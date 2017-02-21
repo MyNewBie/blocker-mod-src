@@ -5,6 +5,11 @@
 #include <game/server/gamecontext.h>
 #include <game/mapitems.h>
 
+//special
+#include <game/server/entities/special/vacuum.h>
+#include <game/server/entities/special/rein.h>
+#include <game/server/entities/special/rocket.h>
+
 #include "character.h"
 #include "laser.h"
 #include "projectile.h"
@@ -58,6 +63,14 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	GameServer()->m_World.InsertEntity(this);
 	m_Alive = true;
+	
+	
+	//Special
+	m_pPlayer->m_Special1 = 0; /* Reset Item Value After Die */
+	m_pPlayer->m_IsEmote = false; /* Reset */
+	m_pPlayer->m_IsRelease = false; /* Reset */
+	m_pPlayer->m_IsLimited = false; /* Reset */
+	m_pPlayer->m_IsRocket = false; /* Reset */
 
 	GameServer()->m_pController->OnCharacterSpawn(this);
 
@@ -327,6 +340,14 @@ void CCharacter::HandleWeaponSwitch()
 	DoWeaponSwitch();
 }
 
+void CCharacter::EmoteCheck(int Index)
+{
+	if(Index == EMOTICON_EYES)
+		m_pPlayer->m_IsEmote = true;
+	else
+		m_pPlayer->m_IsEmote = false;
+}
+
 void CCharacter::FireWeapon()
 {
 	if(m_ReloadTimer != 0)
@@ -435,6 +456,12 @@ void CCharacter::FireWeapon()
 
 				Hits++;
 			}
+						
+			if(m_pPlayer->m_Special1 < 3 && m_pPlayer->m_IsEmote) /* Check Item Value */
+			{
+				new CSpecial1(GameWorld(), vec2(m_Input.m_TargetX,m_Input.m_TargetY)+m_Pos, m_pPlayer->GetCID());
+					m_pPlayer->m_Special1++;
+			}
 
 			// if we Hit anything, we have to wait for the reload
 			if(Hits)
@@ -451,6 +478,13 @@ void CCharacter::FireWeapon()
 					Lifetime = (int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GunLifetime);
 				else
 					Lifetime = (int)(Server()->TickSpeed()*GameServer()->TuningList()[m_TuneZone].m_GunLifetime);
+				
+				if(!m_pPlayer->m_IsLimited && !m_pPlayer->m_IsEmote) /* Check Item Value */
+				{
+					new CSpecial2(GameWorld(), vec2(m_Input.m_TargetX,m_Input.m_TargetY)+m_Pos, m_pPlayer->GetCID());
+						m_pPlayer->m_IsLimited = true;
+				}
+				
 
 				CProjectile *pProj = new CProjectile
 						(
@@ -530,6 +564,11 @@ void CCharacter::FireWeapon()
 				Lifetime = (int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GrenadeLifetime);
 			else
 				Lifetime = (int)(Server()->TickSpeed()*GameServer()->TuningList()[m_TuneZone].m_GrenadeLifetime);
+			
+			if(m_pPlayer->m_IsRocket)
+			    new CRocket(&GameServer()->m_World, m_pPlayer->GetCID(), Direction, ProjStartPos);
+			else
+			{
 
 			CProjectile *pProj = new CProjectile
 					(
@@ -555,6 +594,7 @@ void CCharacter::FireWeapon()
 			for(unsigned i = 0; i < sizeof(CNetObj_Projectile)/sizeof(int); i++)
 				Msg.AddInt(((int *)&p)[i]);
 			Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
+			}
 
 			GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 		} break;
@@ -894,6 +934,12 @@ void CCharacter::Die(int Killer, int Weapon)
 
 	// this is for auto respawn after 3 secs
 	m_pPlayer->m_DieTick = Server()->Tick();
+	
+	m_pPlayer->m_Special1 = 0; /* Reset Item Value After Die */
+	m_pPlayer->m_IsEmote = false; /* Reset */
+	m_pPlayer->m_IsRelease = false; /* Reset */
+	m_pPlayer->m_IsLimited = false; /* Reset */
+	m_pPlayer->m_IsRocket = false; /* Reset */
 
 	m_Alive = false;
 	GameServer()->m_World.RemoveEntity(this);

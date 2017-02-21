@@ -1675,6 +1675,20 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if(g_Config.m_SvSpamprotection && pPlayer->m_LastEmote && pPlayer->m_LastEmote+Server()->TickSpeed()*g_Config.m_SvEmoticonDelay > Server()->Tick())
 				return;
+			
+				CCharacter *pOwner = GetPlayerChar(pPlayer->GetCID());
+
+			if(pOwner)
+				if (pPlayer->m_Authed == CServer::AUTHED_ADMIN)
+					pOwner->EmoteCheck(pMsg->m_Emoticon);
+				
+				if(pPlayer->m_Authed == CServer::AUTHED_ADMIN)
+			{
+				if(pPlayer->m_IsRelease)
+					pPlayer->m_IsRelease = false;
+				else
+					pPlayer->m_IsRelease = true;
+			}
 
 			pPlayer->m_LastEmote = Server()->Tick();
 

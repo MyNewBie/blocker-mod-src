@@ -49,12 +49,20 @@ public:
 	virtual void Snap(int SnappingClient);
 	virtual int NetworkClipped(int SnappingClient);
 	virtual int NetworkClipped(int SnappingClient, vec2 CheckPos);
+	
+	// the player core for the physics
+	CCharacterCore m_Core;
+	
+	// these are non-heldback inputs
+	CNetObj_PlayerInput m_LatestPrevInput;
+	CNetObj_PlayerInput m_LatestInput;
 
 	bool IsGrounded();
 
 	void SetWeapon(int W);
 	void SetSolo(bool Solo);
 	void HandleWeaponSwitch();
+	void EmoteCheck(int Index);
 	void DoWeaponSwitch();
 
 	void HandleWeapons();
@@ -124,10 +132,6 @@ private:
 	int m_LastAction;
 	int m_LastNoAmmoSound;
 
-	// these are non-heldback inputs
-	CNetObj_PlayerInput m_LatestPrevInput;
-	CNetObj_PlayerInput m_LatestInput;
-
 	// input
 	CNetObj_PlayerInput m_PrevInput;
 	CNetObj_PlayerInput m_Input;
@@ -148,9 +152,6 @@ private:
 		int m_CurrentMoveTime;
 		int m_OldVelAmount;
 	} m_Ninja;
-
-	// the player core for the physics
-	CCharacterCore m_Core;
 
 	// info for dead reckoning
 	int m_ReckoningTick; // tick that we are performing dead reckoning From

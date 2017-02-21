@@ -6,6 +6,9 @@
 #define CONSOLE_COMMAND(name, params, flags, callback, userdata, help)
 #endif
 
+//special
+CONSOLE_COMMAND("rocket", "v[id]", CFGFLAG_SERVER, ConRocket, this, "Gives a player rocket")
+
 CONSOLE_COMMAND("kill_pl", "v[id]", CFGFLAG_SERVER, ConKillPlayer, this, "Kills player v and announces the kill")
 CONSOLE_COMMAND("totele", "i[number]", CFGFLAG_SERVER|CMDFLAG_TEST, ConToTeleporter, this, "Teleports you to teleporter v")
 CONSOLE_COMMAND("totelecp", "i[number]", CFGFLAG_SERVER|CMDFLAG_TEST, ConToCheckTeleporter, this, "Teleports you to checkpoint teleporter v")

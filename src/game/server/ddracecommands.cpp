@@ -74,6 +74,35 @@ void CGameContext::MoveCharacter(int ClientID, int X, int Y, bool Raw)
 	pChr->m_DDRaceState = DDRACE_CHEAT;
 }
 
+void CGameContext::ConRocket(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	if(!pPlayer)
+		return;
+	
+	pSelf->ModifyWeapons(pResult, pUserData, WEAPON_GRENADE, false);
+
+	char aBuf[128];
+	if (!pPlayer->m_IsRocket)
+	{
+		pPlayer->m_IsRocket = true;
+
+		str_format(aBuf, sizeof(aBuf), "You got Rocket by %s.", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+	else
+	{
+		pPlayer->m_IsRocket = false;
+		str_format(aBuf, sizeof(aBuf), "%s removed your Rocket.", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
 void CGameContext::ConKillPlayer(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *) pUserData;

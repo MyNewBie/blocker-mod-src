@@ -60,8 +60,16 @@ public:
 	// used for spectator mode
 	int m_SpectatorID;
 
-	bool m_IsReady;
+		// special
+	int m_Special1;
 
+	//
+	bool m_IsEmote;
+	bool m_IsReady;
+	bool m_IsRelease;
+	bool m_IsLimited;
+    bool m_IsRocket;
+	
 	//
 	int m_Vote;
 	int m_VotePos;
