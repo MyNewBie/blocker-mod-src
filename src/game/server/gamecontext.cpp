@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <base/tl/sorted_array.h>
 
+#include <string>
 #include <new>
 #include <base/math.h>
 #include <engine/shared/config.h>
@@ -325,6 +326,7 @@ void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, in
 		CNetMsg_Sv_Chat Msg;
 		Msg.m_Team = 0;
 		Msg.m_ClientID = ChatterClientID;
+		std::string ChatterName = Server()->ClientName(ChatterClientID);
 		Msg.m_pMessage = aText;
 
 		// pack one for the recording only
