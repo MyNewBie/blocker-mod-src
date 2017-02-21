@@ -14,8 +14,6 @@
 #include <stdio.h>
 #include <time.h>
 
-#include <stdlib.h>
-#include <iostream>
 
 MACRO_ALLOC_POOL_ID_IMPL(CPlayer, MAX_CLIENTS)
 
@@ -29,24 +27,6 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_pCharacter = 0;
 	m_NumInputs = 0;
 	m_KillMe = 0;
-	
-		skins[0] = "bluekitty";
-		skins[1] = "bluestripe";
-        skins[2] = "brownbear";
-		skins[3] = "cammo";
-        skins[4] = "cammostripes";
-        skins[5] = "coala";
-        skins[6] = "default";
-        skins[7] = "limekitty";
-        skins[8] = "pinky";
-        skins[9] = "redbopp";
-        skins[10] = "redstripe";
-        skins[11] = "saddo";
-        skins[12] = "toptri";
-        skins[13] = "twinbop";
-        skins[14] = "twintri";
-        skins[15] = "warpaint";
-		
 	Reset();
 }
 
@@ -310,18 +290,9 @@ void CPlayer::Snap(int SnappingClient)
 	if(!pClientInfo)
 		return;
 
-	if(g_Config.m_SvAnonymousBlock)
-	{
-		StrToInts(&pClientInfo->m_Name0, 4, " ");
-		StrToInts(&pClientInfo->m_Clan0, 3, " ");
-		pClientInfo->m_Country = -1;
-	} else
-	{
-		StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
-		StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
-		pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
-	}
-
+	StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
+	StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
+	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
 	if (m_StolenSkin && SnappingClient != m_ClientID && g_Config.m_SvSkinStealAction == 1)
 	{
 		StrToInts(&pClientInfo->m_Skin0, 6, "pinky");
@@ -330,24 +301,10 @@ void CPlayer::Snap(int SnappingClient)
 		pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
 	} else
 	{
-		if(g_Config.m_SvAnonymousBlock)
-		{
-			if (Server()->Tick() >= m_LastTriggerTick + Server()->TickSpeed()*2) {
-				m_LastTriggerTick = Server()->Tick();
-				m_RandIndex = rand() % 16;
-				m_pSkin = m_aSkins[m_RandIndex].c_str();
-			}
-			StrToInts(&pClientInfo->m_Skin0, 6, m_pSkin);
-			pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
-			pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
-			pClientInfo->m_UseCustomColor = 0;
-		} else 
-		{
-			StrToInts(&pClientInfo->m_Skin0, 6, skin);
-			pClientInfo->m_UseCustomColor = 0;
-			pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
-			pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
-		}
+		StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
+		pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
+		pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
+		pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
 	}
 
 	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, id, sizeof(CNetObj_PlayerInfo)));
@@ -379,8 +336,6 @@ void CPlayer::Snap(int SnappingClient)
 		pPlayerInfo->m_Score = -9999;
 	else
 		pPlayerInfo->m_Score = abs(m_Score) * -1;
-	if(g_Config.m_SvAnonymousBlock)
-		pPlayerInfo->m_Score = -9999;
 }
 
 void CPlayer::FakeSnap()
@@ -399,8 +354,8 @@ void CPlayer::FakeSnap()
 		return;
 
 	StrToInts(&pClientInfo->m_Name0, 4, " ");
-	StrToInts(&pClientInfo->m_Clan0, 3, " ");
-	StrToInts(&pClientInfo->m_Skin0, 6, skin); //remind
+	StrToInts(&pClientInfo->m_Clan0, 3, "");
+	StrToInts(&pClientInfo->m_Skin0, 6, "default");
 
 	if(m_Paused != PAUSED_SPEC)
 		return;
