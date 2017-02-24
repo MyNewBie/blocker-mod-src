@@ -590,7 +590,41 @@ void CGameContext::ConRename(IConsole::IResult *pResult, void *pUserData)
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "%s has changed %s's name to '%s'", pSelf->Server()->ClientName(pResult->m_ClientID), oldName, pSelf->Server()->ClientName(Victim));
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
+}
 
-	str_format(aBuf, sizeof(aBuf), "%s changed your name to %s.", pSelf->Server()->ClientName(pResult->m_ClientID), pSelf->Server()->ClientName(Victim));
-	pSelf->SendChatTarget(Victim, aBuf);
+void CGameContext::ConFastReload(IConsole::IResult *pResult, void *pUserData)
+{
+	//player
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Victim = pResult->GetVictim();
+
+	if (!CheckClientID(Victim) || !CheckClientID(pResult->m_ClientID))
+		return;
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	if(!pPlayer)
+		return;
+
+	CCharacter* pChr = pSelf->m_apPlayers[Victim]->GetCharacter();
+	if(!pChr)
+		return;
+
+	if (!pChr->m_FastReload)
+	{
+		pChr->m_ReloadMultiplier = 10000;
+		pChr->m_FastReload = true;
+        char aBuf[128];
+		str_format(aBuf, sizeof(aBuf), "You got XXL by %s.", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+	else
+	{
+		pChr->m_ReloadMultiplier = 1000;
+		pChr->m_FastReload = false;
+		char aBuf[128];
+		str_format(aBuf, sizeof(aBuf), "%s removed your XXL.", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+
+	pChr->m_DDRaceState = DDRACE_CHEAT;
 }

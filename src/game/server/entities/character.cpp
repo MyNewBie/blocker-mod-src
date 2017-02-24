@@ -364,7 +364,8 @@ void CCharacter::FireWeapon()
 		FullAuto = true;
 	if(GetPlayer()->m_Pullhammer || m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_RIFLE)
 		FullAuto = true;
-
+    if(m_FastReload && (m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_RIFLE || m_Core.m_ActiveWeapon == WEAPON_HAMMER || m_Core.m_ActiveWeapon == WEAPON_GUN))		
+		FullAuto = true;
 	// don't fire non auto weapons when player is deep and sv_deepfly is disabled
 	if(!g_Config.m_SvDeepfly && !FullAuto && m_DeepFreeze)
 		return;
@@ -444,6 +445,7 @@ void CCharacter::FireWeapon()
 		{
 			// reset objects Hit
 			m_NumObjectsHit = 0;
+			if (!m_FastReload)
 			GameServer()->CreateSound(m_Pos, SOUND_HAMMER_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 
 			if (m_Hit&DISABLE_HIT_HAMMER) break;
@@ -555,6 +557,7 @@ void CCharacter::FireWeapon()
 					Msg.AddInt(((int *)&p)[i]);
 
 				Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
+				if (!m_FastReload)
 				GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 			}
 		} break;
@@ -598,6 +601,7 @@ void CCharacter::FireWeapon()
 				LaserReach = GameServer()->TuningList()[m_TuneZone].m_LaserReach;
 
 			new CLaser(&GameServer()->m_World, m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_SHOTGUN);
+			if (!m_FastReload)
 			GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 		} break;
 
@@ -639,7 +643,7 @@ void CCharacter::FireWeapon()
 				Msg.AddInt(((int *)&p)[i]);
 			Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
 			}
-
+            if (!m_FastReload)
 			GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 		} break;
 
@@ -652,6 +656,7 @@ void CCharacter::FireWeapon()
 				LaserReach = GameServer()->TuningList()[m_TuneZone].m_LaserReach;
 
 			new CLaser(GameWorld(), m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_RIFLE);
+			if (!m_FastReload)
 			GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 		} break;
 
@@ -663,7 +668,8 @@ void CCharacter::FireWeapon()
 			m_Ninja.m_ActivationDir = Direction;
 			m_Ninja.m_CurrentMoveTime = g_pData->m_Weapons.m_Ninja.m_Movetime * Server()->TickSpeed() / 1000;
 			m_Ninja.m_OldVelAmount = length(m_Core.m_Vel);
-
+            if (!m_FastReload)
+				
 			GameServer()->CreateSound(m_Pos, SOUND_NINJA_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 		} break;
 
@@ -681,7 +687,7 @@ void CCharacter::FireWeapon()
 			GameServer()->Tuning()->Get(38 + m_Core.m_ActiveWeapon, &FireDelay);
 		else
 			GameServer()->TuningList()[m_TuneZone].Get(38 + m_Core.m_ActiveWeapon, &FireDelay);
-		m_ReloadTimer = FireDelay * Server()->TickSpeed() / 1000;
+		m_ReloadTimer = FireDelay * Server()->TickSpeed() / m_ReloadMultiplier;
 	}
 }
 
@@ -1738,6 +1744,29 @@ void CCharacter::HandleTiles(int Index)
 		m_Core.m_Jumped = 0;
 		m_Core.m_JumpedTotal = 0;
 	}
+	
+	//XXL
+	if((m_TileIndex == TILE_XXL) || (m_TileFIndex == TILE_XXL))
+	{
+		if (m_LastIndexTile == TILE_XXL || m_LastIndexFrontTile == TILE_XXL)
+			return;
+
+		char aBuf[256];
+		if (m_FastReload)
+		{
+			m_FastReload = false;
+			m_ReloadMultiplier = 1000;
+			str_format(aBuf, sizeof(aBuf), "XXL disabled");
+		}
+		else
+		{
+			m_FastReload = true;
+			m_ReloadMultiplier = 10000;
+			str_format(aBuf, sizeof(aBuf), "XXL enabled");
+		}
+
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
+	}
 
 	// handle switch tiles
 	if(GameServer()->Collision()->IsSwitch(MapIndex) == TILE_SWITCHOPEN && Team() != TEAM_SUPER)
@@ -2268,6 +2297,8 @@ void CCharacter::DDRaceInit()
 	m_SetSavePos = false;
 	m_LastBroadcast = 0;
 	m_TeamBeforeSuper = 0;
+	m_FastReload = false;
+	m_ReloadMultiplier = 1000;
 	m_Core.m_Id = GetPlayer()->GetCID();
 	if(g_Config.m_SvTeam == 2)
 	{

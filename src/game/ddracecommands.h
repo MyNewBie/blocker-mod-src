@@ -53,6 +53,7 @@ CONSOLE_COMMAND("mutes", "", CFGFLAG_SERVER, ConMutes, this, "");
 CONSOLE_COMMAND("freezehammer", "v[id]", CFGFLAG_SERVER, ConFreezeHammer, this, "Gives a player freeze hammer")
 CONSOLE_COMMAND("pullhammer", "v[id]", CFGFLAG_SERVER, ConPullhammer, this, "Gives a player telekinese")
 CONSOLE_COMMAND("rename", "vi", CFGFLAG_SERVER, ConRename, this, "Renames i name to s", IConsole::CONSOLELEVEL_CONFIG)
+CONSOLE_COMMAND("xxl", "v", CFGFLAG_SERVER|CMDFLAG_TEST, ConFastReload, this, "Fast reload :-)")
 #undef CONSOLE_COMMAND
 
 #endif

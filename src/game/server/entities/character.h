@@ -276,6 +276,14 @@ public:
 	void SetNinjaActivationDir(vec2 ActivationDir) { m_Ninja.m_ActivationDir = ActivationDir; };
 	void SetNinjaActivationTick(int ActivationTick) { m_Ninja.m_ActivationTick = ActivationTick; };
 	void SetNinjaCurrentMoveTime(int CurrentMoveTime) { m_Ninja.m_CurrentMoveTime = CurrentMoveTime; };
+	
+	//int
+	int m_ReloadMultiplier;
+	int m_LastIndexTile;		
+	int m_LastIndexFrontTile;	
+	//bool
+	bool m_FastReload;
+	
 };
 
 enum
