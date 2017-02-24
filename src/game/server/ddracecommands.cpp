@@ -628,3 +628,34 @@ void CGameContext::ConFastReload(IConsole::IResult *pResult, void *pUserData)
 
 	pChr->m_DDRaceState = DDRACE_CHEAT;
 }
+
+void CGameContext::ConCircle(IConsole::IResult *pResult, void *pUserData)
+{
+	//player
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Victim = pResult->GetVictim();
+
+	if (!CheckClientID(Victim) || !CheckClientID(pResult->m_ClientID))
+		return;
+
+	CPlayer * pPlayer = pSelf->m_apPlayers[Victim];
+
+	if (!pPlayer)
+		return;
+	
+    if (!pPlayer->m_EpicCircle)
+	{
+		pPlayer->m_EpicCircle = true;
+		char aBuf[256];
+		str_format(aBuf, sizeof(aBuf), "You have got epic-circle by '%s'", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+	else
+	{
+		pPlayer->m_EpicCircle = false;
+		char aBuf[256];
+		str_format(aBuf, sizeof(aBuf), "You have lost epic-circle by '%s'", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+
+}

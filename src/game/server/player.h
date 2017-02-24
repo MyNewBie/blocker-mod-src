@@ -124,6 +124,7 @@ public:
 	
 	//special
 	bool m_Pullhammer;
+	bool m_EpicCircle;
 
 private:
 	CCharacter *m_pCharacter;

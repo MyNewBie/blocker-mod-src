@@ -1656,6 +1656,25 @@ void CCharacter::HandleTiles(int Index)
 		}
 	}
 
+	//circles
+	if ((m_TileIndex == TILE_CIRCLE) || (m_TileFIndex == TILE_CIRCLE))
+	{
+		if (m_LastIndexTile == TILE_CIRCLE || m_LastIndexFrontTile == TILE_CIRCLE)
+			return;
+
+		char aBuf[256];
+		if (m_pPlayer->m_EpicCircle)
+		{
+			m_pPlayer->m_EpicCircle = false;
+			str_format(aBuf, sizeof(aBuf), "Epic Circles disabled");
+		}
+		else
+		{
+			m_pPlayer->m_EpicCircle = true;
+			str_format(aBuf, sizeof(aBuf), "Epic Circles enabled");
+		}
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
+	}
 	// walljump
 	if((m_TileIndex == TILE_WALLJUMP) || (m_TileFIndex == TILE_WALLJUMP))
 	{
@@ -2304,6 +2323,7 @@ void CCharacter::DDRaceInit()
 	m_TeamBeforeSuper = 0;
 	m_FastReload = false;
 	m_ReloadMultiplier = 1000;
+	m_EpicCircle = 0;
 	m_LastIndexTile = 0;
 	m_LastIndexFrontTile = 0;
 	m_Core.m_Id = GetPlayer()->GetCID();

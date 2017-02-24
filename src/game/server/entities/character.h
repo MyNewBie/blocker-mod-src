@@ -283,6 +283,7 @@ public:
 	int m_LastIndexFrontTile;	
 	//bool
 	bool m_FastReload;
+	bool m_EpicCircle;
 	
 };
 

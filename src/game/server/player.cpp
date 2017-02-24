@@ -138,6 +138,7 @@ void CPlayer::Reset()
 		m_FirstVoteTick = Now + g_Config.m_SvJoinVoteDelay * TickSpeed;
 	else
 		m_FirstVoteTick = Now;
+	    m_EpicCircle = false;
 }
 
 void CPlayer::Tick()
