@@ -116,8 +116,8 @@ enum
 	TILE_SOLO_END,
 	
 	//Specials
-	TILE_CIRCLE = 177,
-	TILE_XXL = 178,
+	TILE_CIRCLE,//177
+	TILE_XXL,//178
 	
 	//Switches
 	TILE_SWITCHTIMEDOPEN = 22,

@@ -48,6 +48,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_LastPenalty = false;
 	m_LastBonus = false;
 	m_PullingID = -1;
+	m_AnimIDNum = 9; //maximum number of "animation balls"
+	m_apAnimIDs = new int[m_AnimIDNum];//create id-array
 
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
@@ -86,6 +88,9 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
 
 	Server()->StartRecord(m_pPlayer->GetCID());
+	
+	for (int i = 0; i < m_AnimIDNum; i++)//snap ids
+	    m_apAnimIDs[i] = Server()->SnapNewID();
 
 	return true;
 }
@@ -960,6 +965,18 @@ bool CCharacter::IncreaseArmor(int Amount)
 
 void CCharacter::Die(int Killer, int Weapon)
 {
+	{//release snapped IDs
+		for (int i = 0; i < m_AnimIDNum; i++)
+		{
+			dbg_assert(m_apAnimIDs[i] != -1, "Character Release ID Error");
+			if (m_apAnimIDs[i] > 0)
+			{
+				Server()->SnapFreeID(m_apAnimIDs[i]);
+				//dbg_msg("ASDF", "Releasing ID %d" ,m_apAnimIDs[i]);
+			}
+		}
+	}
+	
 	if(Server()->IsRecording(m_pPlayer->GetCID()))
 		Server()->StopRecord(m_pPlayer->GetCID());
 
@@ -1248,6 +1265,36 @@ void CCharacter::Snap(int SnappingClient)
 	}
 
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
+	
+	if (m_EpicCircle)
+	{
+		//calculate visible balls
+		float Panso = 1.0f;
+		Panso *= m_AnimIDNum;
+
+		int MaxBalls = round(Panso);
+
+		for (int i = 0; i < MaxBalls; i++)
+		{
+			CNetObj_Projectile *pFirstParticle = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_apAnimIDs[i], sizeof(CNetObj_Projectile)));
+			if (pFirstParticle && m_apAnimIDs[i] != -1)
+			{
+				float rad = 16 * pow(sinf(Server()->Tick() /30.0f), 3) *1 +50;
+
+				float TurnFac = 0.025f;
+
+				float PosX = m_Pos.x + cosf(2 * pi * (i / (float)m_AnimIDNum) + Server()->Tick()*TurnFac) * rad;
+				float PosY = m_Pos.y + sinf(2 * pi * (i / (float)m_AnimIDNum) + Server()->Tick()*TurnFac) * rad;
+
+				pFirstParticle->m_X = PosX;
+				pFirstParticle->m_Y = PosY;
+				pFirstParticle->m_VelX = 4;
+				pFirstParticle->m_VelY = 4;
+				pFirstParticle->m_StartTick = Server()->Tick() - 4;
+				pFirstParticle->m_Type = WEAPON_HAMMER;
+			}
+		}
+	}
 }
 
 int CCharacter::NetworkClipped(int SnappingClient)

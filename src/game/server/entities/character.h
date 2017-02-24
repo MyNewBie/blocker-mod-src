@@ -152,6 +152,9 @@ private:
 		int m_CurrentMoveTime;
 		int m_OldVelAmount;
 	} m_Ninja;
+	
+	int m_AnimIDNum;
+	int * m_apAnimIDs;
 
 	// info for dead reckoning
 	int m_ReckoningTick; // tick that we are performing dead reckoning From
