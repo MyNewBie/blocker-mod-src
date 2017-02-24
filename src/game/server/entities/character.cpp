@@ -1768,6 +1768,9 @@ void CCharacter::HandleTiles(int Index)
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 	}
 
+	m_LastIndexTile = m_TileIndex;
+	m_LastIndexFrontTile = m_TileFIndex;
+	
 	// handle switch tiles
 	if(GameServer()->Collision()->IsSwitch(MapIndex) == TILE_SWITCHOPEN && Team() != TEAM_SUPER)
 	{
@@ -2184,6 +2187,8 @@ void CCharacter::DDRacePostCoreTick()
 	else
 	{
 		HandleTiles(CurrentIndex);
+		m_LastIndexTile = 0;		
+		m_LastIndexFrontTile = 0;
 	}
 
 	HandleBroadcast();
@@ -2299,6 +2304,8 @@ void CCharacter::DDRaceInit()
 	m_TeamBeforeSuper = 0;
 	m_FastReload = false;
 	m_ReloadMultiplier = 1000;
+	m_LastIndexTile = 0;
+	m_LastIndexFrontTile = 0;
 	m_Core.m_Id = GetPlayer()->GetCID();
 	if(g_Config.m_SvTeam == 2)
 	{
