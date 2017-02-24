@@ -508,7 +508,7 @@ void CGameContext::ConList(IConsole::IResult *pResult, void *pUserData)
 	else
 		pSelf->List(ClientID, &zerochar);
 }
-
+//special
 void CGameContext::ConFreezeHammer(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *) pUserData;
@@ -555,14 +555,14 @@ void CGameContext::ConPullhammer(IConsole::IResult *pResult, void *pUserData)// 
 	{
 		pPlayer->m_Pullhammer = true;
 		char aBuf[256];
-		str_format(aBuf, sizeof(aBuf), "You got pullhammer by '%s'"!, pSelf->Server()->ClientName(pResult->m_ClientID));
+		str_format(aBuf, sizeof(aBuf), "You got pullhammer by '%s'!", pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
 	}
 	else
 	{
 		pPlayer->m_Pullhammer = false;
 		char aBuf[256];
-		str_format(aBuf, sizeof(aBuf), "'%s' removed your pullhammer"!, pSelf->Server()->ClientName(pResult->m_ClientID));
+		str_format(aBuf, sizeof(aBuf), "'%s' removed your pullhammer!", pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
 	}
 }
