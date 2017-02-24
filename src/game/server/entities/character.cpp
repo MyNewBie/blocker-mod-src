@@ -1272,7 +1272,7 @@ void CCharacter::Snap(int SnappingClient)
 		float Panso = 1.0f;
 		Panso *= m_AnimIDNum;
 
-		int MaxBalls = round(Panso);
+		int MaxBalls = round_to_int(Panso);
 
 		for (int i = 0; i < MaxBalls; i++)
 		{
@@ -1732,6 +1732,28 @@ void CCharacter::HandleTiles(int Index)
 			m_Core.m_Jumped = 1;
 		}
 	}
+	
+	//Circle
+	
+	if ((m_TileIndex == TILE_CIRCLE) || (m_TileFIndex == TILE_CIRCLE))
+	{
+		if (m_LastIndexTile == TILE_CIRCLE || m_LastIndexFrontTile == TILE_CIRCLE)
+			return;
+		
+		char aBuf[256];
+		if (m_EpicCircle)
+		{
+			m_EpicCircle = false;
+			str_format(aBuf, sizeof(aBuf), "Circle disabled");
+		}
+		else
+		{
+			m_EpicCircle = true;
+			str_format(aBuf, sizeof(aBuf), "Circle enabled");
+		}
+
+			GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
+	}
 
 	// jetpack gun
 	if(((m_TileIndex == TILE_JETPACK_START) || (m_TileFIndex == TILE_JETPACK_START)) && !m_Jetpack)
@@ -1812,7 +1834,7 @@ void CCharacter::HandleTiles(int Index)
 	}
 	
 	//XXL
-	if((m_TileIndex == TILE_XXL) || (m_TileFIndex == TILE_XXL))
+	if(((m_TileIndex == TILE_XXL) || (m_TileFIndex == TILE_XXL)))
 	{
 		if (m_LastIndexTile == TILE_XXL || m_LastIndexFrontTile == TILE_XXL)
 			return;
@@ -1831,6 +1853,26 @@ void CCharacter::HandleTiles(int Index)
 			str_format(aBuf, sizeof(aBuf), "XXL enabled");
 		}
 
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
+	}
+	
+	//CIRCLES
+	if (((m_TileIndex == TILE_CIRCLE) || (m_TileFIndex == TILE_CIRCLE)))
+	{
+		if (m_LastIndexTile == TILE_CIRCLE || m_LastIndexFrontTile == TILE_CIRCLE)
+			return;
+
+		char aBuf[256];
+		if (m_pPlayer->m_EpicCircle)
+		{
+			m_pPlayer->m_EpicCircle = false;
+			str_format(aBuf, sizeof(aBuf), "Epic Circles disabled");
+		}
+		else
+		{
+			m_pPlayer->m_EpicCircle = true;
+			str_format(aBuf, sizeof(aBuf), "Epic Circles enabled");
+		}
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 	}
 
@@ -2249,12 +2291,14 @@ void CCharacter::DDRacePostCoreTick()
 	std::list < int > Indices = GameServer()->Collision()->GetMapIndices(m_PrevPos, m_Pos);
 	if(!Indices.empty())
 		for(std::list < int >::iterator i = Indices.begin(); i != Indices.end(); i++)
-			HandleTiles(*i);
+		HandleTiles(*i);
+		//dbg_msg("Running","%d", *i);
 	else
 	{
 		HandleTiles(CurrentIndex);
 		m_LastIndexTile = 0;		
 		m_LastIndexFrontTile = 0;
+		//dbg_msg("Running","%d", CurrentIndex);
 	}
 
 	HandleBroadcast();
