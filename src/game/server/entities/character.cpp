@@ -361,6 +361,8 @@ void CCharacter::FireWeapon()
 		FullAuto = true;
 	if (m_Jetpack && m_Core.m_ActiveWeapon == WEAPON_GUN)
 		FullAuto = true;
+	if(GetPlayer()->m_Pullhammer || m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_RIFLE)
+		FullAuto = true;
 
 	// don't fire non auto weapons when player is deep and sv_deepfly is disabled
 	if(!g_Config.m_SvDeepfly && !FullAuto && m_DeepFreeze)
@@ -375,7 +377,48 @@ void CCharacter::FireWeapon()
 		WillFire = true;
 
 	if(!WillFire)
+	{
+		if (GetPlayer()->m_Pullhammer)
+			m_PullingID = -1;
 		return;
+	}
+	
+	if (GetPlayer()->m_Pullhammer && m_Core.m_ActiveWeapon == WEAPON_HAMMER)
+	{
+		if (m_PullingID == -1) //no one gets pulled, so search for one!
+		{
+			CCharacter * pTarget = GameWorld()->ClosestCharacter(MousePos(), 20.f, 0);
+			if (pTarget)
+				m_PullingID = pTarget->GetPlayer()->GetCID();
+		}
+		else
+		{
+			//crash prevention
+			CPlayer * pTargetPlayer = GameServer()->m_apPlayers[m_PullingID];
+
+			if (pTargetPlayer)
+			{
+				CCharacter *pTarget = GameServer()->m_apPlayers[m_PullingID]->GetCharacter();
+
+				if (pTarget && pTarget->IsAlive())
+				{
+					pTarget->Core()->m_Pos = MousePos();
+					pTarget->Core()->m_Vel.y = 0;
+				}
+				else
+				{
+					m_PullingID = -1;
+					return;
+				}
+			}
+			else
+			{
+				m_PullingID = -1;
+				return;
+			}
+		}
+		return;
+	}
 
 	// check for ammo
 	if(!m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)

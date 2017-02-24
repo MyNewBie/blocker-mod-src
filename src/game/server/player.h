@@ -121,6 +121,9 @@ public:
 		int m_Min;
 		int m_Max;
 	} m_Latency;
+	
+	//special
+	bool m_Pullhammer;
 
 private:
 	CCharacter *m_pCharacter;

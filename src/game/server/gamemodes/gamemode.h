@@ -4,5 +4,5 @@
 #define GAME_MODE_H
 
 #define GAME_NAME "DDraceNetwork"
-#define TEST_NAME "TestDDraceNetwork"
+#define TEST_NAME "DDraceNetwork"
 #endif

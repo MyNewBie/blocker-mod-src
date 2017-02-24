@@ -518,29 +518,51 @@ void CGameContext::ConFreezeHammer(IConsole::IResult *pResult, void *pUserData)
 
 	if (!pChr)
 		return;
-
-	char aBuf[128];
-	str_format(aBuf, sizeof aBuf, "'%s' got freeze hammer!",
-			pSelf->Server()->ClientName(Victim));
-	pSelf->SendChat(-1, CHAT_ALL, aBuf);
-
+	
+	if (!pChr->m_FreezeHammer)
+    {
 	pChr->m_FreezeHammer = true;
+	char aBuf[128];
+	str_format(aBuf, sizeof aBuf, "You got freezehammer by '%s'!",
+			pSelf->Server()->ClientName(pResult->m_ClientID));
+	pSelf->SendChatTarget(Victim, aBuf);
+    }
+    else
+    {
+	pChr->m_FreezeHammer = false;
+	char aBuf[128];
+	str_format(aBuf, sizeof aBuf, "'%s' removed your freezehammer!",
+			pSelf->Server()->ClientName(pResult->m_ClientID));
+	pSelf->SendChatTarget(Victim, aBuf);
+    }
 }
 
-void CGameContext::ConUnFreezeHammer(IConsole::IResult *pResult, void *pUserData)
+void CGameContext::ConPullhammer(IConsole::IResult *pResult, void *pUserData)// Yaaay did it, idk why you guys call it telekinesis tho?
 {
-	CGameContext *pSelf = (CGameContext *) pUserData;
+	//player
+	CGameContext *pSelf = (CGameContext *)pUserData;
 	int Victim = pResult->GetVictim();
 
-	CCharacter* pChr = pSelf->GetPlayerChar(Victim);
-
-	if (!pChr)
+	if (!CheckClientID(Victim) || !CheckClientID(pResult->m_ClientID))
 		return;
 
-	char aBuf[128];
-	str_format(aBuf, sizeof aBuf, "'%s' lost freeze hammer!",
-			pSelf->Server()->ClientName(Victim));
-	pSelf->SendChat(-1, CHAT_ALL, aBuf);
+	CPlayer * pPlayer = pSelf->m_apPlayers[Victim];
 
-	pChr->m_FreezeHammer = false;
+	if (!pPlayer)
+		return;
+
+	if (!pPlayer->m_Pullhammer)
+	{
+		pPlayer->m_Pullhammer = true;
+		char aBuf[256];
+		str_format(aBuf, sizeof(aBuf), "You got pullhammer by '%s'"!, pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+	else
+	{
+		pPlayer->m_Pullhammer = false;
+		char aBuf[256];
+		str_format(aBuf, sizeof(aBuf), "'%s' removed your pullhammer"!, pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
 }

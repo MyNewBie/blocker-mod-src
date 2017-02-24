@@ -196,6 +196,8 @@ public:
 	bool m_DeepFreeze;
 	bool m_EndlessHook;
 	bool m_FreezeHammer;
+	int m_PullingID;
+	vec2 MousePos() { return vec2(m_LatestInput.m_TargetX + m_Pos.x, m_LatestInput.m_TargetY + m_Pos.y); };
 	enum
 	{
 		HIT_ALL=0,
