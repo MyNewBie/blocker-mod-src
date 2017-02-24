@@ -47,6 +47,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_LastRefillJumps = false;
 	m_LastPenalty = false;
 	m_LastBonus = false;
+	m_PullingID = -1;
 
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;

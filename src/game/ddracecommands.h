@@ -49,9 +49,10 @@ CONSOLE_COMMAND("muteid", "v[id] i[seconds]", CFGFLAG_SERVER, ConMuteID, this, "
 CONSOLE_COMMAND("muteip", "s[ip] i[seconds]", CFGFLAG_SERVER, ConMuteIP, this, "");
 CONSOLE_COMMAND("unmute", "v[id]", CFGFLAG_SERVER, ConUnmute, this, "");
 CONSOLE_COMMAND("mutes", "", CFGFLAG_SERVER, ConMutes, this, "");
-
+//special
 CONSOLE_COMMAND("freezehammer", "v[id]", CFGFLAG_SERVER, ConFreezeHammer, this, "Gives a player freeze hammer")
 CONSOLE_COMMAND("pullhammer", "v[id]", CFGFLAG_SERVER, ConPullhammer, this, "Gives a player telekinese")
+CONSOLE_COMMAND("rename", "vi", CFGFLAG_SERVER, ConRename, this, "Renames i name to s", IConsole::CONSOLELEVEL_CONFIG)
 #undef CONSOLE_COMMAND
 
 #endif
