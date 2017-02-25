@@ -1088,7 +1088,41 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if(pMsg->m_pMessage[0]=='/')
 			{
-				if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
+				if (!strncmp(pMsg->m_pMessage, "/login", 6))
+				{
+					char Username[512];
+					char Password[512];
+					if (sscanf(pMsg->m_pMessage, "/login %s %s", Username, Password) != 2)
+					{
+						SendChatTarget(pPlayer->GetCID(), "Please, use '/login <username> <password>'");
+						return;
+					}
+					pPlayer->m_pAccount->Login(Username, Password);
+					return;
+				}
+				else if (!str_comp_nocase(pMsg->m_pMessage, "/logout"))
+				{
+					if (!pPlayer->m_AccData.m_UserID)
+					{
+						SendChatTarget(pPlayer->GetCID(), "Not logged in");
+						return;
+					}
+					pPlayer->m_pAccount->Apply();
+					pPlayer->m_pAccount->Reset();
+
+					SendChatTarget(pPlayer->GetCID(), "Logout succesful");
+
+					CCharacter *pOwner = GetPlayerChar(pPlayer->GetCID());
+
+					if (pOwner)
+					{
+						if (pOwner->IsAlive())
+							pOwner->Die(pPlayer->GetCID(), WEAPON_GAME);
+					}
+
+					return;
+				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
 				{
 					char pWhisperMsg[256];
 					str_copy(pWhisperMsg, pMsg->m_pMessage + 3, 256);
