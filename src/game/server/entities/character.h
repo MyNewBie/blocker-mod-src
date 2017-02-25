@@ -116,6 +116,7 @@ private:
 	int m_AttackTick;
 
 	int m_DamageTaken;
+	bool isFreezed;
 
 	int m_EmoteType;
 	int m_EmoteStop;
@@ -149,6 +150,8 @@ private:
 		int m_OldVelAmount;
 	} m_Ninja;
 
+	bool m_TilePauser; // This is ugly asf TODO: Fix
+
 	// the player core for the physics
 	CCharacterCore m_Core;
 
@@ -169,6 +172,8 @@ private:
 	void DDRacePostCoreTick();
 	void HandleBroadcast();
 	void HandleTuneLayer();
+	void HandleThreeSecondRule();
+	void HandlePassiveMode();
 	void SendZoneMsgs();
 
 	bool m_SetSavePos;
@@ -192,9 +197,12 @@ public:
 	int m_TeamBeforeSuper;
 	int m_FreezeTime;
 	int m_FreezeTick;
+	int m_FirstFreezeTick;
 	bool m_DeepFreeze;
 	bool m_EndlessHook;
 	bool m_FreezeHammer;
+	bool m_PassiveMode;
+	bool m_ThreeSecondRule;
 	enum
 	{
 		HIT_ALL=0,
@@ -248,8 +256,9 @@ public:
 	vec2 m_Intersection;
 	int64 m_LastStartWarning;
 	int64 m_LastRescue;
+	int64 m_LastPassiveOut;
+	int64 m_LastPenalty;
 	bool m_LastRefillJumps;
-	bool m_LastPenalty;
 	bool m_LastBonus;
 
 	// Setters/Getters because i don't want to modify vanilla vars access modifiers

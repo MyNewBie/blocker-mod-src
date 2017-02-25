@@ -723,18 +723,15 @@ void CCharacter::ResetInput()
 
 void CCharacter::Tick()
 {
-	/*if(m_pPlayer->m_ForceBalanced)
-	{
-		char Buf[128];
-		str_format(Buf, sizeof(Buf), "You were moved to %s due to team balancing", GameServer()->m_pController->GetTeamName(m_pPlayer->GetTeam()));
-		GameServer()->SendBroadcast(Buf, m_pPlayer->GetCID());
-
-		m_pPlayer->m_ForceBalanced = false;
-	}*/
-
 	if (m_Paused)
 		return;
 
+	// handle info spam
+	if ((Server()->Tick() % 150) == 0 && m_TilePauser) // Ugly asf TODO: FIX
+		m_TilePauser = false;
+
+	HandlePassiveMode();
+	HandleThreeSecondRule();
 	DDRaceTick();
 
 	m_Core.m_Input = m_Input;
@@ -1593,6 +1590,21 @@ void CCharacter::HandleTiles(int Index)
 				GameServer()->SendChatTarget(i, "Your team was unlocked by an unlock team tile");
 	}
 
+	// passive
+	if ((m_TileIndex == TILE_PASSIVE_IN) || (m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
+	{
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode enabled!");
+		m_ThreeSecondRule = false;
+		m_PassiveMode = true;
+	}
+	else if ((m_TileIndex == TILE_PASSIVE_OUT) || (m_TileFIndex == TILE_PASSIVE_OUT) && m_PassiveMode && !m_TilePauser)
+	{
+		m_LastPassiveOut = Server()->Tick();
+		m_ThreeSecondRule = true;
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode disabling in three seconds!");
+		m_TilePauser = true;
+	}
+
 	// solo part
 	if(((m_TileIndex == TILE_SOLO_START) || (m_TileFIndex == TILE_SOLO_START)) && !Teams()->m_Core.GetSolo(m_pPlayer->GetCID()))
 	{
@@ -2029,6 +2041,7 @@ void CCharacter::DDRaceTick()
 
 void CCharacter::DDRacePostCoreTick()
 {
+	isFreezed = false;
 	m_Time = (float)(Server()->Tick() - m_StartTime) / ((float)Server()->TickSpeed());
 
 	if (m_pPlayer->m_DefEmoteReset >= 0 && m_pPlayer->m_DefEmoteReset <= Server()->Tick())
@@ -2067,11 +2080,18 @@ void CCharacter::DDRacePostCoreTick()
 		HandleTiles(CurrentIndex);
 	}
 
+	if (!(isFreezed)) {
+
+		m_FirstFreezeTick = 0;
+
+	}
+
 	HandleBroadcast();
 }
 
 bool CCharacter::Freeze(int Seconds)
 {
+	isFreezed = true;
 	if ((Seconds <= 0 || m_Super || m_FreezeTime == -1 || m_FreezeTime > Seconds * Server()->TickSpeed()) && Seconds != -1)
 		 return false;
 	if (m_FreezeTick < Server()->Tick() - Server()->TickSpeed() || Seconds == -1)
@@ -2082,6 +2102,11 @@ bool CCharacter::Freeze(int Seconds)
 				 m_aWeapons[i].m_Ammo = 0;
 			 }
 		m_Armor = 0;
+
+		if (m_FreezeTick == 0 || m_FirstFreezeTick == 0) {
+			m_FirstFreezeTick = Server()->Tick();
+		}
+
 		m_FreezeTime = Seconds == -1 ? Seconds : Seconds * Server()->TickSpeed();
 		m_FreezeTick = Server()->Tick();
 		return true;
@@ -2108,6 +2133,7 @@ bool CCharacter::UnFreeze()
 			m_Core.m_ActiveWeapon = WEAPON_GUN;
 		m_FreezeTime = 0;
 		m_FreezeTick = 0;
+		m_FirstFreezeTick = 0;
 		if (m_Core.m_ActiveWeapon==WEAPON_HAMMER) m_ReloadTimer = 0;
 		return true;
 	}
@@ -2237,5 +2263,40 @@ void CCharacter::Rescue()
 			m_Core.m_HookPos = m_Core.m_Pos;
 			UnFreeze();
 		}
+	}
+}
+
+void CCharacter::HandleThreeSecondRule() // Since passive mode is meant for anti wayblocking only, we will remove passive mode after the unfreeze
+{
+	if (m_LastPassiveOut + 3 * Server()->TickSpeed() > Server()->Tick())
+		return;
+
+	if (m_ThreeSecondRule)
+	{
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode disabled!");
+		m_PassiveMode = false;
+		m_ThreeSecondRule = false;
+	}
+}
+
+void CCharacter::HandlePassiveMode()
+{
+	if (!GetPlayer()->GetCharacter())
+		return;
+
+	// Dealing with Passive mode : Bodyblocking wayblock
+	if (m_PassiveMode)
+	{
+		m_Core.m_Collision = false;
+		m_NeededFaketuning |= FAKETUNE_NOCOLL;
+		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+		m_Core.m_PassiveMode = true;
+	}
+	else if (m_Core.m_PassiveMode)
+	{
+		m_Core.m_Collision = true;
+		m_NeededFaketuning &= ~FAKETUNE_NOCOLL;
+		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+		m_Core.m_PassiveMode = false;
 	}
 }

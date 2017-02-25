@@ -6,6 +6,7 @@
 // this include should perhaps be removed
 #include "entities/character.h"
 #include "gamecontext.h"
+#include "accounting/account.h"
 
 // player object
 class CPlayer
@@ -113,6 +114,19 @@ public:
 		int m_Min;
 		int m_Max;
 	} m_Latency;
+
+	// City
+	struct
+	{
+		// Main
+		char m_Username[32];
+		char m_Password[32];
+		char m_RconPassword[32];
+		int m_UserID;
+
+	} m_AccData;
+
+	class CAccount *m_pAccount;//(CPlayer *m_Player, CGameContext *gameserver);
 
 private:
 	CCharacter *m_pCharacter;

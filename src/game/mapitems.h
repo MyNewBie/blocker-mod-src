@@ -155,6 +155,11 @@ enum
 	TILE_NPH_START,
 	TILE_ENTITIES_OFF_1 = 190,
 	TILE_ENTITIES_OFF_2,
+
+	// Googles Tiles
+	TILE_PASSIVE_IN = 160,
+	TILE_PASSIVE_OUT,
+
 	//End of higher tiles
 	//Layers
 	LAYER_GAME=0,

@@ -678,7 +678,11 @@ bool CCollision::TileExists(int Index)
 	if(Index < 0)
 		return false;
 
+	if (m_pTiles[Index].m_Index >= TILE_PASSIVE_IN && m_pTiles[Index].m_Index <= TILE_PASSIVE_OUT) // Add more tiles
+		return true;
 	if(m_pTiles[Index].m_Index >= TILE_FREEZE && m_pTiles[Index].m_Index <= TILE_NPH_START)
+		return true;
+	if (m_pFront && m_pFront[Index].m_Index >= TILE_PASSIVE_IN && m_pFront[Index].m_Index <= TILE_PASSIVE_OUT) // Add more tiles
 		return true;
 	if(m_pFront && m_pFront[Index].m_Index >= TILE_FREEZE && m_pFront[Index].m_Index  <= TILE_NPH_START)
 		return true;

@@ -49,6 +49,11 @@ void CPlayer::Reset()
 	m_TeamChangeTick = Server()->Tick();
 	m_WeakHookSpawn = false;
 
+	// city - label everything vali so its easier to find pls
+	m_pAccount = new CAccount(this, m_pGameServer);
+	if (m_AccData.m_UserID)
+		m_pAccount->Apply();
+
 	int* idMap = Server()->GetIdMap(m_ClientID);
 	for (int i = 1;i < VANILLA_MAX_CLIENTS;i++)
 	{
@@ -381,6 +386,10 @@ void CPlayer::FakeSnap()
 
 void CPlayer::OnDisconnect(const char *pReason)
 {
+	// City
+	if (m_AccData.m_UserID)
+		m_pAccount->Reset();
+
 	KillCharacter();
 
 	if(Server()->ClientIngame(m_ClientID))

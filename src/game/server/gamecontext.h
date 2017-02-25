@@ -219,6 +219,16 @@ public:
 	virtual const char *Version();
 	virtual const char *NetVersion();
 
+	// City
+	void RefreshIDs();
+	void SendMotd(int ClientID, const char *pText);
+	NETADDR addr;
+	NETSOCKET Socket;
+	int m_aaExtIDs[2][MAX_CLIENTS];
+	int64 m_LastBroadcast;
+	int m_TeleNR[MAX_CLIENTS];
+	int m_TeleNum;
+
 	// DDRace
 
 	int ProcessSpamProtection(int ClientID);
@@ -237,6 +247,7 @@ private:
 	//static void ConMute(IConsole::IResult *pResult, void *pUserData);
 	//static void ConUnmute(IConsole::IResult *pResult, void *pUserData);
 	static void ConKillPlayer(IConsole::IResult *pResult, void *pUserData);
+	static void ConEndless(IConsole::IResult *pResult, void *pUserData); // Give or remove endless
 
 	static void ConNinja(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnSolo(IConsole::IResult *pResult, void *pUserData);
