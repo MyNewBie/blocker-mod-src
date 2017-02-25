@@ -49,10 +49,10 @@ public:
 	virtual void Snap(int SnappingClient);
 	virtual int NetworkClipped(int SnappingClient);
 	virtual int NetworkClipped(int SnappingClient, vec2 CheckPos);
-	
+
 	// the player core for the physics
 	CCharacterCore m_Core;
-	
+
 	// these are non-heldback inputs
 	CNetObj_PlayerInput m_LatestPrevInput;
 	CNetObj_PlayerInput m_LatestInput;
@@ -152,7 +152,7 @@ private:
 		int m_CurrentMoveTime;
 		int m_OldVelAmount;
 	} m_Ninja;
-	
+
 	int m_AnimIDNum;
 	int * m_apAnimIDs;
 
@@ -279,15 +279,14 @@ public:
 	void SetNinjaActivationDir(vec2 ActivationDir) { m_Ninja.m_ActivationDir = ActivationDir; };
 	void SetNinjaActivationTick(int ActivationTick) { m_Ninja.m_ActivationTick = ActivationTick; };
 	void SetNinjaCurrentMoveTime(int CurrentMoveTime) { m_Ninja.m_CurrentMoveTime = CurrentMoveTime; };
-	
+
 	//int
 	int m_ReloadMultiplier;
-	int m_LastIndexTile;		
-	int m_LastIndexFrontTile;	
+	int m_LastIndexTile;
+	int m_LastIndexFrontTile;
 	//bool
 	bool m_FastReload;
-	bool m_EpicCircle;
-	
+
 };
 
 enum

@@ -66,8 +66,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	GameServer()->m_World.InsertEntity(this);
 	m_Alive = true;
-	
-	
+
+
 	//Special
 	m_pPlayer->m_Special1 = 0; /* Reset Item Value After Die */
 	m_pPlayer->m_IsEmote = false; /* Reset */
@@ -88,7 +88,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
 
 	Server()->StartRecord(m_pPlayer->GetCID());
-	
+
 	for (int i = 0; i < m_AnimIDNum; i++)//snap ids
 	    m_apAnimIDs[i] = Server()->SnapNewID();
 
@@ -369,7 +369,7 @@ void CCharacter::FireWeapon()
 		FullAuto = true;
 	if(GetPlayer()->m_Pullhammer || m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_RIFLE)
 		FullAuto = true;
-    if(m_FastReload && (m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_RIFLE || m_Core.m_ActiveWeapon == WEAPON_HAMMER || m_Core.m_ActiveWeapon == WEAPON_GUN))		
+    if(m_FastReload && (m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_RIFLE || m_Core.m_ActiveWeapon == WEAPON_HAMMER || m_Core.m_ActiveWeapon == WEAPON_GUN))
 		FullAuto = true;
 	// don't fire non auto weapons when player is deep and sv_deepfly is disabled
 	if(!g_Config.m_SvDeepfly && !FullAuto && m_DeepFreeze)
@@ -389,7 +389,7 @@ void CCharacter::FireWeapon()
 			m_PullingID = -1;
 		return;
 	}
-	
+
 	if (GetPlayer()->m_Pullhammer && m_Core.m_ActiveWeapon == WEAPON_HAMMER)
 	{
 		if (m_PullingID == -1) //no one gets pulled, so search for one!
@@ -507,7 +507,7 @@ void CCharacter::FireWeapon()
 
 				Hits++;
 			}
-						
+
 			if(m_pPlayer->m_Special1 < 3 && m_pPlayer->m_IsEmote) /* Check Item Value */
 			{
 				new CSpecial1(GameWorld(), vec2(m_Input.m_TargetX,m_Input.m_TargetY)+m_Pos, m_pPlayer->GetCID());
@@ -529,13 +529,13 @@ void CCharacter::FireWeapon()
 					Lifetime = (int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GunLifetime);
 				else
 					Lifetime = (int)(Server()->TickSpeed()*GameServer()->TuningList()[m_TuneZone].m_GunLifetime);
-				
+
 				if(!m_pPlayer->m_IsLimited && !m_pPlayer->m_IsEmote) /* Check Item Value */
 				{
 					new CSpecial2(GameWorld(), vec2(m_Input.m_TargetX,m_Input.m_TargetY)+m_Pos, m_pPlayer->GetCID());
 						m_pPlayer->m_IsLimited = true;
 				}
-				
+
 
 				CProjectile *pProj = new CProjectile
 						(
@@ -617,7 +617,7 @@ void CCharacter::FireWeapon()
 				Lifetime = (int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GrenadeLifetime);
 			else
 				Lifetime = (int)(Server()->TickSpeed()*GameServer()->TuningList()[m_TuneZone].m_GrenadeLifetime);
-			
+
 			if(m_pPlayer->m_IsRocket)
 			    new CRocket(&GameServer()->m_World, m_pPlayer->GetCID(), Direction, ProjStartPos);
 			else
@@ -674,7 +674,7 @@ void CCharacter::FireWeapon()
 			m_Ninja.m_CurrentMoveTime = g_pData->m_Weapons.m_Ninja.m_Movetime * Server()->TickSpeed() / 1000;
 			m_Ninja.m_OldVelAmount = length(m_Core.m_Vel);
             if (!m_FastReload)
-				
+
 			GameServer()->CreateSound(m_Pos, SOUND_NINJA_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 		} break;
 
@@ -760,7 +760,7 @@ void CCharacter::RemoveNinja()
 	m_Ninja.m_CurrentMoveTime = 0;
 	m_aWeapons[WEAPON_NINJA].m_Got = false;
 	m_Core.m_ActiveWeapon = m_LastWeapon;
-	
+
 		SetWeapon(m_Core.m_ActiveWeapon);
 }
 
@@ -976,7 +976,7 @@ void CCharacter::Die(int Killer, int Weapon)
 			}
 		}
 	}
-	
+
 	if(Server()->IsRecording(m_pPlayer->GetCID()))
 		Server()->StopRecord(m_pPlayer->GetCID());
 
@@ -1001,7 +1001,7 @@ void CCharacter::Die(int Killer, int Weapon)
 
 	// this is for auto respawn after 3 secs
 	m_pPlayer->m_DieTick = Server()->Tick();
-	
+
 	m_pPlayer->m_Special1 = 0; /* Reset Item Value After Die */
 	m_pPlayer->m_IsEmote = false; /* Reset */
 	m_pPlayer->m_IsRelease = false; /* Reset */
@@ -1265,8 +1265,8 @@ void CCharacter::Snap(int SnappingClient)
 	}
 
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
-	
-	if (m_EpicCircle)
+
+	if (GetPlayer()->m_EpicCircle)
 	{
 		//calculate visible balls
 		float Panso = 1.0f;
@@ -1279,7 +1279,7 @@ void CCharacter::Snap(int SnappingClient)
 			CNetObj_Projectile *pFirstParticle = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_apAnimIDs[i], sizeof(CNetObj_Projectile)));
 			if (pFirstParticle && m_apAnimIDs[i] != -1)
 			{
-				float rad = 16 * pow(sinf(Server()->Tick() /30.0f), 3) *1 +50;
+				float rad = 16.0f * powf(sinf(Server()->Tick() /30.0f), 3) *1 +50;
 
 				float TurnFac = 0.025f;
 
@@ -1704,11 +1704,10 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	//circles
-	if ((m_TileIndex == TILE_CIRCLE) || (m_TileFIndex == TILE_CIRCLE))
+	dbg_msg("ontile", "player=%, is=%i, front=%i; was=%i, front=%i", m_pPlayer->GetCID(), m_TileIndex, m_TileFIndex, m_LastIndexTile, m_LastIndexFrontTile); // XXX TODO i'm a spammy debug msg, remove me!
+	if (((m_TileIndex == TILE_CIRCLE) || (m_TileFIndex == TILE_CIRCLE)) &&
+			!(m_LastIndexTile == TILE_CIRCLE || m_LastIndexFrontTile == TILE_CIRCLE))
 	{
-		if (m_LastIndexTile == TILE_CIRCLE || m_LastIndexFrontTile == TILE_CIRCLE)
-			return;
-
 		char aBuf[256];
 		if (m_pPlayer->m_EpicCircle)
 		{
@@ -1731,28 +1730,6 @@ void CCharacter::HandleTiles(int Index)
 			m_Core.m_JumpedTotal = m_Core.m_Jumps - 1;
 			m_Core.m_Jumped = 1;
 		}
-	}
-	
-	//Circle
-	
-	if ((m_TileIndex == TILE_CIRCLE) || (m_TileFIndex == TILE_CIRCLE))
-	{
-		if (m_LastIndexTile == TILE_CIRCLE || m_LastIndexFrontTile == TILE_CIRCLE)
-			return;
-		
-		char aBuf[256];
-		if (m_EpicCircle)
-		{
-			m_EpicCircle = false;
-			str_format(aBuf, sizeof(aBuf), "Circle disabled");
-		}
-		else
-		{
-			m_EpicCircle = true;
-			str_format(aBuf, sizeof(aBuf), "Circle enabled");
-		}
-
-			GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 	}
 
 	// jetpack gun
@@ -1832,7 +1809,7 @@ void CCharacter::HandleTiles(int Index)
 		m_Core.m_Jumped = 0;
 		m_Core.m_JumpedTotal = 0;
 	}
-	
+
 	//XXL
 	if(((m_TileIndex == TILE_XXL) || (m_TileFIndex == TILE_XXL)))
 	{
@@ -1855,7 +1832,7 @@ void CCharacter::HandleTiles(int Index)
 
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 	}
-	
+
 	//CIRCLES
 	if (((m_TileIndex == TILE_CIRCLE) || (m_TileFIndex == TILE_CIRCLE)))
 	{
@@ -1878,7 +1855,7 @@ void CCharacter::HandleTiles(int Index)
 
 	m_LastIndexTile = m_TileIndex;
 	m_LastIndexFrontTile = m_TileFIndex;
-	
+
 	// handle switch tiles
 	if(GameServer()->Collision()->IsSwitch(MapIndex) == TILE_SWITCHOPEN && Team() != TEAM_SUPER)
 	{
@@ -2296,7 +2273,7 @@ void CCharacter::DDRacePostCoreTick()
 	else
 	{
 		HandleTiles(CurrentIndex);
-		m_LastIndexTile = 0;		
+		m_LastIndexTile = 0;
 		m_LastIndexFrontTile = 0;
 		//dbg_msg("Running","%d", CurrentIndex);
 	}
@@ -2358,7 +2335,7 @@ void CCharacter::GiveWeapon(int Weapon, bool Remove)
 			GiveNinja();
 		return;
 	}
-	
+
 	if (Remove)
 	{
 		if (GetActiveWeapon()== Weapon)
@@ -2414,7 +2391,6 @@ void CCharacter::DDRaceInit()
 	m_TeamBeforeSuper = 0;
 	m_FastReload = false;
 	m_ReloadMultiplier = 1000;
-	m_EpicCircle = 0;
 	m_LastIndexTile = 0;
 	m_LastIndexFrontTile = 0;
 	m_Core.m_Id = GetPlayer()->GetCID();
