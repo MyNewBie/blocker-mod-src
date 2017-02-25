@@ -1122,6 +1122,18 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					return;
 				}
+				else if (!strncmp(pMsg->m_pMessage, "/register", 9))
+				{
+					char Username[512];
+					char Password[512];
+					if (sscanf(pMsg->m_pMessage, "/register %s %s", Username, Password) != 2)
+					{
+						SendChatTarget(pPlayer->GetCID(), "Please, use '/register <username> <password>'");
+						return;
+					}
+					pPlayer->m_pAccount->Register(Username, Password);
+					return;
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
 				{
 					char pWhisperMsg[256];
