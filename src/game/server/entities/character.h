@@ -174,6 +174,7 @@ private:
 	void HandleTuneLayer();
 	void HandleThreeSecondRule();
 	void HandlePassiveMode();
+	void HandleBots();
 	void SendZoneMsgs();
 
 	bool m_SetSavePos;
@@ -203,6 +204,8 @@ public:
 	bool m_FreezeHammer;
 	bool m_PassiveMode;
 	bool m_ThreeSecondRule;
+	bool m_Botter;
+	bool m_HammerUpBot;
 	enum
 	{
 		HIT_ALL=0,
@@ -282,6 +285,8 @@ public:
 	void SetNinjaActivationDir(vec2 ActivationDir) { m_Ninja.m_ActivationDir = ActivationDir; };
 	void SetNinjaActivationTick(int ActivationTick) { m_Ninja.m_ActivationTick = ActivationTick; };
 	void SetNinjaCurrentMoveTime(int CurrentMoveTime) { m_Ninja.m_CurrentMoveTime = CurrentMoveTime; };
+
+	vec2 MousePos() { return vec2(m_LatestInput.m_TargetX + m_Pos.x, m_LatestInput.m_TargetY + m_Pos.y); };
 };
 
 enum

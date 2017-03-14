@@ -1134,6 +1134,19 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_pAccount->Register(Username, Password);
 					return;
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "bot", 3) == 0)
+				{
+					if (!pPlayer->GetCharacter()->m_Botter)
+					{
+						pPlayer->GetCharacter()->m_Botter = true;
+						SendChatTarget(pPlayer->GetCID(), "Bot enabled!");
+					}
+					else
+					{
+						pPlayer->GetCharacter()->m_Botter = false;
+						SendChatTarget(pPlayer->GetCID(), "Bot disabled!");
+					}
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
 				{
 					char pWhisperMsg[256];

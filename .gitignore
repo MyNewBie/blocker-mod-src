@@ -58,3 +58,7 @@ bam.exe
 *.VC.opendb
 
 DDNet*
+*.acc
+autoexec_server.cfg
+*.cfg
+*.cfg

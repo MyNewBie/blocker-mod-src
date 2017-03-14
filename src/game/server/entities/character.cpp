@@ -353,7 +353,7 @@ void CCharacter::FireWeapon()
 	if(FullAuto && (m_LatestInput.m_Fire&1) && m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
 		WillFire = true;
 
-	if(!WillFire)
+	if(!WillFire && !m_HammerUpBot)
 		return;
 
 	// check for ammo
@@ -730,7 +730,10 @@ void CCharacter::Tick()
 	if ((Server()->Tick() % 150) == 0 && m_TilePauser) // Ugly asf TODO: FIX
 		m_TilePauser = false;
 
-	HandlePassiveMode();
+	if(g_Config.m_SvWbProt)
+		HandlePassiveMode();
+
+	HandleBots();
 	HandleThreeSecondRule();
 	DDRaceTick();
 
@@ -1591,18 +1594,21 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// passive
-	if ((m_TileIndex == TILE_PASSIVE_IN) || (m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
+	if (g_Config.m_SvWbProt)
 	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode enabled!");
-		m_ThreeSecondRule = false;
-		m_PassiveMode = true;
-	}
-	else if ((m_TileIndex == TILE_PASSIVE_OUT) || (m_TileFIndex == TILE_PASSIVE_OUT) && m_PassiveMode && !m_TilePauser)
-	{
-		m_LastPassiveOut = Server()->Tick();
-		m_ThreeSecondRule = true;
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode disabling in three seconds!");
-		m_TilePauser = true;
+		if ((m_TileIndex == TILE_PASSIVE_IN) || (m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
+		{
+			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode enabled!");
+			m_ThreeSecondRule = false;
+			m_PassiveMode = true;
+		}
+		else if ((m_TileIndex == TILE_PASSIVE_OUT) || (m_TileFIndex == TILE_PASSIVE_OUT) && m_PassiveMode && !m_TilePauser)
+		{
+			m_LastPassiveOut = Server()->Tick();
+			m_ThreeSecondRule = true;
+			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode disabling in three seconds!");
+			m_TilePauser = true;
+		}
 	}
 
 	// solo part
@@ -2299,4 +2305,43 @@ void CCharacter::HandlePassiveMode()
 		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
 		m_Core.m_PassiveMode = false;
 	}
+	// ok so Make sure Non Passive players cant wayblock passive players
+	{
+		int HookedPer = m_Core.m_HookedPlayer;
+		if (HookedPer != -1)
+		{
+			bool IsPassive = GameServer()->GetPlayerChar(HookedPer)->m_PassiveMode;
+			if (IsPassive)
+			{
+				Freeze(3);
+				char Reason[32];
+				str_format(Reason, 32, "Wayblocking isn't permitted at the time being");
+				GameServer()->SendChatTarget(GetPlayer()->GetCID(), Reason);
+			}
+		}
+	}
+}
+
+void CCharacter::HandleBots()
+{
+	if (!m_Botter || m_Core.m_ActiveWeapon != WEAPON_HAMMER || GetPlayer()->m_PlayerFlags&PLAYERFLAG_CHATTING) // Until we decide to make more bots ill Clean up and make some vars
+		return;
+
+	CCharacter * pTarget = GameWorld()->ClosestCharacter(GetPlayer()->GetCharacter()->m_Pos, 64.f, GetPlayer()->GetCharacter());
+	if (pTarget)
+	{
+		if (distance(GetPlayer()->GetCharacter()->m_Pos, pTarget->m_Pos) < 65)
+		{
+			if (pTarget->m_Pos.y < GetPlayer()->GetCharacter()->m_Pos.y)
+			{
+				m_LatestInput.m_TargetX = pTarget->m_Pos.x - GetPlayer()->GetCharacter()->m_Pos.x;
+				m_LatestInput.m_TargetY = pTarget->m_Pos.y - GetPlayer()->GetCharacter()->m_Pos.y;
+				m_HammerUpBot = true;
+			}
+		}
+		else if (m_HammerUpBot)
+			m_HammerUpBot = false;
+	}
+	else if (m_HammerUpBot)
+		m_HammerUpBot = false;
 }
