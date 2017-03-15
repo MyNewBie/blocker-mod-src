@@ -151,6 +151,7 @@ private:
 	} m_Ninja;
 
 	bool m_TilePauser; // This is ugly asf TODO: Fix
+	bool m_AntiSpam;
 
 	// the player core for the physics
 	CCharacterCore m_Core;

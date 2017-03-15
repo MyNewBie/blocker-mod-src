@@ -202,6 +202,7 @@ public:
 	bool m_NewHook;
 
 	bool m_PassiveMode;
+	bool m_RevokeHook;
 
 	int m_Jumped;
 	int m_JumpedTotal;

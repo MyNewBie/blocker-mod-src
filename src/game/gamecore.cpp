@@ -202,7 +202,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 			m_Jumped &= ~1;
 
 		// handle hook
-		if(m_Input.m_Hook && !m_PassiveMode)
+		if(m_Input.m_Hook && !m_PassiveMode && !m_RevokeHook)
 		{
 			if(m_HookState == HOOK_IDLE)
 			{
