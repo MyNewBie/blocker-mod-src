@@ -2347,24 +2347,60 @@ void CCharacter::HandlePassiveMode()
 
 void CCharacter::HandleBots()
 {
-	if (!m_Botter || m_Core.m_ActiveWeapon != WEAPON_HAMMER || GetPlayer()->m_PlayerFlags&PLAYERFLAG_CHATTING) // Until we decide to make more bots ill Clean up and make some vars
+	if (GetPlayer()->m_PlayerFlags&PLAYERFLAG_CHATTING) // Until we decide to make more bots ill Clean up and make some vars
 		return;
 
-	CCharacter * pTarget = GameWorld()->ClosestCharacter(GetPlayer()->GetCharacter()->m_Pos, 64.f, GetPlayer()->GetCharacter());
-	if (pTarget)
+	if (m_SmartHammer)
 	{
-		if (distance(GetPlayer()->GetCharacter()->m_Pos, pTarget->m_Pos) < 65)
+		CCharacter * pTarget = GameWorld()->ClosestCharacter(GetPlayer()->GetCharacter()->m_Pos, 64.f, GetPlayer()->GetCharacter());
+		if (pTarget)
 		{
-			if (pTarget->m_Pos.y < GetPlayer()->GetCharacter()->m_Pos.y)
+			if (distance(GetPlayer()->GetCharacter()->m_Pos, pTarget->m_Pos) < 65)
 			{
-				m_LatestInput.m_TargetX = pTarget->m_Pos.x - GetPlayer()->GetCharacter()->m_Pos.x;
-				m_LatestInput.m_TargetY = pTarget->m_Pos.y - GetPlayer()->GetCharacter()->m_Pos.y;
-				m_HammerUpBot = true;
+				if (pTarget->m_Pos.y < GetPlayer()->GetCharacter()->m_Pos.y)
+				{
+					m_LatestInput.m_TargetX = pTarget->m_Pos.x - GetPlayer()->GetCharacter()->m_Pos.x;
+					m_LatestInput.m_TargetY = pTarget->m_Pos.y - GetPlayer()->GetCharacter()->m_Pos.y;
+					m_HammerUpBot = true;
+				}
 			}
+			else if (m_HammerUpBot)
+				m_HammerUpBot = false;
 		}
 		else if (m_HammerUpBot)
 			m_HammerUpBot = false;
 	}
-	else if (m_HammerUpBot)
-		m_HammerUpBot = false;
+	if (m_AutoHook)
+	{
+		CCharacter *pMain = GetPlayer()->GetCharacter();
+		if (pMain->GetPlayer()->m_PlayerFlags&PLAYERFLAG_AIM)
+		{
+			// Releases go first
+			if (pMain->Core()->m_HookState == HOOK_RETRACTED)
+				pMain->Core()->m_RevokeHook = true;
+			else if (pMain->Core()->m_HookState == HOOK_RETRACT_END)
+				pMain->Core()->m_RevokeHook = true;
+			else if (pMain->Core()->m_HookState == HOOK_GRABBED && pMain->Core()->m_HookedPlayer == -1)
+				pMain->Core()->m_RevokeHook = true;
+			else if (pMain->Core()->m_RevokeHook)
+				pMain->Core()->m_RevokeHook = false;
+
+			vec2 Shit;
+			const int Angle = round(atan2(pMain->m_LatestInput.m_TargetX, pMain->m_LatestInput.m_TargetY) * 256); // compress
+			const vec2 Direction = vec2(sin(Angle / 256.f), cos(Angle / 256.f)); // decompress
+			vec2 initPos = pMain->m_Pos + Direction * 28.0f * 1.5f;
+			vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength - 18.0f);
+			CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, .0f, Shit, pMain);
+
+			if (pTarget)
+			{
+				char Hooked[32];
+				str_format(Hooked, 32, "Hooked!");
+				GameServer()->SendBroadcast(Hooked, -1);
+				pMain->m_LatestInput.m_Hook = 1;
+				pMain->Core()->m_Hook = 1;
+				pMain->m_Input.m_Hook = 1;
+			}
+		}
+	}
 }

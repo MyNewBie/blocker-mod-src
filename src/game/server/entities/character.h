@@ -205,8 +205,10 @@ public:
 	bool m_FreezeHammer;
 	bool m_PassiveMode;
 	bool m_ThreeSecondRule;
-	bool m_Botter;
 	bool m_HammerUpBot;
+
+	bool m_SmartHammer;
+	bool m_AutoHook;
 	enum
 	{
 		HIT_ALL=0,

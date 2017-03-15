@@ -1135,17 +1135,44 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_pAccount->Register(Username, Password);
 					return;
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "bot", 3) == 0)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "smarthammer", 11) == 0)
 				{
-					if (!pPlayer->GetCharacter()->m_Botter)
+					if (!pPlayer->m_Authed)
 					{
-						pPlayer->GetCharacter()->m_Botter = true;
-						SendChatTarget(pPlayer->GetCID(), "Bot enabled!");
+						char Msg[100];
+						str_format(Msg, 100, "No such command: smarthammer.");
+						SendChatTarget(pPlayer->GetCID(), Msg);
+						return;
+					}
+					else if (!pPlayer->GetCharacter()->m_SmartHammer)
+					{
+						pPlayer->GetCharacter()->m_SmartHammer = true;
+						SendChatTarget(pPlayer->GetCID(), "Smarthammer enabled!");
 					}
 					else
 					{
-						pPlayer->GetCharacter()->m_Botter = false;
-						SendChatTarget(pPlayer->GetCID(), "Bot disabled!");
+						pPlayer->GetCharacter()->m_SmartHammer = false;
+						SendChatTarget(pPlayer->GetCID(), "Smarthammer disabled!");
+					}
+				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "autohook", 8) == 0)
+				{
+					if (!pPlayer->m_Authed)
+					{
+						char Msg[100];
+						str_format(Msg, 100, "No such command: autohook.");
+						SendChatTarget(pPlayer->GetCID(), Msg);
+						return;
+					}
+					else if (!pPlayer->GetCharacter()->m_AutoHook)
+					{
+						pPlayer->GetCharacter()->m_AutoHook = true;
+						SendChatTarget(pPlayer->GetCID(), "Autohook enabled!");
+					}
+					else
+					{
+						pPlayer->GetCharacter()->m_AutoHook = false;
+						SendChatTarget(pPlayer->GetCID(), "Autohook disabled!");
 					}
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
