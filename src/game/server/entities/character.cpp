@@ -391,7 +391,8 @@ void CCharacter::FireWeapon()
 			for (int i = 0; i < Num; ++i)
 			{
 				CCharacter *pTarget = apEnts[i];
-
+				if (pTarget->m_PassiveMode) // So dey Dont BLOOOKEE
+					return;
 				//if ((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
 				if((pTarget == this || (pTarget->IsAlive() && !CanCollide(pTarget->GetPlayer()->GetCID()))))
 					continue;
@@ -428,6 +429,7 @@ void CCharacter::FireWeapon()
 				Temp -= pTarget->m_Core.m_Vel;
 				pTarget->TakeDamage((vec2(0.f, -1.0f) + Temp) * Strength, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
 					m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);
+				if(!pTarget->m_PassiveMode) // cannot be unfreezed, If so easy bypass method brought to my attention by Delith
 				pTarget->UnFreeze();
 
 				if(m_FreezeHammer)
@@ -525,6 +527,8 @@ void CCharacter::FireWeapon()
 
 		case WEAPON_GRENADE:
 		{
+			if (m_PassiveMode) 
+				return; 
 			int Lifetime;
 			if (!m_TuneZone)
 				Lifetime = (int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GrenadeLifetime);
@@ -573,6 +577,8 @@ void CCharacter::FireWeapon()
 
 		case WEAPON_NINJA:
 		{
+			if (m_PassiveMode) // cannot be unfreezed, If so easy bypass method brought to my attention by Delith
+				return;
 			// reset Hit objects
 			m_NumObjectsHit = 0;
 
@@ -729,6 +735,8 @@ void CCharacter::Tick()
 	// handle info spam
 	if ((Server()->Tick() % 150) == 0 && m_TilePauser) // Ugly asf TODO: FIX
 		m_TilePauser = false;
+	if ((Server()->Tick() % 150) == 0 && m_AntiSpam) // Ugly asf TODO: FIX
+		m_AntiSpam = false;
 
 	if(g_Config.m_SvWbProt)
 		HandlePassiveMode();
@@ -2306,19 +2314,34 @@ void CCharacter::HandlePassiveMode()
 		m_Core.m_PassiveMode = false;
 	}
 	// ok so Make sure Non Passive players cant wayblock passive players
+	if(!GetPlayer()->GetCharacter()->m_PassiveMode)
 	{
-		int HookedPer = m_Core.m_HookedPlayer;
-		if (HookedPer != -1)
+		CCharacter *pMain = GetPlayer()->GetCharacter();
+		vec2 Shit;
+		const int Angle = round(atan2(pMain->m_LatestInput.m_TargetX, pMain->m_LatestInput.m_TargetY) * 256); // compress
+		const vec2 Direction = vec2(sin(Angle / 256.f), cos(Angle / 256.f)); // decompress
+		vec2 initPos = pMain->m_Pos + Direction * 28.0f * 1.5f;
+		vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength - 18.0f);
+		CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, .0f, Shit, pMain);
+		if (pTarget && pMain->Core()->m_HookState != HOOK_GRABBED && pMain->m_LatestInput.m_Hook)
 		{
-			bool IsPassive = GameServer()->GetPlayerChar(HookedPer)->m_PassiveMode;
+			bool IsPassive = pTarget->m_PassiveMode;
 			if (IsPassive)
 			{
-				Freeze(3);
-				char Reason[32];
-				str_format(Reason, 32, "Wayblocking isn't permitted at the time being");
-				GameServer()->SendChatTarget(GetPlayer()->GetCID(), Reason);
+				char Reason[64];
+				str_format(Reason, 64, "Wayblocking isn't permitted at the time being");
+				if (!m_AntiSpam)
+				{
+					GameServer()->SendChatTarget(GetPlayer()->GetCID(), Reason);
+					m_AntiSpam = true;
+				}
+				pMain->Core()->m_RevokeHook = true;
 			}
+			else if (pMain->Core()->m_RevokeHook)
+				pMain->Core()->m_RevokeHook = false;
 		}
+		else if(pMain->Core()->m_RevokeHook)
+			pMain->Core()->m_RevokeHook = false;
 	}
 }
 

@@ -72,6 +72,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	}
 	else if (m_Type == WEAPON_RIFLE)
 	{
+		if(!pHit->m_PassiveMode) // cannot be unfreezed, If so easy bypass method brought to my attention by Delith
 		pHit->UnFreeze();
 	}
 	return true;
