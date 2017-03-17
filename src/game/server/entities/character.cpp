@@ -2360,7 +2360,10 @@ void CCharacter::HandleBots()
 	if (m_SmartHammer && GetPlayer()->GetCharacter()->Core()->m_ActiveWeapon == WEAPON_HAMMER)
 	{
 		CCharacter * pTarget = GameWorld()->ClosestCharacter(GetPlayer()->GetCharacter()->m_Pos, 64.f, GetPlayer()->GetCharacter());
-		if (pTarget && !pTarget->isFreezed)
+		bool isFreeze;
+		if (pTarget)
+			isFreeze = pTarget->m_FreezeTime > 0 ? true : false;
+		if (pTarget && !isFreeze)
 		{
 			if (distance(GetPlayer()->GetCharacter()->m_Pos, pTarget->m_Pos) < 65)
 			{
