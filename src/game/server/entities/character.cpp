@@ -2321,8 +2321,15 @@ void CCharacter::HandlePassiveMode()
 		const int Angle = round(atan2(pMain->m_LatestInput.m_TargetX, pMain->m_LatestInput.m_TargetY) * 256); // compress
 		const vec2 Direction = vec2(sin(Angle / 256.f), cos(Angle / 256.f)); // decompress
 		vec2 initPos = pMain->m_Pos + Direction * 28.0f * 1.5f;
-		vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength - 18.0f);
-		CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, .0f, Shit, pMain);
+		vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength + 20.0f);
+		CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, 24.0f, Shit, pMain);
+
+		if (pTarget && pTarget->m_FirstFreezeTick != 0)
+		{
+			if (pTarget->m_FirstFreezeTick + Server()->TickSpeed() * 3)
+				return;
+		}
+
 		if (pTarget && pMain->Core()->m_HookState != HOOK_GRABBED && pMain->m_LatestInput.m_Hook)
 		{
 			bool IsPassive = pTarget->m_PassiveMode;
@@ -2350,10 +2357,10 @@ void CCharacter::HandleBots()
 	if (GetPlayer()->m_PlayerFlags&PLAYERFLAG_CHATTING) // Until we decide to make more bots ill Clean up and make some vars
 		return;
 
-	if (m_SmartHammer)
+	if (m_SmartHammer && GetPlayer()->GetCharacter()->Core()->m_ActiveWeapon == WEAPON_HAMMER)
 	{
 		CCharacter * pTarget = GameWorld()->ClosestCharacter(GetPlayer()->GetCharacter()->m_Pos, 64.f, GetPlayer()->GetCharacter());
-		if (pTarget)
+		if (pTarget && !pTarget->isFreezed)
 		{
 			if (distance(GetPlayer()->GetCharacter()->m_Pos, pTarget->m_Pos) < 65)
 			{
