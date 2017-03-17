@@ -2414,3 +2414,12 @@ void CCharacter::HandleBots()
 		}
 	}
 }
+
+void CCharacter::QuestReset()
+{
+	m_QuestData.m_CompletedQuest = false;
+	m_QuestData.m_GrenadedTarget = false;
+	m_QuestData.m_HammeredTarget = false;
+	m_QuestData.m_RifledTarget = false;
+	m_QuestData.m_ShotgunedTarget = false;
+}

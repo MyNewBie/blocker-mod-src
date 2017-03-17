@@ -217,6 +217,20 @@ public:
 		DISABLE_HIT_GRENADE=4,
 		DISABLE_HIT_RIFLE=8
 	};
+
+	// Quest to accuire pages for DeathNote booklet :)
+	struct
+	{
+		// Main
+		bool m_CompletedQuest,
+			m_RifledTarget,
+			m_GrenadedTarget,
+			m_ShotgunedTarget,
+			m_HammeredTarget;
+	} m_QuestData;
+
+	void QuestReset();
+
 	int m_Hit;
 	int m_TuneZone;
 	int m_TuneZoneOld;
