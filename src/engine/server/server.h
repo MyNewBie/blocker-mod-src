@@ -154,6 +154,7 @@ public:
 		int m_Score;
 		int m_Authed;
 		int m_AuthTries;
+		int m_AccID;
 		int m_NextMapChunk;
 
 		const IConsole::CCommandInfo *m_pRconCmdToSend;
@@ -221,6 +222,7 @@ public:
 	virtual void SetClientClan(int ClientID, char const *pClan);
 	virtual void SetClientCountry(int ClientID, int Country);
 	virtual void SetClientScore(int ClientID, int Score);
+	virtual void SetClientAccID(int ClientID, int AccID);
 
 	void Kick(int ClientID, const char *pReason);
 
@@ -330,6 +332,8 @@ public:
 	char *GetAnnouncementLine(char const *FileName);
 	unsigned m_AnnouncementLastLine;
 	void RestrictRconOutput(int ClientID) { m_RconRestrict = ClientID; }
+
+	void SetRconLevel(int ClientID, int Level);
 
 	virtual int* GetIdMap(int ClientID);
 

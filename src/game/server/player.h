@@ -98,6 +98,7 @@ public:
 	bool m_StolenSkin;
 	int m_TeamChangeTick;
 	bool m_SentSemicolonTip;
+	bool m_IsMember;
 	struct
 	{
 		int m_TargetX;

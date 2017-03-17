@@ -37,6 +37,9 @@ public:
 	virtual void GetClientAddr(int ClientID, char *pAddrStr, int Size) = 0;
 	virtual void RestrictRconOutput(int ClientID) = 0;
 
+	virtual void SendRconLine(int ClientID, const char *pLine) = 0; //for Member tile TODO: Realy needed?
+	virtual void SetRconLevel(int ClientID, int Level) = 0;
+
 	virtual int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID) = 0;
 
 	template<class T>

@@ -119,7 +119,7 @@ void CAccount::Login(char *Username, char *Password)
 
 	Accfile = fopen(aBuf, "r");
 
-	fscanf(Accfile, "%s\n%s\n%s\n%d\n\n\n%d\n%d\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n%d\n%d",
+	fscanf(Accfile, "%s\n%s\n%s\n%d",
 		m_pPlayer->m_AccData.m_Username, // Done
 		m_pPlayer->m_AccData.m_Password, // Done
 		m_pPlayer->m_AccData.m_RconPassword,
@@ -138,18 +138,10 @@ void CAccount::Login(char *Username, char *Password)
 	if (m_pPlayer->GetTeam() == TEAM_SPECTATORS)
 		m_pPlayer->SetTeam(TEAM_RED);
 
+	m_pPlayer->m_IsMember = true;
+
 	dbg_msg("account", "Account login sucessful ('%s')", Username);
 	GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Login succesful");
-
-	// Fuck this OKAY?!?!?! Members dont need an auth lvl
-
-	//if (str_comp(m_pPlayer->m_AccData.m_RconPassword, g_Config.m_SvRconModPassword) == 0)
-		//GameServer()->Server()->SetRconlvl(m_pPlayer->GetCID(), 1);
-
-	//else if (str_comp(m_pPlayer->m_AccData.m_RconPassword, g_Config.m_SvRconPassword) == 0)
-		//GameServer()->Server()->SetRconlvl(m_pPlayer->GetCID(), 2);
-
-
 }
 
 void CAccount::Register(char *Username, char *Password)
@@ -213,7 +205,7 @@ void CAccount::Register(char *Username, char *Password)
 	FILE *Accfile;
 	Accfile = fopen(aBuf, "a+");
 
-	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n\n\n%d\n%d\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n%d\n%d",
+	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d",
 		Username,
 		Password,
 		"0",
@@ -247,7 +239,7 @@ void CAccount::Apply()
 	FILE *Accfile;
 	Accfile = fopen(aBuf, "a+");
 
-	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n\n\n%d\n%d\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n\n%d\n%d\n%d\n%d\n%d",
+	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d",
 		m_pPlayer->m_AccData.m_Username,
 		m_pPlayer->m_AccData.m_Password,
 		m_pPlayer->m_AccData.m_RconPassword,
@@ -363,5 +355,4 @@ int CAccount::NextID()
 
 	return 1;
 }
-
 

