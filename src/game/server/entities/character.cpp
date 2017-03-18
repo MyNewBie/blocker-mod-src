@@ -2658,7 +2658,7 @@ void CCharacter::HandleBots()
 			{
 				char Hooked[32];
 				str_format(Hooked, 32, "Hooked!");
-				GameServer()->SendBroadcast(Hooked, -1);
+				//GameServer()->SendBroadcast(Hooked, -1);
 				pMain->m_LatestInput.m_Hook = 1;
 				pMain->Core()->m_Hook = 1;
 				pMain->m_Input.m_Hook = 1;
