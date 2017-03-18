@@ -1163,20 +1163,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_pAccount->NewUsername(NewUsername);
 					return;
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "weapons", 7) == 0)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "weapons", 7) == 0 && pPlayer->m_AccData.m_Vip)
 				{
-					if (!pPlayer->m_Authed)
-					{
-						char Msg[100];
-						str_format(Msg, 100, "No such command: weapons.");
-						SendChatTarget(pPlayer->GetCID(), Msg);
-						return;
-					}
-					else
-					{
 						GetPlayerChar(ClientID)->GiveAllWeapons();
 						SendChatTarget(ClientID, "Successfully gotten weapons");
-					}
 				}
 				/*else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "AM444", 5) == 0)
 				{
@@ -1202,8 +1192,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), "Smarthammer disabled!");
 					}
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "autohook", 8) == 0)
-				/*{
+				/*else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "autohook", 8) == 0)
+				{
 					if (!pPlayer->m_Authed)
 					{
 						char Msg[100];
@@ -1221,7 +1211,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						pPlayer->m_Bots.m_AutoHook = false;
 						SendChatTarget(pPlayer->GetCID(), "Autohook disabled!");
 					}
-				}*/
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "PassiveMode", 11) == 0)
 				{
 					if (!pPlayer->m_Authed)
@@ -1241,7 +1231,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						pPlayer->GetCharacter()->m_PassiveMode = false;
 						SendChatTarget(pPlayer->GetCID(), "PassiveMode disabled!");
 					}
-				}
+				}*/
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "rainbow", 7) == 0 && pPlayer->m_AccData.m_Vip)
 				{
 					pPlayer->m_Rainbowepiletic ^= 1;
