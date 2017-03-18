@@ -153,6 +153,9 @@ private:
 	bool m_TilePauser; // This is ugly asf TODO: Fix
 	bool m_AntiSpam;
 
+	int m_AnimIDNum;
+	int * m_apAnimIDs;
+
 	// the player core for the physics
 	CCharacterCore m_Core;
 
@@ -200,15 +203,25 @@ public:
 	int m_FreezeTime;
 	int m_FreezeTick;
 	int m_FirstFreezeTick;
+	int m_PullingID;
+	int m_HammerStrenght;
 	bool m_DeepFreeze;
 	bool m_EndlessHook;
 	bool m_FreezeHammer;
 	bool m_PassiveMode;
 	bool m_ThreeSecondRule;
 	bool m_HammerUpBot;
+	bool m_Pullhammer;
+	bool m_XXL;
+	bool m_Bloody;
+	bool m_Steamy;
 
-	bool m_SmartHammer;
-	bool m_AutoHook;
+	struct 
+	{
+		bool m_SmartHammer;
+		bool m_AutoHook;
+	} m_Bots;
+	
 	enum
 	{
 		HIT_ALL=0,

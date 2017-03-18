@@ -156,9 +156,16 @@ enum
 	TILE_ENTITIES_OFF_1 = 190,
 	TILE_ENTITIES_OFF_2,
 
-	// Googles Tiles
+	// Passive : Googles Tiles
 	TILE_PASSIVE_IN = 160,
 	TILE_PASSIVE_OUT,
+	// Googles Tiles
+	TILE_HEAVYHAMMER = 176,
+	TILE_EPICCIRCLES,
+	TILE_XXL,
+	TILE_BLOODY,
+	TILE_STEAMY,
+	TILE_VIP,
 
 	//End of higher tiles
 	//Layers

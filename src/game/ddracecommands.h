@@ -8,6 +8,12 @@
 
 CONSOLE_COMMAND("kill_pl", "v[id]", CFGFLAG_SERVER, ConKillPlayer, this, "Kills player v and announces the kill")
 CONSOLE_COMMAND("endless_pl", "v[id]", CFGFLAG_SERVER, ConEndless, this, "give/remove player v endless")
+CONSOLE_COMMAND("epic_circles_pl", "v[id]", CFGFLAG_SERVER, ConEpicCircles, this, "give/remove player v epic circles")
+CONSOLE_COMMAND("pullhammer_pl", "v[id]", CFGFLAG_SERVER, ConPullhammer, this, "give/remove player v pullhammer")
+CONSOLE_COMMAND("xxl_pl", "v[id]", CFGFLAG_SERVER, ConXXL, this, "give/remove player v xxl")
+CONSOLE_COMMAND("bloody_pl", "v[id]", CFGFLAG_SERVER, ConBloody, this, "give/remove player v bloody")
+CONSOLE_COMMAND("steamy_pl", "v[id]", CFGFLAG_SERVER, ConSteamy, this, "give/remove player v steamy")
+CONSOLE_COMMAND("vip_pl", "v[id]", CFGFLAG_SERVER, ConVip, this, "give/remove player v vip")
 CONSOLE_COMMAND("totele", "i[number]", CFGFLAG_SERVER|CMDFLAG_TEST, ConToTeleporter, this, "Teleports you to teleporter v")
 CONSOLE_COMMAND("totelecp", "i[number]", CFGFLAG_SERVER|CMDFLAG_TEST, ConToCheckTeleporter, this, "Teleports you to checkpoint teleporter v")
 CONSOLE_COMMAND("tele", "v[id] ?i[number]", CFGFLAG_SERVER|CMDFLAG_TEST, ConTeleport, this, "Teleports you (or player v) to player i")

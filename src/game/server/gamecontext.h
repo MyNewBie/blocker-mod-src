@@ -248,6 +248,12 @@ private:
 	//static void ConUnmute(IConsole::IResult *pResult, void *pUserData);
 	static void ConKillPlayer(IConsole::IResult *pResult, void *pUserData);
 	static void ConEndless(IConsole::IResult *pResult, void *pUserData); // Give or remove endless
+	static void ConPullhammer(IConsole::IResult *pResult, void *pUserData); // Give or remove endless
+	static void ConEpicCircles(IConsole::IResult *pResult, void *pUserData); // Give or remove epic circles
+	static void ConXXL(IConsole::IResult *pResult, void *pUserData); // Give or remove xxl
+	static void ConBloody(IConsole::IResult *pResult, void *pUserData); // Give or remove bloody
+	static void ConSteamy(IConsole::IResult *pResult, void *pUserData); // Give or remove steamy
+	static void ConVip(IConsole::IResult *pResult, void *pUserData); // Give or remove vip
 
 	static void ConNinja(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnSolo(IConsole::IResult *pResult, void *pUserData);

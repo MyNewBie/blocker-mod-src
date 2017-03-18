@@ -329,14 +329,14 @@ void CCharacter::HandleWeaponSwitch()
 
 void CCharacter::FireWeapon()
 {
-	if(m_ReloadTimer != 0)
+	if(m_ReloadTimer != 0 && !m_XXL)
 		return;
 
 	DoWeaponSwitch();
 	vec2 Direction = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
 
 	bool FullAuto = false;
-	if(m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_RIFLE)
+	if(m_XXL || m_Pullhammer || m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_RIFLE)
 		FullAuto = true;
 	if (m_Jetpack && m_Core.m_ActiveWeapon == WEAPON_GUN)
 		FullAuto = true;
@@ -353,8 +353,49 @@ void CCharacter::FireWeapon()
 	if(FullAuto && (m_LatestInput.m_Fire&1) && m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
 		WillFire = true;
 
-	if(!WillFire && !m_HammerUpBot)
+	if (!WillFire && !m_HammerUpBot)
+	{
+		if (m_Pullhammer)
+			m_PullingID = -1;
 		return;
+	}
+
+	if (	m_Pullhammer && m_Core.m_ActiveWeapon == WEAPON_HAMMER)
+	{
+		if (m_PullingID == -1) //no one gets pulled, so search for one!
+		{
+			CCharacter * pTarget = GameWorld()->ClosestCharacter(MousePos(), 20.f, GetPlayer()->GetCharacter()); // Don't allow the user to use it on their self, Alot of people seem to be abusing and bugging themselves into walls... -.-
+			if (pTarget)
+				m_PullingID = pTarget->GetPlayer()->GetCID();
+		}
+		else
+		{
+			//crash prevention
+			CPlayer * pTargetPlayer = GameServer()->m_apPlayers[m_PullingID];
+
+			if (pTargetPlayer)
+			{
+				CCharacter *pTarget = GameServer()->m_apPlayers[m_PullingID]->GetCharacter();
+
+				if (pTarget && pTarget->IsAlive())
+				{
+					pTarget->Core()->m_Pos = MousePos();
+					pTarget->Core()->m_Vel.y = 0;
+				}
+				else
+				{
+					m_PullingID = -1;
+					return;
+				}
+			}
+			else
+			{
+				m_PullingID = -1;
+				return;
+			}
+		}
+		return;
+	}
 
 	// check for ammo
 	if(!m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
@@ -417,7 +458,7 @@ void CCharacter::FireWeapon()
 				else
 					Strength = GameServer()->TuningList()[m_TuneZone].m_HammerStrength;
 
-				vec2 Temp = pTarget->m_Core.m_Vel + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f;
+				vec2 Temp = pTarget->m_Core.m_Vel + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f * (m_HammerStrenght + 1);
 				if(Temp.x > 0 && ((pTarget->m_TileIndex == TILE_STOP && pTarget->m_TileFlags == ROTATION_270) || (pTarget->m_TileIndexL == TILE_STOP && pTarget->m_TileFlagsL == ROTATION_270) || (pTarget->m_TileIndexL == TILE_STOPS && (pTarget->m_TileFlagsL == ROTATION_90 || pTarget->m_TileFlagsL ==ROTATION_270)) || (pTarget->m_TileIndexL == TILE_STOPA) || (pTarget->m_TileFIndex == TILE_STOP && pTarget->m_TileFFlags == ROTATION_270) || (pTarget->m_TileFIndexL == TILE_STOP && pTarget->m_TileFFlagsL == ROTATION_270) || (pTarget->m_TileFIndexL == TILE_STOPS && (pTarget->m_TileFFlagsL == ROTATION_90 || pTarget->m_TileFFlagsL == ROTATION_270)) || (pTarget->m_TileFIndexL == TILE_STOPA) || (pTarget->m_TileSIndex == TILE_STOP && pTarget->m_TileSFlags == ROTATION_270) || (pTarget->m_TileSIndexL == TILE_STOP && pTarget->m_TileSFlagsL == ROTATION_270) || (pTarget->m_TileSIndexL == TILE_STOPS && (pTarget->m_TileSFlagsL == ROTATION_90 || pTarget->m_TileSFlagsL == ROTATION_270)) || (pTarget->m_TileSIndexL == TILE_STOPA)))
 					Temp.x = 0;
 				if(Temp.x < 0 && ((pTarget->m_TileIndex == TILE_STOP && pTarget->m_TileFlags == ROTATION_90) || (pTarget->m_TileIndexR == TILE_STOP && pTarget->m_TileFlagsR == ROTATION_90) || (pTarget->m_TileIndexR == TILE_STOPS && (pTarget->m_TileFlagsR == ROTATION_90 || pTarget->m_TileFlagsR == ROTATION_270)) || (pTarget->m_TileIndexR == TILE_STOPA) || (pTarget->m_TileFIndex == TILE_STOP && pTarget->m_TileFFlags == ROTATION_90) || (pTarget->m_TileFIndexR == TILE_STOP && pTarget->m_TileFFlagsR == ROTATION_90) || (pTarget->m_TileFIndexR == TILE_STOPS && (pTarget->m_TileFFlagsR == ROTATION_90 || pTarget->m_TileFFlagsR == ROTATION_270)) || (pTarget->m_TileFIndexR == TILE_STOPA) || (pTarget->m_TileSIndex == TILE_STOP && pTarget->m_TileSFlags == ROTATION_90) || (pTarget->m_TileSIndexR == TILE_STOP && pTarget->m_TileSFlagsR == ROTATION_90) || (pTarget->m_TileSIndexR == TILE_STOPS && (pTarget->m_TileSFlagsR == ROTATION_90 || pTarget->m_TileSFlagsR == ROTATION_270)) || (pTarget->m_TileSIndexR == TILE_STOPA)))
@@ -738,7 +779,7 @@ void CCharacter::Tick()
 	if ((Server()->Tick() % 150) == 0 && m_AntiSpam) // Ugly asf TODO: FIX
 		m_AntiSpam = false;
 
-	if(g_Config.m_SvWbProt)
+	if(g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed)
 		HandlePassiveMode();
 
 	HandleBots();
@@ -1075,6 +1116,22 @@ void CCharacter::Snap(int SnappingClient)
 	}
 	pCharacter->m_Emote = m_EmoteType;
 
+	if (m_Steamy)
+	{
+		for (int i = 0; i < 3; i++) 
+		{
+			GameServer()->CreatePlayerSpawn(m_Pos); 
+		}
+	}
+
+	if (m_Bloody)
+	{
+		for (int i = 0; i < 3; i++) 
+		{
+			GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID()); 
+		}
+	}
+
 	if (pCharacter->m_HookedPlayer != -1)
 	{
 		if (!Server()->Translate(pCharacter->m_HookedPlayer, SnappingClient))
@@ -1156,6 +1213,36 @@ void CCharacter::Snap(int SnappingClient)
 		if(1200 - ((Server()->Tick() - m_LastAction)%(1200)) < 5)
 		{
 			GameServer()->SendEmoticon(m_pPlayer->GetCID(), EMOTICON_GHOST);
+		}
+	}
+
+	if (m_pPlayer->m_EpicCircle)
+	{
+		//calculate visible balls
+		float Panso = 1.0f;
+		Panso *= m_AnimIDNum;
+
+		int MaxBalls = round(Panso);
+
+		for (int i = 0; i < MaxBalls; i++)
+		{
+			CNetObj_Projectile *pFirstParticle = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_apAnimIDs[i], sizeof(CNetObj_Projectile)));
+			if (pFirstParticle && m_apAnimIDs[i] != -1)
+			{
+				float rad = 16 * pow(sinf(Server()->Tick() / 30.0f), 3) * 1 + 50;
+
+				float TurnFac = 0.025f;
+
+				float PosX = m_Pos.x + cosf(2 * pi * (i / (float)m_AnimIDNum) + Server()->Tick()*TurnFac) * rad;
+				float PosY = m_Pos.y + sinf(2 * pi * (i / (float)m_AnimIDNum) + Server()->Tick()*TurnFac) * rad;
+
+				pFirstParticle->m_X = PosX;
+				pFirstParticle->m_Y = PosY;
+				pFirstParticle->m_VelX = 4;
+				pFirstParticle->m_VelY = 4;
+				pFirstParticle->m_StartTick = Server()->Tick() - 4;
+				pFirstParticle->m_Type = 0;
+			}
 		}
 	}
 
@@ -1601,21 +1688,87 @@ void CCharacter::HandleTiles(int Index)
 				GameServer()->SendChatTarget(i, "Your team was unlocked by an unlock team tile");
 	}
 
-	// passive
-	if (g_Config.m_SvWbProt)
+	// steamy
+	if ((m_TileIndex == TILE_VIP) || (m_TileFIndex == TILE_VIP) && !m_TilePauser)
 	{
-		if ((m_TileIndex == TILE_PASSIVE_IN) || (m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
+		if (m_pPlayer->m_AccData.m_UserID && !m_pPlayer->m_AccData.m_Vip)
 		{
-			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode enabled!");
-			m_ThreeSecondRule = false;
-			m_PassiveMode = true;
+			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not a vip!");
+			Die(-1, WEAPON_SELF);
 		}
-		else if ((m_TileIndex == TILE_PASSIVE_OUT) || (m_TileFIndex == TILE_PASSIVE_OUT) && m_PassiveMode && !m_TilePauser)
+		m_TilePauser = true;
+	}
+
+	// heavyhammer
+	if ((m_TileIndex == TILE_HEAVYHAMMER) || (m_TileFIndex == TILE_HEAVYHAMMER) && !m_TilePauser)
+	{
+		if (!m_HammerStrenght)
+			m_HammerStrenght = 3;
+		else
+			m_HammerStrenght = 0;
+
+		m_HammerStrenght > 0 ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got heavyhammer!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost heavyhammer!");
+		m_TilePauser = true;
+	}
+
+	// steamy
+	if ((m_TileIndex == TILE_STEAMY) || (m_TileFIndex == TILE_STEAMY) && !m_TilePauser)
+	{
+		m_Steamy ^= 1;
+		m_Steamy ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got steamy!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost steamy!");
+		m_TilePauser = true;
+	}
+
+	// XXL
+	if ((m_TileIndex == TILE_XXL) || (m_TileFIndex == TILE_XXL) && !m_TilePauser)
+	{
+		m_XXL ^= 1;
+		m_XXL ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got xxl!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost XXL!");
+		m_TilePauser = true;
+	}
+
+	// epic circles
+	if ((m_TileIndex == TILE_EPICCIRCLES) || (m_TileFIndex == TILE_EPICCIRCLES) && !m_TilePauser)
+	{
+		m_pPlayer->m_EpicCircle ^= 1;
+		m_pPlayer->m_EpicCircle ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got epic circles!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost epic circles!");
+		m_TilePauser = true;
+	}
+
+	// passive
+	if (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed)
+	{
+		if (g_Config.m_SvWbProt == 1 || m_pPlayer->m_Authed)
 		{
-			m_LastPassiveOut = Server()->Tick();
-			m_ThreeSecondRule = true;
-			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode disabling in three seconds!");
-			m_TilePauser = true;
+			if ((m_TileIndex == TILE_PASSIVE_IN) || (m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
+			{
+				GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode enabled!");
+				m_ThreeSecondRule = false;
+				m_PassiveMode = true;
+			}
+			else if ((m_TileIndex == TILE_PASSIVE_OUT) || (m_TileFIndex == TILE_PASSIVE_OUT) && m_PassiveMode && !m_TilePauser)
+			{
+				m_LastPassiveOut = Server()->Tick();
+				m_ThreeSecondRule = true;
+				GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode disabling in three seconds!");
+				m_TilePauser = true;
+			}
+		}
+		else if (g_Config.m_SvWbProt == 2 && m_pPlayer->m_AccData.m_Vip)
+		{
+			if ((m_TileIndex == TILE_PASSIVE_IN) || (m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
+			{
+				GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode enabled!");
+				m_ThreeSecondRule = false;
+				m_PassiveMode = true;
+			}
+			else if ((m_TileIndex == TILE_PASSIVE_OUT) || (m_TileFIndex == TILE_PASSIVE_OUT) && m_PassiveMode && !m_TilePauser)
+			{
+				m_LastPassiveOut = Server()->Tick();
+				m_ThreeSecondRule = true;
+				GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode disabling in three seconds!");
+				m_TilePauser = true;
+			}
 		}
 	}
 
@@ -2333,10 +2486,11 @@ void CCharacter::HandlePassiveMode()
 		if (pTarget && pMain->Core()->m_HookState != HOOK_GRABBED && pMain->m_LatestInput.m_Hook)
 		{
 			bool IsPassive = pTarget->m_PassiveMode;
+			bool IsMember = pTarget->GetPlayer()->m_AccData.m_Vip;
 			if (IsPassive)
 			{
 				char Reason[64];
-				str_format(Reason, 64, "Wayblocking isn't permitted at the time being");
+				str_format(Reason, 64, IsMember ? "You cannot wayblock a member!" : "Wayblocking isn't permitted at the time being");
 				if (!m_AntiSpam)
 				{
 					GameServer()->SendChatTarget(GetPlayer()->GetCID(), Reason);
@@ -2357,7 +2511,7 @@ void CCharacter::HandleBots()
 	if (GetPlayer()->m_PlayerFlags&PLAYERFLAG_CHATTING) // Until we decide to make more bots ill Clean up and make some vars
 		return;
 
-	if (m_SmartHammer && GetPlayer()->GetCharacter()->Core()->m_ActiveWeapon == WEAPON_HAMMER)
+	if (m_Bots.m_SmartHammer && GetPlayer()->GetCharacter()->Core()->m_ActiveWeapon == WEAPON_HAMMER)
 	{
 		CCharacter * pTarget = GameWorld()->ClosestCharacter(GetPlayer()->GetCharacter()->m_Pos, 64.f, GetPlayer()->GetCharacter());
 		bool isFreeze;
@@ -2380,7 +2534,7 @@ void CCharacter::HandleBots()
 		else if (m_HammerUpBot)
 			m_HammerUpBot = false;
 	}
-	if (m_AutoHook)
+	if (m_Bots.m_AutoHook)
 	{
 		CCharacter *pMain = GetPlayer()->GetCharacter();
 		if (pMain->GetPlayer()->m_PlayerFlags&PLAYERFLAG_AIM)

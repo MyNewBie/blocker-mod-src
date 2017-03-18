@@ -678,11 +678,15 @@ bool CCollision::TileExists(int Index)
 	if(Index < 0)
 		return false;
 
-	if (m_pTiles[Index].m_Index >= TILE_PASSIVE_IN && m_pTiles[Index].m_Index <= TILE_PASSIVE_OUT) // Add more tiles
+	if (m_pTiles[Index].m_Index >= TILE_PASSIVE_IN && m_pTiles[Index].m_Index <= TILE_PASSIVE_OUT) // CUSTOM : PASSIVE
+		return true;
+	if (m_pTiles[Index].m_Index >= TILE_HEAVYHAMMER && m_pTiles[Index].m_Index <= TILE_VIP) // CUSTOM : Google Tiles
 		return true;
 	if(m_pTiles[Index].m_Index >= TILE_FREEZE && m_pTiles[Index].m_Index <= TILE_NPH_START)
 		return true;
-	if (m_pFront && m_pFront[Index].m_Index >= TILE_PASSIVE_IN && m_pFront[Index].m_Index <= TILE_PASSIVE_OUT) // Add more tiles
+	if (m_pFront && m_pFront[Index].m_Index >= TILE_PASSIVE_IN && m_pFront[Index].m_Index <= TILE_PASSIVE_OUT) // CUSTOM : PASSIVE
+		return true;
+	if (m_pFront && m_pFront[Index].m_Index >= TILE_HEAVYHAMMER && m_pFront[Index].m_Index <= TILE_VIP) // CUSTOM : Google Tiles
 		return true;
 	if(m_pFront && m_pFront[Index].m_Index >= TILE_FREEZE && m_pFront[Index].m_Index  <= TILE_NPH_START)
 		return true;

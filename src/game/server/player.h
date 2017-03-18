@@ -98,7 +98,6 @@ public:
 	bool m_StolenSkin;
 	int m_TeamChangeTick;
 	bool m_SentSemicolonTip;
-	bool m_IsMember;
 	struct
 	{
 		int m_TargetX;
@@ -116,6 +115,8 @@ public:
 		int m_Max;
 	} m_Latency;
 
+	bool m_EpicCircle;
+
 	// City
 	struct
 	{
@@ -124,6 +125,7 @@ public:
 		char m_Password[32];
 		char m_RconPassword[32];
 		int m_UserID;
+		int m_Vip;
 
 	} m_AccData;
 

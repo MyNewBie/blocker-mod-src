@@ -3,6 +3,7 @@
 #include <engine/shared/config.h>
 #include <engine/server/server.h>
 #include <game/server/teams.h>
+#include <game/server/accounting/account.h>
 #include <game/server/gamemodes/DDRace.h>
 #include <game/version.h>
 #include <game/generated/nethash.cpp>
@@ -105,6 +106,108 @@ void CGameContext::ConEndless(IConsole::IResult *pResult, void *pUserData) // gi
 		char aBuf[512];
 		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_EndlessHook ? "%s gave you endless!" : "%s removed your endless!" ,pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConPullhammer(IConsole::IResult *pResult, void *pUserData) // give or remove pullhammer
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->GetCharacter()->m_Pullhammer ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Pullhammer ? "%s gave you pullhammer!" : "%s removed your endless!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConEpicCircles(IConsole::IResult *pResult, void *pUserData) // give or remove epic circles
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_EpicCircle ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_EpicCircle ? "%s gave you epic circles!" : "%s removed your epic circles!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConXXL(IConsole::IResult *pResult, void *pUserData) // give or remove xxl
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->GetCharacter()->m_XXL ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_XXL ? "%s gave you xxl!" : "%s removed your xxl!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConBloody(IConsole::IResult *pResult, void *pUserData) // give or remove bloody
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->GetCharacter()->m_Bloody ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Bloody ? "%s gave you bloody!" : "%s removed your bloody!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConSteamy(IConsole::IResult *pResult, void *pUserData) // give or remove steamy
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->GetCharacter()->m_Steamy ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Steamy ? "%s gave you steampy!" : "%s removed your steamy!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConVip(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int VipID = pResult->GetVictim();
+	char aBuf[200];
+
+	CCharacter* pChr = pSelf->GetPlayerChar(VipID);
+	if (pChr)
+	{
+		if (pChr->GetPlayer()->m_AccData.m_UserID)
+		{
+			pChr->GetPlayer()->m_AccData.m_Vip ^= 1;
+			pChr->GetPlayer()->m_pAccount->Apply();
+		}
+		if (pChr->GetPlayer()->m_AccData.m_Vip)
+			str_format(aBuf, sizeof aBuf, "'%s' is Vip now.", pSelf->Server()->ClientName(VipID));
+		else
+			str_format(aBuf, sizeof aBuf, "'%s' is no longer Vip.", pSelf->Server()->ClientName(VipID));
+		pSelf->SendChat(-1, CHAT_ALL, aBuf);
 	}
 }
 

@@ -1191,14 +1191,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), Msg);
 						return;
 					}
-					else if (!pPlayer->GetCharacter()->m_SmartHammer)
+					else if (!pPlayer->GetCharacter()->m_Bots.m_SmartHammer)
 					{
-						pPlayer->GetCharacter()->m_SmartHammer = true;
+						pPlayer->GetCharacter()->m_Bots.m_SmartHammer = true;
 						SendChatTarget(pPlayer->GetCID(), "Smarthammer enabled!");
 					}
 					else
 					{
-						pPlayer->GetCharacter()->m_SmartHammer = false;
+						pPlayer->GetCharacter()->m_Bots.m_SmartHammer = false;
 						SendChatTarget(pPlayer->GetCID(), "Smarthammer disabled!");
 					}
 				}
@@ -1211,14 +1211,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), Msg);
 						return;
 					}
-					else if (!pPlayer->GetCharacter()->m_AutoHook)
+					else if (!pPlayer->GetCharacter()->m_Bots.m_AutoHook)
 					{
-						pPlayer->GetCharacter()->m_AutoHook = true;
+						pPlayer->GetCharacter()->m_Bots.m_AutoHook = true;
 						SendChatTarget(pPlayer->GetCID(), "Autohook enabled!");
 					}
 					else
 					{
-						pPlayer->GetCharacter()->m_AutoHook = false;
+						pPlayer->GetCharacter()->m_Bots.m_AutoHook = false;
 						SendChatTarget(pPlayer->GetCID(), "Autohook disabled!");
 					}
 				}

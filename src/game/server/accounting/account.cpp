@@ -119,11 +119,12 @@ void CAccount::Login(char *Username, char *Password)
 
 	Accfile = fopen(aBuf, "r");
 
-	fscanf(Accfile, "%s\n%s\n%s\n%d",
+	fscanf(Accfile, "%s\n%s\n%s\n%d\n%d",
 		m_pPlayer->m_AccData.m_Username, // Done
 		m_pPlayer->m_AccData.m_Password, // Done
 		m_pPlayer->m_AccData.m_RconPassword,
-		&m_pPlayer->m_AccData.m_UserID); // Done
+		&m_pPlayer->m_AccData.m_UserID,
+		&m_pPlayer->m_AccData.m_Vip); // Done
 
 	fclose(Accfile);
 
@@ -137,8 +138,6 @@ void CAccount::Login(char *Username, char *Password)
 
 	if (m_pPlayer->GetTeam() == TEAM_SPECTATORS)
 		m_pPlayer->SetTeam(TEAM_RED);
-
-	m_pPlayer->m_IsMember = true;
 
 	dbg_msg("account", "Account login sucessful ('%s')", Username);
 	GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Login succesful");
@@ -205,11 +204,12 @@ void CAccount::Register(char *Username, char *Password)
 	FILE *Accfile;
 	Accfile = fopen(aBuf, "a+");
 
-	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d",
+	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d",
 		Username,
 		Password,
 		"0",
-		NextID());
+		NextID(),
+		m_pPlayer->m_AccData.m_Vip);
 
 	fputs(aBuf, Accfile);
 	fclose(Accfile);
@@ -239,11 +239,12 @@ void CAccount::Apply()
 	FILE *Accfile;
 	Accfile = fopen(aBuf, "a+");
 
-	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d",
+	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d",
 		m_pPlayer->m_AccData.m_Username,
 		m_pPlayer->m_AccData.m_Password,
 		m_pPlayer->m_AccData.m_RconPassword,
-		m_pPlayer->m_AccData.m_UserID);
+		m_pPlayer->m_AccData.m_UserID,
+		m_pPlayer->m_AccData.m_Vip);
 
 	fputs(aBuf, Accfile);
 	fclose(Accfile);
@@ -255,6 +256,7 @@ void CAccount::Reset()
 	str_copy(m_pPlayer->m_AccData.m_Password, "", 32);
 	str_copy(m_pPlayer->m_AccData.m_RconPassword, "", 32);
 	m_pPlayer->m_AccData.m_UserID = 0;
+	m_pPlayer->m_AccData.m_Vip = 0;
 }
 
 void CAccount::Delete()
