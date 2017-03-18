@@ -335,28 +335,28 @@ void CCharacter::FireWeapon()
 {
 	if (m_PassiveMode)
 		return;
-	if(m_ReloadTimer != 0 && !m_XXL)
+	if (m_ReloadTimer != 0 && !m_XXL)
 		return;
 
 	DoWeaponSwitch();
 	vec2 Direction = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
 
 	bool FullAuto = false;
-	if(m_XXL || m_Pullhammer || m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_RIFLE)
+	if (m_XXL || m_Pullhammer || m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_RIFLE)
 		FullAuto = true;
 	if (m_Jetpack && m_Core.m_ActiveWeapon == WEAPON_GUN)
 		FullAuto = true;
 
 	// don't fire non auto weapons when player is deep and sv_deepfly is disabled
-	if(!g_Config.m_SvDeepfly && !FullAuto && m_DeepFreeze)
+	if (!g_Config.m_SvDeepfly && !FullAuto && m_DeepFreeze)
 		return;
 
 	// check if we gonna fire
 	bool WillFire = false;
-	if(CountInput(m_LatestPrevInput.m_Fire, m_LatestInput.m_Fire).m_Presses)
+	if (CountInput(m_LatestPrevInput.m_Fire, m_LatestInput.m_Fire).m_Presses)
 		WillFire = true;
 
-	if(FullAuto && (m_LatestInput.m_Fire&1) && m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
+	if (FullAuto && (m_LatestInput.m_Fire & 1) && m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
 		WillFire = true;
 
 	if (!WillFire && !m_HammerUpBot)
@@ -366,7 +366,7 @@ void CCharacter::FireWeapon()
 		return;
 	}
 
-	if (	m_Pullhammer && m_Core.m_ActiveWeapon == WEAPON_HAMMER)
+	if (m_Pullhammer && m_Core.m_ActiveWeapon == WEAPON_HAMMER)
 	{
 		if (m_PullingID == -1) //no one gets pulled, so search for one!
 		{
@@ -404,198 +404,117 @@ void CCharacter::FireWeapon()
 	}
 
 	// check for ammo
-	if(!m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
+	if (!m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
 	{
 		/*// 125ms is a magical limit of how fast a human can click
 		m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
 		GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);*/
 		// Timer stuff to avoid shrieking orchestra caused by unfreeze-plasma
-		if(m_PainSoundTimer<=0)
+		if (m_PainSoundTimer <= 0)
 		{
-				m_PainSoundTimer = 1 * Server()->TickSpeed();
-				GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+			m_PainSoundTimer = 1 * Server()->TickSpeed();
+			GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 		}
 		return;
 	}
 
-	vec2 ProjStartPos = m_Pos+Direction*m_ProximityRadius*0.75f;
+	vec2 ProjStartPos = m_Pos + Direction*m_ProximityRadius*0.75f;
 
-	switch(m_Core.m_ActiveWeapon)
+	switch (m_Core.m_ActiveWeapon)
 	{
-		case WEAPON_HAMMER:
+	case WEAPON_HAMMER:
+	{
+		// reset objects Hit
+		m_NumObjectsHit = 0;
+		GameServer()->CreateSound(m_Pos, SOUND_HAMMER_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+
+		if (m_Hit&DISABLE_HIT_HAMMER) break;
+
+		CCharacter *apEnts[MAX_CLIENTS];
+		int Hits = 0;
+		int Num = GameServer()->m_World.FindEntities(ProjStartPos, m_ProximityRadius*0.5f, (CEntity**)apEnts,
+			MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+
+		for (int i = 0; i < Num; ++i)
 		{
-			// reset objects Hit
-			m_NumObjectsHit = 0;
-			GameServer()->CreateSound(m_Pos, SOUND_HAMMER_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+			CCharacter *pTarget = apEnts[i];
+			if (pTarget->m_PassiveMode) // So dey Dont BLOOOKEE
+				return;
+			//if ((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
+			if ((pTarget == this || (pTarget->IsAlive() && !CanCollide(pTarget->GetPlayer()->GetCID()))))
+				continue;
 
-			if (m_Hit&DISABLE_HIT_HAMMER) break;
+			// set his velocity to fast upward (for now)
+			if (length(pTarget->m_Pos - ProjStartPos) > 0.0f)
+				GameServer()->CreateHammerHit(pTarget->m_Pos - normalize(pTarget->m_Pos - ProjStartPos)*m_ProximityRadius*0.5f, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+			else
+				GameServer()->CreateHammerHit(ProjStartPos, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 
-			CCharacter *apEnts[MAX_CLIENTS];
-			int Hits = 0;
-			int Num = GameServer()->m_World.FindEntities(ProjStartPos, m_ProximityRadius*0.5f, (CEntity**)apEnts,
-														MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+			vec2 Dir;
+			if (length(pTarget->m_Pos - m_Pos) > 0.0f)
+				Dir = normalize(pTarget->m_Pos - m_Pos);
+			else
+				Dir = vec2(0.f, -1.f);
+			/*pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
+				m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);*/
 
-			for (int i = 0; i < Num; ++i)
-			{
-				CCharacter *pTarget = apEnts[i];
-				if (pTarget->m_PassiveMode) // So dey Dont BLOOOKEE
-					return;
-				//if ((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
-				if((pTarget == this || (pTarget->IsAlive() && !CanCollide(pTarget->GetPlayer()->GetCID()))))
-					continue;
+			float Strength;
+			if (!m_TuneZone)
+				Strength = GameServer()->Tuning()->m_HammerStrength;
+			else
+				Strength = GameServer()->TuningList()[m_TuneZone].m_HammerStrength;
 
-				// set his velocity to fast upward (for now)
-				if(length(pTarget->m_Pos-ProjStartPos) > 0.0f)
-					GameServer()->CreateHammerHit(pTarget->m_Pos-normalize(pTarget->m_Pos-ProjStartPos)*m_ProximityRadius*0.5f, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
-				else
-					GameServer()->CreateHammerHit(ProjStartPos, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
-
-				vec2 Dir;
-				if (length(pTarget->m_Pos - m_Pos) > 0.0f)
-					Dir = normalize(pTarget->m_Pos - m_Pos);
-				else
-					Dir = vec2(0.f, -1.f);
-				/*pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
-					m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);*/
-
-				float Strength;
-				if (!m_TuneZone)
-					Strength = GameServer()->Tuning()->m_HammerStrength;
-				else
-					Strength = GameServer()->TuningList()[m_TuneZone].m_HammerStrength;
-
-				vec2 Temp = pTarget->m_Core.m_Vel + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f * (m_HammerStrenght + 1);
-				if(Temp.x > 0 && ((pTarget->m_TileIndex == TILE_STOP && pTarget->m_TileFlags == ROTATION_270) || (pTarget->m_TileIndexL == TILE_STOP && pTarget->m_TileFlagsL == ROTATION_270) || (pTarget->m_TileIndexL == TILE_STOPS && (pTarget->m_TileFlagsL == ROTATION_90 || pTarget->m_TileFlagsL ==ROTATION_270)) || (pTarget->m_TileIndexL == TILE_STOPA) || (pTarget->m_TileFIndex == TILE_STOP && pTarget->m_TileFFlags == ROTATION_270) || (pTarget->m_TileFIndexL == TILE_STOP && pTarget->m_TileFFlagsL == ROTATION_270) || (pTarget->m_TileFIndexL == TILE_STOPS && (pTarget->m_TileFFlagsL == ROTATION_90 || pTarget->m_TileFFlagsL == ROTATION_270)) || (pTarget->m_TileFIndexL == TILE_STOPA) || (pTarget->m_TileSIndex == TILE_STOP && pTarget->m_TileSFlags == ROTATION_270) || (pTarget->m_TileSIndexL == TILE_STOP && pTarget->m_TileSFlagsL == ROTATION_270) || (pTarget->m_TileSIndexL == TILE_STOPS && (pTarget->m_TileSFlagsL == ROTATION_90 || pTarget->m_TileSFlagsL == ROTATION_270)) || (pTarget->m_TileSIndexL == TILE_STOPA)))
-					Temp.x = 0;
-				if(Temp.x < 0 && ((pTarget->m_TileIndex == TILE_STOP && pTarget->m_TileFlags == ROTATION_90) || (pTarget->m_TileIndexR == TILE_STOP && pTarget->m_TileFlagsR == ROTATION_90) || (pTarget->m_TileIndexR == TILE_STOPS && (pTarget->m_TileFlagsR == ROTATION_90 || pTarget->m_TileFlagsR == ROTATION_270)) || (pTarget->m_TileIndexR == TILE_STOPA) || (pTarget->m_TileFIndex == TILE_STOP && pTarget->m_TileFFlags == ROTATION_90) || (pTarget->m_TileFIndexR == TILE_STOP && pTarget->m_TileFFlagsR == ROTATION_90) || (pTarget->m_TileFIndexR == TILE_STOPS && (pTarget->m_TileFFlagsR == ROTATION_90 || pTarget->m_TileFFlagsR == ROTATION_270)) || (pTarget->m_TileFIndexR == TILE_STOPA) || (pTarget->m_TileSIndex == TILE_STOP && pTarget->m_TileSFlags == ROTATION_90) || (pTarget->m_TileSIndexR == TILE_STOP && pTarget->m_TileSFlagsR == ROTATION_90) || (pTarget->m_TileSIndexR == TILE_STOPS && (pTarget->m_TileSFlagsR == ROTATION_90 || pTarget->m_TileSFlagsR == ROTATION_270)) || (pTarget->m_TileSIndexR == TILE_STOPA)))
-					Temp.x = 0;
-				if(Temp.y < 0 && ((pTarget->m_TileIndex == TILE_STOP && pTarget->m_TileFlags == ROTATION_180) || (pTarget->m_TileIndexB == TILE_STOP && pTarget->m_TileFlagsB == ROTATION_180) || (pTarget->m_TileIndexB == TILE_STOPS && (pTarget->m_TileFlagsB == ROTATION_0 || pTarget->m_TileFlagsB == ROTATION_180)) || (pTarget->m_TileIndexB == TILE_STOPA) || (pTarget->m_TileFIndex == TILE_STOP && pTarget->m_TileFFlags == ROTATION_180) || (pTarget->m_TileFIndexB == TILE_STOP && pTarget->m_TileFFlagsB == ROTATION_180) || (pTarget->m_TileFIndexB == TILE_STOPS && (pTarget->m_TileFFlagsB == ROTATION_0 || pTarget->m_TileFFlagsB == ROTATION_180)) || (pTarget->m_TileFIndexB == TILE_STOPA) || (pTarget->m_TileSIndex == TILE_STOP && pTarget->m_TileSFlags == ROTATION_180) || (pTarget->m_TileSIndexB == TILE_STOP && pTarget->m_TileSFlagsB == ROTATION_180) || (pTarget->m_TileSIndexB == TILE_STOPS && (pTarget->m_TileSFlagsB == ROTATION_0 || pTarget->m_TileSFlagsB == ROTATION_180)) || (pTarget->m_TileSIndexB == TILE_STOPA)))
-					Temp.y = 0;
-				if(Temp.y > 0 && ((pTarget->m_TileIndex == TILE_STOP && pTarget->m_TileFlags == ROTATION_0) || (pTarget->m_TileIndexT == TILE_STOP && pTarget->m_TileFlagsT == ROTATION_0) || (pTarget->m_TileIndexT == TILE_STOPS && (pTarget->m_TileFlagsT == ROTATION_0 || pTarget->m_TileFlagsT == ROTATION_180)) || (pTarget->m_TileIndexT == TILE_STOPA) || (pTarget->m_TileFIndex == TILE_STOP && pTarget->m_TileFFlags == ROTATION_0) || (pTarget->m_TileFIndexT == TILE_STOP && pTarget->m_TileFFlagsT == ROTATION_0) || (pTarget->m_TileFIndexT == TILE_STOPS && (pTarget->m_TileFFlagsT == ROTATION_0 || pTarget->m_TileFFlagsT == ROTATION_180)) || (pTarget->m_TileFIndexT == TILE_STOPA) || (pTarget->m_TileSIndex == TILE_STOP && pTarget->m_TileSFlags == ROTATION_0) || (pTarget->m_TileSIndexT == TILE_STOP && pTarget->m_TileSFlagsT == ROTATION_0) || (pTarget->m_TileSIndexT == TILE_STOPS && (pTarget->m_TileSFlagsT == ROTATION_0 || pTarget->m_TileSFlagsT == ROTATION_180)) || (pTarget->m_TileSIndexT == TILE_STOPA)))
-					Temp.y = 0;
-				Temp -= pTarget->m_Core.m_Vel;
-				pTarget->TakeDamage((vec2(0.f, -1.0f) + Temp) * Strength, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
-					m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);
-				if(!pTarget->m_PassiveMode) // cannot be unfreezed, If so easy bypass method brought to my attention by Delith
+			vec2 Temp = pTarget->m_Core.m_Vel + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f * (m_HammerStrenght + 1);
+			if (Temp.x > 0 && ((pTarget->m_TileIndex == TILE_STOP && pTarget->m_TileFlags == ROTATION_270) || (pTarget->m_TileIndexL == TILE_STOP && pTarget->m_TileFlagsL == ROTATION_270) || (pTarget->m_TileIndexL == TILE_STOPS && (pTarget->m_TileFlagsL == ROTATION_90 || pTarget->m_TileFlagsL == ROTATION_270)) || (pTarget->m_TileIndexL == TILE_STOPA) || (pTarget->m_TileFIndex == TILE_STOP && pTarget->m_TileFFlags == ROTATION_270) || (pTarget->m_TileFIndexL == TILE_STOP && pTarget->m_TileFFlagsL == ROTATION_270) || (pTarget->m_TileFIndexL == TILE_STOPS && (pTarget->m_TileFFlagsL == ROTATION_90 || pTarget->m_TileFFlagsL == ROTATION_270)) || (pTarget->m_TileFIndexL == TILE_STOPA) || (pTarget->m_TileSIndex == TILE_STOP && pTarget->m_TileSFlags == ROTATION_270) || (pTarget->m_TileSIndexL == TILE_STOP && pTarget->m_TileSFlagsL == ROTATION_270) || (pTarget->m_TileSIndexL == TILE_STOPS && (pTarget->m_TileSFlagsL == ROTATION_90 || pTarget->m_TileSFlagsL == ROTATION_270)) || (pTarget->m_TileSIndexL == TILE_STOPA)))
+				Temp.x = 0;
+			if (Temp.x < 0 && ((pTarget->m_TileIndex == TILE_STOP && pTarget->m_TileFlags == ROTATION_90) || (pTarget->m_TileIndexR == TILE_STOP && pTarget->m_TileFlagsR == ROTATION_90) || (pTarget->m_TileIndexR == TILE_STOPS && (pTarget->m_TileFlagsR == ROTATION_90 || pTarget->m_TileFlagsR == ROTATION_270)) || (pTarget->m_TileIndexR == TILE_STOPA) || (pTarget->m_TileFIndex == TILE_STOP && pTarget->m_TileFFlags == ROTATION_90) || (pTarget->m_TileFIndexR == TILE_STOP && pTarget->m_TileFFlagsR == ROTATION_90) || (pTarget->m_TileFIndexR == TILE_STOPS && (pTarget->m_TileFFlagsR == ROTATION_90 || pTarget->m_TileFFlagsR == ROTATION_270)) || (pTarget->m_TileFIndexR == TILE_STOPA) || (pTarget->m_TileSIndex == TILE_STOP && pTarget->m_TileSFlags == ROTATION_90) || (pTarget->m_TileSIndexR == TILE_STOP && pTarget->m_TileSFlagsR == ROTATION_90) || (pTarget->m_TileSIndexR == TILE_STOPS && (pTarget->m_TileSFlagsR == ROTATION_90 || pTarget->m_TileSFlagsR == ROTATION_270)) || (pTarget->m_TileSIndexR == TILE_STOPA)))
+				Temp.x = 0;
+			if (Temp.y < 0 && ((pTarget->m_TileIndex == TILE_STOP && pTarget->m_TileFlags == ROTATION_180) || (pTarget->m_TileIndexB == TILE_STOP && pTarget->m_TileFlagsB == ROTATION_180) || (pTarget->m_TileIndexB == TILE_STOPS && (pTarget->m_TileFlagsB == ROTATION_0 || pTarget->m_TileFlagsB == ROTATION_180)) || (pTarget->m_TileIndexB == TILE_STOPA) || (pTarget->m_TileFIndex == TILE_STOP && pTarget->m_TileFFlags == ROTATION_180) || (pTarget->m_TileFIndexB == TILE_STOP && pTarget->m_TileFFlagsB == ROTATION_180) || (pTarget->m_TileFIndexB == TILE_STOPS && (pTarget->m_TileFFlagsB == ROTATION_0 || pTarget->m_TileFFlagsB == ROTATION_180)) || (pTarget->m_TileFIndexB == TILE_STOPA) || (pTarget->m_TileSIndex == TILE_STOP && pTarget->m_TileSFlags == ROTATION_180) || (pTarget->m_TileSIndexB == TILE_STOP && pTarget->m_TileSFlagsB == ROTATION_180) || (pTarget->m_TileSIndexB == TILE_STOPS && (pTarget->m_TileSFlagsB == ROTATION_0 || pTarget->m_TileSFlagsB == ROTATION_180)) || (pTarget->m_TileSIndexB == TILE_STOPA)))
+				Temp.y = 0;
+			if (Temp.y > 0 && ((pTarget->m_TileIndex == TILE_STOP && pTarget->m_TileFlags == ROTATION_0) || (pTarget->m_TileIndexT == TILE_STOP && pTarget->m_TileFlagsT == ROTATION_0) || (pTarget->m_TileIndexT == TILE_STOPS && (pTarget->m_TileFlagsT == ROTATION_0 || pTarget->m_TileFlagsT == ROTATION_180)) || (pTarget->m_TileIndexT == TILE_STOPA) || (pTarget->m_TileFIndex == TILE_STOP && pTarget->m_TileFFlags == ROTATION_0) || (pTarget->m_TileFIndexT == TILE_STOP && pTarget->m_TileFFlagsT == ROTATION_0) || (pTarget->m_TileFIndexT == TILE_STOPS && (pTarget->m_TileFFlagsT == ROTATION_0 || pTarget->m_TileFFlagsT == ROTATION_180)) || (pTarget->m_TileFIndexT == TILE_STOPA) || (pTarget->m_TileSIndex == TILE_STOP && pTarget->m_TileSFlags == ROTATION_0) || (pTarget->m_TileSIndexT == TILE_STOP && pTarget->m_TileSFlagsT == ROTATION_0) || (pTarget->m_TileSIndexT == TILE_STOPS && (pTarget->m_TileSFlagsT == ROTATION_0 || pTarget->m_TileSFlagsT == ROTATION_180)) || (pTarget->m_TileSIndexT == TILE_STOPA)))
+				Temp.y = 0;
+			Temp -= pTarget->m_Core.m_Vel;
+			pTarget->TakeDamage((vec2(0.f, -1.0f) + Temp) * Strength, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
+				m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);
+			if (!pTarget->m_PassiveMode) // cannot be unfreezed, If so easy bypass method brought to my attention by Delith
 				pTarget->UnFreeze();
 
-				if(m_FreezeHammer)
-					pTarget->Freeze();
+			if (m_FreezeHammer)
+				pTarget->Freeze();
 
-				Hits++;
-			}
+			Hits++;
+		}
 
-			// if we Hit anything, we have to wait for the reload
-			if(Hits)
-				m_ReloadTimer = Server()->TickSpeed()/3;
+		// if we Hit anything, we have to wait for the reload
+		if (Hits)
+			m_ReloadTimer = Server()->TickSpeed() / 3;
 
-		} break;
+	} break;
 
-		case WEAPON_GUN:
+	case WEAPON_GUN:
+	{
+		if (!m_Jetpack || !m_pPlayer->m_NinjaJetpack)
 		{
-			if (!m_Jetpack || !m_pPlayer->m_NinjaJetpack)
-			{
-				int Lifetime;
-				if (!m_TuneZone)
-					Lifetime = (int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GunLifetime);
-				else
-					Lifetime = (int)(Server()->TickSpeed()*GameServer()->TuningList()[m_TuneZone].m_GunLifetime);
-
-				CProjectile *pProj = new CProjectile
-						(
-						GameWorld(),
-						WEAPON_GUN,//Type
-						m_pPlayer->GetCID(),//Owner
-						ProjStartPos,//Pos
-						Direction,//Dir
-						Lifetime,//Span
-						0,//Freeze
-						0,//Explosive
-						0,//Force
-						-1,//SoundImpact
-						WEAPON_GUN//Weapon
-						);
-
-				// pack the Projectile and send it to the client Directly
-				CNetObj_Projectile p;
-				pProj->FillInfo(&p);
-
-				CMsgPacker Msg(NETMSGTYPE_SV_EXTRAPROJECTILE);
-				Msg.AddInt(1);
-				for(unsigned i = 0; i < sizeof(CNetObj_Projectile)/sizeof(int); i++)
-					Msg.AddInt(((int *)&p)[i]);
-
-				Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
-				GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
-			}
-		} break;
-
-		case WEAPON_SHOTGUN:
-		{
-			/*int ShotSpread = 2;
-
-			CMsgPacker Msg(NETMSGTYPE_SV_EXTRAPROJECTILE);
-			Msg.AddInt(ShotSpread*2+1);
-
-			for(int i = -ShotSpread; i <= ShotSpread; ++i)
-			{
-				float Spreading[] = {-0.185f, -0.070f, 0, 0.070f, 0.185f};
-				float a = GetAngle(Direction);
-				a += Spreading[i+2];
-				float v = 1-(absolute(i)/(float)ShotSpread);
-				float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
-				CProjectile *pProj = new CProjectile(GameWorld(), WEAPON_SHOTGUN,
-					m_pPlayer->GetCID(),
-					ProjStartPos,
-					vec2(cosf(a), sinf(a))*Speed,
-					(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_ShotgunLifetime),
-					1, 0, 0, -1, WEAPON_SHOTGUN);
-
-				// pack the Projectile and send it to the client Directly
-				CNetObj_Projectile p;
-				pProj->FillInfo(&p);
-
-				for(unsigned i = 0; i < sizeof(CNetObj_Projectile)/sizeof(int); i++)
-					Msg.AddInt(((int *)&p)[i]);
-			}
-
-			Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
-
-			GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE);*/
-			float LaserReach;
-			if (!m_TuneZone)
-				LaserReach = GameServer()->Tuning()->m_LaserReach;
-			else
-				LaserReach = GameServer()->TuningList()[m_TuneZone].m_LaserReach;
-
-			new CLaser(&GameServer()->m_World, m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_SHOTGUN);
-			GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
-		} break;
-
-		case WEAPON_GRENADE:
-		{
-			if (m_PassiveMode) 
-				return; 
 			int Lifetime;
 			if (!m_TuneZone)
-				Lifetime = (int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GrenadeLifetime);
+				Lifetime = (int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GunLifetime);
 			else
-				Lifetime = (int)(Server()->TickSpeed()*GameServer()->TuningList()[m_TuneZone].m_GrenadeLifetime);
+				Lifetime = (int)(Server()->TickSpeed()*GameServer()->TuningList()[m_TuneZone].m_GunLifetime);
 
 			CProjectile *pProj = new CProjectile
-					(
+				(
 					GameWorld(),
-					WEAPON_GRENADE,//Type
+					WEAPON_GUN,//Type
 					m_pPlayer->GetCID(),//Owner
 					ProjStartPos,//Pos
 					Direction,//Dir
 					Lifetime,//Span
 					0,//Freeze
-					true,//Explosive
+					0,//Explosive
 					0,//Force
-					SOUND_GRENADE_EXPLODE,//SoundImpact
-					WEAPON_GRENADE//Weapon
-					);//SoundImpact
+					-1,//SoundImpact
+					WEAPON_GUN//Weapon
+					);
 
 			// pack the Projectile and send it to the client Directly
 			CNetObj_Projectile p;
@@ -603,38 +522,115 @@ void CCharacter::FireWeapon()
 
 			CMsgPacker Msg(NETMSGTYPE_SV_EXTRAPROJECTILE);
 			Msg.AddInt(1);
+			for (unsigned i = 0; i < sizeof(CNetObj_Projectile) / sizeof(int); i++)
+				Msg.AddInt(((int *)&p)[i]);
+
+			Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
+			GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+		}
+	} break;
+
+	case WEAPON_SHOTGUN:
+	{
+		/*int ShotSpread = 2;
+
+		CMsgPacker Msg(NETMSGTYPE_SV_EXTRAPROJECTILE);
+		Msg.AddInt(ShotSpread*2+1);
+
+		for(int i = -ShotSpread; i <= ShotSpread; ++i)
+		{
+			float Spreading[] = {-0.185f, -0.070f, 0, 0.070f, 0.185f};
+			float a = GetAngle(Direction);
+			a += Spreading[i+2];
+			float v = 1-(absolute(i)/(float)ShotSpread);
+			float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
+			CProjectile *pProj = new CProjectile(GameWorld(), WEAPON_SHOTGUN,
+				m_pPlayer->GetCID(),
+				ProjStartPos,
+				vec2(cosf(a), sinf(a))*Speed,
+				(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_ShotgunLifetime),
+				1, 0, 0, -1, WEAPON_SHOTGUN);
+
+			// pack the Projectile and send it to the client Directly
+			CNetObj_Projectile p;
+			pProj->FillInfo(&p);
+
 			for(unsigned i = 0; i < sizeof(CNetObj_Projectile)/sizeof(int); i++)
 				Msg.AddInt(((int *)&p)[i]);
-			Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
+		}
 
-			GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
-		} break;
+		Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
 
-		case WEAPON_RIFLE:
-		{
-			float LaserReach;
-			if (!m_TuneZone)
-				LaserReach = GameServer()->Tuning()->m_LaserReach;
-			else
-				LaserReach = GameServer()->TuningList()[m_TuneZone].m_LaserReach;
+		GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE);*/
+		float LaserReach;
+		if (!m_TuneZone)
+			LaserReach = GameServer()->Tuning()->m_LaserReach;
+		else
+			LaserReach = GameServer()->TuningList()[m_TuneZone].m_LaserReach;
 
-			new CLaser(GameWorld(), m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_RIFLE);
-			GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
-		} break;
+		new CLaser(&GameServer()->m_World, m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_SHOTGUN);
+		GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+	} break;
 
-		case WEAPON_NINJA:
-		{
-			if (m_PassiveMode) // cannot be unfreezed, If so easy bypass method brought to my attention by Delith
-				return;
-			// reset Hit objects
-			m_NumObjectsHit = 0;
+	case WEAPON_GRENADE:
+	{
+		int Lifetime;
+		if (!m_TuneZone)
+			Lifetime = (int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GrenadeLifetime);
+		else
+			Lifetime = (int)(Server()->TickSpeed()*GameServer()->TuningList()[m_TuneZone].m_GrenadeLifetime);
 
-			m_Ninja.m_ActivationDir = Direction;
-			m_Ninja.m_CurrentMoveTime = g_pData->m_Weapons.m_Ninja.m_Movetime * Server()->TickSpeed() / 1000;
-			m_Ninja.m_OldVelAmount = length(m_Core.m_Vel);
+		CProjectile *pProj = new CProjectile
+			(
+				GameWorld(),
+				WEAPON_GRENADE,//Type
+				m_pPlayer->GetCID(),//Owner
+				ProjStartPos,//Pos
+				Direction,//Dir
+				Lifetime,//Span
+				0,//Freeze
+				true,//Explosive
+				0,//Force
+				SOUND_GRENADE_EXPLODE,//SoundImpact
+				WEAPON_GRENADE//Weapon
+				);//SoundImpact
 
-			GameServer()->CreateSound(m_Pos, SOUND_NINJA_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
-		} break;
+		// pack the Projectile and send it to the client Directly
+		CNetObj_Projectile p;
+		pProj->FillInfo(&p);
+
+		CMsgPacker Msg(NETMSGTYPE_SV_EXTRAPROJECTILE);
+		Msg.AddInt(1);
+		for (unsigned i = 0; i < sizeof(CNetObj_Projectile) / sizeof(int); i++)
+			Msg.AddInt(((int *)&p)[i]);
+		Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
+
+		GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+	} break;
+
+	case WEAPON_RIFLE:
+	{
+		float LaserReach;
+		if (!m_TuneZone)
+			LaserReach = GameServer()->Tuning()->m_LaserReach;
+		else
+			LaserReach = GameServer()->TuningList()[m_TuneZone].m_LaserReach;
+
+		new CLaser(GameWorld(), m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_RIFLE);
+		GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+	} break;
+
+	case WEAPON_NINJA:
+	{
+		// reset Hit objects
+		m_NumObjectsHit = 0;
+
+		m_Ninja.m_ActivationDir = Direction;
+		m_Ninja.m_CurrentMoveTime = g_pData->m_Weapons.m_Ninja.m_Movetime * Server()->TickSpeed() / 1000;
+		m_Ninja.m_OldVelAmount = length(m_Core.m_Vel);
+
+		GameServer()->CreateSound(m_Pos, SOUND_NINJA_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+	} break;
 
 	}
 
@@ -643,7 +639,7 @@ void CCharacter::FireWeapon()
 	/*if(m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo > 0) // -1 == unlimited
 		m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo--;*/
 
-	if(!m_ReloadTimer)
+	if (!m_ReloadTimer)
 	{
 		float FireDelay;
 		if (!m_TuneZone)
@@ -2511,6 +2507,21 @@ void CCharacter::HandlePassiveMode()
 		m_NeededFaketuning |= FAKETUNE_NOCOLL;
 		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
 		m_Core.m_PassiveMode = true;
+
+		CCharacter *pMain = GetPlayer()->GetCharacter();
+		vec2 Shit;
+		const int Angle = round(atan2(pMain->m_LatestInput.m_TargetX, pMain->m_LatestInput.m_TargetY) * 256); // compress
+		const vec2 Direction = vec2(sin(Angle / 256.f), cos(Angle / 256.f)); // decompress
+		vec2 initPos = pMain->m_Pos + Direction * 28.0f * 1.5f;
+		vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength + 20.0f);
+		CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, 24.0f, Shit, pMain);
+
+		if (pMain && pTarget)
+		{
+			pMain->Core()->m_RevokeHook = true;
+		}
+		else if (pMain->Core()->m_RevokeHook)
+			pMain->Core()->m_RevokeHook = false;
 	}
 	else if (m_Core.m_PassiveMode)
 	{
@@ -2519,6 +2530,8 @@ void CCharacter::HandlePassiveMode()
 		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
 		m_Core.m_PassiveMode = false;
 	}
+	else if (m_Core.m_RevokeHook)
+		m_Core.m_RevokeHook = false;
 	// ok so Make sure Non Passive players cant wayblock passive players
 	if(!GetPlayer()->GetCharacter()->m_PassiveMode)
 	{
@@ -2530,13 +2543,13 @@ void CCharacter::HandlePassiveMode()
 		vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength + 20.0f);
 		CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, 24.0f, Shit, pMain);
 
-		if (pTarget && pTarget->m_FirstFreezeTick != 0)
+		if (pTarget && pTarget->m_FirstFreezeTick != 0) // being able to help they player if they are stuck
 		{
 			if (pTarget->m_FirstFreezeTick + Server()->TickSpeed() * 3)
 				return;
 		}
 
-		if (pTarget && pMain->Core()->m_HookState != HOOK_GRABBED && pMain->m_LatestInput.m_Hook)
+		if (pTarget && pMain->Core()->m_HookState != HOOK_GRABBED)
 		{
 			bool IsPassive = pTarget->m_PassiveMode;
 			bool IsMember = pTarget->GetPlayer()->m_AccData.m_Vip;
@@ -2546,7 +2559,8 @@ void CCharacter::HandlePassiveMode()
 				str_format(Reason, 64, IsMember ? "You cannot wayblock a member!" : "Wayblocking isn't permitted at the time being");
 				if (!m_AntiSpam)
 				{
-					GameServer()->SendChatTarget(GetPlayer()->GetCID(), Reason);
+					if (pMain->m_LatestInput.m_Hook)
+						GameServer()->SendChatTarget(GetPlayer()->GetCID(), Reason);
 					m_AntiSpam = true;
 				}
 				pMain->Core()->m_RevokeHook = true;

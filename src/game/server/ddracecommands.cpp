@@ -121,7 +121,23 @@ void CGameContext::ConPullhammer(IConsole::IResult *pResult, void *pUserData) //
 	{
 		pSelf->m_apPlayers[Victim]->GetCharacter()->m_Pullhammer ^= 1;
 		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Pullhammer ? "%s gave you pullhammer!" : "%s removed your endless!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Pullhammer ? "%s gave you pullhammer!" : "%s removed your pullhammer!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConSmarthammer(IConsole::IResult *pResult, void *pUserData) // give or remove smarthammer
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_Bots.m_SmartHammer ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Bots.m_SmartHammer ? "%s gave you smarthammer!" : "%s removed your smarthammer!", pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
 	}
 }

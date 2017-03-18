@@ -1781,11 +1781,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 		}
 		else if (MsgID == NETMSGTYPE_CL_CHANGEINFO)
 		{
-			if (m_apPlayers[ClientID]->m_AccData.m_Vip || m_apPlayers[ClientID]->m_Authed)
-			{
-
-			}
-			else if(g_Config.m_SvSpamprotection && pPlayer->m_LastChangeInfo && pPlayer->m_LastChangeInfo+Server()->TickSpeed()*g_Config.m_SvInfoChangeDelay > Server()->Tick())
+			 if(!pPlayer->m_Authed && !pPlayer->m_AccData.m_Vip && g_Config.m_SvSpamprotection && pPlayer->m_LastChangeInfo && pPlayer->m_LastChangeInfo+Server()->TickSpeed()*g_Config.m_SvInfoChangeDelay > Server()->Tick())
 				return;
 
 			CNetMsg_Cl_ChangeInfo *pMsg = (CNetMsg_Cl_ChangeInfo *)pRawMsg;
@@ -1805,8 +1801,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			{
 				char aChatText[256];
 				str_format(aChatText, sizeof(aChatText), "'%s' changed name to '%s'", aOldName, Server()->ClientName(ClientID));
-				if(!m_apPlayers[ClientID]->m_AccData.m_Vip && m_apPlayers[ClientID]->m_Authed)
-				SendChat(-1, CGameContext::CHAT_ALL, aChatText);
+				if (!m_apPlayers[ClientID]->m_AccData.m_Vip && !m_apPlayers[ClientID]->m_Authed)
+					SendChat(-1, CGameContext::CHAT_ALL, aChatText);
 
 				// reload scores
 
