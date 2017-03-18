@@ -216,6 +216,14 @@ public:
 	bool m_XXL;
 	bool m_Bloody;
 	bool m_Steamy;
+
+	// Prevention spam for tiles
+	bool WasInRainbow;
+	bool WasInHH;
+	bool WasInBloody;
+	bool WasInSteam;
+	bool WasInXXL;
+	bool WasInCircles;
 	
 	enum
 	{

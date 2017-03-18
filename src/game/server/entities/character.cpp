@@ -696,7 +696,7 @@ void CCharacter::HandleWeapons()
 		}
 	}*/
 
-	return;
+return;
 }
 
 void CCharacter::GiveNinja()
@@ -709,7 +709,7 @@ void CCharacter::GiveNinja()
 		m_LastWeapon = m_Core.m_ActiveWeapon;
 	m_Core.m_ActiveWeapon = WEAPON_NINJA;
 
-	if(!m_aWeapons[WEAPON_NINJA].m_Got)
+	if (!m_aWeapons[WEAPON_NINJA].m_Got)
 		GameServer()->CreateSound(m_Pos, SOUND_PICKUP_NINJA, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 }
 
@@ -718,8 +718,8 @@ void CCharacter::RemoveNinja()
 	m_Ninja.m_CurrentMoveTime = 0;
 	m_aWeapons[WEAPON_NINJA].m_Got = false;
 	m_Core.m_ActiveWeapon = m_LastWeapon;
-	
-		SetWeapon(m_Core.m_ActiveWeapon);
+
+	SetWeapon(m_Core.m_ActiveWeapon);
 }
 
 void CCharacter::SetEmote(int Emote, int Tick)
@@ -731,7 +731,7 @@ void CCharacter::SetEmote(int Emote, int Tick)
 void CCharacter::OnPredictedInput(CNetObj_PlayerInput *pNewInput)
 {
 	// check for changes
-	if(mem_comp(&m_SavedInput, pNewInput, sizeof(CNetObj_PlayerInput)) != 0)
+	if (mem_comp(&m_SavedInput, pNewInput, sizeof(CNetObj_PlayerInput)) != 0)
 		m_LastAction = Server()->Tick();
 
 	// copy new input
@@ -740,7 +740,7 @@ void CCharacter::OnPredictedInput(CNetObj_PlayerInput *pNewInput)
 	m_NumInputs++;
 
 	// it is not allowed to aim in the center
-	if(m_Input.m_TargetX == 0 && m_Input.m_TargetY == 0)
+	if (m_Input.m_TargetX == 0 && m_Input.m_TargetY == 0)
 		m_Input.m_TargetY = -1;
 }
 
@@ -750,10 +750,10 @@ void CCharacter::OnDirectInput(CNetObj_PlayerInput *pNewInput)
 	mem_copy(&m_LatestInput, pNewInput, sizeof(m_LatestInput));
 
 	// it is not allowed to aim in the center
-	if(m_LatestInput.m_TargetX == 0 && m_LatestInput.m_TargetY == 0)
+	if (m_LatestInput.m_TargetX == 0 && m_LatestInput.m_TargetY == 0)
 		m_LatestInput.m_TargetY = -1;
 
-	if(m_NumInputs > 2 && m_pPlayer->GetTeam() != TEAM_SPECTATORS)
+	if (m_NumInputs > 2 && m_pPlayer->GetTeam() != TEAM_SPECTATORS)
 	{
 		HandleWeaponSwitch();
 		FireWeapon();
@@ -767,7 +767,7 @@ void CCharacter::ResetInput()
 	m_Input.m_Direction = 0;
 	//m_Input.m_Hook = 0;
 	// simulate releasing the fire button
-	if((m_Input.m_Fire&1) != 0)
+	if ((m_Input.m_Fire & 1) != 0)
 		m_Input.m_Fire++;
 	m_Input.m_Fire &= INPUT_STATE_MASK;
 	m_Input.m_Jump = 0;
@@ -780,6 +780,15 @@ void CCharacter::Tick()
 		return;
 
 	// handle info spam
+	if ((Server()->Tick() % 80) == 0 && (WasInBloody || WasInCircles || WasInHH || WasInRainbow || WasInSteam || WasInXXL))
+	{
+		WasInBloody = false;
+		WasInCircles = false;
+		WasInHH = false;
+		WasInRainbow = false;
+		WasInSteam = false;
+		WasInXXL = false;
+	}
 	if ((Server()->Tick() % 150) == 0 && m_TilePauser) // Ugly asf TODO: FIX
 		m_TilePauser = false;
 	if ((Server()->Tick() % 150) == 0 && m_AntiSpam) // Ugly asf TODO: FIX
@@ -1717,17 +1726,14 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// rainbow tile : regular players
-	static bool WasInRainbow = false;
 	if (((m_TileIndex == TILE_RAINBOW) || (m_TileFIndex == TILE_RAINBOW)) && !WasInRainbow)
 	{
 		m_pPlayer->m_Rainbow ^= 1;
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_pPlayer->m_Rainbow ? "Rainbow activated" : "Rainbow deactivated");
 		WasInRainbow = true;
 	}
-	else if (WasInRainbow && m_TileIndex != TILE_RAINBOW && m_TileFIndex != TILE_RAINBOW)
-		WasInRainbow = false;
 
-	// steamy
+	// Vip
 	if ((m_TileIndex == TILE_VIP) || (m_TileFIndex == TILE_VIP))
 	{
 		if (!m_pPlayer->m_AccData.m_Vip)
@@ -1738,7 +1744,6 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// heavyhammer
-	static bool WasInHH = false;
 	if (((m_TileIndex == TILE_HEAVYHAMMER) || (m_TileFIndex == TILE_HEAVYHAMMER)) && !WasInHH)
 	{
 		if (!m_HammerStrenght)
@@ -1749,52 +1754,38 @@ void CCharacter::HandleTiles(int Index)
 		m_HammerStrenght > 0 ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got heavyhammer!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost heavyhammer!");
 		WasInHH = true;
 	}
-	else if (WasInHH && m_TileIndex != TILE_HEAVYHAMMER && m_TileFIndex != TILE_HEAVYHAMMER)
-		WasInHH = false;
 
 	// steamy
-	static bool WasInBloody = false;
-	if (((m_TileIndex == TILE_STEAMY) || (m_TileFIndex == TILE_STEAMY)) && !WasInBloody)
+	if (((m_TileIndex == TILE_BLOODY) || (m_TileFIndex == TILE_BLOODY)) && !WasInBloody)
 	{
 		m_Bloody ^= 1;
 		m_Bloody ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got Bloody!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost Bloody!");
 		WasInBloody = true;
 	}
-	else if (WasInBloody && m_TileIndex != TILE_STEAMY && m_TileFIndex != TILE_STEAMY)
-		WasInBloody = false;
 
 	// steamy
-	static bool WasInSteam = false;
 	if (((m_TileIndex == TILE_STEAMY) || (m_TileFIndex == TILE_STEAMY)) && !WasInSteam)
 	{
 		m_Steamy ^= 1;
 		m_Steamy ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got steamy!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost steamy!");
 		WasInSteam = true;
 	}
-	else if (WasInSteam && m_TileIndex != TILE_STEAMY && m_TileFIndex != TILE_STEAMY)
-		WasInSteam = false;
 
 	// XXL
-	static bool WasInXXL = false;
 	if (((m_TileIndex == TILE_XXL) || (m_TileFIndex == TILE_XXL)) && !WasInXXL)
 	{
 		m_XXL ^= 1;
 		m_XXL ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got xxl!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost XXL!");
 		WasInXXL = true;
 	}
-	else if (WasInXXL && m_TileIndex != TILE_XXL && m_TileFIndex != TILE_XXL)
-		WasInXXL = false;
 
 	// epic circles
-	static bool WasInCircles = false;
 	if (((m_TileIndex == TILE_EPICCIRCLES) || (m_TileFIndex == TILE_EPICCIRCLES)) && !WasInCircles)
 	{
 		m_pPlayer->m_EpicCircle ^= 1;
 		m_pPlayer->m_EpicCircle ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got epic circles!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost epic circles!");
 		WasInCircles = true;
 	}
-	else if (WasInCircles && m_TileIndex != TILE_EPICCIRCLES && m_TileFIndex != TILE_EPICCIRCLES)
-		WasInCircles = false;
 
 	// passive
 	if (g_Config.m_SvWbProt != 0)
