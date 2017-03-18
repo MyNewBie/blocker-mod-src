@@ -25,6 +25,8 @@ freetype.dll
 /tileset_border*
 /twping*
 /versionsrv*
+other/boost*
+other/msinttypes*
 
 Debug
 bam
