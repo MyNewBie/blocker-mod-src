@@ -1716,7 +1716,7 @@ void CCharacter::HandleTiles(int Index)
 
 	// rainbow tile : regular players
 	static bool WasInRainbow = false;
-	if ((m_TileIndex == TILE_RAINBOW) || (m_TileFIndex == TILE_RAINBOW) && !WasInRainbow)
+	if (((m_TileIndex == TILE_RAINBOW) || (m_TileFIndex == TILE_RAINBOW)) && !WasInRainbow)
 	{
 		m_pPlayer->m_Rainbow ^= 1;
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_pPlayer->m_Rainbow ? "Rainbow activated" : "Rainbow deactivated");
@@ -1737,7 +1737,7 @@ void CCharacter::HandleTiles(int Index)
 
 	// heavyhammer
 	static bool WasInHH = false;
-	if ((m_TileIndex == TILE_HEAVYHAMMER) || (m_TileFIndex == TILE_HEAVYHAMMER) && !WasInHH)
+	if (((m_TileIndex == TILE_HEAVYHAMMER) || (m_TileFIndex == TILE_HEAVYHAMMER)) && !WasInHH)
 	{
 		if (!m_HammerStrenght)
 			m_HammerStrenght = 3;
@@ -1752,7 +1752,7 @@ void CCharacter::HandleTiles(int Index)
 
 	// steamy
 	static bool WasInSteam = false;
-	if ((m_TileIndex == TILE_STEAMY) || (m_TileFIndex == TILE_STEAMY) && !WasInSteam)
+	if (((m_TileIndex == TILE_STEAMY) || (m_TileFIndex == TILE_STEAMY)) && !WasInSteam)
 	{
 		m_Steamy ^= 1;
 		m_Steamy ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got steamy!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost steamy!");
@@ -1763,7 +1763,7 @@ void CCharacter::HandleTiles(int Index)
 
 	// XXL
 	static bool WasInXXL = false;
-	if ((m_TileIndex == TILE_XXL) || (m_TileFIndex == TILE_XXL) && !WasInXXL)
+	if (((m_TileIndex == TILE_XXL) || (m_TileFIndex == TILE_XXL)) && !WasInXXL)
 	{
 		m_XXL ^= 1;
 		m_XXL ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got xxl!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost XXL!");
@@ -1774,7 +1774,7 @@ void CCharacter::HandleTiles(int Index)
 
 	// epic circles
 	static bool WasInCircles = false;
-	if ((m_TileIndex == TILE_EPICCIRCLES) || (m_TileFIndex == TILE_EPICCIRCLES) && !WasInCircles)
+	if (((m_TileIndex == TILE_EPICCIRCLES) || (m_TileFIndex == TILE_EPICCIRCLES)) && !WasInCircles)
 	{
 		m_pPlayer->m_EpicCircle ^= 1;
 		m_pPlayer->m_EpicCircle ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got epic circles!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost epic circles!");
