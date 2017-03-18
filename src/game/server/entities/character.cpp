@@ -1728,7 +1728,7 @@ void CCharacter::HandleTiles(int Index)
 	// steamy
 	if ((m_TileIndex == TILE_VIP) || (m_TileFIndex == TILE_VIP))
 	{
-		if (m_pPlayer->m_AccData.m_UserID && !m_pPlayer->m_AccData.m_Vip)
+		if (!m_pPlayer->m_AccData.m_Vip)
 		{
 			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not a vip!");
 			Die(GetPlayer()->GetCID(), WEAPON_WORLD);
