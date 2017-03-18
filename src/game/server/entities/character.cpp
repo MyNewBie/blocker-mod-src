@@ -1703,20 +1703,41 @@ void CCharacter::HandleTiles(int Index)
 			if(Teams()->m_Core.Team(i) == Team())
 				GameServer()->SendChatTarget(i, "Your team was unlocked by an unlock team tile");
 	}
+	
+	// admin
+	if ((m_TileIndex == TILE_ADMIN) || (m_TileFIndex == TILE_ADMIN))
+	{
+		if (m_pPlayer->m_Authed != CServer::AUTHED_ADMIN)
+		{
+			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not an admin!");
+			Die(-1, WEAPON_SELF);
+		}
+	}
+
+	// rainbow tile : regular players
+	static bool WasInRainbow = false;
+	if ((m_TileIndex == TILE_RAINBOW) || (m_TileFIndex == TILE_RAINBOW) && !WasInRainbow)
+	{
+		m_pPlayer->m_Rainbow ^= 1;
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_pPlayer->m_Rainbow ? "Rainbow activated" : "Rainbow deactivated");
+		WasInRainbow = true;
+	}
+	else if (WasInRainbow && !((m_TileIndex == TILE_RAINBOW) || (m_TileFIndex == TILE_RAINBOW)))
+		WasInRainbow = false;
 
 	// steamy
-	if ((m_TileIndex == TILE_VIP) || (m_TileFIndex == TILE_VIP) && !m_TilePauser)
+	if ((m_TileIndex == TILE_VIP) || (m_TileFIndex == TILE_VIP))
 	{
 		if (m_pPlayer->m_AccData.m_UserID && !m_pPlayer->m_AccData.m_Vip)
 		{
 			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not a vip!");
 			Die(-1, WEAPON_SELF);
 		}
-		m_TilePauser = true;
 	}
 
 	// heavyhammer
-	if ((m_TileIndex == TILE_HEAVYHAMMER) || (m_TileFIndex == TILE_HEAVYHAMMER) && !m_TilePauser)
+	static bool WasInHH = false;
+	if ((m_TileIndex == TILE_HEAVYHAMMER) || (m_TileFIndex == TILE_HEAVYHAMMER) && !WasInHH)
 	{
 		if (!m_HammerStrenght)
 			m_HammerStrenght = 3;
@@ -1724,32 +1745,43 @@ void CCharacter::HandleTiles(int Index)
 			m_HammerStrenght = 0;
 
 		m_HammerStrenght > 0 ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got heavyhammer!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost heavyhammer!");
-		m_TilePauser = true;
+		WasInHH = true;
 	}
+	else if (WasInHH && !((m_TileIndex == TILE_HEAVYHAMMER) || (m_TileFIndex == TILE_HEAVYHAMMER)))
+		WasInHH = false;
 
 	// steamy
-	if ((m_TileIndex == TILE_STEAMY) || (m_TileFIndex == TILE_STEAMY) && !m_TilePauser)
+	static bool WasInSteam = false;
+	if ((m_TileIndex == TILE_STEAMY) || (m_TileFIndex == TILE_STEAMY) && !WasInSteam)
 	{
 		m_Steamy ^= 1;
 		m_Steamy ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got steamy!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost steamy!");
-		m_TilePauser = true;
+		WasInSteam = true;
 	}
+	else if (WasInSteam && !((m_TileIndex == TILE_STEAMY) || (m_TileFIndex == TILE_STEAMY)))
+		WasInSteam = false;
 
 	// XXL
-	if ((m_TileIndex == TILE_XXL) || (m_TileFIndex == TILE_XXL) && !m_TilePauser)
+	static bool WasInXXL = false;
+	if ((m_TileIndex == TILE_XXL) || (m_TileFIndex == TILE_XXL) && !WasInXXL)
 	{
 		m_XXL ^= 1;
 		m_XXL ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got xxl!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost XXL!");
-		m_TilePauser = true;
+		WasInXXL = true;
 	}
+	else if (WasInXXL && !((m_TileIndex == TILE_XXL) || (m_TileFIndex == TILE_XXL)))
+		WasInXXL = false;
 
 	// epic circles
-	if ((m_TileIndex == TILE_EPICCIRCLES) || (m_TileFIndex == TILE_EPICCIRCLES) && !m_TilePauser)
+	static bool WasInCircles = false;
+	if ((m_TileIndex == TILE_EPICCIRCLES) || (m_TileFIndex == TILE_EPICCIRCLES) && !WasInCircles)
 	{
 		m_pPlayer->m_EpicCircle ^= 1;
 		m_pPlayer->m_EpicCircle ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got epic circles!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost epic circles!");
-		m_TilePauser = true;
+		WasInCircles = true;
 	}
+	else if (WasInCircles && !((m_TileIndex == TILE_EPICCIRCLES) || (m_TileFIndex == TILE_EPICCIRCLES)))
+		WasInCircles = false;
 
 	// passive
 	if (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed)
@@ -2183,6 +2215,7 @@ void CCharacter::SendZoneMsgs()
 
 void CCharacter::DDRaceTick()
 {
+	HandleRainbow();
 	mem_copy(&m_Input, &m_SavedInput, sizeof(m_Input));
 	m_Armor=(m_FreezeTime >= 0)?10-(m_FreezeTime/15):0;
 	if(m_Input.m_Direction != 0 || m_Input.m_Jump != 0)
@@ -2592,4 +2625,67 @@ void CCharacter::QuestReset()
 	m_QuestData.m_HammeredTarget = false;
 	m_QuestData.m_RifledTarget = false;
 	m_QuestData.m_ShotgunedTarget = false;
+}
+
+void CCharacter::HandleRainbow()
+{
+	if (m_pPlayer->m_Rainbow)
+	{
+		// save teh varrrrrrr:D
+		if (!m_pPlayer->m_Called)
+		{
+			m_pPlayer->m_OldColorBody = m_pPlayer->m_TeeInfos.m_ColorBody;
+			m_pPlayer->m_OldColorFeet = m_pPlayer->m_TeeInfos.m_ColorFeet;
+			m_pPlayer->m_OldCustom = m_pPlayer->m_TeeInfos.m_UseCustomColor;
+			m_pPlayer->m_Called = true;
+		}
+		m_pPlayer->m_TeeInfos.m_UseCustomColor = 1;
+
+		if (m_pPlayer->m_LastRainbow >= 16711424 || m_pPlayer->m_LastRainbow < 65280)
+			m_pPlayer->m_LastRainbow = 65280;
+		else
+			m_pPlayer->m_LastRainbow += 65536;  //the magic number
+
+		m_pPlayer->m_TeeInfos.m_ColorFeet = m_pPlayer->m_LastRainbow;
+
+		if (m_pPlayer->m_Rainbow)
+			m_pPlayer->m_TeeInfos.m_ColorBody = m_pPlayer->m_LastRainbow;
+	}
+	else if (m_pPlayer->m_Rainbowepiletic)
+	{
+		// save teh varrrrrrr:D
+		if (!m_pPlayer->m_Called)
+		{
+			m_pPlayer->m_OldColorBody = m_pPlayer->m_TeeInfos.m_ColorBody;
+			m_pPlayer->m_OldColorFeet = m_pPlayer->m_TeeInfos.m_ColorFeet;
+			m_pPlayer->m_OldCustom = m_pPlayer->m_TeeInfos.m_UseCustomColor;
+			m_pPlayer->m_Called = true;
+		}
+		m_pPlayer->m_TeeInfos.m_UseCustomColor = 1;
+
+		if (m_pPlayer->m_LastRainbow >= 16711424 || m_pPlayer->m_LastRainbow < 65280)
+			m_pPlayer->m_LastRainbow = 65280;
+		else
+			m_pPlayer->m_LastRainbow += 65536 * 8;  //the magic number
+
+		m_pPlayer->m_TeeInfos.m_ColorFeet = m_pPlayer->m_LastRainbow;
+
+		if (m_pPlayer->m_LastRainbow2 >= 16711424 || m_pPlayer->m_LastRainbow2 < 65280)
+			m_pPlayer->m_LastRainbow2 = 65280;
+		else
+			m_pPlayer->m_LastRainbow2 += 65536 * 18;  //the magic number
+
+		m_pPlayer->m_TeeInfos.m_ColorBody = m_pPlayer->m_LastRainbow2;
+	}
+	else
+	{
+		if (m_pPlayer->m_Called)
+		{
+			m_pPlayer->m_TeeInfos.m_ColorBody = m_pPlayer->m_OldColorBody;
+			m_pPlayer->m_TeeInfos.m_ColorFeet = m_pPlayer->m_OldColorFeet;
+			m_pPlayer->m_TeeInfos.m_UseCustomColor = m_pPlayer->m_OldCustom;
+			m_pPlayer->m_Called = false;
+		}
+
+	}
 }

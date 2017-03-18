@@ -166,6 +166,8 @@ enum
 	TILE_BLOODY,
 	TILE_STEAMY,
 	TILE_VIP,
+	TILE_RAINBOW,
+	TILE_ADMIN,
 
 	//End of higher tiles
 	//Layers

@@ -178,6 +178,7 @@ private:
 	void HandleTuneLayer();
 	void HandleThreeSecondRule();
 	void HandlePassiveMode();
+	void HandleRainbow();
 	void HandleBots();
 	void SendZoneMsgs();
 
@@ -231,6 +232,13 @@ public:
 		DISABLE_HIT_RIFLE=8
 	};
 
+	enum
+	{
+		QUEST_PART1 = 1,
+		QUEST_PART2,
+		QUEST_PART3,
+	};
+
 	// Quest to accuire pages for DeathNote booklet :)
 	struct
 	{
@@ -240,6 +248,7 @@ public:
 			m_GrenadedTarget,
 			m_ShotgunedTarget,
 			m_HammeredTarget;
+		int m_QuestPart;
 	} m_QuestData;
 
 	void QuestReset();

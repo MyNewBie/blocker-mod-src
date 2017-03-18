@@ -116,6 +116,14 @@ public:
 	} m_Latency;
 
 	bool m_EpicCircle;
+	bool m_Rainbowepiletic; // Epiletic rainbow!
+	bool m_Rainbow;
+	bool m_Called;
+	int m_OldColorBody;
+	int m_OldColorFeet;
+	int m_OldCustom;
+	int m_LastRainbow;
+	int m_LastRainbow2;
 
 	// City
 	struct

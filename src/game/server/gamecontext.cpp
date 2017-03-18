@@ -1242,6 +1242,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), "PassiveMode disabled!");
 					}
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "rainbow", 7) == 0)
+				{
+					pPlayer->m_Rainbowepiletic ^= 1;
+					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Rainbow activated" : "Rainbow deactivated");
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
 				{
 					char pWhisperMsg[256];
