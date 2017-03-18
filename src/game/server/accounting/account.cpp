@@ -119,12 +119,13 @@ void CAccount::Login(char *Username, char *Password)
 
 	Accfile = fopen(aBuf, "r");
 
-	fscanf(Accfile, "%s\n%s\n%s\n%d\n%d",
+	fscanf(Accfile, "%s\n%s\n%s\n%d\n%d\n%d",
 		m_pPlayer->m_AccData.m_Username, // Done
 		m_pPlayer->m_AccData.m_Password, // Done
 		m_pPlayer->m_AccData.m_RconPassword,
 		&m_pPlayer->m_AccData.m_UserID,
-		&m_pPlayer->m_AccData.m_Vip); // Done
+		&m_pPlayer->m_AccData.m_Vip,
+		&m_pPlayer->m_Pages); // Done
 
 	fclose(Accfile);
 
@@ -204,12 +205,13 @@ void CAccount::Register(char *Username, char *Password)
 	FILE *Accfile;
 	Accfile = fopen(aBuf, "a+");
 
-	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d",
+	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d\n%d",
 		Username,
 		Password,
 		"0",
 		NextID(),
-		m_pPlayer->m_AccData.m_Vip);
+		m_pPlayer->m_AccData.m_Vip,
+		m_pPlayer->m_Pages);
 
 	fputs(aBuf, Accfile);
 	fclose(Accfile);
@@ -239,12 +241,13 @@ void CAccount::Apply()
 	FILE *Accfile;
 	Accfile = fopen(aBuf, "a+");
 
-	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d",
+	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d\n%d",
 		m_pPlayer->m_AccData.m_Username,
 		m_pPlayer->m_AccData.m_Password,
 		m_pPlayer->m_AccData.m_RconPassword,
 		m_pPlayer->m_AccData.m_UserID,
-		m_pPlayer->m_AccData.m_Vip);
+		m_pPlayer->m_AccData.m_Vip,
+		m_pPlayer->m_Pages);
 
 	fputs(aBuf, Accfile);
 	fclose(Accfile);

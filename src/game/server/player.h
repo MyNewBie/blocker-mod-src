@@ -124,6 +124,8 @@ public:
 	int m_OldCustom;
 	int m_LastRainbow;
 	int m_LastRainbow2;
+	bool m_DeathNote;
+	int m_Pages;
 
 	// City
 	struct

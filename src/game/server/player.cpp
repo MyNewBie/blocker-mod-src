@@ -387,6 +387,8 @@ void CPlayer::FakeSnap()
 
 void CPlayer::OnDisconnect(const char *pReason)
 {
+	if (m_AccData.m_UserID)
+		m_pAccount->Apply(); // Save important Shit b4 leaving
 	// City
 	if (m_AccData.m_UserID)
 		m_pAccount->Reset();
