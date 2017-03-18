@@ -1191,14 +1191,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), Msg);
 						return;
 					}
-					else if (!pPlayer->GetCharacter()->m_Bots.m_SmartHammer)
+					else if (!pPlayer->m_Bots.m_SmartHammer)
 					{
-						pPlayer->GetCharacter()->m_Bots.m_SmartHammer = true;
+						pPlayer->m_Bots.m_SmartHammer = true;
 						SendChatTarget(pPlayer->GetCID(), "Smarthammer enabled!");
 					}
 					else
 					{
-						pPlayer->GetCharacter()->m_Bots.m_SmartHammer = false;
+						pPlayer->m_Bots.m_SmartHammer = false;
 						SendChatTarget(pPlayer->GetCID(), "Smarthammer disabled!");
 					}
 				}
@@ -1211,14 +1211,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), Msg);
 						return;
 					}
-					else if (!pPlayer->GetCharacter()->m_Bots.m_AutoHook)
+					else if (!pPlayer->m_Bots.m_AutoHook)
 					{
-						pPlayer->GetCharacter()->m_Bots.m_AutoHook = true;
+						pPlayer->m_Bots.m_AutoHook = true;
 						SendChatTarget(pPlayer->GetCID(), "Autohook enabled!");
 					}
 					else
 					{
-						pPlayer->GetCharacter()->m_Bots.m_AutoHook = false;
+						pPlayer->m_Bots.m_AutoHook = false;
 						SendChatTarget(pPlayer->GetCID(), "Autohook disabled!");
 					}
 				}
@@ -1242,7 +1242,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), "PassiveMode disabled!");
 					}
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "rainbow", 7) == 0)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "rainbow", 7) == 0 && pPlayer->m_AccData.m_Vip)
 				{
 					pPlayer->m_Rainbowepiletic ^= 1;
 					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Rainbow activated" : "Rainbow deactivated");
@@ -1791,7 +1791,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 		}
 		else if (MsgID == NETMSGTYPE_CL_CHANGEINFO)
 		{
-			if(g_Config.m_SvSpamprotection && pPlayer->m_LastChangeInfo && pPlayer->m_LastChangeInfo+Server()->TickSpeed()*g_Config.m_SvInfoChangeDelay > Server()->Tick())
+			if (m_apPlayers[ClientID]->m_AccData.m_Vip || m_apPlayers[ClientID]->m_Authed)
+			{
+
+			}
+			else if(g_Config.m_SvSpamprotection && pPlayer->m_LastChangeInfo && pPlayer->m_LastChangeInfo+Server()->TickSpeed()*g_Config.m_SvInfoChangeDelay > Server()->Tick())
 				return;
 
 			CNetMsg_Cl_ChangeInfo *pMsg = (CNetMsg_Cl_ChangeInfo *)pRawMsg;
@@ -1811,6 +1815,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			{
 				char aChatText[256];
 				str_format(aChatText, sizeof(aChatText), "'%s' changed name to '%s'", aOldName, Server()->ClientName(ClientID));
+				if(!m_apPlayers[ClientID]->m_AccData.m_Vip && m_apPlayers[ClientID]->m_Authed)
 				SendChat(-1, CGameContext::CHAT_ALL, aChatText);
 
 				// reload scores

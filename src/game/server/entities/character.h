@@ -216,12 +216,6 @@ public:
 	bool m_XXL;
 	bool m_Bloody;
 	bool m_Steamy;
-
-	struct 
-	{
-		bool m_SmartHammer;
-		bool m_AutoHook;
-	} m_Bots;
 	
 	enum
 	{

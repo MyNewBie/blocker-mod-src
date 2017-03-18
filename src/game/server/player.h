@@ -115,6 +115,12 @@ public:
 		int m_Max;
 	} m_Latency;
 
+	struct
+	{
+		bool m_SmartHammer;
+		bool m_AutoHook;
+	} m_Bots;
+
 	bool m_EpicCircle;
 	bool m_Rainbowepiletic; // Epiletic rainbow!
 	bool m_Rainbow;

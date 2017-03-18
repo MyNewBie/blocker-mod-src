@@ -333,6 +333,8 @@ void CCharacter::HandleWeaponSwitch()
 
 void CCharacter::FireWeapon()
 {
+	if (m_PassiveMode)
+		return;
 	if(m_ReloadTimer != 0 && !m_XXL)
 		return;
 
@@ -1722,7 +1724,7 @@ void CCharacter::HandleTiles(int Index)
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_pPlayer->m_Rainbow ? "Rainbow activated" : "Rainbow deactivated");
 		WasInRainbow = true;
 	}
-	else if (WasInRainbow && !((m_TileIndex == TILE_RAINBOW) || (m_TileFIndex == TILE_RAINBOW)))
+	else if (WasInRainbow && m_TileIndex != TILE_RAINBOW && m_TileFIndex != TILE_RAINBOW)
 		WasInRainbow = false;
 
 	// steamy
@@ -1747,8 +1749,19 @@ void CCharacter::HandleTiles(int Index)
 		m_HammerStrenght > 0 ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got heavyhammer!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost heavyhammer!");
 		WasInHH = true;
 	}
-	else if (WasInHH && !((m_TileIndex == TILE_HEAVYHAMMER) || (m_TileFIndex == TILE_HEAVYHAMMER)))
+	else if (WasInHH && m_TileIndex != TILE_HEAVYHAMMER && m_TileFIndex != TILE_HEAVYHAMMER)
 		WasInHH = false;
+
+	// steamy
+	static bool WasInBloody = false;
+	if (((m_TileIndex == TILE_STEAMY) || (m_TileFIndex == TILE_STEAMY)) && !WasInBloody)
+	{
+		m_Bloody ^= 1;
+		m_Bloody ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got Bloody!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost Bloody!");
+		WasInBloody = true;
+	}
+	else if (WasInBloody && m_TileIndex != TILE_STEAMY && m_TileFIndex != TILE_STEAMY)
+		WasInBloody = false;
 
 	// steamy
 	static bool WasInSteam = false;
@@ -1758,7 +1771,7 @@ void CCharacter::HandleTiles(int Index)
 		m_Steamy ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got steamy!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost steamy!");
 		WasInSteam = true;
 	}
-	else if (WasInSteam && !((m_TileIndex == TILE_STEAMY) || (m_TileFIndex == TILE_STEAMY)))
+	else if (WasInSteam && m_TileIndex != TILE_STEAMY && m_TileFIndex != TILE_STEAMY)
 		WasInSteam = false;
 
 	// XXL
@@ -1769,7 +1782,7 @@ void CCharacter::HandleTiles(int Index)
 		m_XXL ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got xxl!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost XXL!");
 		WasInXXL = true;
 	}
-	else if (WasInXXL && !((m_TileIndex == TILE_XXL) || (m_TileFIndex == TILE_XXL)))
+	else if (WasInXXL && m_TileIndex != TILE_XXL && m_TileFIndex != TILE_XXL)
 		WasInXXL = false;
 
 	// epic circles
@@ -1780,7 +1793,7 @@ void CCharacter::HandleTiles(int Index)
 		m_pPlayer->m_EpicCircle ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got epic circles!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost epic circles!");
 		WasInCircles = true;
 	}
-	else if (WasInCircles && !((m_TileIndex == TILE_EPICCIRCLES) || (m_TileFIndex == TILE_EPICCIRCLES)))
+	else if (WasInCircles && m_TileIndex != TILE_EPICCIRCLES && m_TileFIndex != TILE_EPICCIRCLES)
 		WasInCircles = false;
 
 	// passive
@@ -2560,7 +2573,7 @@ void CCharacter::HandleBots()
 	if (GetPlayer()->m_PlayerFlags&PLAYERFLAG_CHATTING) // Until we decide to make more bots ill Clean up and make some vars
 		return;
 
-	if (m_Bots.m_SmartHammer && GetPlayer()->GetCharacter()->Core()->m_ActiveWeapon == WEAPON_HAMMER)
+	if (GetPlayer()->m_Bots.m_SmartHammer && GetPlayer()->GetCharacter()->Core()->m_ActiveWeapon == WEAPON_HAMMER)
 	{
 		CCharacter * pTarget = GameWorld()->ClosestCharacter(GetPlayer()->GetCharacter()->m_Pos, 64.f, GetPlayer()->GetCharacter());
 		bool isFreeze;
@@ -2583,7 +2596,7 @@ void CCharacter::HandleBots()
 		else if (m_HammerUpBot)
 			m_HammerUpBot = false;
 	}
-	if (m_Bots.m_AutoHook)
+	if (GetPlayer()->m_Bots.m_AutoHook)
 	{
 		CCharacter *pMain = GetPlayer()->GetCharacter();
 		if (pMain->GetPlayer()->m_PlayerFlags&PLAYERFLAG_AIM)

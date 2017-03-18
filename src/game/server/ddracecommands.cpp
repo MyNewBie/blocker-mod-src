@@ -89,6 +89,7 @@ void CGameContext::ConKillPlayer(IConsole::IResult *pResult, void *pUserData)
 		str_format(aBuf, sizeof(aBuf), "%s was killed by %s",
 				pSelf->Server()->ClientName(Victim),
 				pSelf->Server()->ClientName(pResult->m_ClientID));
+		if(pSelf->m_apPlayers[pResult->m_ClientID]->m_AccData.m_Vip)
 		pSelf->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 	}
 }
