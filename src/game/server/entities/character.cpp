@@ -1710,7 +1710,7 @@ void CCharacter::HandleTiles(int Index)
 		if (m_pPlayer->m_Authed != CServer::AUTHED_ADMIN)
 		{
 			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not an admin!");
-			Die(-1, WEAPON_SELF);
+			Die(GetPlayer()->GetCID(), WEAPON_WORLD);
 		}
 	}
 
@@ -1731,7 +1731,7 @@ void CCharacter::HandleTiles(int Index)
 		if (m_pPlayer->m_AccData.m_UserID && !m_pPlayer->m_AccData.m_Vip)
 		{
 			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not a vip!");
-			Die(-1, WEAPON_SELF);
+			Die(GetPlayer()->GetCID(), WEAPON_WORLD);
 		}
 	}
 
@@ -1784,9 +1784,9 @@ void CCharacter::HandleTiles(int Index)
 		WasInCircles = false;
 
 	// passive
-	if (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed)
+	if (g_Config.m_SvWbProt != 0)
 	{
-		if (g_Config.m_SvWbProt == 1 || m_pPlayer->m_Authed)
+		if (g_Config.m_SvWbProt == 1)
 		{
 			if ((m_TileIndex == TILE_PASSIVE_IN) || (m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
 			{
