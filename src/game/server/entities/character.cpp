@@ -2510,14 +2510,47 @@ void CCharacter::HandlePassiveMode()
 		m_Core.m_Collision = false;
 		m_NeededFaketuning |= FAKETUNE_NOCOLL;
 		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-		m_Core.m_PassiveMode = true;
+		//m_Core.m_PassiveMode = true;
+
+		CCharacter *pMain = GetPlayer()->GetCharacter();
+		vec2 Shit;
+		const int Angle = round(atan2(pMain->m_LatestInput.m_TargetX, pMain->m_LatestInput.m_TargetY) * 256); // compress
+		const vec2 Direction = vec2(sin(Angle / 256.f), cos(Angle / 256.f)); // decompress
+		vec2 initPos = pMain->m_Pos + Direction * 28.0f * 1.5f;
+		vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength + 20.0f);
+		CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, 24.0f, Shit, pMain);
+
+		if (pMain->Core()->m_HookedPlayer != -1)
+		{
+			CCharacter *HookedPlayer = GameServer()->GetPlayerChar(pMain->Core()->m_HookedPlayer);
+			if (HookedPlayer)
+				pMain->Core()->m_RevokeHook = true;
+			else if (HookedPlayer)
+				pMain->Core()->m_RevokeHook = false;
+		}
+		else if (pMain->Core()->m_RevokeHook)
+			pMain->Core()->m_RevokeHook = false;
+
+		if (pTarget && pTarget->m_FirstFreezeTick != 0)
+		{
+			if (pTarget->m_FirstFreezeTick + Server()->TickSpeed() * 3)
+				return;
+		}
+
+		if (pMain && pTarget && pMain->m_PassiveMode && pMain->Core()->m_HookState != HOOK_GRABBED)
+		{
+			pMain->Core()->m_RevokeHook = true;
+		}
+		else if (pMain->Core()->m_RevokeHook)
+			pMain->Core()->m_RevokeHook = false;
+		
 	}
 	else if (m_Core.m_PassiveMode)
 	{
 		m_Core.m_Collision = true;
 		m_NeededFaketuning &= ~FAKETUNE_NOCOLL;
 		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-		m_Core.m_PassiveMode = false;
+		//m_Core.m_PassiveMode = false;
 	}
 	// ok so Make sure Non Passive players cant wayblock passive players
 	if(!GetPlayer()->GetCharacter()->m_PassiveMode)
@@ -2530,13 +2563,24 @@ void CCharacter::HandlePassiveMode()
 		vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength + 20.0f);
 		CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, 24.0f, Shit, pMain);
 
+		if (pMain->Core()->m_HookedPlayer != -1)
+		{
+			CCharacter *HookedPlayer = GameServer()->GetPlayerChar(pMain->Core()->m_HookedPlayer);
+			if (HookedPlayer && HookedPlayer->m_PassiveMode)
+				pMain->Core()->m_RevokeHook = true;
+			else if (HookedPlayer && pMain->Core()->m_RevokeHook)
+				pMain->Core()->m_RevokeHook = false;
+		}
+		else if (pMain->Core()->m_RevokeHook)
+			pMain->Core()->m_RevokeHook = false;
+
 		if (pTarget && pTarget->m_FirstFreezeTick != 0)
 		{
 			if (pTarget->m_FirstFreezeTick + Server()->TickSpeed() * 3)
 				return;
 		}
 
-		if (pTarget && pMain->Core()->m_HookState != HOOK_GRABBED && pMain->m_LatestInput.m_Hook)
+		if (pTarget && pMain->Core()->m_HookState != HOOK_GRABBED)
 		{
 			bool IsPassive = pTarget->m_PassiveMode;
 			bool IsMember = pTarget->GetPlayer()->m_AccData.m_Vip;
@@ -2546,6 +2590,7 @@ void CCharacter::HandlePassiveMode()
 				str_format(Reason, 64, IsMember ? "You cannot wayblock a member!" : "Wayblocking isn't permitted at the time being");
 				if (!m_AntiSpam)
 				{
+					if(pMain->m_LatestInput.m_Hook)
 					GameServer()->SendChatTarget(GetPlayer()->GetCID(), Reason);
 					m_AntiSpam = true;
 				}

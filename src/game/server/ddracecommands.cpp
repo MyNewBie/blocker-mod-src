@@ -121,7 +121,7 @@ void CGameContext::ConPullhammer(IConsole::IResult *pResult, void *pUserData) //
 	{
 		pSelf->m_apPlayers[Victim]->GetCharacter()->m_Pullhammer ^= 1;
 		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Pullhammer ? "%s gave you pullhammer!" : "%s removed your endless!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Pullhammer ? "%s gave you pullhammer!" : "%s removed your pullhammer!", pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
 	}
 }
