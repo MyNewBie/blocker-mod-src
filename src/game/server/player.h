@@ -60,7 +60,11 @@ public:
 
 	// used for spectator mode
 	int m_SpectatorID;
-
+	
+	//special
+	int m_Vacuum;
+    
+	bool m_IsEmote;
 	bool m_IsReady;
 
 	//

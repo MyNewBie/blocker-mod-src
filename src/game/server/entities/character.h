@@ -36,6 +36,10 @@ class CCharacter : public CEntity
 	friend class CSaveTee; // need to use core
 
 public:
+
+	// the player core for the physics
+	CCharacterCore m_Core;
+	
 	//character's size
 	static const int ms_PhysSize = 28;
 
@@ -55,6 +59,7 @@ public:
 	void SetWeapon(int W);
 	void SetSolo(bool Solo);
 	void HandleWeaponSwitch();
+	void EmoteCheck(int Index);
 	void DoWeaponSwitch();
 
 	void HandleWeapons();
@@ -155,9 +160,6 @@ private:
 
 	int m_AnimIDNum;
 	int * m_apAnimIDs;
-
-	// the player core for the physics
-	CCharacterCore m_Core;
 
 	// info for dead reckoning
 	int m_ReckoningTick; // tick that we are performing dead reckoning From

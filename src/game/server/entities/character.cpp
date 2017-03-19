@@ -3,6 +3,7 @@
 #include <new>
 #include <engine/shared/config.h>
 #include <game/server/gamecontext.h>
+#include <game/server/entities/special/vacuum.h>
 #include <game/mapitems.h>
 
 #include "character.h"
@@ -60,6 +61,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	GameServer()->m_World.InsertEntity(this);
 	m_Alive = true;
+	
+	m_pPlayer->m_IsEmote = false; /* Reset */
 
 	GameServer()->m_pController->OnCharacterSpawn(this);
 
@@ -331,6 +334,15 @@ void CCharacter::HandleWeaponSwitch()
 	DoWeaponSwitch();
 }
 
+void CCharacter::EmoteCheck(int Index)
+{
+	if(Index == EMOTICON_EYES)
+		m_pPlayer->m_IsEmote = true;
+	else
+		m_pPlayer->m_IsEmote = false;
+}
+
+
 void CCharacter::FireWeapon()
 {
 	if (m_PassiveMode)
@@ -484,7 +496,13 @@ void CCharacter::FireWeapon()
 
 			Hits++;
 		}
-
+			
+			if(m_pPlayer->m_Vacuum < 3 && m_pPlayer->m_IsEmote) /* Check Item Value */
+			{
+				new CVacuum(GameWorld(), vec2(m_Input.m_TargetX,m_Input.m_TargetY)+m_Pos, m_pPlayer->GetCID());
+					m_pPlayer->m_Vacuum++;
+			}
+			
 		// if we Hit anything, we have to wait for the reload
 		if (Hits)
 			m_ReloadTimer = Server()->TickSpeed() / 3;
@@ -966,6 +984,9 @@ void CCharacter::Die(int Killer, int Weapon)
 
 	// this is for auto respawn after 3 secs
 	m_pPlayer->m_DieTick = Server()->Tick();
+	
+	m_pPlayer->m_Vacuum = 0;
+	m_pPlayer->m_IsEmote = false;
 
 	m_Alive = false;
 	GameServer()->m_World.RemoveEntity(this);
