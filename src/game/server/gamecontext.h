@@ -247,6 +247,9 @@ private:
 	//static void ConMute(IConsole::IResult *pResult, void *pUserData);
 	//static void ConUnmute(IConsole::IResult *pResult, void *pUserData);
 	static void ConKillPlayer(IConsole::IResult *pResult, void *pUserData);
+	
+	//special
+	static void ConRename(IConsole::IResult *pResult, void *pUserData);
 	static void ConEndless(IConsole::IResult *pResult, void *pUserData); // Give or remove endless
 	static void ConPullhammer(IConsole::IResult *pResult, void *pUserData); // Give or remove endless
 	static void ConEpicCircles(IConsole::IResult *pResult, void *pUserData); // Give or remove epic circles

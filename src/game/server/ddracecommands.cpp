@@ -651,3 +651,32 @@ void CGameContext::ConUnFreezeHammer(IConsole::IResult *pResult, void *pUserData
 
 	pChr->m_FreezeHammer = false;
 }
+
+void CGameContext::ConRename(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	const char *newName = pResult->GetString(0);
+	int Victim = pResult->GetVictim();
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	if(!pPlayer)
+		return;
+
+	CCharacter* pChr = pSelf->m_apPlayers[Victim]->GetCharacter();
+	if(!pChr)
+		return;
+
+	//change name
+	char oldName[MAX_NAME_LENGTH];
+	str_copy(oldName, pSelf->Server()->ClientName(Victim), MAX_NAME_LENGTH);
+
+	pSelf->Server()->SetClientName(Victim, newName);
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), "%s has changed %s's name to '%s'", pSelf->Server()->ClientName(pResult->m_ClientID), oldName, pSelf->Server()->ClientName(Victim));
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
+
+	str_format(aBuf, sizeof(aBuf), "%s changed your name to %s.", pSelf->Server()->ClientName(pResult->m_ClientID), pSelf->Server()->ClientName(Victim));
+	//pSelf->SendChatTarget(Victim, aBuf);
+}
