@@ -182,7 +182,7 @@ private:
 	void HandlePassiveMode();
 	void HandleRainbow();
 	void HandleBots();
-	void HandleTimeCodeCheats();
+	//void HandleTimeCodeCheats();
 	void SendZoneMsgs();
 
 	bool m_SetSavePos;

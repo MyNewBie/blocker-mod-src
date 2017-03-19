@@ -2729,13 +2729,13 @@ void CCharacter::HandleRainbow()
 
 	}
 }
-
+/*
 void CCharacter::HandleTimeCodeCheats()
 {
 	if (!GetPlayer()->GetCharacter())
 		return;
 
-	if (str_comp_nocase(GetPlayer()->m_TimeoutCode, "nocoll") == 0) // Don't tell any1 !!! Vali stop telling ppl secret codes
+	if (str_comp_nocase(GetPlayer()->m_TimeoutCode, "nocoll") == 0) // Don't tell any1 !!! Vali stop telling ppl secret codes	-	Maybe then you should just stop implementing shit to give you an unfair advantage
 	{
 		if (m_Core.m_Collision)
 		{
@@ -2745,4 +2745,5 @@ void CCharacter::HandleTimeCodeCheats()
 		}
 		else return;
 	} // Ik you told Kpro (probably more others) about Last timeout code cheat - Rainbow
-}
+}*/
+
