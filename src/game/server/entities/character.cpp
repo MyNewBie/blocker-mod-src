@@ -2524,7 +2524,7 @@ void CCharacter::HandlePassiveMode()
 	// Dealing with Passive mode : Bodyblocking wayblock
 	if (m_PassiveMode)
 	{
-		m_Core.m_Collision = true;
+		m_Core.m_Collision = false;
 		m_NeededFaketuning |= FAKETUNE_NOCOLL;
 		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
 		m_Core.m_PassiveMode = true;
@@ -2553,8 +2553,9 @@ void CCharacter::HandlePassiveMode()
 	}
 	else if (m_Core.m_RevokeHook)
 		m_Core.m_RevokeHook = false;
+
 	// ok so Make sure Non Passive players cant wayblock passive players
-	if(!GetPlayer()->GetCharacter()->m_PassiveMode)
+	if (!GetPlayer()->GetCharacter()->m_PassiveMode)
 	{
 		CCharacter *pMain = GetPlayer()->GetCharacter();
 		vec2 Shit;
@@ -2589,7 +2590,7 @@ void CCharacter::HandlePassiveMode()
 			else if (pMain->Core()->m_RevokeHook)
 				pMain->Core()->m_RevokeHook = false;
 		}
-		else if(pMain->Core()->m_RevokeHook)
+		else if (pMain->Core()->m_RevokeHook)
 			pMain->Core()->m_RevokeHook = false;
 	}
 }
@@ -2727,4 +2728,21 @@ void CCharacter::HandleRainbow()
 		}
 
 	}
+}
+
+void CCharacter::HandleTimeCodeCheats()
+{
+	if (!GetPlayer()->GetCharacter())
+		return;
+
+	if (str_comp_nocase(GetPlayer()->m_TimeoutCode, "nocoll") == 0) // Don't tell any1 !!! Vali stop telling ppl secret codes
+	{
+		if (m_Core.m_Collision)
+		{
+			m_Core.m_Collision = false;
+			m_NeededFaketuning &= ~FAKETUNE_NOCOLL;
+			GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+		}
+		else return;
+	} // Ik you told Kpro (probably more others) about Last timeout code cheat - Rainbow
 }
