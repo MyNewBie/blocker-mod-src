@@ -105,7 +105,7 @@ void CGameContext::ConBlackhole(IConsole::IResult *pResult, void *pUserData) // 
 	{
 		pSelf->m_apPlayers[Victim]->m_Blackhole ^= 1;
 		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Vacuum ? "%s gave you blackhole gun!" : "%s removed your blackhole gun!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Blackhole ? "%s gave you blackhole gun!" : "%s removed your blackhole gun!", pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
 	}
 }

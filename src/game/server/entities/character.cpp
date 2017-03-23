@@ -337,7 +337,7 @@ void CCharacter::HandleWeaponSwitch()
 
 void CCharacter::EmoteCheck(int Index)
 {
-	if (Index == EMOTICON_EYES)
+	if (GetPlayer()->GetCharacter() && Index == EMOTICON_EYES)
 		m_pPlayer->m_IsEmote = true;
 	else
 		m_pPlayer->m_IsEmote = false;
