@@ -60,7 +60,7 @@ void CVacuum::Gravity()
 				m_Kill = false;
 			}
 
-			if (m_Kill)
+			if (m_Kill && g_Config.m_SvBlackHoleKills)
 			{
 				if (length(m_Pos - apEnts[i]->m_Pos) < 50) /* Check Distance To Die */
 					apEnts[i]->Die(m_Owner, WEAPON_HAMMER);
