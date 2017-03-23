@@ -504,7 +504,7 @@ void CCharacter::FireWeapon()
 			Hits++;
 		}
 			
-			if(m_pPlayer->m_Vacuum < 3 && m_pPlayer->m_Blackhole) /* Check Item Value */
+			if(m_pPlayer->m_Vacuum < g_Config.m_SvBlackHolescount && m_pPlayer->m_Blackhole) /* Check Item Value */
 			{
 				new CVacuum(GameWorld(), vec2(m_Input.m_TargetX,m_Input.m_TargetY)+m_Pos, m_pPlayer->GetCID());
 					m_pPlayer->m_Vacuum++;
