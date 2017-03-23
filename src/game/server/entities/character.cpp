@@ -2579,7 +2579,7 @@ void CCharacter::HandlePassiveMode()
 		const vec2 Direction = vec2(sin(Angle / 256.f), cos(Angle / 256.f)); // decompress
 		vec2 initPos = pMain->m_Pos + Direction * 28.0f * 1.5f;
 		vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength + 20.0f);
-		CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, 24.0f, Shit, pMain);
+		CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, 0, Shit, pMain);
 
 		if (pTarget && pTarget->m_FirstFreezeTick != 0) // being able to help they player if they are stuck
 		{
@@ -2606,6 +2606,8 @@ void CCharacter::HandlePassiveMode()
 			else if (pMain->Core()->m_RevokeHook)
 				pMain->Core()->m_RevokeHook = false;
 		}
+		else if (pMain->Core()->m_HookedPlayer != -1 && GameServer()->GetPlayerChar(pMain->Core()->m_HookedPlayer)->m_PassiveMode)
+			pMain->Core()->m_RevokeHook = true;
 		else if (pMain->Core()->m_RevokeHook)
 			pMain->Core()->m_RevokeHook = false;
 	}
