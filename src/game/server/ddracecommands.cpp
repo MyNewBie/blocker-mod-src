@@ -496,6 +496,29 @@ void CGameContext::ConRocket(IConsole::IResult *pResult, void *pUserData)
 	}
 }
 
+void CGameContext::ConSkin(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	const char *Skin = pResult->GetString(0);
+	int Victim = pResult->GetVictim();
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	if(!pPlayer)
+		return;
+
+	CCharacter* pChr = pSelf->m_apPlayers[Victim]->GetCharacter();;
+	if(!pChr)
+		return;
+
+	//change skin
+	str_copy(pSelf->m_apPlayers[Victim]->m_TeeInfos.m_SkinName, Skin, sizeof(pSelf->m_apPlayers[Victim]->m_TeeInfos.m_SkinName));
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), "%s's skin changed to %s" ,pSelf->Server()->ClientName(Victim), Skin);
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
+}
+
 void CGameContext::ConKill(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *) pUserData;
