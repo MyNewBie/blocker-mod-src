@@ -485,11 +485,13 @@ void CGameContext::ConRocket(IConsole::IResult *pResult, void *pUserData)
 	{
 		pPlayer->m_IsRocket = true;
 
+		str_format(aBuf, sizeof(aBuf), "You got rocket by %s.", pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
 	}
 	else
 	{
 		pPlayer->m_IsRocket = false;
+		str_format(aBuf, sizeof(aBuf), "%s removed your rocket.", pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
 	}
 }

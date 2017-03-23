@@ -4,6 +4,7 @@
 #include <engine/shared/config.h>
 #include <game/server/gamecontext.h>
 #include <game/server/entities/special/vacuum.h>
+#include <game/server/entities/special/rocket.h>
 #include <game/mapitems.h>
 
 #include "character.h"
@@ -63,6 +64,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_Alive = true;
 	
 	m_pPlayer->m_IsEmote = false; /* Reset */
+	m_pPlayer->m_IsRocket = false; /* Reset */
 
 	GameServer()->m_pController->OnCharacterSpawn(this);
 
