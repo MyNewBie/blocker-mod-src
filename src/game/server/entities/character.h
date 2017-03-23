@@ -208,7 +208,6 @@ public:
 	int m_FreezeTick;
 	int m_FirstFreezeTick;
 	int m_PullingID;
-	int m_Killedby;
 	int m_HammerStrenght;
 	bool m_DeepFreeze;
 	bool m_EndlessHook;

@@ -46,7 +46,6 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_LastBonus = false;
 	m_AnimIDNum = 9; //maximum number of "animation balls"
 	m_apAnimIDs = new int[m_AnimIDNum];//create id-array
-	m_Killedby = -1;
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
 
@@ -957,15 +956,13 @@ bool CCharacter::IncreaseArmor(int Amount)
 
 void CCharacter::Die(int Killer, int Weapon)
 {
-	if (GetPlayer()->m_QuestInSession && GetPlayer()->m_QuestPart == CPlayer::QUEST_PART3 && GetPlayer()->m_Rstartkill)
+	if (GetPlayer()->GetCharacter() && GetPlayer()->m_QuestInSession && GetPlayer()->m_QuestPart == CPlayer::QUEST_PART3 && GetPlayer()->m_Rstartkill)
 	{
 		char Promt[204];
 		str_format(Promt, sizeof(Promt), "You failed to complete the race, Quest failed!");
 		GameServer()->SendChatTarget(Killer, Promt);
 		QuestReset();
 	}
-	if (m_Core.m_LastHookedPlayer != -1)
-		m_Killedby = m_Core.m_LastHookedPlayer;
 		{//release snapped IDs
 		for (int i = 0; i < m_AnimIDNum; i++)
 		{
@@ -2608,9 +2605,9 @@ void CCharacter::HandlePassiveMode()
 			else if (pMain->Core()->m_RevokeHook)
 				pMain->Core()->m_RevokeHook = false;
 		}
-		else if (pMain->Core()->m_HookedPlayer != -1 && GameServer()->GetPlayerChar(pMain->Core()->m_HookedPlayer)->m_PassiveMode)
+		else if (pMain && GameServer()->GetPlayerChar(pMain->Core()->m_HookedPlayer) && GameServer()->GetPlayerChar(pMain->Core()->m_HookedPlayer)->m_PassiveMode)
 			pMain->Core()->m_RevokeHook = true;
-		else if (pMain->Core()->m_RevokeHook)
+		else if (pMain && pMain->Core()->m_RevokeHook)
 			pMain->Core()->m_RevokeHook = false;
 	}
 }
