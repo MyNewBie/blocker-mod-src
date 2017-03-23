@@ -94,6 +94,22 @@ void CGameContext::ConKillPlayer(IConsole::IResult *pResult, void *pUserData)
 	}
 }
 
+void CGameContext::ConBlackhole(IConsole::IResult *pResult, void *pUserData) // give or remove blackhole
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_Blackhole ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Vacuum ? "%s gave you blackhole gun!" : "%s removed your blackhole gun!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
 void CGameContext::ConEndless(IConsole::IResult *pResult, void *pUserData) // give or remove endless
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;

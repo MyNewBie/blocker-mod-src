@@ -101,7 +101,7 @@ void CVacuum::Tick()
 	if(m_Owner != -1 && !pOwnerChar)
 		Reset();
 
-	if((Server()->Tick() - m_TimeTick) / Server()->TickSpeed() < 20) /* Life Time */
+	if((Server()->Tick() - m_TimeTick) / Server()->TickSpeed() < 20 && !pOwnerChar->GetPlayer()->m_IsEmote) /* Life Time */
 	{
 		Gravity();
 		CreateDeath();

@@ -17,6 +17,7 @@ CONSOLE_COMMAND("bloody_pl", "v[id]", CFGFLAG_SERVER, ConBloody, this, "give/rem
 CONSOLE_COMMAND("steamy_pl", "v[id]", CFGFLAG_SERVER, ConSteamy, this, "give/remove player v steamy")
 CONSOLE_COMMAND("vip_pl", "v[id]", CFGFLAG_SERVER, ConVip, this, "give/remove player v vip")
 CONSOLE_COMMAND("rename", "vr", CFGFLAG_SERVER|CMDFLAG_TEST, ConRename, this, "Renames i name to s")
+CONSOLE_COMMAND("blackhole_pl", "v[id]", CFGFLAG_SERVER | CMDFLAG_TEST, ConBlackhole, this, "give/remove player v blackhole")
 
 
 

@@ -1878,10 +1878,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			
 			CCharacter *pOwner = GetPlayerChar(pPlayer->GetCID());
 
-			if(pOwner)
-				if (pPlayer->m_Authed == CServer::AUTHED_ADMIN)
-					pOwner->EmoteCheck(pMsg->m_Emoticon);
-			
+			if(pOwner && pOwner->GetPlayer()->m_Blackhole)
+			pOwner->EmoteCheck(pMsg->m_Emoticon);
 
 			pPlayer->m_LastEmote = Server()->Tick();
 

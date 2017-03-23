@@ -337,7 +337,7 @@ void CCharacter::HandleWeaponSwitch()
 
 void CCharacter::EmoteCheck(int Index)
 {
-	if(Index == EMOTICON_EYES)
+	if (Index == EMOTICON_EYES)
 		m_pPlayer->m_IsEmote = true;
 	else
 		m_pPlayer->m_IsEmote = false;
@@ -503,7 +503,7 @@ void CCharacter::FireWeapon()
 			Hits++;
 		}
 			
-			if(m_pPlayer->m_Vacuum < 3 && m_pPlayer->m_IsEmote) /* Check Item Value */
+			if(m_pPlayer->m_Vacuum < 3 && m_pPlayer->m_Blackhole) /* Check Item Value */
 			{
 				new CVacuum(GameWorld(), vec2(m_Input.m_TargetX,m_Input.m_TargetY)+m_Pos, m_pPlayer->GetCID());
 					m_pPlayer->m_Vacuum++;
@@ -800,7 +800,9 @@ void CCharacter::Tick()
 		return;
 
 	// handle info spam
-	if ((Server()->Tick() % 80) == 0 && (WasInBloody || WasInCircles || WasInHH || WasInRainbow || WasInSteam || WasInXXL))
+	if (GetPlayer()->GetCharacter() && (Server()->Tick() % 50) && m_pPlayer->m_IsEmote)
+		m_pPlayer->m_IsEmote = false;
+	if (GetPlayer()->GetCharacter() && (Server()->Tick() % 80) == 0 && (WasInBloody || WasInCircles || WasInHH || WasInRainbow || WasInSteam || WasInXXL))
 	{
 		WasInBloody = false;
 		WasInCircles = false;
@@ -809,12 +811,12 @@ void CCharacter::Tick()
 		WasInSteam = false;
 		WasInXXL = false;
 	}
-	if ((Server()->Tick() % 150) == 0 && m_TilePauser) // Ugly asf TODO: FIX
+	if (GetPlayer()->GetCharacter() && (Server()->Tick() % 150) == 0 && m_TilePauser) // Ugly asf TODO: FIX
 		m_TilePauser = false;
-	if ((Server()->Tick() % 150) == 0 && m_AntiSpam) // Ugly asf TODO: FIX
+	if (GetPlayer()->GetCharacter() && (Server()->Tick() % 150) == 0 && m_AntiSpam) // Ugly asf TODO: FIX
 		m_AntiSpam = false;
 
-	if (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed)
+	if (GetPlayer()->GetCharacter() && (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed))
 		HandlePassiveMode();
 
 	HandleQuest();

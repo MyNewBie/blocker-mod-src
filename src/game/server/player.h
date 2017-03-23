@@ -64,7 +64,6 @@ public:
 	//special
 	int m_Vacuum;
     
-	bool m_IsEmote;
 	bool m_IsReady;
 
 	//
@@ -146,6 +145,8 @@ public:
 	bool m_Rstartkill;
 	int m_Pages;
 	int m_QuestPart;
+	bool m_Blackhole;
+	bool m_IsEmote;
 
 	// City
 	struct

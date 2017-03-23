@@ -250,6 +250,7 @@ private:
 	
 	//special
 	static void ConRename(IConsole::IResult *pResult, void *pUserData);
+	static void ConBlackhole(IConsole::IResult *pResult, void *pUserData); // Give or remove blackhole
 	static void ConEndless(IConsole::IResult *pResult, void *pUserData); // Give or remove endless
 	static void ConPullhammer(IConsole::IResult *pResult, void *pUserData); // Give or remove endless
 	static void ConEpicCircles(IConsole::IResult *pResult, void *pUserData); // Give or remove epic circles
