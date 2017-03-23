@@ -126,7 +126,7 @@ void CAccount::Login(char *Username, char *Password)
 		m_pPlayer->m_AccData.m_RconPassword,
 		&m_pPlayer->m_AccData.m_UserID,
 		&m_pPlayer->m_AccData.m_Vip,
-		&m_pPlayer->m_Pages); // Done
+		&m_pPlayer->m_QuestData.m_Pages); // Done
 
 	fclose(Accfile);
 
@@ -219,7 +219,7 @@ void CAccount::Register(char *Username, char *Password)
 		"0",
 		NextID(),
 		m_pPlayer->m_AccData.m_Vip,
-		m_pPlayer->m_Pages);
+		m_pPlayer->m_QuestData.m_Pages);
 
 	fputs(aBuf, Accfile);
 	fclose(Accfile);
@@ -255,7 +255,7 @@ void CAccount::Apply()
 		m_pPlayer->m_AccData.m_RconPassword,
 		m_pPlayer->m_AccData.m_UserID,
 		m_pPlayer->m_AccData.m_Vip,
-		m_pPlayer->m_Pages);
+		m_pPlayer->m_QuestData.m_Pages);
 
 	fputs(aBuf, Accfile);
 	fclose(Accfile);

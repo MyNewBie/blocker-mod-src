@@ -1196,7 +1196,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnote ", 10) == 0)
 				{
-					if (pPlayer->m_Pages != 0)
+					if (pPlayer->m_QuestData.m_Pages != 0)
 					{
 						char Name[256];
 						str_copy(Name, pMsg->m_pMessage + 11, 256);
@@ -1222,11 +1222,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						str_format(Msg2, 103, "Successfully killed %s", Server()->ClientName(id));
 						SendChatTarget(id, Msg1);
 						SendChatTarget(ClientID, Msg2);
-						pPlayer->m_Pages--;
+						pPlayer->m_QuestData.m_Pages--;
 					}
 					else
 					{
-						if(!pPlayer->m_QuestInSession)
+						if(!pPlayer->m_QuestData.m_QuestInSession)
 						SendChatTarget(ClientID, "You don't have any pages, type /beginquest to start your quest to get some pages.");
 						else
 							SendChatTarget(ClientID, "You don't have any pages, complete your quest to get some pages.");
@@ -1250,29 +1250,29 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 					}
 
-					int Pages = pPlayer->m_Pages;
+					int Pages = pPlayer->m_QuestData.m_Pages;
 					char Message[104];
 					str_format(Message, 104, "You have %d pages in your booklet!", Pages);
 					SendChatTarget(ClientID, Message);
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "beginquest", 10) == 0)
 				{
-					if (!pPlayer->GetCharacter() || pPlayer->m_QuestInSession)
+					if (!pPlayer->GetCharacter() || pPlayer->m_QuestData.m_QuestInSession)
 						return;
 					if (!pPlayer->m_AccData.m_UserID)
 					{
 						SendChatTarget(ClientID, "Please login first");
 						return;
 					}
-					pPlayer->GetCharacter()->QuestReset();
-					pPlayer->m_QuestInSession = true;
-					pPlayer->m_QuestPart = CPlayer::QUEST_PART1;
+					pPlayer->QuestReset();
+					pPlayer->m_QuestData.m_QuestInSession = true;
+					pPlayer->m_QuestData.m_QuestPart = CPlayer::QUEST_PART1;
 					SendChatTarget(ClientID, "You can stop the quest whenever by typing /stopquest (WARNING: Quest progress will reset)");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "stopquest", 9) == 0)
 				{
-					pPlayer->m_QuestInSession = false;
-					pPlayer->GetCharacter()->QuestReset();
+					pPlayer->m_QuestData.m_QuestInSession = false;
+					pPlayer->QuestReset();
 					SendChatTarget(ClientID, "Quest has been quited and your progress has been reset!");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "rainbow", 7) == 0 && pPlayer->m_AccData.m_Vip)

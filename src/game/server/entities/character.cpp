@@ -380,9 +380,9 @@ void CCharacter::FireWeapon()
 		return;
 	}
 
-	if (m_Pullhammer && m_Core.m_ActiveWeapon == WEAPON_HAMMER)
+	if (GetPlayer()->GetCharacter() && m_Pullhammer && m_Core.m_ActiveWeapon == WEAPON_HAMMER)
 	{
-		if (m_PullingID == -1) //no one gets pulled, so search for one!
+		if (m_PullingID == -1 || !GameServer()->GetPlayerChar(m_PullingID)) //no one gets pulled, so search for one!
 		{
 			CCharacter * pTarget = GameWorld()->ClosestCharacter(MousePos(), 20.f, GetPlayer()->GetCharacter()); // Don't allow the user to use it on their self, Alot of people seem to be abusing and bugging themselves into walls... -.-
 			if (pTarget)
@@ -397,7 +397,7 @@ void CCharacter::FireWeapon()
 			{
 				CCharacter *pTarget = GameServer()->m_apPlayers[m_PullingID]->GetCharacter();
 
-				if (pTarget && pTarget->IsAlive())
+				if (pTarget->GetPlayer()->GetCharacter() && pTarget)
 				{
 					pTarget->Core()->m_Pos = MousePos();
 					pTarget->Core()->m_Vel.y = 0;
@@ -454,10 +454,10 @@ void CCharacter::FireWeapon()
 			CCharacter *pTarget = apEnts[i];
 			if (pTarget->m_PassiveMode) // So dey Dont BLOOOKEE
 				return;
-			if (m_pPlayer->m_QuestInSession && GetPlayer()->m_QuestPart == CPlayer::QUEST_PART2 && pTarget->GetPlayer()->GetCID() == GetPlayer()->m_RandomID)
+			if (m_pPlayer->m_QuestData.m_QuestInSession && GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART2 && pTarget->GetPlayer()->GetCID() == GetPlayer()->m_QuestData.m_RandomID)
 			{
-				m_QuestData.m_HammeredTarget = true;
-				GetPlayer()->m_RandomID = -1;
+				GetPlayer()->m_QuestData.m_HammeredTarget = true;
+				GetPlayer()->m_QuestData.m_RandomID = -1;
 			}
 			//if ((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
 			if ((pTarget == this || (pTarget->IsAlive() && !CanCollide(pTarget->GetPlayer()->GetCID()))))
@@ -963,12 +963,12 @@ bool CCharacter::IncreaseArmor(int Amount)
 
 void CCharacter::Die(int Killer, int Weapon)
 {
-	if (GetPlayer()->GetCharacter() && GetPlayer()->m_QuestInSession && GetPlayer()->m_QuestPart == CPlayer::QUEST_PART3 && GetPlayer()->m_Rstartkill)
+	if (GetPlayer()->GetCharacter() && GetPlayer()->m_QuestData.m_QuestInSession && GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART3 && GetPlayer()->m_QuestData.m_Rstartkill)
 	{
 		char Promt[204];
 		str_format(Promt, sizeof(Promt), "You failed to complete the race, Quest failed!");
 		GameServer()->SendChatTarget(Killer, Promt);
-		QuestReset();
+		GetPlayer()->QuestReset();
 	}
 		{//release snapped IDs
 		for (int i = 0; i < m_AnimIDNum; i++)
@@ -2685,20 +2685,6 @@ void CCharacter::HandleBots()
 	}
 }
 
-void CCharacter::QuestReset()
-{
-	m_QuestData.m_CompletedQuest = false;
-	GetPlayer()->m_QuestInSession = false;
-	m_QuestData.m_HookedTarget = false;
-	m_QuestData.m_HammeredTarget = false;
-	m_QuestData.m_RifledTarget = false;
-	m_QuestData.m_ShotgunedTarget = false;
-	GetPlayer()->m_QuestPart = 0;
-	GetPlayer()->m_Rstartkill = false;
-	GetPlayer()->m_RandomID = -1;
-	m_QuestData.m_RaceTime = 0;
-}
-
 void CCharacter::HandleRainbow()
 {
 	if (m_pPlayer->m_Rainbow)
@@ -2764,16 +2750,16 @@ void CCharacter::HandleRainbow()
 
 void CCharacter::HandleQuest()
 {
-	if (!GetPlayer()->GetCharacter() || !m_pPlayer->m_DeathNote || !m_pPlayer->m_QuestInSession)
+	if (!GetPlayer()->GetCharacter() || !m_pPlayer->m_DeathNote || !m_pPlayer->m_QuestData.m_QuestInSession)
 		return;
-	else if (GetPlayer()->GetCharacter() && m_QuestData.m_CompletedQuest)
+	else if (GetPlayer()->GetCharacter() && GetPlayer()->m_QuestData.m_CompletedQuest)
 	{
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You have completed the quest, you have been given 1+ Pages!");
-		m_pPlayer->m_Pages++;
-		QuestReset();
+		m_pPlayer->m_QuestData.m_Pages++;
+		GetPlayer()->QuestReset();
 	}
 
-	if (GetPlayer()->m_QuestPart == CPlayer::QUEST_PART1)
+	if (GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART1)
 	{
 		int OwnID = GetPlayer()->GetCID();
 		int PlayerCount = 0;
@@ -2783,30 +2769,30 @@ void CCharacter::HandleQuest()
 				PlayerCount++;
 		}
 
-		if(GetPlayer()->m_RandomID == -1)
-			GetPlayer()->m_RandomID = rand() % PlayerCount;
-		else if(GetPlayer()->m_RandomID == GetPlayer()->GetCID())
-			GetPlayer()->m_RandomID = rand() % PlayerCount;
-		else if(!GameServer()->GetPlayerChar(GetPlayer()->m_RandomID))
-			GetPlayer()->m_RandomID = rand() % PlayerCount;
+		if(GetPlayer()->m_QuestData.m_RandomID == -1)
+			GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
+		else if(GetPlayer()->m_QuestData.m_RandomID == GetPlayer()->GetCID())
+			GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
+		else if(!GameServer()->GetPlayerChar(GetPlayer()->m_QuestData.m_RandomID))
+			GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 	char Objective[102];
-	str_format(Objective, 102, "PART 1: You must block %s", Server()->ClientName(GetPlayer()->m_RandomID));
+	str_format(Objective, 102, "PART 1: You must block %s", Server()->ClientName(GetPlayer()->m_QuestData.m_RandomID));
 	GameServer()->SendBroadcast(Objective, OwnID);
 
-	CCharacter *pVictim = GameServer()->GetPlayerChar(GetPlayer()->m_RandomID);
+	CCharacter *pVictim = GameServer()->GetPlayerChar(GetPlayer()->m_QuestData.m_RandomID);
 	CCharacter *pChr = GetPlayer()->GetCharacter();
 
 	if (pVictim && pVictim->Core()->m_LastHookedPlayer == GetPlayer()->GetCID() && pVictim->m_FirstFreezeTick != 0)
 	{
 		GameServer()->SendChatTarget(OwnID, "Successfully blocked target!");
-		GetPlayer()->m_RandomID = -1;
-		GetPlayer()->m_QuestPart = CPlayer::QUEST_PART2;
+		GetPlayer()->m_QuestData.m_RandomID = -1;
+		GetPlayer()->m_QuestData.m_QuestPart = CPlayer::QUEST_PART2;
 	}
 	}
-	else if (GetPlayer()->m_QuestPart ==CPlayer::QUEST_PART2)
+	else if (GetPlayer()->m_QuestData.m_QuestPart ==CPlayer::QUEST_PART2)
 	{
-		if (!m_QuestData.m_HookedTarget) // KILL
+		if (!GetPlayer()->m_QuestData.m_HookedTarget) // KILL
 		{
 			int OwnID = GetPlayer()->GetCID();
 			int PlayerCount = 0;
@@ -2816,28 +2802,28 @@ void CCharacter::HandleQuest()
 					PlayerCount++;
 			}
 
-			if (GetPlayer()->m_RandomID == -1)
-				GetPlayer()->m_RandomID = rand() % PlayerCount;
-			else if (GetPlayer()->m_RandomID == GetPlayer()->GetCID())
-				GetPlayer()->m_RandomID = rand() % PlayerCount;
-			else if (!GameServer()->GetPlayerChar(GetPlayer()->m_RandomID))
-				GetPlayer()->m_RandomID = rand() % PlayerCount;
+			if (GetPlayer()->m_QuestData.m_RandomID == -1)
+				GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (GetPlayer()->m_QuestData.m_RandomID == GetPlayer()->GetCID())
+				GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (!GameServer()->GetPlayerChar(GetPlayer()->m_QuestData.m_RandomID))
+				GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 		char Objective[102];
-		str_format(Objective, 102, "PART 2: You must hook %s!", Server()->ClientName(GetPlayer()->m_RandomID));
+		str_format(Objective, 102, "PART 2: You must hook %s!", Server()->ClientName(GetPlayer()->m_QuestData.m_RandomID));
 		GameServer()->SendBroadcast(Objective, OwnID);
 
-		CCharacter *pVictim = GameServer()->GetPlayerChar(GetPlayer()->m_RandomID);
+		CCharacter *pVictim = GameServer()->GetPlayerChar(GetPlayer()->m_QuestData.m_RandomID);
 		CCharacter *pChr = GetPlayer()->GetCharacter();
 
 		if (GameServer()->GetPlayerChar(pChr->Core()->m_HookedPlayer) && pChr->Core()->m_HookedPlayer == pVictim->GetPlayer()->GetCID())
 		{
 			GameServer()->SendChatTarget(OwnID, "Successfully hooked target!");
-			GetPlayer()->m_RandomID = -1;
-			m_QuestData.m_HookedTarget = true;
+			GetPlayer()->m_QuestData.m_RandomID = -1;
+			GetPlayer()->m_QuestData.m_HookedTarget = true;
 		}
 		}
-		else if (!m_QuestData.m_HammeredTarget) // HAMMER
+		else if (!GetPlayer()->m_QuestData.m_HammeredTarget) // HAMMER
 		{
 			int OwnID = GetPlayer()->GetCID();
 			int PlayerCount = 0;
@@ -2847,21 +2833,21 @@ void CCharacter::HandleQuest()
 					PlayerCount++;
 			}
 
-			if (GetPlayer()->m_RandomID == -1)
-				GetPlayer()->m_RandomID = rand() % PlayerCount;
-			else if (GetPlayer()->m_RandomID == GetPlayer()->GetCID())
-				GetPlayer()->m_RandomID = rand() % PlayerCount;
-			else if (!GameServer()->GetPlayerChar(GetPlayer()->m_RandomID))
-				GetPlayer()->m_RandomID = rand() % PlayerCount;
+			if (GetPlayer()->m_QuestData.m_RandomID == -1)
+				GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (GetPlayer()->m_QuestData.m_RandomID == GetPlayer()->GetCID())
+				GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (!GameServer()->GetPlayerChar(GetPlayer()->m_QuestData.m_RandomID))
+				GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 		char Objective[102];
-		str_format(Objective, 102, "PART 2: You must hammer %s!", Server()->ClientName(GetPlayer()->m_RandomID));
+		str_format(Objective, 102, "PART 2: You must hammer %s!", Server()->ClientName(GetPlayer()->m_QuestData.m_RandomID));
 		GameServer()->SendBroadcast(Objective, OwnID);
 
-		CCharacter *pVictim = GameServer()->GetPlayerChar(GetPlayer()->m_RandomID);
+		CCharacter *pVictim = GameServer()->GetPlayerChar(GetPlayer()->m_QuestData.m_RandomID);
 		CCharacter *pChr = GetPlayer()->GetCharacter();
 		}
-		else if (!m_QuestData.m_RifledTarget) // RIFLE
+		else if (!GetPlayer()->m_QuestData.m_RifledTarget) // RIFLE
 		{
 			int OwnID = GetPlayer()->GetCID();
 			int PlayerCount = 0;
@@ -2871,21 +2857,21 @@ void CCharacter::HandleQuest()
 					PlayerCount++;
 			}
 
-			if (GetPlayer()->m_RandomID == -1)
-				GetPlayer()->m_RandomID = rand() % PlayerCount;
-			else if (GetPlayer()->m_RandomID == GetPlayer()->GetCID())
-				GetPlayer()->m_RandomID = rand() % PlayerCount;
-			else if (!GameServer()->GetPlayerChar(GetPlayer()->m_RandomID))
-				GetPlayer()->m_RandomID = rand() % PlayerCount;
+			if (GetPlayer()->m_QuestData.m_RandomID == -1)
+				GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (GetPlayer()->m_QuestData.m_RandomID == GetPlayer()->GetCID())
+				GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (!GameServer()->GetPlayerChar(GetPlayer()->m_QuestData.m_RandomID))
+				GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 		char Objective[102];
-		str_format(Objective, 102, "PART 2: You must shoot %s with laser/rifle", Server()->ClientName(GetPlayer()->m_RandomID));
+		str_format(Objective, 102, "PART 2: You must shoot %s with laser/rifle", Server()->ClientName(GetPlayer()->m_QuestData.m_RandomID));
 		GameServer()->SendBroadcast(Objective, OwnID);
 
-		CCharacter *pVictim = GameServer()->GetPlayerChar(GetPlayer()->m_RandomID);
+		CCharacter *pVictim = GameServer()->GetPlayerChar(GetPlayer()->m_QuestData.m_RandomID);
 		CCharacter *pChr = GetPlayer()->GetCharacter();
 		}
-		else if (!m_QuestData.m_ShotgunedTarget) // SHOTGUN
+		else if (!GetPlayer()->m_QuestData.m_ShotgunedTarget) // SHOTGUN
 		{
 			int OwnID = GetPlayer()->GetCID();
 			int PlayerCount = 0;
@@ -2895,54 +2881,54 @@ void CCharacter::HandleQuest()
 					PlayerCount++;
 			}
 
-			if (GetPlayer()->m_RandomID == -1)
-				GetPlayer()->m_RandomID = rand() % PlayerCount;
-			else if (GetPlayer()->m_RandomID == GetPlayer()->GetCID())
-				GetPlayer()->m_RandomID = rand() % PlayerCount;
-			else if (!GameServer()->GetPlayerChar(GetPlayer()->m_RandomID))
-				GetPlayer()->m_RandomID = rand() % PlayerCount;
+			if (GetPlayer()->m_QuestData.m_RandomID == -1)
+				GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (GetPlayer()->m_QuestData.m_RandomID == GetPlayer()->GetCID())
+				GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (!GameServer()->GetPlayerChar(GetPlayer()->m_QuestData.m_RandomID))
+				GetPlayer()->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 		char Objective[102];
-		str_format(Objective, 102, "PART 2: You must shoot %s with shotgun", Server()->ClientName(GetPlayer()->m_RandomID));
+		str_format(Objective, 102, "PART 2: You must shoot %s with shotgun", Server()->ClientName(GetPlayer()->m_QuestData.m_RandomID));
 		GameServer()->SendBroadcast(Objective, OwnID);
 
-		CCharacter *pVictim = GameServer()->GetPlayerChar(GetPlayer()->m_RandomID);
+		CCharacter *pVictim = GameServer()->GetPlayerChar(GetPlayer()->m_QuestData.m_RandomID);
 		CCharacter *pChr = GetPlayer()->GetCharacter();
 		}
 
-			if (m_QuestData.m_HookedTarget && m_QuestData.m_HammeredTarget &&
-				m_QuestData.m_RifledTarget && m_QuestData.m_ShotgunedTarget)
-				GetPlayer()->m_QuestPart = CPlayer::QUEST_PART3;
+			if (GetPlayer()->m_QuestData.m_HookedTarget && GetPlayer()->m_QuestData.m_HammeredTarget &&
+				GetPlayer()->m_QuestData.m_RifledTarget && GetPlayer()->m_QuestData.m_ShotgunedTarget)
+				GetPlayer()->m_QuestData.m_QuestPart = CPlayer::QUEST_PART3;
 	}
-	else if (GetPlayer()->m_QuestPart == CPlayer::QUEST_PART3 && GetPlayer()->GetCharacter())
+	else if (GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART3 && GetPlayer()->GetCharacter())
 	{
-		if (!GetPlayer()->m_Rstartkill)
+		if (!GetPlayer()->m_QuestData.m_Rstartkill)
 		{
 			Die(GetPlayer()->GetCID(), WEAPON_GAME);
-			GetPlayer()->m_Rstartkill = true;
+			GetPlayer()->m_QuestData.m_Rstartkill = true;
 		}
 
 		int OwnID = GetPlayer()->GetCID();
 
-		GameServer()->SendBroadcast("You must comlete the race in less than 2 minute without failing!", OwnID);
+		GameServer()->SendBroadcast("You must comlete the race in less than 1 minute!", OwnID);
 
-		if (Server()->Tick() > m_FirstFreezeTick + Server()->TickSpeed() * 3 && m_FirstFreezeTick != 0)
+		if(m_DDRaceState == DDRACE_FINISHED && GetPlayer()->m_QuestData.m_RaceTime < 1)
+		{
+			GetPlayer()->m_QuestData.m_CompletedQuest = true;
+		}
+		else if (m_DDRaceState == DDRACE_FINISHED && GetPlayer()->m_QuestData.m_RaceTime >= 1)
 		{
 			char Promt[204];
 			str_format(Promt, sizeof(Promt), "You failed to complete the race, Quest failed!");
 			GameServer()->SendChatTarget(OwnID, Promt);
-			QuestReset();
+			GetPlayer()->QuestReset();
 		}
-		else if (m_DDRaceState == DDRACE_CHEAT)
+		else if (m_DDRaceState == DDRACE_STARTED && GetPlayer()->m_QuestData.m_RaceTime >= 1)
 		{
 			char Promt[204];
-			str_format(Promt, sizeof(Promt), "You cheated to complete the race, Quest failed!");
+			str_format(Promt, sizeof(Promt), "You failed to complete the race, Quest failed!");
 			GameServer()->SendChatTarget(OwnID, Promt);
-			QuestReset();
-		}
-		else if(m_DDRaceState == DDRACE_FINISHED && m_QuestData.m_RaceTime <= 1)
-		{
-			m_QuestData.m_CompletedQuest = true;
+			GetPlayer()->QuestReset();
 		}
 	}
 }

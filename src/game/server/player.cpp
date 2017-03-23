@@ -739,3 +739,17 @@ void CPlayer::FindDuplicateSkins()
 		}
 	}
 }
+
+void CPlayer::QuestReset()
+{
+	m_QuestData.m_CompletedQuest = false;
+	m_QuestData.m_QuestInSession = false;
+	m_QuestData.m_HookedTarget = false;
+	m_QuestData.m_HammeredTarget = false;
+	m_QuestData.m_RifledTarget = false;
+	m_QuestData.m_ShotgunedTarget = false;
+	m_QuestData.m_QuestPart = 0;
+	m_QuestData.m_Rstartkill = false;
+	m_QuestData.m_RandomID = -1;
+	m_QuestData.m_RaceTime = 0;
+}

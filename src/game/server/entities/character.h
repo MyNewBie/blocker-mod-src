@@ -238,19 +238,6 @@ public:
 	};
 
 	// Quest to accuire pages for DeathNote booklet :)
-	struct
-	{
-		// Main
-		bool m_CompletedQuest,
-			m_RifledTarget,
-			m_HookedTarget,
-			m_ShotgunedTarget,
-			m_HammeredTarget;
-
-		int m_RaceTime;
-	} m_QuestData;
-
-	void QuestReset();
 
 	int m_Hit;
 	int m_TuneZone;

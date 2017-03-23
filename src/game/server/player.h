@@ -132,6 +132,26 @@ public:
 		QUEST_PART3,
 	};
 
+	struct
+	{
+		// Main
+		bool m_CompletedQuest,
+			m_RifledTarget,
+			m_HookedTarget,
+			m_ShotgunedTarget,
+			m_HammeredTarget;
+
+		bool m_QuestInSession;
+		bool m_Rstartkill;
+
+		int m_RandomID;
+		int m_RaceTime;
+		int m_Pages;
+		int m_QuestPart;
+	} m_QuestData;
+
+	void QuestReset();
+
 	bool m_EpicCircle;
 	bool m_Rainbowepiletic; // Epiletic rainbow!
 	bool m_Rainbow;
@@ -142,12 +162,7 @@ public:
 	int m_LastRainbow;
 	int m_LastRainbow2;
 	bool m_DeathNote;
-	bool m_QuestInSession;
-	bool m_Rstartkill;
-	int m_Pages;
-	int m_QuestPart;
 	int m_Killedby;
-	int m_RandomID;
 	bool m_Blackhole;
 	bool m_IsEmote;
 
