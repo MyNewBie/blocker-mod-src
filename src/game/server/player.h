@@ -145,6 +145,8 @@ public:
 	bool m_Rstartkill;
 	int m_Pages;
 	int m_QuestPart;
+	int m_Killedby;
+	int m_RandomID;
 	bool m_Blackhole;
 	bool m_IsEmote;
 

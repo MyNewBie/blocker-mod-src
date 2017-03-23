@@ -243,11 +243,10 @@ public:
 		// Main
 		bool m_CompletedQuest,
 			m_RifledTarget,
-			m_GrenadedTarget,
+			m_HookedTarget,
 			m_ShotgunedTarget,
 			m_HammeredTarget;
 
-		int m_RandomID;
 		int m_RaceTime;
 	} m_QuestData;
 
