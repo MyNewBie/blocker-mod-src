@@ -20,7 +20,7 @@ CONSOLE_COMMAND("rename_pl", "vr", CFGFLAG_SERVER|CMDFLAG_TEST, ConRename, this,
 CONSOLE_COMMAND("blackhole_pl", "v[id]", CFGFLAG_SERVER | CMDFLAG_TEST, ConBlackhole, this, "give/remove player v blackhole")
 CONSOLE_COMMAND("magnetgrocket_pl", "v[id]", CFGFLAG_SERVER, ConRocket, this, "Gives a player rocket")
 CONSOLE_COMMAND("skin_pl", "vs", CFGFLAG_SERVER|CMDFLAG_TEST, ConSkin, this, "Changes the skin from i in s")
-
+CONSOLE_COMMAND("clan_pl", "vr", CFGFLAG_SERVER|CMDFLAG_TEST, ConClan, this, "Renames i name to s")
 
 CONSOLE_COMMAND("totele", "i[number]", CFGFLAG_SERVER|CMDFLAG_TEST, ConToTeleporter, this, "Teleports you to teleporter v")
 CONSOLE_COMMAND("totelecp", "i[number]", CFGFLAG_SERVER|CMDFLAG_TEST, ConToCheckTeleporter, this, "Teleports you to checkpoint teleporter v")

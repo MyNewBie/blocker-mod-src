@@ -748,3 +748,31 @@ void CGameContext::ConRename(IConsole::IResult *pResult, void *pUserData)
 	str_format(aBuf, sizeof(aBuf), "%s changed your name to %s.", pSelf->Server()->ClientName(pResult->m_ClientID), pSelf->Server()->ClientName(Victim));
 	//pSelf->SendChatTarget(Victim, aBuf);
 }
+
+void CGameContext::ConClan(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	const char *newClan = pResult->GetString(0);
+	int Victim = pResult->GetVictim();
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	if(!pPlayer)
+		return;
+
+	CCharacter* pChr = pSelf->m_apPlayers[Victim]->GetCharacter();
+	if(!pChr)
+		return;
+
+	//change name
+	char oldClan[MAX_CLAN_LENGTH];
+	str_copy(oldClan, pSelf->Server()->ClientClan(Victim), MAX_CLAN_LENGTH);
+
+	pSelf->Server()->SetClientClan(Victim, newClan);
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), "%s has changed %s' clan to '%s'", pSelf->Server()->ClientClan(pResult->m_ClientID), oldClan, pSelf->Server()->ClientClan(Victim));
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
+
+	str_format(aBuf, sizeof(aBuf), "%s changed your skin to %s.", pSelf->Server()->ClientClan(pResult->m_ClientID), pSelf->Server()->ClientClan(Victim));
+}
