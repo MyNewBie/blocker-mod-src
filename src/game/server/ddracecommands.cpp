@@ -467,6 +467,33 @@ void CGameContext::ConTeleport(IConsole::IResult *pResult, void *pUserData)
 	}
 }
 
+void CGameContext::ConRocket(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	if(!pPlayer)
+		return;
+	
+	pSelf->ModifyWeapons(pResult, pUserData, WEAPON_GRENADE, false);
+
+	char aBuf[128];
+	if (!pPlayer->m_IsRocket)
+	{
+		pPlayer->m_IsRocket = true;
+
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+	else
+	{
+		pPlayer->m_IsRocket = false;
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
 void CGameContext::ConKill(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *) pUserData;

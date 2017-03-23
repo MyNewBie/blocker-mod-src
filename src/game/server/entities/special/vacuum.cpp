@@ -37,13 +37,13 @@ void CVacuum::Gravity()
 	for (int i = 0; i < Num; i++)
 	{
 		if (apEnts[i] && ((CGameControllerDDRace*)GameServer()->m_pController)->m_Teams.m_Core.Team(apEnts[i]->GetPlayer()->GetCID()) != ((CGameControllerDDRace*)GameServer()->m_pController)->m_Teams.m_Core.Team(m_Owner)) /* Check Team */
-			return;
+			continue;
 
 		if (apEnts[i] && GameServer()->Collision()->IntersectLine(m_Pos, apEnts[i]->m_Pos, 0x0, 0))
 			continue;
 
 		if (!apEnts[i])
-			return;
+			continue;
 
 		if (apEnts[i] != pOwnerChar)
 		{

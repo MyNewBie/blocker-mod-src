@@ -602,8 +602,12 @@ void CCharacter::FireWeapon()
 			Lifetime = (int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GrenadeLifetime);
 		else
 			Lifetime = (int)(Server()->TickSpeed()*GameServer()->TuningList()[m_TuneZone].m_GrenadeLifetime);
-
-		CProjectile *pProj = new CProjectile
+		
+		if(m_pPlayer->m_IsRocket)
+			new CRocket(&GameServer()->m_World, m_pPlayer->GetCID(), Direction, ProjStartPos);
+		else
+		{
+			CProjectile *pProj = new CProjectile
 			(
 				GameWorld(),
 				WEAPON_GRENADE,//Type
@@ -627,6 +631,7 @@ void CCharacter::FireWeapon()
 		for (unsigned i = 0; i < sizeof(CNetObj_Projectile) / sizeof(int); i++)
 			Msg.AddInt(((int *)&p)[i]);
 		Server()->SendMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
+		}
 
 		GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 	} break;

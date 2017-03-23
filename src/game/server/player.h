@@ -65,6 +65,7 @@ public:
 	int m_Vacuum;
     
 	bool m_IsReady;
+	bool m_IsRocket;
 
 	//
 	int m_Vote;

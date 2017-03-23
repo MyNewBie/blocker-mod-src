@@ -259,6 +259,7 @@ private:
 	static void ConSteamy(IConsole::IResult *pResult, void *pUserData); // Give or remove steamy
 	static void ConVip(IConsole::IResult *pResult, void *pUserData); // Give or remove vip
 	static void ConSmarthammer(IConsole::IResult *pResult, void *pUserData); // Give or remove smarthammer
+	static void ConRocket(IConsole::IResult *pResult, void *pUserData); // Give or remove rocket
 
 	static void ConNinja(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnSolo(IConsole::IResult *pResult, void *pUserData);
