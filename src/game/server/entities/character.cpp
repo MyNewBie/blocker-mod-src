@@ -963,14 +963,7 @@ bool CCharacter::IncreaseArmor(int Amount)
 
 void CCharacter::Die(int Killer, int Weapon)
 {
-	if (GetPlayer()->GetCharacter() && GetPlayer()->m_QuestData.m_QuestInSession && GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART3 && GetPlayer()->m_QuestData.m_Rstartkill)
-	{
-		char Promt[204];
-		str_format(Promt, sizeof(Promt), "You failed to complete the race, Quest failed!");
-		GameServer()->SendChatTarget(Killer, Promt);
-		GetPlayer()->QuestReset();
-	}
-		{//release snapped IDs
+	{//release snapped IDs
 		for (int i = 0; i < m_AnimIDNum; i++)
 		{
 			dbg_assert(m_apAnimIDs[i] != -1, "Character Release ID Error");
@@ -981,11 +974,11 @@ void CCharacter::Die(int Killer, int Weapon)
 			}
 		}
 	}
-	
-		if (GetPlayer()->GetCharacter() && GameServer()->GetPlayerChar(GetPlayer()->GetCharacter()->Core()->m_LastHookedPlayer))
-			GetPlayer()->m_Killedby = GetPlayer()->GetCharacter()->Core()->m_LastHookedPlayer;
 
-	if(Server()->IsRecording(m_pPlayer->GetCID()))
+	if (GetPlayer()->GetCharacter() && GameServer()->GetPlayerChar(GetPlayer()->GetCharacter()->Core()->m_LastHookedPlayer))
+		GetPlayer()->m_Killedby = GetPlayer()->GetCharacter()->Core()->m_LastHookedPlayer;
+
+	if (Server()->IsRecording(m_pPlayer->GetCID()))
 		Server()->StopRecord(m_pPlayer->GetCID());
 
 	int ModeSpecial = GameServer()->m_pController->OnCharacterDeath(this, GameServer()->m_apPlayers[Killer], Weapon);
@@ -1009,7 +1002,7 @@ void CCharacter::Die(int Killer, int Weapon)
 
 	// this is for auto respawn after 3 secs
 	m_pPlayer->m_DieTick = Server()->Tick();
-	
+
 	m_pPlayer->m_Vacuum = 0;
 	m_pPlayer->m_IsEmote = false;
 
@@ -2750,7 +2743,7 @@ void CCharacter::HandleRainbow()
 
 void CCharacter::HandleQuest()
 {
-	if (!GetPlayer()->GetCharacter() || !m_pPlayer->m_DeathNote || !m_pPlayer->m_QuestData.m_QuestInSession)
+	if (!this || !IsAlive() || !m_pPlayer->m_DeathNote || !m_pPlayer->m_QuestData.m_QuestInSession)
 		return;
 	else if (GetPlayer()->GetCharacter() && GetPlayer()->m_QuestData.m_CompletedQuest)
 	{
@@ -2900,7 +2893,7 @@ void CCharacter::HandleQuest()
 				GetPlayer()->m_QuestData.m_RifledTarget && GetPlayer()->m_QuestData.m_ShotgunedTarget)
 				GetPlayer()->m_QuestData.m_QuestPart = CPlayer::QUEST_PART3;
 	}
-	else if (GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART3 && GetPlayer()->GetCharacter())
+	else if (GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART3)
 	{
 		if (!GetPlayer()->m_QuestData.m_Rstartkill)
 		{
