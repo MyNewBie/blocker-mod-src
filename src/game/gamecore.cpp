@@ -94,6 +94,7 @@ void CCharacterCore::Reset()
 	m_HookDir = vec2(0,0);
 	m_HookTick = 0;
 	m_HookState = HOOK_IDLE;
+	m_LastHookedPlayer = -1;
 	m_HookedPlayer = -1;
 	m_Jumped = 0;
 	m_JumpedTotal = 0;
@@ -105,6 +106,13 @@ void CCharacterCore::Reset()
 
 void CCharacterCore::Tick(bool UseInput, bool IsClient)
 {
+	if (m_LastHookedTick != -1) { m_LastHookedTick = m_LastHookedTick + 1; }
+
+	if (m_LastHookedTick > SERVER_TICK_SPEED * 10) {
+		m_LastHookedPlayer = -1;
+		m_LastHookedTick = -1;
+	}
+
 	float PhysSize = 28.0f;
 	int MapIndex = Collision()->GetPureMapIndex(m_Pos);
 	int MapIndexL = Collision()->GetPureMapIndex(vec2(m_Pos.x + (28/2)+4,m_Pos.y));
@@ -306,6 +314,8 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 						m_HookState = HOOK_GRABBED;
 						m_HookedPlayer = i;
 						Distance = distance(m_HookPos, pCharCore->m_Pos);
+						pCharCore->m_LastHookedPlayer = m_Id;
+						pCharCore->m_LastHookedTick = 0;
 					}
 				}
 			}
@@ -395,6 +405,10 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 			m_HookState = HOOK_RETRACTED;
 			m_HookPos = m_Pos;
 		}
+	}
+
+	if (m_LastHookedPlayer != -1 && !m_pWorld->m_apCharacters[m_LastHookedPlayer]) {
+		m_LastHookedPlayer = -1;
 	}
 
 	if(m_pWorld)

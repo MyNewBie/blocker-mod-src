@@ -139,6 +139,17 @@ int CCollision::GetTile(int x, int y)
 	return 0;
 }
 
+int CCollision::GetTileRaw(int x, int y)
+{
+	if (!m_pTiles)
+		return 0;
+
+	int Nx = clamp(x / 32, 0, m_Width - 1);
+	int Ny = clamp(y / 32, 0, m_Height - 1);
+
+	return m_pTiles[Ny*m_Width + Nx].m_Index;
+}
+
 // TODO: rewrite this smarter!
 int CCollision::IntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision)
 {

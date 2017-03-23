@@ -181,8 +181,8 @@ private:
 	void HandleThreeSecondRule();
 	void HandlePassiveMode();
 	void HandleRainbow();
+	void HandleQuest();
 	void HandleBots();
-	//void HandleTimeCodeCheats();
 	void SendZoneMsgs();
 
 	bool m_SetSavePos;
@@ -208,6 +208,7 @@ public:
 	int m_FreezeTick;
 	int m_FirstFreezeTick;
 	int m_PullingID;
+	int m_Killedby;
 	int m_HammerStrenght;
 	bool m_DeepFreeze;
 	bool m_EndlessHook;
@@ -237,13 +238,6 @@ public:
 		DISABLE_HIT_RIFLE=8
 	};
 
-	enum
-	{
-		QUEST_PART1 = 1,
-		QUEST_PART2,
-		QUEST_PART3,
-	};
-
 	// Quest to accuire pages for DeathNote booklet :)
 	struct
 	{
@@ -253,7 +247,9 @@ public:
 			m_GrenadedTarget,
 			m_ShotgunedTarget,
 			m_HammeredTarget;
-		int m_QuestPart;
+
+		int m_RandomID;
+		int m_RaceTime;
 	} m_QuestData;
 
 	void QuestReset();

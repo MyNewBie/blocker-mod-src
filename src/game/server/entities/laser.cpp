@@ -68,10 +68,21 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 			Temp.y = 0;
 		if(Temp.y > 0 && ((pHit->m_TileIndex == TILE_STOP && pHit->m_TileFlags == ROTATION_0) || (pHit->m_TileIndexT == TILE_STOP && pHit->m_TileFlagsT == ROTATION_0) || (pHit->m_TileIndexT == TILE_STOPS && (pHit->m_TileFlagsT == ROTATION_0 || pHit->m_TileFlagsT == ROTATION_180)) || (pHit->m_TileIndexT == TILE_STOPA) || (pHit->m_TileFIndex == TILE_STOP && pHit->m_TileFFlags == ROTATION_0) || (pHit->m_TileFIndexT == TILE_STOP && pHit->m_TileFFlagsT == ROTATION_0) || (pHit->m_TileFIndexT == TILE_STOPS && (pHit->m_TileFFlagsT == ROTATION_0 || pHit->m_TileFFlagsT == ROTATION_180)) || (pHit->m_TileFIndexT == TILE_STOPA) || (pHit->m_TileSIndex == TILE_STOP && pHit->m_TileSFlags == ROTATION_0) || (pHit->m_TileSIndexT == TILE_STOP && pHit->m_TileSFlagsT == ROTATION_0) || (pHit->m_TileSIndexT == TILE_STOPS && (pHit->m_TileSFlagsT == ROTATION_0 || pHit->m_TileSFlagsT == ROTATION_180)) || (pHit->m_TileSIndexT == TILE_STOPA)))
 			Temp.y = 0;
+		if(!pHit->m_PassiveMode)
 		pHit->Core()->m_Vel = Temp;
+		if (pOwnerChar->GetPlayer()->m_QuestInSession && pOwnerChar->GetPlayer()->m_QuestPart == CPlayer::QUEST_PART2 && pHit->GetPlayer()->GetCID() == pOwnerChar->m_QuestData.m_RandomID)
+		{
+			pOwnerChar->m_QuestData.m_ShotgunedTarget = true;
+			pOwnerChar->m_QuestData.m_RandomID = -1;
+		}
 	}
 	else if (m_Type == WEAPON_RIFLE)
 	{
+		if (pOwnerChar->GetPlayer()->m_QuestInSession && pOwnerChar->GetPlayer()->m_QuestPart == CPlayer::QUEST_PART2 && pHit->GetPlayer()->GetCID() == pOwnerChar->m_QuestData.m_RandomID)
+		{
+			pOwnerChar->m_QuestData.m_RifledTarget = true;
+			pOwnerChar->m_QuestData.m_RandomID = -1;
+		}
 		if(!pHit->m_PassiveMode) // cannot be unfreezed, If so easy bypass method brought to my attention by Delith
 		pHit->UnFreeze();
 	}

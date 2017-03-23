@@ -125,6 +125,13 @@ public:
 		bool m_AutoHook;
 	} m_Bots;
 
+	enum
+	{
+		QUEST_PART1 = 1,
+		QUEST_PART2,
+		QUEST_PART3,
+	};
+
 	bool m_EpicCircle;
 	bool m_Rainbowepiletic; // Epiletic rainbow!
 	bool m_Rainbow;
@@ -135,7 +142,10 @@ public:
 	int m_LastRainbow;
 	int m_LastRainbow2;
 	bool m_DeathNote;
+	bool m_QuestInSession;
+	bool m_Rstartkill;
 	int m_Pages;
+	int m_QuestPart;
 
 	// City
 	struct

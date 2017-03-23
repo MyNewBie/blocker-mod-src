@@ -48,6 +48,7 @@ public:
 	int GetFIndex(int x, int y);
 
 	int GetTile(int x, int y);
+	int GetTileRaw(int x, int y);
 	int GetFTile(int x, int y);
 	int Entity(int x, int y, int Layer);
 	int GetPureMapIndex(float x, float y);

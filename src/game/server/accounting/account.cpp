@@ -143,6 +143,13 @@ void CAccount::Login(char *Username, char *Password)
 
 	dbg_msg("account", "Account login sucessful ('%s')", Username);
 	GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Login succesful");
+
+	if (pOwner)
+	{
+		m_pPlayer->m_DeathNote = true;
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "You have been given a Deathnote booklet");
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Write /Deathnoteinfo for more information");
+	}
 }
 
 void CAccount::Register(char *Username, char *Password)

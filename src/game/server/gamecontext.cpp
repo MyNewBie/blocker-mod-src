@@ -181,8 +181,15 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamag
 				{
 					if(Owner != -1 && apEnts[i]->IsAlive() && !apEnts[i]->CanCollide(Owner)) continue;
 					if(Owner == -1 && ActivatedTeam != -1 && apEnts[i]->IsAlive() && apEnts[i]->Team() != ActivatedTeam) continue;
-					if(!apEnts[i]->m_PassiveMode) // cannot be unfreezed, If so easy bypass method brought to my attention by Delith
-					apEnts[i]->TakeDamage(ForceDir*Dmg*2, (int)Dmg, Owner, Weapon);
+					if (!apEnts[i]->m_PassiveMode) // Cannot be shot down with a grenade
+					{
+						apEnts[i]->TakeDamage(ForceDir*Dmg * 2, (int)Dmg, Owner, Weapon);
+						if (GetPlayerChar(Owner)->GetPlayer()->m_QuestInSession && m_apPlayers[Owner]->m_QuestPart == CPlayer::QUEST_PART2 && i == GetPlayerChar(Owner)->m_QuestData.m_RandomID)
+						{
+							GetPlayerChar(Owner)->m_QuestData.m_GrenadedTarget = true;
+							GetPlayerChar(Owner)->m_QuestData.m_RandomID = -1;
+						}
+					}
 					if(GetPlayerChar(Owner) ? GetPlayerChar(Owner)->m_Hit&CCharacter::DISABLE_HIT_GRENADE : !g_Config.m_SvHit || NoDamage) break;
 				}
 		}
@@ -1165,6 +1172,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "weapons", 7) == 0 && pPlayer->m_AccData.m_Vip)
 				{
+					if (!GetPlayerChar(ClientID) || !GetPlayerChar(ClientID)->IsAlive())
+						return; // Tested and found a crashbug -- heres the fix 
 						GetPlayerChar(ClientID)->GiveAllWeapons();
 						SendChatTarget(ClientID, "Successfully gotten weapons");
 				}
@@ -1192,46 +1201,87 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), "Smarthammer disabled!");
 					}
 				}
-				/*else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "autohook", 8) == 0)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnote ", 10) == 0)
 				{
-					if (!pPlayer->m_Authed)
+					if (pPlayer->m_Pages != 0)
 					{
-						char Msg[100];
-						str_format(Msg, 100, "No such command: autohook.");
-						SendChatTarget(pPlayer->GetCID(), Msg);
-						return;
-					}
-					else if (!pPlayer->m_Bots.m_AutoHook)
-					{
-						pPlayer->m_Bots.m_AutoHook = true;
-						SendChatTarget(pPlayer->GetCID(), "Autohook enabled!");
+						char Name[256];
+						str_copy(Name, pMsg->m_pMessage + 11, 256);
+						int id = -1;
+						for (int i = 0; i < MAX_CLIENTS; i++)
+						{
+							if (!GetPlayerChar(i))
+								continue;
+							if (str_comp_nocase(Name, Server()->ClientName(i)) != 0)
+								continue;
+							if (str_comp_nocase(Name, Server()->ClientName(i)) == 0)
+							{
+								id = i;
+								break;
+							}
+						}
+						if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter()) // Prevent crashbug (fix)
+							return;
+						m_apPlayers[id]->KillCharacter(WEAPON_WORLD);
+						char Msg1[103];
+						char Msg2[103];
+						str_format(Msg1, 103, "%s used a deathnote to kill you!", Server()->ClientName(ClientID));
+						str_format(Msg2, 103, "Successfully killed %s", Server()->ClientName(id));
+						SendChatTarget(id, Msg1);
+						SendChatTarget(ClientID, Msg2);
+						pPlayer->m_Pages--;
 					}
 					else
 					{
-						pPlayer->m_Bots.m_AutoHook = false;
-						SendChatTarget(pPlayer->GetCID(), "Autohook disabled!");
+						if(!pPlayer->m_QuestInSession)
+						SendChatTarget(ClientID, "You don't have any pages, type /beginquest to start your quest to get some pages.");
+						else
+							SendChatTarget(ClientID, "You don't have any pages, complete your quest to get some pages.");
+						return;
 					}
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "PassiveMode", 11) == 0)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnoteinfo", 13) == 0)
 				{
-					if (!pPlayer->m_Authed)
+					SendChatTarget(ClientID, "With a deathnote booklet you can write /deathnote PlayerName (Ex: /deathnote namelesstee) to kill any specific player!");
+					SendChatTarget(ClientID, "You are given a free Booklet, but you must aquire pages in order to kill a player though.");
+					SendChatTarget(ClientID, "You can type /pages to check your current amount of pages.");
+					SendChatTarget(ClientID, "To obtain pages you must complete quests type /beginquest to start the quest. - Goodluck!");
+					SendChatTarget(ClientID, "For further information please go watch the anime - DeathNote :)");
+				}
+				// PAGES CHECK
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "pages", 5) == 0)
+				{
+					if (!pPlayer->m_DeathNote)
 					{
-						char Msg[100];
-						str_format(Msg, 100, "No such command: PassiveMode.");
-						SendChatTarget(pPlayer->GetCID(), Msg);
+						SendChatTarget(ClientID, "0 pages, You dont even have a book!");
 						return;
 					}
-					else if (!pPlayer->GetCharacter()->m_PassiveMode)
+
+					int Pages = pPlayer->m_Pages;
+					char Message[104];
+					str_format(Message, 104, "You have %d pages in your booklet!", Pages);
+					SendChatTarget(ClientID, Message);
+				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "beginquest", 10) == 0)
+				{
+					if (!pPlayer->GetCharacter() || pPlayer->m_QuestInSession)
+						return;
+					if (!pPlayer->m_AccData.m_UserID)
 					{
-						pPlayer->GetCharacter()->m_PassiveMode = true;
-						SendChatTarget(pPlayer->GetCID(), "PassiveMode enabled!");
+						SendChatTarget(ClientID, "Please login first");
+						return;
 					}
-					else
-					{
-						pPlayer->GetCharacter()->m_PassiveMode = false;
-						SendChatTarget(pPlayer->GetCID(), "PassiveMode disabled!");
-					}
-				}*/
+					pPlayer->GetCharacter()->QuestReset();
+					pPlayer->m_QuestInSession = true;
+					pPlayer->m_QuestPart = CPlayer::QUEST_PART1;
+					SendChatTarget(ClientID, "You can stop the quest whenever by typing /stopquest (WARNING: Quest progress will reset)");
+				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "stopquest", 9) == 0)
+				{
+					pPlayer->m_QuestInSession = false;
+					pPlayer->GetCharacter()->QuestReset();
+					SendChatTarget(ClientID, "Quest has been quited and your progress has been reset!");
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "rainbow", 7) == 0 && pPlayer->m_AccData.m_Vip)
 				{
 					pPlayer->m_Rainbowepiletic ^= 1;
