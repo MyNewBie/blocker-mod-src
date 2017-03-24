@@ -18,4 +18,8 @@ dependencies:
 test:
   override:
     - |
-        ../bam/bam release
+         ../bam/bam release
+        mkdir build
+        cd build
+        env CFLAGS="-Wdeclaration-after-statement -Werror" CXXFLAGS="-Werror" cmake ..
+        make everything
