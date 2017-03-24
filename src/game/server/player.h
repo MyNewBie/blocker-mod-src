@@ -124,6 +124,8 @@ public:
 	{
 		bool m_SmartHammer;
 		bool m_AutoHook;
+		
+		bool m_Active;
 	} m_Bots;
 
 	enum

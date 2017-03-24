@@ -2538,7 +2538,7 @@ void CCharacter::HandleThreeSecondRule() // Since passive mode is meant for anti
 
 void CCharacter::HandlePassiveMode()
 {
-	if (!GetPlayer()->GetCharacter())
+	if (!this || !IsAlive())
 		return;
 
 	// Dealing with Passive mode : Bodyblocking wayblock
@@ -2619,16 +2619,23 @@ void CCharacter::HandlePassiveMode()
 
 void CCharacter::HandleBots()
 {
-	if (GetPlayer()->m_PlayerFlags&PLAYERFLAG_CHATTING) // Until we decide to make more bots ill Clean up and make some vars
+	if (this && IsAlive() && GetPlayer()->m_PlayerFlags&PLAYERFLAG_CHATTING) // Until we decide to make more bots ill Clean up and make some vars
+	{
+		if (m_pPlayer->m_Bots.m_Active)
+			m_pPlayer->m_Bots.m_Active = false;
 		return;
+	}
 
-	if (GetPlayer()->m_Bots.m_SmartHammer && GetPlayer()->GetCharacter()->Core()->m_ActiveWeapon == WEAPON_HAMMER)
+	if (this && IsAlive() && !m_pPlayer->m_Bots.m_Active)
+		m_pPlayer->m_Bots.m_Active = true;
+
+	if (this && IsAlive() && GetPlayer()->m_Bots.m_SmartHammer && GetPlayer()->GetCharacter()->Core()->m_ActiveWeapon == WEAPON_HAMMER)
 	{
 		CCharacter * pTarget = GameWorld()->ClosestCharacter(GetPlayer()->GetCharacter()->m_Pos, 64.f, GetPlayer()->GetCharacter());
 		bool isFreeze;
-		if (pTarget)
+		if (pTarget && pTarget->IsAlive())
 			isFreeze = pTarget->m_FreezeTime > 0 ? true : false;
-		if (pTarget && !isFreeze)
+		if (pTarget && pTarget->IsAlive() && !isFreeze)
 		{
 			if (distance(GetPlayer()->GetCharacter()->m_Pos, pTarget->m_Pos) < 65)
 			{
@@ -2645,7 +2652,9 @@ void CCharacter::HandleBots()
 		else if (m_HammerUpBot)
 			m_HammerUpBot = false;
 	}
-	if (GetPlayer()->m_Bots.m_AutoHook)
+	else if(this && IsAlive() && m_HammerUpBot)
+		m_HammerUpBot = false;
+	/*if (GetPlayer()->m_Bots.m_AutoHook)
 	{
 		CCharacter *pMain = GetPlayer()->GetCharacter();
 		if (pMain->GetPlayer()->m_PlayerFlags&PLAYERFLAG_AIM)
@@ -2677,11 +2686,14 @@ void CCharacter::HandleBots()
 				pMain->m_Input.m_Hook = 1;
 			}
 		}
-	}
+	}*/
 }
 
 void CCharacter::HandleRainbow()
 {
+	if (!this || !IsAlive())
+		return;
+
 	if (m_pPlayer->m_Rainbow)
 	{
 		// save teh varrrrrrr:D

@@ -1176,6 +1176,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}*/
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "smarthammer", 11) == 0)
 				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
 					if (!pPlayer->m_Authed)
 					{
 						char Msg[100];
@@ -1196,6 +1198,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnote ", 10) == 0)
 				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
 					if (pPlayer->m_QuestData.m_Pages != 0)
 					{
 						char Name[256];
@@ -1213,7 +1217,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 								break;
 							}
 						}
-						if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter()) // Prevent crashbug (fix)
+						if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
 							return;
 						m_apPlayers[id]->KillCharacter(WEAPON_WORLD);
 						char Msg1[103];
@@ -1235,8 +1239,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnoteinfo", 13) == 0)
 				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
 					SendChatTarget(ClientID, "With a deathnote booklet you can write /deathnote PlayerName (Ex: /deathnote namelesstee) to kill any specific player!");
-					SendChatTarget(ClientID, "You are given a free Booklet, but you must aquire pages in order to kill a player though.");
+					SendChatTarget(ClientID, "You are given a free Booklet when you login, but you must aquire pages in order to kill a player though.");
 					SendChatTarget(ClientID, "You can type /pages to check your current amount of pages.");
 					SendChatTarget(ClientID, "To obtain pages you must complete quests type /beginquest to start the quest. - Goodluck!");
 					SendChatTarget(ClientID, "For further information please go watch the anime - DeathNote :)");
@@ -1244,6 +1250,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				// PAGES CHECK
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "pages", 5) == 0)
 				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
 					if (!pPlayer->m_DeathNote)
 					{
 						SendChatTarget(ClientID, "0 pages, You dont even have a book!");
@@ -1257,7 +1265,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "beginquest", 10) == 0)
 				{
-					if (!pPlayer->GetCharacter() || pPlayer->m_QuestData.m_QuestInSession)
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive() || pPlayer->m_QuestData.m_QuestInSession)
 						return;
 					if (!pPlayer->m_AccData.m_UserID)
 					{
@@ -1271,12 +1279,16 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "stopquest", 9) == 0)
 				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
 					pPlayer->m_QuestData.m_QuestInSession = false;
 					pPlayer->QuestReset();
 					SendChatTarget(ClientID, "Quest has been quited and your progress has been reset!");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "rainbow", 7) == 0 && pPlayer->m_AccData.m_Vip)
 				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
 					pPlayer->m_Rainbowepiletic ^= 1;
 					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Rainbow activated" : "Rainbow deactivated");
 				}
