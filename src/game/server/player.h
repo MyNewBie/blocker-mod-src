@@ -64,6 +64,7 @@ public:
 	//special
 	int m_Vacuum;
     
+	bool m_RconFreeze;
 	bool m_IsReady;
 	bool m_IsRocket;
 

@@ -837,6 +837,7 @@ void CCharacter::Tick()
 	HandleWeapons();
 
 	DDRacePostCoreTick();
+	SpecialPostCoreTick();
 
 	// Previnput
 	m_PrevInput = m_Input;
@@ -2275,6 +2276,7 @@ void CCharacter::DDRaceTick()
 		m_Input.m_Hook = 0;
 		if (m_FreezeTime == 1)
 			UnFreeze();
+		    m_pPlayer->m_RconFreeze = false;
 	}
 
 	HandleTuneLayer(); // need this before coretick
@@ -2924,4 +2926,10 @@ void CCharacter::HandleQuest()
 			GetPlayer()->QuestReset();
 		}
 	}
+}
+
+void CCharacter::SpecialPostCoreTick()
+{
+	if (m_pPlayer->m_RconFreeze) Freeze(-1);
+	if (!m_FreezeTime) m_Paused = false;
 }

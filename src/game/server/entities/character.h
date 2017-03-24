@@ -179,6 +179,9 @@ private:
 	void HandleBroadcast();
 	void HandleTuneLayer();
 	void HandleThreeSecondRule();
+	
+	//special
+	void SpecialPostCoreTick();
 	void HandlePassiveMode();
 	void HandleRainbow();
 	void HandleQuest();

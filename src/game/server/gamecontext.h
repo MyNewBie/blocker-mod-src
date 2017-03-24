@@ -262,6 +262,8 @@ private:
 	static void ConRocket(IConsole::IResult *pResult, void *pUserData); // Give or remove rocket
 	static void ConSkin(IConsole::IResult *pResult, void *pUserData);
 	static void ConClan(IConsole::IResult *pResult, void *pUserData);
+	static void ConFreeze(IConsole::IResult *pResult, void *pUserData);
+	static void ConUnFreeze(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConNinja(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnSolo(IConsole::IResult *pResult, void *pUserData);

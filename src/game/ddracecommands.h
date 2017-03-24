@@ -21,6 +21,8 @@ CONSOLE_COMMAND("blackhole_pl", "v[id]", CFGFLAG_SERVER | CMDFLAG_TEST, ConBlack
 CONSOLE_COMMAND("magnetgrocket_pl", "v[id]", CFGFLAG_SERVER, ConRocket, this, "Gives a player rocket")
 CONSOLE_COMMAND("skin_pl", "vs", CFGFLAG_SERVER|CMDFLAG_TEST, ConSkin, this, "Changes the skin from i in s")
 CONSOLE_COMMAND("clan_pl", "vr", CFGFLAG_SERVER|CMDFLAG_TEST, ConClan, this, "Renames i name to s")
+CONSOLE_COMMAND("freeze", "v?i", CFGFLAG_SERVER|CMDFLAG_TEST, ConFreeze, this, "Freezes player v for i seconds (infinite by default)")
+CONSOLE_COMMAND("unfreeze", "v", CFGFLAG_SERVER|CMDFLAG_TEST, ConUnFreeze, this, "Unfreezes player v")
 
 CONSOLE_COMMAND("totele", "i[number]", CFGFLAG_SERVER|CMDFLAG_TEST, ConToTeleporter, this, "Teleports you to teleporter v")
 CONSOLE_COMMAND("totelecp", "i[number]", CFGFLAG_SERVER|CMDFLAG_TEST, ConToCheckTeleporter, this, "Teleports you to checkpoint teleporter v")
