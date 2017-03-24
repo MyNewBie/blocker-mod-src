@@ -1163,7 +1163,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_pAccount->Apply();
 					pPlayer->m_pAccount->Reset();
 
-					SendChatTarget(pPlayer->GetCID(), "Logout succesful");
+					SendChatTarget(pPlayer->GetCID(), "Logout successful");
 
 					CCharacter *pOwner = GetPlayerChar(pPlayer->GetCID());
 
@@ -1232,7 +1232,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if (!pPlayer->m_Authed)
 					{
 						char Msg[100];
-						str_format(Msg, 100, "No such command: smarthammer.");
+						str_format(Msg, 100, "No such command: smarthammer.");	//sneaky
 						SendChatTarget(pPlayer->GetCID(), Msg);
 						return;
 					}
@@ -1273,7 +1273,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						m_apPlayers[id]->KillCharacter(WEAPON_WORLD);
 						char Msg1[103];
 						char Msg2[103];
-						str_format(Msg1, 103, "%s used a deathnote to kill you!", Server()->ClientName(ClientID));
+						str_format(Msg1, 103, "%s used a Deathnote to kill you!", Server()->ClientName(ClientID));
 						str_format(Msg2, 103, "Successfully killed %s", Server()->ClientName(id));
 						SendChatTarget(id, Msg1);
 						SendChatTarget(ClientID, Msg2);
@@ -1282,9 +1282,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					else
 					{
 						if(!pPlayer->m_QuestData.m_QuestInSession)
-						SendChatTarget(ClientID, "You don't have any pages, type /beginquest to start your quest to get some pages.");
+						SendChatTarget(ClientID, "You don't have any pages, type /beginquest to start your quests to get some pages.");
 						else
-							SendChatTarget(ClientID, "You don't have any pages, complete your quest to get some pages.");
+							SendChatTarget(ClientID, "You don't have any pages, complete your quests to get some pages.");
 						return;
 					}
 				}
@@ -1292,11 +1292,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
-					SendChatTarget(ClientID, "With a deathnote booklet you can write /deathnote PlayerName (Ex: /deathnote namelesstee) to kill any specific player!");
-					SendChatTarget(ClientID, "You are given a free Booklet when you login, but you must aquire pages in order to kill a player though.");
+					SendChatTarget(ClientID, "You have received a Deathnote, but in order to kill players you must gather pages.");
+					SendChatTarget(ClientID, "With a Deathnote you can write /deathnote Playername (Ex: /deathnote namelesstee) to kill any specific player!");
 					SendChatTarget(ClientID, "You can type /pages to check your current amount of pages.");
-					SendChatTarget(ClientID, "To obtain pages you must complete quests type /beginquest to start the quest. - Goodluck!");
-					SendChatTarget(ClientID, "For further information please go watch the anime - DeathNote :)");
+					SendChatTarget(ClientID, "To obtain pages you must complete quests type /beginquest to start the quest. - Good luck!");
+					SendChatTarget(ClientID, "For further information please go watch the anime - DeathNote :)");	//dat note doe
 				}
 				// PAGES CHECK
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "pages", 5) == 0)
@@ -1305,13 +1305,13 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 					if (!pPlayer->m_DeathNote)
 					{
-						SendChatTarget(ClientID, "0 pages, You dont even have a book!");
+						SendChatTarget(ClientID, "0 pages, You dont even have a Deathnote!");
 						return;
 					}
 
 					int Pages = pPlayer->m_QuestData.m_Pages;
 					char Message[104];
-					str_format(Message, 104, "You have %d pages in your booklet!", Pages);
+					str_format(Message, 104, "You have %d pages in your Deathnote!", Pages);
 					SendChatTarget(ClientID, Message);
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "beginquest", 10) == 0)
@@ -1326,7 +1326,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->QuestReset();
 					pPlayer->m_QuestData.m_QuestInSession = true;
 					pPlayer->m_QuestData.m_QuestPart = CPlayer::QUEST_PART1;
-					SendChatTarget(ClientID, "You can stop the quest whenever by typing /stopquest (WARNING: Quest progress will reset)");
+					SendChatTarget(ClientID, "You can stop the quest whenever you want by typing /stopquest (WARNING: Quest progress will reset)");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "stopquest", 9) == 0)
 				{
@@ -1334,7 +1334,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 					pPlayer->m_QuestData.m_QuestInSession = false;
 					pPlayer->QuestReset();
-					SendChatTarget(ClientID, "Quest has been quited and your progress has been reset!");
+					SendChatTarget(ClientID, "Quest has been stopped and your progress has been reset!");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "rainbow", 7) == 0 && pPlayer->m_AccData.m_Vip)
 				{

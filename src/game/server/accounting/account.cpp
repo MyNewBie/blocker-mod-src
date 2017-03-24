@@ -142,12 +142,12 @@ void CAccount::Login(char *Username, char *Password)
 		m_pPlayer->SetTeam(TEAM_RED);
 
 	dbg_msg("account", "Account login sucessful ('%s')", Username);
-	GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Login succesful");
+	GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Login successful");
 
 	if (pOwner)
 	{
 		m_pPlayer->m_DeathNote = true;
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "You have been given a Deathnote booklet");
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "You have reveived a Deathnote.");
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Write /Deathnoteinfo for more information");
 	}
 }
@@ -224,8 +224,8 @@ void CAccount::Register(char *Username, char *Password)
 	fputs(aBuf, Accfile);
 	fclose(Accfile);
 
-	dbg_msg("account", "Registration succesful ('%s')", Username);
-	str_format(aBuf, sizeof(aBuf), "Registration succesful - ('/login %s %s'): ", Username, Password);
+	dbg_msg("account", "Registration successful ('%s')", Username);
+	str_format(aBuf, sizeof(aBuf), "Registration successful - ('/login %s %s'): ", Username, Password);
 	GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 	Login(Username, Password);
 }
