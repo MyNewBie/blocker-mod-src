@@ -119,6 +119,31 @@ public:
 		int m_Min;
 		int m_Max;
 	} m_Latency;
+	
+	struct		//saved player infos when entering tournament; restores them after
+	{
+		vec2 m_SavedSpawn;
+		bool m_SavedShotgun;
+		bool m_SavedGrenade;
+		bool m_SavedLaser;
+		bool m_SavedEHook;
+		
+		int m_SavedStartTick;
+		
+		void Reset()
+		{
+			m_SavedSpawn = vec2(0,0);
+			m_SavedShotgun = false;
+			m_SavedGrenade = false;
+			m_SavedLaser = false;
+			m_SavedEHook = false;
+			m_SavedStartTick = 0;
+		}
+	}m_SavedStats;
+	
+	void SaveStats();
+	
+	int m_InLMB;
 
 	struct
 	{

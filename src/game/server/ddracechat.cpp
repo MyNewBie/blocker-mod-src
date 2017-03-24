@@ -779,6 +779,15 @@ void CGameContext::ConJoinTeam(IConsole::IResult *pResult, void *pUserData)
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
 	if (!pPlayer)
 		return;
+	
+	if(pPlayer->m_InLMB == LMB_PARTICIPATE)
+	{
+		pSelf->Console()->Print(
+			IConsole::OUTPUT_LEVEL_STANDARD,
+			"join",
+			"You can't join teams while being a participant in LMB.");
+		return;
+	}
 
 	if (pSelf->m_VoteCloseTime && pSelf->m_VoteCreator == pResult->m_ClientID && (pSelf->m_VoteKick || pSelf->m_VoteSpec))
 	{
@@ -1251,6 +1260,53 @@ void CGameContext::ConProtectedKill(IConsole::IResult *pResult, void *pUserData)
 			//		((CurrTime / 60) > 9) ? "" : "0", CurrTime / 60,
 			//		((CurrTime % 60) > 9) ? "" : "0", CurrTime % 60);
 			//pSelf->SendChatTarget(pResult->m_ClientID, aBuf);
+	}
+}
+
+void CGameContext::ConRegisterLMB(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *) pUserData;
+	
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	
+	if(pSelf->m_apPlayers[pResult->m_ClientID]->GetTeam() == TEAM_SPECTATORS)
+	{
+		pSelf->SendChatTarget(pResult->m_ClientID, "You cannot register for the tournament while being in spec.");
+		return;
+	}
+	
+	
+	if(pSelf->m_LMB.State() == CLMB::STATE_STANDBY)
+	{
+		pSelf->SendChatTarget(pResult->m_ClientID, "LMB is closed now. Please wait until the registration has opened.");
+		return;
+	}
+	else if(pSelf->m_LMB.State() == CLMB::STATE_RUNNING)
+	{
+		pSelf->SendChatTarget(pResult->m_ClientID, "LMB is running right now. Please wait for the next round to start.");
+		return;
+	}
+	else
+	{
+		if(pSelf->m_LMB.ParticipantNum() >= g_Config.m_SvLMBMaxPlayer && !pSelf->m_LMB.IsParticipant(pResult->m_ClientID))
+		{
+			pSelf->SendChatTarget(pResult->m_ClientID, "Sorry, the tournament is already full.");
+			return;
+		}
+		
+		bool Reg = pSelf->m_LMB.RegisterPlayer(pResult->m_ClientID);
+		
+		if(Reg)
+				pSelf->SendChatTarget(pResult->m_ClientID, "[LMB] Registered.");
+		else
+			    pSelf->SendChatTarget(pResult->m_ClientID, "[LMB] Unregistered.");
+		
+		pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(64, true);
+		
+		/*char aBuf[256];
+		str_format(aBuf, sizeof(aBuf), "%d player registered. [Min : %d]", pSelf->m_LMB.ParticipantNum(), g_Config.m_SvLMBMinPlayer);
+		pSelf->SendBroadcast(aBuf, -1);*/
 	}
 }
 #if defined(CONF_SQL)

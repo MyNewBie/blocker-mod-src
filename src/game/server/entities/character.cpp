@@ -79,6 +79,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
 
 	Server()->StartRecord(m_pPlayer->GetCID());
+	
+	m_FreezeTimer = 0;
 	for (int i = 0; i < m_AnimIDNum; i++)//snap ids
 	     m_apAnimIDs[i] = Server()->SnapNewID();
 
@@ -2462,6 +2464,24 @@ void CCharacter::DDRaceInit()
 	m_LastBroadcast = 0;
 	m_TeamBeforeSuper = 0;
 	m_Core.m_Id = GetPlayer()->GetCID();
+		
+	if(m_FreezeTime && GetPlayer()->m_InLMB == 2)
+	{
+		m_FreezeTimer++;
+	}
+	else
+		m_FreezeTimer = 0;
+	
+	if(GetPlayer()->m_InLMB == LMB_PARTICIPATE && m_FreezeTimer > GameServer()->Server()->TickSpeed()*g_Config.m_SvLMBFreezeTime)
+	{
+		Die(m_pPlayer->GetCID(), WEAPON_WORLD);
+	}
+		
+	if(GetPlayer()->m_InLMB == LMB_PARTICIPATE && m_Core.m_LMBHookCount >=600)
+	{
+		Freeze(1);
+		m_Core.m_LMBHookCount -= 150;
+	}
 	if(g_Config.m_SvTeam == 2)
 	{
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(),"Please join a team before you start");

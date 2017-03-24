@@ -127,9 +127,9 @@ bool IGameController::CanSpawn(int Team, vec2 *pOutPos)
 	}
 	else
 	{*/
-		EvaluateSpawnType(&Eval, 0);
-		EvaluateSpawnType(&Eval, 1);
-		EvaluateSpawnType(&Eval, 2);
+        EvaluateSpawnType(&Eval, Team);
+		//EvaluateSpawnType(&Eval, 1);
+		//EvaluateSpawnType(&Eval, 2);
 	//}
 
 	*pOutPos = Eval.m_Pos;
@@ -403,7 +403,7 @@ const char *IGameController::GetTeamName(int Team)
 
 void IGameController::StartRound()
 {
-	ResetGame();
+	/*ResetGame();
 
 	m_RoundStartTick = Server()->Tick();
 	m_SuddenDeath = 0;
@@ -415,7 +415,7 @@ void IGameController::StartRound()
 	Server()->DemoRecorder_HandleAutoStart();
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "start round type='%s' teamplay='%d'", m_pGameType, m_GameFlags&GAMEFLAG_TEAMS);
-	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
+	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);*/
 }
 
 void IGameController::ChangeMap(const char *pToMap)
@@ -551,6 +551,17 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 	}
 	if(Weapon == WEAPON_SELF)
 		pVictim->GetPlayer()->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()*3.0f;*/
+		
+	if(pVictim->GetPlayer()->m_InLMB == LMB_PARTICIPATE)
+	{
+		if(GameServer()->m_LMB.State() == CLMB::STATE_RUNNING)
+		{
+			GameServer()->SendChatTarget(pVictim->GetPlayer()->GetCID(), "You are out!");	
+		}
+		GameServer()->m_LMB.RemoveParticipant(pVictim->GetPlayer()->GetCID());
+		pVictim->GetPlayer()->m_InLMB = LMB_NONREGISTERED;
+	}
+	
 	return 0;
 }
 
@@ -611,11 +622,11 @@ void IGameController::Tick()
 	if(m_Warmup)
 	{
 		m_Warmup--;
-		if(!m_Warmup)
-			StartRound();
+		//if(!m_Warmup)
+		//	StartRound();
 	}
 
-	if(m_GameOverTick != -1)
+	/*if(m_GameOverTick != -1)
 	{
 		// game over.. wait for restart
 		if(Server()->Tick() > m_GameOverTick+Server()->TickSpeed()*10)
@@ -624,7 +635,7 @@ void IGameController::Tick()
 			StartRound();
 			m_RoundCount++;
 		}
-	}
+	}*/
 
 	/*
 	// game is Paused

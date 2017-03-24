@@ -45,6 +45,7 @@ CHAT_COMMAND("r", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConRescue, this, "Teleport yo
 CHAT_COMMAND("rescue", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConRescue, this, "Teleport yourself out of freeze (use sv_rescue 1 to enable this feature)")
 
 CHAT_COMMAND("kill", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConProtectedKill, this, "Kill yourself")
+CHAT_COMMAND("lmb", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConRegisterLMB, this, "Register yourself for an upcoming tournament.")
 
 #if defined(CONF_SQL)
 CHAT_COMMAND("times", "?s[playername] ?i[number of times to skip]", CFGFLAG_CHAT|CFGFLAG_SERVER, ConTimes, this, "/times ?s?i shows last 5 times of the server or of a player beginning with name s starting with time i (i = 1 by default)")

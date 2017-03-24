@@ -14,6 +14,7 @@
 #include "gamecontroller.h"
 #include "gameworld.h"
 #include "player.h"
+#include "lmb.h"
 
 #include "score.h"
 #ifdef _MSC_VER
@@ -89,6 +90,9 @@ class CGameContext : public IGameServer
 	static void ConForceVote(IConsole::IResult *pResult, void *pUserData);
 	static void ConClearVotes(IConsole::IResult *pResult, void *pUserData);
 	static void ConVote(IConsole::IResult *pResult, void *pUserData);
+	static void ConCountdown(IConsole::IResult *pResult, void *pUserData);
+	static void ConOpenLMB(IConsole::IResult *pResult, void *pUserData);
+	static void ConRegisterLMB(IConsole::IResult *pResult, void *pUserData);
 	static void ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
 	CGameContext(int Resetting);
@@ -236,6 +240,8 @@ public:
 	// Describes the time when the first player joined the server.
 	int64 m_NonEmptySince;
 	int64 m_LastMapVote;
+	
+	CLMB m_LMB;
 
 private:
 
@@ -367,6 +373,16 @@ private:
 
 	CMute m_aMutes[MAX_MUTES];
 	int m_NumMutes;
+		
+	struct
+	{
+		int m_StartTick;
+		int m_Time;
+		char m_aReason[256];
+		int m_AnnouncePeriod;
+		int m_LastAnnounce;
+	}m_CountdownInfo;
+	
 	void Mute(IConsole::IResult *pResult, NETADDR *Addr, int Secs, const char *pDisplayName);
 	void Whisper(int ClientID, char *pStr);
 	void WhisperID(int ClientID, int VictimID, char *pMessage);

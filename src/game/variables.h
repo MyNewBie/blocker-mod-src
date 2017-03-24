@@ -170,6 +170,13 @@ MACRO_CONFIG_INT(SvBlackHolescount, sv_blackholes_count, 3, 1, 10, CFGFLAG_SERVE
 MACRO_CONFIG_INT(SvBlackHoleKills, sv_blackhole_kills, 1, 0, 1, CFGFLAG_SERVER, "black hole can kill?")
 MACRO_CONFIG_INT(SvRescue, sv_rescue, 0, 0, 1, CFGFLAG_SERVER, "Allow /rescue command so players can teleport themselves out of freeze")
 MACRO_CONFIG_INT(SvRescueDelay, sv_rescue_delay, 5, 0, 1000, CFGFLAG_SERVER, "Number of seconds inbetween two rescues")
+MACRO_CONFIG_INT(SvLMBRegDuration, sv_lmb_reg_duration, 5, 1, 60, CFGFLAG_SERVER, "Specify the duration where LMB registration is possible")
+MACRO_CONFIG_INT(SvLMBFreezeTime, sv_lmb_freeze_time, 15, 5, 30, CFGFLAG_SERVER, "Specifies the time a player needs to be frozen to die")
+MACRO_CONFIG_INT(SvLMBTournamentTime, sv_lmb_tournament_time, 5, 1, 20, CFGFLAG_SERVER, "Specifies the maximum time a tournament runs.")
+MACRO_CONFIG_INT(SvLMBMinPlayer, sv_lmb_min_player, 2, 2, 64, CFGFLAG_SERVER, "Specifies the minimum players required to start")
+MACRO_CONFIG_INT(SvLMBMaxPlayer, sv_lmb_max_player, 64, 2, 64, CFGFLAG_SERVER, "Specifies the maximum playercount")
+MACRO_CONFIG_INT(SvLMBSpawnFreezeTime, sv_lmb_spawn_freeze_time, 3, 0, 5, CFGFLAG_SERVER, "Specifies the amount of time a player is frozen at the spawn")
+MACRO_CONFIG_INT(SvLMBCooldown, sv_lmb_cooldown, 30, 0, 120, CFGFLAG_SERVER, "Minutes that have to pass unless a new round can start.")
 
 // debug
 #ifdef CONF_DEBUG // this one can crash the server if not used correctly

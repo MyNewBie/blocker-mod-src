@@ -190,6 +190,8 @@ private:
 
 	bool m_SetSavePos;
 	vec2 m_PrevSavePos;
+	
+	int m_FreezeTimer;
 
 public:
 	CGameTeams* Teams();

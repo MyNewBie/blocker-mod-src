@@ -142,7 +142,12 @@ void CPlayer::Reset()
 	if(Now > GameServer()->m_NonEmptySince + 10 * TickSpeed)
 		m_FirstVoteTick = Now + g_Config.m_SvJoinVoteDelay * TickSpeed;
 	else
+	{
 		m_FirstVoteTick = Now;
+    }
+	m_InLMB = LMB_NONREGISTERED;
+	
+	m_SavedStats.Reset();
 }
 
 void CPlayer::Tick()
@@ -199,7 +204,7 @@ void CPlayer::Tick()
 
 	if(!GameServer()->m_World.m_Paused)
 	{
-		if(!m_pCharacter && m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick())
+		if(!m_pCharacter && (m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick() || m_InLMB == LMB_PARTICIPATE))
 			m_Spawning = true;
 
 		if(m_pCharacter)
@@ -567,7 +572,11 @@ void CPlayer::TryRespawn()
 {
 	vec2 SpawnPos;
 
-	if(!GameServer()->m_pController->CanSpawn(m_Team, &SpawnPos))
+	int Team = m_Team;
+	
+	if(m_InLMB == LMB_PARTICIPATE)	//LMB=1 means registered
+		Team += 2;
+	if(!GameServer()->m_pController->CanSpawn(Team, &SpawnPos))	//we cant spawn being in LMB!
 		return;
 
 	CGameControllerDDRace* Controller = (CGameControllerDDRace*)GameServer()->m_pController;
@@ -575,8 +584,36 @@ void CPlayer::TryRespawn()
 	m_WeakHookSpawn = false;
 	m_Spawning = false;
 	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World);
+	
+	if(!m_InLMB && (m_SavedStats.m_SavedSpawn.x || m_SavedStats.m_SavedSpawn.y))
+		SpawnPos = m_SavedStats.m_SavedSpawn;
+	
 	m_pCharacter->Spawn(this, SpawnPos);
 	GameServer()->CreatePlayerSpawn(SpawnPos, m_pCharacter->Teams()->TeamMask(m_pCharacter->Team(), -1, m_ClientID));
+	
+	if(!m_InLMB)
+	{
+		if(m_SavedStats.m_SavedShotgun)
+			m_pCharacter->GiveWeapon(WEAPON_SHOTGUN, -1);
+		
+		if(m_SavedStats.m_SavedGrenade)
+			m_pCharacter->GiveWeapon(WEAPON_GRENADE, -1);
+		
+		if(m_SavedStats.m_SavedLaser)
+			m_pCharacter->GiveWeapon(WEAPON_RIFLE, -1);
+		
+		m_pCharacter->m_EndlessHook = m_SavedStats.m_SavedEHook;
+		
+		if(m_SavedStats.m_SavedStartTick)
+		{
+			m_pCharacter->Teams()->OnCharacterStart(GetCID());
+			m_pCharacter->m_StartTime = m_SavedStats.m_SavedStartTick;
+		}
+		
+		
+		m_SavedStats.Reset();
+	}
+		
 
 	if(g_Config.m_SvTeam == 3)
 	{
@@ -590,6 +627,9 @@ void CPlayer::TryRespawn()
 
 		Controller->m_Teams.SetForceCharacterTeam(GetCID(), NewTeam);
 	}
+	
+	if(m_InLMB == LMB_PARTICIPATE)
+		m_pCharacter->Freeze(g_Config.m_SvLMBSpawnFreezeTime);
 }
 
 bool CPlayer::AfkTimer(int NewTargetX, int NewTargetY)
@@ -752,4 +792,20 @@ void CPlayer::QuestReset()
 	m_QuestData.m_Rstartkill = false;
 	m_QuestData.m_RandomID = -1;
 	m_QuestData.m_RaceTime = 0;
+}
+
+
+void CPlayer::SaveStats()
+{
+	if(!GetCharacter() || !GetCharacter()->IsAlive())
+		return;
+	
+	m_SavedStats.m_SavedSpawn = GetCharacter()->Core()->m_Pos;
+	m_SavedStats.m_SavedShotgun = GetCharacter()->GetWeaponGot(WEAPON_SHOTGUN);
+	m_SavedStats.m_SavedGrenade = GetCharacter()->GetWeaponGot(WEAPON_GRENADE);
+	m_SavedStats.m_SavedLaser = GetCharacter()->GetWeaponGot(WEAPON_RIFLE);
+	m_SavedStats.m_SavedEHook = GetCharacter()->m_EndlessHook;
+		
+	if(GetCharacter()->m_DDRaceState == DDRACE_STARTED)
+		m_SavedStats.m_SavedStartTick = GetCharacter()->m_StartTime;
 }

@@ -61,6 +61,8 @@ void CGameContext::Construct(int Resetting)
 	}
 	m_ChatResponseTargetID = -1;
 	m_aDeleteTempfile[0] = 0;
+	
+	m_LMB.SetGameServer(this);
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -268,6 +270,18 @@ void CGameContext::CallVote(int ClientID, const char *pDesc, const char *pCmd, c
 
 	if(!pPlayer)
 		return;
+	
+	if(str_comp(pCmd, "open_lmb") == 0 && m_LMB.State() > CLMB::STATE_STANDBY)
+		return;
+	
+	if(str_comp(pCmd, "open_lmb") == 0 && Server()->Tick() < m_LMB.m_LastLMB + 3000*g_Config.m_SvLMBCooldown)
+	{
+		char aBuf[256];
+		str_format(aBuf, sizeof(aBuf), "LMB is on cooldown. Remaining seconds : %ds", (m_LMB.m_LastLMB+3000*g_Config.m_SvLMBCooldown - Server()->Tick())/50);
+		SendChatTarget(ClientID, aBuf);
+		return;
+	}
+
 
 	SendChat(-1, CGameContext::CHAT_ALL, pChatmsg);
 	StartVote(pDesc, pCmd, pReason);
@@ -414,7 +428,7 @@ void CGameContext::StartVote(const char *pDesc, const char *pCommand, const char
 	m_VoteCloseTime = time_get() + time_freq() * g_Config.m_SvVoteTime;
 	str_copy(m_aVoteDescription, pDesc, sizeof(m_aVoteDescription));
 	str_copy(m_aVoteCommand, pCommand, sizeof(m_aVoteCommand));
-	str_copy(m_aVoteReason, pReason, sizeof(m_aVoteReason));
+	str_copy(m_aVoteReason, "", sizeof(m_aVoteReason));
 	SendVoteSet(-1);
 	m_VoteUpdate = true;
 }
@@ -589,6 +603,38 @@ void CGameContext::SwapTeams()
 */
 void CGameContext::OnTick()
 {
+		if(m_CountdownInfo.m_Time > 0 && Server()->Tick() - m_CountdownInfo.m_LastAnnounce > 50)
+	{
+		unsigned int SecondsC = Server()->Tick() - m_CountdownInfo.m_StartTick;
+		SecondsC /= 50;
+		
+		unsigned int Seconds = m_CountdownInfo.m_Time - SecondsC;
+		char Output[256];
+		
+		if (Seconds > 5)
+		{
+			if(Seconds % m_CountdownInfo.m_AnnouncePeriod == 0)
+			{
+				str_format(Output, sizeof(Output), "The server will restart in %d seconds. Reason : '%s'",
+				Seconds, m_CountdownInfo.m_aReason);
+				SendChatTarget(-1, Output);			
+				
+				m_CountdownInfo.m_LastAnnounce = Server()->Tick();
+			}
+		}
+		else
+		{
+			str_format(Output, sizeof(Output), "Server restart in : %d", Seconds);
+			SendChatTarget(-1, Output);		
+			m_CountdownInfo.m_LastAnnounce = Server()->Tick();
+		}
+		
+		if (Seconds < 1)
+		{
+			Console()->ExecuteLine("shutdown");
+		}
+		
+	}
 	// check tuning
 	CheckPureTuning();
 
@@ -598,6 +644,8 @@ void CGameContext::OnTick()
 
 	//if(world.paused) // make sure that the game object always updates
 	m_pController->Tick();
+	
+	m_LMB.Tick();
 
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
@@ -1003,6 +1051,9 @@ void CGameContext::OnClientConnected(int ClientID)
 
 void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 {
+	if(m_LMB.State() == CLMB::STATE_REGISTRATION && m_LMB.IsParticipant(ClientID))
+		m_LMB.RegisterPlayer(ClientID);
+	
 	AbortVoteKickOnDisconnect(ClientID);
 	m_apPlayers[ClientID]->OnDisconnect(pReason);
 	delete m_apPlayers[ClientID];
@@ -1743,6 +1794,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->SetTeam(pMsg->m_Team);
 					//(void)m_pController->CheckTeamBalance();
 					pPlayer->m_TeamChangeTick = Server()->Tick();
+					if(m_LMB.State() == CLMB::STATE_REGISTRATION && m_LMB.IsParticipant(pPlayer->GetCID()))
+						m_LMB.RegisterPlayer(pPlayer->GetCID());
 				}
 				//else
 					//SendBroadcast("Teams must be balanced, please join other team", ClientID);
@@ -2564,6 +2617,21 @@ void CGameContext::ConVote(IConsole::IResult *pResult, void *pUserData)
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
 }
 
+void CGameContext::ConCountdown(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	pSelf->m_CountdownInfo.m_StartTick = pSelf->Server()->Tick();
+	pSelf->m_CountdownInfo.m_Time = pResult->GetInteger(0);
+	pSelf->m_CountdownInfo.m_AnnouncePeriod = pResult->GetInteger(1);
+	str_format(pSelf->m_CountdownInfo.m_aReason, sizeof(pSelf->m_CountdownInfo.m_aReason), "%s", pResult->GetString(2));
+}
+
+void CGameContext::ConOpenLMB(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	pSelf->m_LMB.OpenRegistration();
+}
+
 void CGameContext::ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
 {
 	pfnCallback(pResult, pCallbackUserData);
@@ -2612,7 +2680,8 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("force_vote", "s[name] s[command] ?r[reason]", CFGFLAG_SERVER, ConForceVote, this, "Force a voting option");
 	Console()->Register("clear_votes", "", CFGFLAG_SERVER, ConClearVotes, this, "Clears the voting options");
 	Console()->Register("vote", "r['yes'|'no']", CFGFLAG_SERVER, ConVote, this, "Force a vote to yes/no");
-
+    Console()->Register("countdown", "iir", CFGFLAG_SERVER, ConCountdown, this, "Starts a countdown for a server restart");
+	Console()->Register("open_lmb", "", CFGFLAG_SERVER, ConOpenLMB, this, "Opens registration for LMB");
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 
 #define CONSOLE_COMMAND(name, params, flags, callback, userdata, help) m_pConsole->Register(name, params, flags, callback, userdata, help);

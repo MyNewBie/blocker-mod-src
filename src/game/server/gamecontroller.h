@@ -24,7 +24,7 @@ class IGameController
 {
 	friend class CSaveTeam; // need acces to GameServer() and Server()
 
-	vec2 m_aaSpawnPoints[3][64];
+	vec2 m_aaSpawnPoints[3][128];
 	int m_aNumSpawnPoints[3];
 
 	class CGameContext *m_pGameServer;

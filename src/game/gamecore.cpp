@@ -396,6 +396,19 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 				m_Vel = NewVel; // no problem. apply
 
 		}
+				
+		if(m_HookedPlayer == -1)
+		{
+			if(m_HookPos.y > m_Pos.y)
+				m_LMBHookCount += 4;
+		}
+		else
+			m_LMBHookCount-=3;
+		
+		if(m_LMBHookCount < 0)
+			m_LMBHookCount = 0;
+		if(m_LMBHookCount > 650)		//some buffer
+			m_LMBHookCount = 600;
 
 		// release hook (max default hook time is 1.25 s)
 		m_HookTick++;
@@ -410,6 +423,8 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 	if (m_LastHookedPlayer != -1 && !m_pWorld->m_apCharacters[m_LastHookedPlayer]) {
 		m_LastHookedPlayer = -1;
 	}
+	else
+		m_LMBHookCount--;
 
 	if(m_pWorld)
 	{

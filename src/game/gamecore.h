@@ -238,6 +238,9 @@ public:
 
 	void LimitForce(vec2 *Force);
 	void ApplyForce(vec2 Force);
+		
+	//LMB
+	int m_LMBHookCount;
 
 private:
 
