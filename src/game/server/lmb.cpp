@@ -199,16 +199,20 @@ void CLMB::RemoveParticipant(int CID)
 	
 	char aBuf[256];
 	
-	if(m_Participants.size() == 1 && m_State == STATE_RUNNING)
+	if (m_Participants.size() == 1 && m_State == STATE_RUNNING)
 	{
-		str_format(aBuf, sizeof(aBuf), "'%s' won!", m_pGameServer->Server()->ClientName(m_Participants[0]));
+		int ID = m_Participants[0];
+		CPlayer *Player = m_pGameServer->m_apPlayers[ID];
+		str_format(aBuf, sizeof(aBuf), "'%s' won!", m_pGameServer->Server()->ClientName(ID));
 		m_pGameServer->SendBroadcast(aBuf, -1);
-		
+
 		char aBuf2[256];
-		str_format(aBuf2, sizeof(aBuf2), "'%s' has won the LMB tournament! Congratulations.", m_pGameServer->Server()->ClientName(m_Participants[0]));
+		str_format(aBuf2, sizeof(aBuf2), Player->m_AccData.m_UserID ? "'%s' has won the LMB tournament and has been rewarded 3 pages! \n Congratulations!" : "'%s' has won the LMB tournament! Congratulations.", m_pGameServer->Server()->ClientName(ID));
 		m_pGameServer->SendChatTarget(-1, aBuf2);
-		
-		dbg_msg("LMB", "%d has won!", m_Participants[0]);
+		if (Player->m_AccData.m_UserID)
+			m_pGameServer->m_apPlayers[ID]->m_QuestData.m_Pages += 3;
+
+		dbg_msg("LMB", "%d has won!", ID);
 
 		m_EndTick = m_pGameServer->Server()->Tick();
 		m_State = STATE_STANDBY;
