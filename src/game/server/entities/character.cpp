@@ -2674,6 +2674,28 @@ void CCharacter::HandleBots()
 	}
 	else if(this && IsAlive() && m_HammerUpBot)
 		m_HammerUpBot = false;
+
+	/*if (this && IsAlive() && m_pPlayer->m_Bots.m_Grenadebot && m_Core.m_ActiveWeapon == WEAPON_GRENADE)
+	{
+		CCharacter *pMe = m_pPlayer->GetCharacter();
+
+		if (!pMe)
+			return;
+
+		int Team = m_pPlayer->GetTeam();
+		vec2 Pos = pMe->m_Pos;
+
+		CCharacterCore* apTarget[MAX_CLIENTS];
+		int Count = 0;
+
+		for (int c = 0; c < MAX_CLIENTS; c++)
+		{
+			if (c == m_pPlayer->GetCID())
+				continue;
+			if (GameServer()->m_apPlayers[c] && GameServer()->m_apPlayers[c]->GetCharacter() && (GameServer()->m_apPlayers[c]->GetTeam() != Team || !GameServer()->m_pController->IsTeamplay()))
+				apTarget[Count++] = GameServer()->m_apPlayers[c]->GetCharacter()->GetCore();
+		}
+	}*/ // Finish later vali needs help
 	/*if (GetPlayer()->m_Bots.m_AutoHook)
 	{
 		CCharacter *pMain = GetPlayer()->GetCharacter();

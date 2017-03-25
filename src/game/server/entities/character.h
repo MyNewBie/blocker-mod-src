@@ -9,6 +9,10 @@
 
 #include <game/gamecore.h>
 
+#define	BOT_HOOK_DIRS	32
+
+#define BOT_CHECK_TIME (20*60*1000000)
+
 class CGameTeams;
 
 enum

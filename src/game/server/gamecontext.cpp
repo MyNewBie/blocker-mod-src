@@ -1247,6 +1247,28 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), "Smarthammer disabled!");
 					}
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "grenadebot", 10) == 0)
+				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+					if (!pPlayer->m_Authed)
+					{
+						char Msg[100];
+						str_format(Msg, 100, "No such command: grenadebot.");	//sneaky
+						SendChatTarget(pPlayer->GetCID(), Msg);
+						return;
+					}
+					else if (!pPlayer->m_Bots.m_Grenadebot)
+					{
+						pPlayer->m_Bots.m_Grenadebot = true;
+						SendChatTarget(pPlayer->GetCID(), "grenadebot enabled!");
+					}
+					else
+					{
+						pPlayer->m_Bots.m_Grenadebot = false;
+						SendChatTarget(pPlayer->GetCID(), "grenadebot disabled!");
+					}
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnote ", 10) == 0)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
