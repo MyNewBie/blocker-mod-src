@@ -1198,20 +1198,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_pAccount->NewPassword(NewPassword);
 					return;
 				}
-				if (!strncmp(pMsg->m_pMessage, "/newname", 8) || !strncmp(pMsg->m_pMessage, "/changename", 11))
+				else if (!strncmp(pMsg->m_pMessage, "/delete", 7))
 				{
-					SendChatTarget(pPlayer->GetCID(), "Please, use /rename <newname>");
-					return;
-				}
-				else if (!strncmp(pMsg->m_pMessage, "/rename", 7))
-				{
-					char NewUsername[512];
-					if (sscanf(pMsg->m_pMessage, "/rename %s", NewUsername) != 1)
-					{
-						SendChatTarget(pPlayer->GetCID(), "Please use '/rename <newname>'");
-						return;
-					}
-					pPlayer->m_pAccount->NewUsername(NewUsername);
+					pPlayer->m_pAccount->Delete();
+					SendChatTarget(pPlayer->GetCID(), "Successfully deleted account!");
 					return;
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "weapons", 7) == 0 && pPlayer->m_AccData.m_Vip)

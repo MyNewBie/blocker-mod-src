@@ -308,31 +308,6 @@ void CAccount::NewPassword(char *NewPassword)
 	GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Password successfully changed!");
 }
 
-void CAccount::NewUsername(char *NewUsername)
-{
-	char aBuf[128];
-	if (!m_pPlayer->m_AccData.m_UserID)
-	{
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Please, login to change the username");
-		return;
-	}
-	if (strlen(NewUsername) > 15 || !strlen(NewUsername))
-	{
-		str_format(aBuf, sizeof(aBuf), "Username too %s!", strlen(NewUsername) ? "long" : "short");
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
-		return;
-	}
-
-	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", m_pPlayer->m_AccData.m_Username);
-	std::rename(aBuf, NewUsername);
-
-	str_copy(m_pPlayer->m_AccData.m_Username, NewUsername, 32);
-	Apply();
-
-
-	dbg_msg("account", "Username changed - ('%s')", m_pPlayer->m_AccData.m_Username);
-	GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Username successfully changed!");
-}
 
 int CAccount::NextID()
 {

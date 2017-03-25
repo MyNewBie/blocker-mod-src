@@ -17,7 +17,6 @@ public:
 	void Reset();
 	void Delete();
 	void NewPassword(char *NewPassword);
-	void NewUsername(char *NewUsername);
 	bool Exists(const char * Username);
 
 	static const int MAX_SERVER = 2;
