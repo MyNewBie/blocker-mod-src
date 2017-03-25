@@ -419,12 +419,12 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 			m_HookPos = m_Pos;
 		}
 	}
+		else
+		m_LMBHookCount--;
 
 	if (m_LastHookedPlayer != -1 && !m_pWorld->m_apCharacters[m_LastHookedPlayer]) {
 		m_LastHookedPlayer = -1;
 	}
-	else
-		m_LMBHookCount--;
 
 	if(m_pWorld)
 	{

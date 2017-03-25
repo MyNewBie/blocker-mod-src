@@ -145,6 +145,7 @@ void CPlayer::Reset()
 	{
 		m_FirstVoteTick = Now;
     }
+	
 	m_InLMB = LMB_NONREGISTERED;
 	
 	m_SavedStats.Reset();
@@ -609,7 +610,6 @@ void CPlayer::TryRespawn()
 			m_pCharacter->Teams()->OnCharacterStart(GetCID());
 			m_pCharacter->m_StartTime = m_SavedStats.m_SavedStartTick;
 		}
-		
 		
 		m_SavedStats.Reset();
 	}

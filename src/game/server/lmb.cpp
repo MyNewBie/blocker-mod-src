@@ -34,14 +34,14 @@ void CLMB::Tick()
 	if(m_State == STATE_REGISTRATION)
 	{
 		int Diff = m_StartTick - m_pGameServer->Server()->Tick();
-		
+
 		if(Diff % 3000 == 0 && Diff > 0)
 		{
 			char aBuf[256];
 			str_format(aBuf, sizeof(aBuf), "LMB will start in %d minutes.", (m_StartTick - m_pGameServer->Server()->Tick())/3000);
 			m_pGameServer->SendChatTarget(-1, aBuf);
 			m_pGameServer->SendChatTarget(-1, "Please use /lmb if you want to participate now");
-						
+			
 			if(Diff == 3000)
 				m_pGameServer->m_pController->DoWarmup(60);
 		}
@@ -62,19 +62,19 @@ void CLMB::Tick()
 				char aBuf[256];
 				str_format(aBuf, sizeof(aBuf), "It needs at least %d players to start.", g_Config.m_SvLMBMinPlayer);
 				m_pGameServer->SendChatTarget(-1, aBuf);
-				
+
 				m_State = STATE_STANDBY;
 				for(int i = 0; i < m_Participants.size(); i++)
-					{
-						if(m_pGameServer->m_apPlayers[m_Participants[i]])
+				{
+					if(m_pGameServer->m_apPlayers[m_Participants[i]])
 						m_pGameServer->m_apPlayers[m_Participants[i]]->m_InLMB = LMB_NONREGISTERED;
-					}
-				
+				}
+
 				m_Participants.clear();
 				m_pGameServer->SendBroadcast(" ", -1);
 			}
 		}
-			
+
 		if(m_pGameServer->Server()->Tick() % SERVER_TICK_SPEED == 0)
 		{
 			char aBuf[256];
@@ -85,8 +85,8 @@ void CLMB::Tick()
 	else if(m_Participants.size() && m_State == STATE_STANDBY && m_pGameServer->Server()->Tick() > m_EndTick + 500)
 	{
 		dbg_msg("LMB", "Removing winner from arena (%d)", m_Participants[0]);
-
-        m_pGameServer->m_apPlayers[m_Participants[0]]->m_InLMB = LMB_NONREGISTERED;	
+		
+		m_pGameServer->m_apPlayers[m_Participants[0]]->m_InLMB = LMB_NONREGISTERED;
 		if(m_pGameServer->m_apPlayers[m_Participants[0]]->GetCharacter())
 		{
 			m_pGameServer->m_apPlayers[m_Participants[0]]->KillCharacter();
@@ -100,7 +100,7 @@ void CLMB::Tick()
 		if(m_pGameServer->Server()->Tick() >= m_StartTick + 3000*g_Config.m_SvLMBTournamentTime)	//force cancel
 		{
 			m_State = STATE_STANDBY;
-					
+			
 			while(m_Participants.size())
 			{		//killed player will get removed from the list; so we just have to kill ID 0 all the time!
 				//m_pGameServer->m_apPlayers[m_Participants[0]]->m_InLMB = 0;
@@ -152,7 +152,7 @@ std::vector<int>::iterator CLMB::FindParticipant(int ID)
 {
 	std::vector<int>::iterator it = std::find(m_Participants.begin(), m_Participants.end(), ID);
 	return it;
-	}
+}
 
 void CLMB::TeleportParticipants()
 {
@@ -173,9 +173,9 @@ void CLMB::TeleportParticipants()
 				m_pGameServer->SendChatTarget(m_Participants[i], "Oops! Something went wrong! Please assure that you are alive when the tournament starts.""");
 				m_pGameServer->m_apPlayers[m_Participants[i]]->m_InLMB = LMB_NONREGISTERED;
 				RemoveParticipant(m_Participants[i]);
-			}
+			}			
 		}
-				else
+		else
 		{
 			m_pGameServer->SendChatTarget(m_Participants[i], "Oops, some strange error happened. We're sorry. If you have information for us what exactly happened, please tell the team.");
 			if(m_pGameServer->m_apPlayers[m_Participants[i]])
@@ -199,16 +199,17 @@ void CLMB::RemoveParticipant(int CID)
 	
 	char aBuf[256];
 	
-	if (m_Participants.size() == 1 && m_State == STATE_RUNNING)
+	if(m_Participants.size() == 1 && m_State == STATE_RUNNING)
 	{
 		int ID = m_Participants[0];
 		CPlayer *Player = m_pGameServer->m_apPlayers[ID];
 		str_format(aBuf, sizeof(aBuf), "'%s' won!", m_pGameServer->Server()->ClientName(ID));
 		m_pGameServer->SendBroadcast(aBuf, -1);
-
+		
 		char aBuf2[256];
 		str_format(aBuf2, sizeof(aBuf2), Player->m_AccData.m_UserID ? "'%s' has won the LMB tournament and has been rewarded 3 pages! \n Congratulations!" : "'%s' has won the LMB tournament! Congratulations.", m_pGameServer->Server()->ClientName(ID));
 		m_pGameServer->SendChatTarget(-1, aBuf2);
+		
 		if (Player->m_AccData.m_UserID)
 			m_pGameServer->m_apPlayers[ID]->m_QuestData.m_Pages += 3;
 
