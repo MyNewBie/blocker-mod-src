@@ -595,13 +595,13 @@ void CPlayer::TryRespawn()
 	if(!m_InLMB)
 	{
 		if(m_SavedStats.m_SavedShotgun)
-			m_pCharacter->GiveWeapon(WEAPON_SHOTGUN, -1);
+			m_pCharacter->GiveWeapon(WEAPON_SHOTGUN);
 		
 		if(m_SavedStats.m_SavedGrenade)
-			m_pCharacter->GiveWeapon(WEAPON_GRENADE, -1);
+			m_pCharacter->GiveWeapon(WEAPON_GRENADE);
 		
 		if(m_SavedStats.m_SavedLaser)
-			m_pCharacter->GiveWeapon(WEAPON_RIFLE, -1);
+			m_pCharacter->GiveWeapon(WEAPON_RIFLE);
 		
 		m_pCharacter->m_EndlessHook = m_SavedStats.m_SavedEHook;
 		
@@ -797,7 +797,7 @@ void CPlayer::QuestReset()
 
 void CPlayer::SaveStats()
 {
-	if(!GetCharacter() || !GetCharacter()->IsAlive())
+	if(!GetCharacter()) // It already checks for alive
 		return;
 	
 	m_SavedStats.m_SavedSpawn = GetCharacter()->Core()->m_Pos;
