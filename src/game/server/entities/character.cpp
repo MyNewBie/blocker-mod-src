@@ -2914,7 +2914,6 @@ void CCharacter::HandleQuest()
 		GameServer()->SendBroadcast(Objective, OwnID);
 
 		CCharacter *pVictim = GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID);
-		CCharacter *pChr = this;
 
 		if (pVictim && pVictim->IsAlive() && pVictim->Core()->m_LastHookedPlayer == m_Core.m_Id && pVictim->m_FirstFreezeTick != 0)
 		{
