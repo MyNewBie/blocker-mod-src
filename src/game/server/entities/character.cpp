@@ -2877,7 +2877,7 @@ void CCharacter::HandleRainbow()
 
 void CCharacter::HandleQuest()
 {
-	if (!this || !IsAlive() || !m_pPlayer->m_DeathNote || !m_pPlayer->m_QuestData.m_QuestInSession)
+	if (!this || !IsAlive() || !m_pPlayer->m_DeathNote || !m_pPlayer->m_QuestData.m_QuestInSession || Team() != 0)
 		return;
 	else if (this && IsAlive() && m_pPlayer->m_QuestData.m_CompletedQuest)
 	{
@@ -2903,6 +2903,10 @@ void CCharacter::HandleQuest()
 		else if (m_pPlayer->m_QuestData.m_RandomID == m_Core.m_Id)
 			m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 		else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID))
+			m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
+		else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->IsAlive())
+			m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
+		else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams != 0)
 			m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 		char Objective[102];
@@ -2940,6 +2944,10 @@ void CCharacter::HandleQuest()
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 			else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID))
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->IsAlive())
+				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams != 0)
+				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 			char Objective[102];
 			str_format(Objective, 102, "PART 2: You must hook %s!", Server()->ClientName(m_pPlayer->m_QuestData.m_RandomID));
@@ -2974,6 +2982,10 @@ void CCharacter::HandleQuest()
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 			else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID))
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->IsAlive())
+				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams != 0)
+				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 			char Objective[102];
 			str_format(Objective, 102, "PART 2: You must hammer %s!", Server()->ClientName(m_pPlayer->m_QuestData.m_RandomID));
@@ -2997,6 +3009,10 @@ void CCharacter::HandleQuest()
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 			else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID))
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->IsAlive())
+				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams != 0)
+				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 			char Objective[102];
 			str_format(Objective, 102, "PART 2: You must shoot %s with laser/rifle", Server()->ClientName(m_pPlayer->m_QuestData.m_RandomID));
@@ -3019,6 +3035,10 @@ void CCharacter::HandleQuest()
 			else if (m_pPlayer->m_QuestData.m_RandomID == m_Core.m_Id)
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 			else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID))
+				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->IsAlive())
+				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
+			else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams != 0)
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 			char Objective[102];
