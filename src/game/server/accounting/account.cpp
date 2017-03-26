@@ -64,7 +64,7 @@ void CAccount::Login(char *Username, char *Password)
 		return;
 	}
 
-	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", Username);
+	str_format(aBuf, sizeof(aBuf), "~/.teeworlds/accounts/+%s.acc", Username);
 
 	char AccUsername[32];
 	char AccPassword[32];
@@ -208,7 +208,7 @@ void CAccount::Register(char *Username, char *Password)
 		dbg_msg("account", "Account folder created!");
 #endif
 
-	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", Username);
+	str_format(aBuf, sizeof(aBuf), "~/.teeworlds/accounts/+%s.acc", Username);
 
 	FILE *Accfile;
 	Accfile = fopen(aBuf, "a+");
@@ -232,7 +232,7 @@ void CAccount::Register(char *Username, char *Password)
 bool CAccount::Exists(const char *Username)
 {
 	char aBuf[128];
-	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", Username);
+	str_format(aBuf, sizeof(aBuf), "~/.teeworlds/accounts/+%s.acc", Username);
 	if (FILE *Accfile = fopen(aBuf, "r"))
 	{
 		fclose(Accfile);
@@ -244,7 +244,7 @@ bool CAccount::Exists(const char *Username)
 void CAccount::Apply()
 {
 	char aBuf[512];
-	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", m_pPlayer->m_AccData.m_Username);
+	str_format(aBuf, sizeof(aBuf), "~/.teeworlds/accounts/+%s.acc", m_pPlayer->m_AccData.m_Username);
 	std::remove(aBuf);
 	FILE *Accfile;
 	Accfile = fopen(aBuf, "a+");
@@ -276,7 +276,7 @@ void CAccount::Delete()
 	if (m_pPlayer->m_AccData.m_UserID)
 	{
 		Reset();
-		str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", m_pPlayer->m_AccData.m_Username);
+		str_format(aBuf, sizeof(aBuf), "~/.teeworlds/accounts/+%s.acc", m_pPlayer->m_AccData.m_Username);
 		std::remove(aBuf);
 		dbg_msg("account", "Account deleted ('%s')", m_pPlayer->m_AccData.m_Username);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account deleted!");
@@ -316,7 +316,7 @@ int CAccount::NextID()
 	char aBuf[32];
 	char AccUserID[32];
 
-	str_copy(AccUserID, "accounts/++UserIDs++.acc", sizeof(AccUserID));
+	str_copy(AccUserID, "~/.teeworlds/accounts/++UserIDs++.acc", sizeof(AccUserID));
 
 	if (Exists("+UserIDs++"))
 	{
