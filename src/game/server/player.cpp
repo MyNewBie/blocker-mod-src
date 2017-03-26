@@ -51,7 +51,7 @@ void CPlayer::Reset()
 	m_WeakHookSpawn = false;
 
 	// city - label everything vali so its easier to find pls
-	m_pAccount = new CAccount(this, m_pGameServer);
+	m_pAccount = new CAccount(this, m_pGameServer, m_pGameServer->Storage());
 	if (m_AccData.m_UserID)
 		m_pAccount->Apply();
 

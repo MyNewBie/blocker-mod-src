@@ -1,12 +1,9 @@
 ﻿/* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 
+// TODO: most of this includes can probably be removed
 #include <string.h>
 #include <fstream>
-#include <engine/config.h>
-#include "account.h"
-//#include "game/server/gamecontext.h"
-
 #if defined(CONF_FAMILY_WINDOWS)
 #include <tchar.h>
 #include <direct.h>
@@ -18,10 +15,19 @@
 #include <unistd.h>
 #endif
 
-CAccount::CAccount(CPlayer *pPlayer, CGameContext *pGameServer)
+#include <base/system.h>
+#include <engine/storage.h>
+#include <engine/config.h>
+#include <game/server/player.h>
+//#include <game/server/gamecontext.h>
+#include "account.h"
+
+
+CAccount::CAccount(CPlayer *pPlayer, CGameContext *pGameServer, IStorage *pStorage)
+		: m_pPlayer(pPlayer),
+		  m_pGameServer(pGameServer),
+		  m_pStorage(pStorage)
 {
-	m_pPlayer = pPlayer;
-	m_pGameServer = pGameServer;
 }
 
 /*
@@ -35,36 +41,38 @@ CAccount::CAccount(CPlayer *pPlayer, CGameContext *pGameServer)
 #endif
 */
 
-void CAccount::Login(char *Username, char *Password)
+void CAccount::Login(const char *pUsername, const char *pPassword)
 {
-	char aBuf[125];
+	char aBuf[128];
 	if (m_pPlayer->m_AccData.m_UserID)
 	{
-		dbg_msg("account", "Account login failed ('%s' - Already logged in)", Username);
+		dbg_msg("account", "Account login failed ('%s' - Already logged in)", pUsername);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Already logged in");
 		return;
 	}
-	else if (strlen(Username) > 15 || !strlen(Username))
+	else if (str_length(pUsername) > 15 || !str_length(pUsername))
 	{
-		str_format(aBuf, sizeof(aBuf), "Username too %s", strlen(Username) ? "long" : "short");
+		str_format(aBuf, sizeof(aBuf), "Username too %s", str_length(pUsername) ? "long" : "short");
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 		return;
 	}
-	else if (strlen(Password) > 15 || !strlen(Password))
+	else if (str_length(pPassword) > 15 || !str_length(pPassword))
 	{
-		str_format(aBuf, sizeof(aBuf), "Password too %s!", strlen(Password) ? "long" : "short");
+		str_format(aBuf, sizeof(aBuf), "Password too %s!", str_length(pPassword) ? "long" : "short");
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 		return;
 	}
-	else if (!Exists(Username))
+	else if (!Exists(pUsername))
 	{
-		dbg_msg("account", "Account login failed ('%s' - Missing)", Username);
+		dbg_msg("account", "Account login failed ('%s' - Missing)", pUsername);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "This account does not exist.");
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Please register first. (/register <user> <pass>)");
 		return;
 	}
 
-	str_format(aBuf, sizeof(aBuf), "/root/.teeworlds/accounts/+%s.acc", Username);
+	char aFullPath[512];
+	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", pUsername);
+	io_close(Storage()->OpenFile(aBuf, IOFLAG_READ, IStorage::TYPE_SAVE, aFullPath, sizeof(aFullPath)));
 
 	char AccUsername[32];
 	char AccPassword[32];
@@ -74,7 +82,7 @@ void CAccount::Login(char *Username, char *Password)
 
 
 	FILE *Accfile;
-	Accfile = fopen(aBuf, "r");
+	Accfile = fopen(aFullPath, "r");
 	fscanf(Accfile, "%s\n%s\n%s\n%d", AccUsername, AccPassword, AccRcon, &AccID);
 	fclose(Accfile);
 
@@ -86,7 +94,7 @@ void CAccount::Login(char *Username, char *Password)
 		{
 			if (GameServer()->m_apPlayers[j] && GameServer()->m_apPlayers[j]->m_AccData.m_UserID == AccID)
 			{
-				dbg_msg("account", "Account login failed ('%s' - already in use (local))", Username);
+				dbg_msg("account", "Account login failed ('%s' - already in use (local))", pUsername);
 				GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account already in use");
 				return;
 			}
@@ -96,23 +104,23 @@ void CAccount::Login(char *Username, char *Password)
 
 			if (AccID == GameServer()->m_aaExtIDs[i][j])
 			{
-				dbg_msg("account", "Account login failed ('%s' - already in use (extern))", Username);
+				dbg_msg("account", "Account login failed ('%s' - already in use (extern))", pUsername);
 				GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account already in use");
 				return;
 			}
 		}
 	}
 
-	if (strcmp(Username, AccUsername))
+	if (str_comp(pUsername, AccUsername))
 	{
-		dbg_msg("account", "Account login failed ('%s' - Wrong username)", Username);
+		dbg_msg("account", "Account login failed ('%s' - Wrong username)", pUsername);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Wrong username or password");
 		return;
 	}
 
-	if (strcmp(Password, AccPassword))
+	if (str_comp(pPassword, AccPassword))
 	{
-		dbg_msg("account", "Account login failed ('%s' - Wrong password)", Username);
+		dbg_msg("account", "Account login failed ('%s' - Wrong password)", pUsername);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Wrong username or password");
 		return;
 	}
@@ -141,7 +149,7 @@ void CAccount::Login(char *Username, char *Password)
 	if (m_pPlayer->GetTeam() == TEAM_SPECTATORS)
 		m_pPlayer->SetTeam(TEAM_RED);
 
-	dbg_msg("account", "Account login sucessful ('%s')", Username);
+	dbg_msg("account", "Account login sucessful ('%s')", pUsername);
 	GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Login successful");
 
 	if (pOwner)
@@ -152,30 +160,30 @@ void CAccount::Login(char *Username, char *Password)
 	}
 }
 
-void CAccount::Register(char *Username, char *Password)
+void CAccount::Register(const char *pUsername, const char *pPassword)
 {
 	char aBuf[125];
 	if (m_pPlayer->m_AccData.m_UserID)
 	{
-		dbg_msg("account", "Account registration failed ('%s' - Logged in)", Username);
+		dbg_msg("account", "Account registration failed ('%s' - Logged in)", pUsername);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Already logged in");
 		return;
 	}
-	if (strlen(Username) > 15 || !strlen(Username))
+	if (str_length(pUsername) > 15 || !str_length(pUsername))
 	{
-		str_format(aBuf, sizeof(aBuf), "Username too %s", strlen(Username) ? "long" : "short");
+		str_format(aBuf, sizeof(aBuf), "Username too %s", str_length(pUsername) ? "long" : "short");
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 		return;
 	}
-	else if (strlen(Password) > 15 || !strlen(Password))
+	else if (str_length(pPassword) > 15 || !str_length(pPassword))
 	{
-		str_format(aBuf, sizeof(aBuf), "Password too %s!", strlen(Password) ? "long" : "short");
+		str_format(aBuf, sizeof(aBuf), "Password too %s!", str_length(pPassword) ? "long" : "short");
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 		return;
 	}
-	else if (Exists(Username))
+	else if (Exists(pUsername))
 	{
-		dbg_msg("account", "Account registration failed ('%s' - Already exists)", Username);
+		dbg_msg("account", "Account registration failed ('%s' - Already exists)", pUsername);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account already exists.");
 		return;
 	}
@@ -183,59 +191,54 @@ void CAccount::Register(char *Username, char *Password)
 #if defined(CONF_FAMILY_UNIX)
 	char Filter[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.-_";
 	// "äöü<>|!§$%&/()=?`´*'#+~«»¢“”æßðđŋħjĸł˝;,·^°@ł€¶ŧ←↓→øþ\\";
-	char *p = strpbrk(Username, Filter);
-	if (!p)
-	{
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Don't use invalid chars for username!");
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "A - Z, a - z, 0 - 9, . - _");
-		return;
-	}
-
-	if (mkdir("/root/.teeworlds/accounts", mode_t S_IRWXU || S_IRWXG | S_IROTH | S_IXOTH))
-		dbg_msg("account", "Account folder created!");
-#endif
-
-#if defined(CONF_FAMILY_WINDOWS)
+	if (!strpbrk(pUsername, Filter))
+#elif defined(CONF_FAMILY_WINDOWS)
 	static TCHAR * ValidChars = _T("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.-_");
 	if (_tcsspnp(Username, ValidChars))
+#else
+#error not implemented
+#endif
 	{
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Don't use invalid chars for username!");
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "A - Z, a - z, 0 - 9, . - _");
 		return;
 	}
 
-	if (mkdir("/root/.teeworlds/accounts"))
-		dbg_msg("account", "Account folder created!");
-#endif
+	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", pUsername);
 
-	str_format(aBuf, sizeof(aBuf), "/root/.teeworlds/accounts/+%s.acc", Username);
-
-	FILE *Accfile;
-	Accfile = fopen(aBuf, "a+");
+	IOHANDLE Accfile = Storage()->OpenFile(aBuf, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+	if(!Accfile)
+	{
+		dbg_msg("account/error", "Register: failed to open '%s' for writing");
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Internal Server Error. Please contact an admin.");
+		return;
+	}
 
 	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d\n%d",
-		Username,
-		Password,
+		pUsername,
+		pPassword,
 		"0",
 		NextID(),
 		m_pPlayer->m_AccData.m_Vip,
-		m_pPlayer->m_QuestData.m_Pages);
+		m_pPlayer->m_QuestData.m_Pages
+	);
 
-	fputs(aBuf, Accfile);
-	fclose(Accfile);
+	io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
+	io_close(Accfile);
 
-	dbg_msg("account", "Registration successful ('%s')", Username);
-	str_format(aBuf, sizeof(aBuf), "Registration successful - ('/login %s %s'): ", Username, Password);
+	dbg_msg("account", "Registration successful ('%s')", pUsername);
+	str_format(aBuf, sizeof(aBuf), "Registration successful - ('/login %s %s'): ", pUsername, pPassword);
 	GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
-	Login(Username, Password);
+	Login(pUsername, pPassword);
 }
 bool CAccount::Exists(const char *Username)
 {
 	char aBuf[128];
-	str_format(aBuf, sizeof(aBuf), "/root/.teeworlds/accounts/+%s.acc", Username);
-	if (FILE *Accfile = fopen(aBuf, "r"))
+	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", Username);
+	IOHANDLE Accfile = Storage()->OpenFile(aBuf, IOFLAG_READ, IStorage::TYPE_SAVE);
+	if (Accfile)
 	{
-		fclose(Accfile);
+		io_close(Accfile);
 		return true;
 	}
 	return false;
@@ -243,11 +246,14 @@ bool CAccount::Exists(const char *Username)
 
 void CAccount::Apply()
 {
-	char aBuf[512];
-	str_format(aBuf, sizeof(aBuf), "/root/.teeworlds/accounts/+%s.acc", m_pPlayer->m_AccData.m_Username);
-	std::remove(aBuf);
-	FILE *Accfile;
-	Accfile = fopen(aBuf, "a+");
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", m_pPlayer->m_AccData.m_Username);
+	IOHANDLE Accfile = Storage()->OpenFile(aBuf, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+	if(!Accfile)
+	{
+		dbg_msg("account/error", "Apply: failed to open '%s' for writing", aBuf);
+		return;
+	}
 
 	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d\n%d",
 		m_pPlayer->m_AccData.m_Username,
@@ -257,15 +263,15 @@ void CAccount::Apply()
 		m_pPlayer->m_AccData.m_Vip,
 		m_pPlayer->m_QuestData.m_Pages);
 
-	fputs(aBuf, Accfile);
-	fclose(Accfile);
+	io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
+	io_close(Accfile);
 }
 
 void CAccount::Reset()
 {
-	str_copy(m_pPlayer->m_AccData.m_Username, "", 32);
-	str_copy(m_pPlayer->m_AccData.m_Password, "", 32);
-	str_copy(m_pPlayer->m_AccData.m_RconPassword, "", 32);
+	mem_zero(m_pPlayer->m_AccData.m_Username, sizeof(m_pPlayer->m_AccData.m_Username));
+	mem_zero(m_pPlayer->m_AccData.m_Password, sizeof(m_pPlayer->m_AccData.m_Password));
+	mem_zero(m_pPlayer->m_AccData.m_RconPassword, sizeof(m_pPlayer->m_AccData.m_RconPassword));
 	m_pPlayer->m_AccData.m_UserID = 0;
 	m_pPlayer->m_AccData.m_Vip = 0;
 }
@@ -276,16 +282,16 @@ void CAccount::Delete()
 	if (m_pPlayer->m_AccData.m_UserID)
 	{
 		Reset();
-		str_format(aBuf, sizeof(aBuf), "/root/.teeworlds/accounts/+%s.acc", m_pPlayer->m_AccData.m_Username);
-		std::remove(aBuf);
-		dbg_msg("account", "Account deleted ('%s')", m_pPlayer->m_AccData.m_Username);
+		str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", m_pPlayer->m_AccData.m_Username);
+		if(Storage()->RemoveFile(aBuf, IStorage::TYPE_SAVE))
+			dbg_msg("account", "Account deleted ('%s')", m_pPlayer->m_AccData.m_Username);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account deleted!");
 	}
 	else
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Please, login to delete your account");
 }
 
-void CAccount::NewPassword(char *NewPassword)
+void CAccount::NewPassword(const char *pNewPassword)
 {
 	char aBuf[128];
 	if (!m_pPlayer->m_AccData.m_UserID)
@@ -293,14 +299,14 @@ void CAccount::NewPassword(char *NewPassword)
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Please, login to change the password");
 		return;
 	}
-	if (strlen(NewPassword) > 15 || !strlen(NewPassword))
+	if (str_length(pNewPassword) > 15 || !str_length(pNewPassword))
 	{
-		str_format(aBuf, sizeof(aBuf), "Password too %s!", strlen(NewPassword) ? "long" : "short");
+		str_format(aBuf, sizeof(aBuf), "Password too %s!", str_length(pNewPassword) ? "long" : "short");
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 		return;
 	}
 
-	str_copy(m_pPlayer->m_AccData.m_Password, NewPassword, 32);
+	str_copy(m_pPlayer->m_AccData.m_Password, pNewPassword, 32);
 	Apply();
 
 

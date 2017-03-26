@@ -3,33 +3,32 @@
 
 #ifndef GAME_SERVER_ACCOUNT_H
 #define GAME_SERVER_ACCOUNT_H
-#include <engine/server.h> // ?
-#include <game/server/player.h>
 
 class CAccount
 {
-public:
-	CAccount(CPlayer *pPlayer, CGameContext *pGameServer);
+	class IStorage *m_pStorage;
+	class CGameContext *m_pGameServer;
+	class CPlayer *m_pPlayer;
 
-	void Login(char *Username, char *Password);
-	void Register(char *Username, char *Password);
+	class CGameContext *GameServer() const { return m_pGameServer; }
+	class IStorage *Storage() const { return m_pStorage; }
+
+public:
+	CAccount(class CPlayer *pPlayer, class CGameContext *pGameServer, class IStorage *pStorage);
+
+	void Login(const char *pUsername, const char *pPassword);
+	void Register(const char *pUsername, const char *pPassword);
 	void Apply();
 	void Reset();
 	void Delete();
-	void NewPassword(char *NewPassword);
+	void NewPassword(const char *pNewPassword);
 	bool Exists(const char * Username);
 
-	static const int MAX_SERVER = 2;
+	enum { MAX_SERVER = 2 };
 	int NextID();
-
 
 	//bool LoggedIn(const char * Username);
 	//int NameToID(const char * Username);
-
-private:
-	class CPlayer *m_pPlayer;
-	class CGameContext *m_pGameServer;
-	CGameContext *GameServer() const { return m_pGameServer; }
 };
 
 #endif

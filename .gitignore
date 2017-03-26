@@ -5,10 +5,9 @@ datasrc/__pycache__
 datasrc/*.pyc
 objs
 src/game/generated
-SDL.dll
-SDL2.dll
-freetype.dll
 
+/DDNet*
+/Google-Mod*
 /confusables*
 /crapnet*
 /config_store*
@@ -28,12 +27,10 @@ freetype.dll
 other/boost*
 other/msinttypes*
 
-Debug
-bam
-build server.bat
-buildlog.txt
-bam.exe
+Debug/
 *.bat
+buildlog.txt
+/*.exe
 .cproject
 .project
 *.dtb
@@ -59,8 +56,5 @@ bam.exe
 *.map
 *.VC.opendb
 
-DDNet*
 *.acc
 autoexec_server.cfg
-*.cfg
-*.cfg

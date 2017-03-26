@@ -64,6 +64,11 @@ public:
 				fs_makedir(GetPath(TYPE_SAVE, "maps", aPath, sizeof(aPath)));
 				fs_makedir(GetPath(TYPE_SAVE, "downloadedmaps", aPath, sizeof(aPath)));
 			}
+			else if(StorageType == STORAGETYPE_SERVER)
+			{
+				fs_makedir(GetPath(TYPE_SAVE, "accounts", aPath, sizeof(aPath)));
+				// TODO: add more here
+			}
 			fs_makedir(GetPath(TYPE_SAVE, "dumps", aPath, sizeof(aPath)));
 			fs_makedir(GetPath(TYPE_SAVE, "demos", aPath, sizeof(aPath)));
 			fs_makedir(GetPath(TYPE_SAVE, "demos/auto", aPath, sizeof(aPath)));
@@ -310,6 +315,7 @@ public:
 		pBuffer[0] = 0;
 		return 0;
 	}
+
 
 	struct CFindCBData
 	{
