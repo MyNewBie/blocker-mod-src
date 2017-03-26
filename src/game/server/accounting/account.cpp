@@ -126,7 +126,7 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 	}
 
 
-	Accfile = fopen(aBuf, "r");
+	Accfile = fopen(aFullPath, "r");
 
 	fscanf(Accfile, "%s\n%s\n%s\n%d\n%d\n%d",
 		m_pPlayer->m_AccData.m_Username, // Done
@@ -317,35 +317,36 @@ void CAccount::NewPassword(const char *pNewPassword)
 
 int CAccount::NextID()
 {
-	FILE *Accfile;
 	int UserID = 1;
-	char aBuf[32];
-	char AccUserID[32];
+	char aAccUserID[128];
 
-	str_copy(AccUserID, "/root/.teeworlds/accounts/++UserIDs++.acc", sizeof(AccUserID));
+	str_copy(aAccUserID, "accounts/++UserIDs++.acc", sizeof(aAccUserID));
 
-	if (Exists("+UserIDs++"))
+	// read the current ID
+	IOHANDLE Accfile = Storage()->OpenFile(aAccUserID, IOFLAG_READ, IStorage::TYPE_SAVE);
+	if(Accfile)
 	{
-		Accfile = fopen(AccUserID, "r");
-		fscanf(Accfile, "%d", &UserID);
-		fclose(Accfile);
+		char aBuf[32];
+		mem_zero(aBuf, sizeof(aBuf));
+		io_read(Accfile, aBuf, sizeof(aBuf));
+		io_close(Accfile);
+		UserID = str_toint(aBuf);
+	}
 
-		std::remove(AccUserID);
-
-		Accfile = fopen(AccUserID, "a+");
-		str_format(aBuf, sizeof(aBuf), "%d", UserID + 1);
-		fputs(aBuf, Accfile);
-		fclose(Accfile);
-
-		return UserID + 1;
+	// write the next ID
+	Accfile = Storage()->OpenFile(aAccUserID, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+	if(Accfile)
+	{
+		char aBuf[32];
+		str_format(aBuf, sizeof(aBuf), "%d", ++UserID);
+		io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
+		io_close(Accfile);
 	}
 	else
-	{
-		Accfile = fopen(AccUserID, "a+");
-		str_format(aBuf, sizeof(aBuf), "%d", UserID);
-		fputs(aBuf, Accfile);
-		fclose(Accfile);
-	}
+		dbg_msg("account/error", "NextID: failed to open '%s' for writing", aAccUserID);
+
+
+	return UserID + 1;
 
 	return 1;
 }
