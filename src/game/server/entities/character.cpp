@@ -1799,18 +1799,16 @@ void CCharacter::HandleTiles(int Index)
 	// King of the hill !
 	if (GameServer()->m_KOH && Team() == 0)
 	{
-		if (GameServer()->m_KOH && (m_TileIndex == TILE_ZONE_IN) || (m_TileFIndex == TILE_ZONE_IN))
+		if (GameServer()->m_KOH && (m_TileIndex == TILE_ZONE_IN || m_TileFIndex == TILE_ZONE_IN))
 		{
-			if (!m_pPlayer->m_Koh.m_InZone)
-				m_pPlayer->m_Koh.m_InZone = true;
+			m_pPlayer->m_Koh.m_InZone = true;
 		}
-		else if (GameServer()->m_KOH && (m_TileIndex == TILE_ZONE_OUT) || (m_TileFIndex == TILE_ZONE_OUT))
+		else if (GameServer()->m_KOH && (m_TileIndex == TILE_ZONE_OUT || m_TileFIndex == TILE_ZONE_OUT))
 		{
-			if (m_pPlayer->m_Koh.m_InZone)
-				m_pPlayer->m_Koh.m_InZone = false;;
+			m_pPlayer->m_Koh.m_InZone = false;
 		}
 
-		if ((m_TileIndex == TILE_KOH) || (m_TileFIndex == TILE_KOH))
+		if (m_TileIndex == TILE_KOH || m_TileFIndex == TILE_KOH)
 		{
 			if (!GameServer()->m_PlayerContestant)// Check if we are in the zone
 			{
@@ -1842,7 +1840,7 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// rainbow tile : regular players
-	if (((m_TileIndex == TILE_RAINBOW) || (m_TileFIndex == TILE_RAINBOW)) && !WasInRainbow)
+	if (((m_TileIndex == TILE_RAINBOW || m_TileFIndex == TILE_RAINBOW)) && !WasInRainbow)
 	{
 		m_pPlayer->m_Rainbow ^= 1;
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_pPlayer->m_Rainbow ? "Rainbow activated" : "Rainbow deactivated");
@@ -1850,13 +1848,10 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// Vip
-	if ((m_TileIndex == TILE_VIP) || (m_TileFIndex == TILE_VIP))
+	if ((m_TileIndex == TILE_VIP || m_TileFIndex == TILE_VIP) && !m_pPlayer->m_AccData.m_Vip)
 	{
-		if (!m_pPlayer->m_AccData.m_Vip)
-		{
-			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not a vip!");
-			Die(GetPlayer()->GetCID(), WEAPON_WORLD);
-		}
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not a vip!");
+		Die(GetPlayer()->GetCID(), WEAPON_WORLD);
 	}
 
 	// heavyhammer
@@ -1872,7 +1867,7 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// steamy
-	if (((m_TileIndex == TILE_BLOODY) || (m_TileFIndex == TILE_BLOODY)) && !WasInBloody)
+	if (((m_TileIndex == TILE_BLOODY || m_TileFIndex == TILE_BLOODY)) && !WasInBloody)
 	{
 		m_Bloody ^= 1;
 		m_Bloody ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got Bloody!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost Bloody!");
@@ -1880,7 +1875,7 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// steamy
-	if (((m_TileIndex == TILE_STEAMY) || (m_TileFIndex == TILE_STEAMY)) && !WasInSteam)
+	if (((m_TileIndex == TILE_STEAMY || m_TileFIndex == TILE_STEAMY)) && !WasInSteam)
 	{
 		m_Steamy ^= 1;
 		m_Steamy ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got steamy!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost steamy!");
@@ -1888,7 +1883,7 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// XXL
-	if (((m_TileIndex == TILE_XXL) || (m_TileFIndex == TILE_XXL)) && !WasInXXL)
+	if (((m_TileIndex == TILE_XXL || m_TileFIndex == TILE_XXL)) && !WasInXXL)
 	{
 		m_XXL ^= 1;
 		m_XXL ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got xxl!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost XXL!");
@@ -1896,7 +1891,7 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// epic circles
-	if (((m_TileIndex == TILE_EPICCIRCLES) || (m_TileFIndex == TILE_EPICCIRCLES)) && !WasInCircles)
+	if (((m_TileIndex == TILE_EPICCIRCLES || m_TileFIndex == TILE_EPICCIRCLES)) && !WasInCircles)
 	{
 		m_pPlayer->m_EpicCircle ^= 1;
 		m_pPlayer->m_EpicCircle ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got epic circles!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost epic circles!");
@@ -1908,13 +1903,13 @@ void CCharacter::HandleTiles(int Index)
 	{
 		if (g_Config.m_SvWbProt == 1)
 		{
-			if ((m_TileIndex == TILE_PASSIVE_IN) || (m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
+			if ((m_TileIndex == TILE_PASSIVE_IN || m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
 			{
 				GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode enabled!");
 				m_ThreeSecondRule = false;
 				m_PassiveMode = true;
 			}
-			else if ((m_TileIndex == TILE_PASSIVE_OUT) || (m_TileFIndex == TILE_PASSIVE_OUT) && m_PassiveMode && !m_TilePauser)
+			else if ((m_TileIndex == TILE_PASSIVE_OUT || m_TileFIndex == TILE_PASSIVE_OUT) && m_PassiveMode && !m_TilePauser)
 			{
 				m_LastPassiveOut = Server()->Tick();
 				m_ThreeSecondRule = true;
@@ -1924,13 +1919,13 @@ void CCharacter::HandleTiles(int Index)
 		}
 		else if (g_Config.m_SvWbProt == 2 && m_pPlayer->m_AccData.m_Vip)
 		{
-			if ((m_TileIndex == TILE_PASSIVE_IN) || (m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
+			if ((m_TileIndex == TILE_PASSIVE_IN || m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
 			{
 				GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode enabled!");
 				m_ThreeSecondRule = false;
 				m_PassiveMode = true;
 			}
-			else if ((m_TileIndex == TILE_PASSIVE_OUT) || (m_TileFIndex == TILE_PASSIVE_OUT) && m_PassiveMode && !m_TilePauser)
+			else if ((m_TileIndex == TILE_PASSIVE_OUT || m_TileFIndex == TILE_PASSIVE_OUT) && m_PassiveMode && !m_TilePauser)
 			{
 				m_LastPassiveOut = Server()->Tick();
 				m_ThreeSecondRule = true;
@@ -1941,25 +1936,25 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// solo part
-	if(((m_TileIndex == TILE_SOLO_START) || (m_TileFIndex == TILE_SOLO_START)) && !Teams()->m_Core.GetSolo(m_pPlayer->GetCID()))
+	if((m_TileIndex == TILE_SOLO_START || m_TileFIndex == TILE_SOLO_START) && !Teams()->m_Core.GetSolo(m_pPlayer->GetCID()))
 	{
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are now in a solo part");
 		SetSolo(true);
 	}
-	else if(((m_TileIndex == TILE_SOLO_END) || (m_TileFIndex == TILE_SOLO_END)) && Teams()->m_Core.GetSolo(m_pPlayer->GetCID()))
+	else if((m_TileIndex == TILE_SOLO_END || m_TileFIndex == TILE_SOLO_END) && Teams()->m_Core.GetSolo(m_pPlayer->GetCID()))
 	{
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are now out of the solo part");
 		SetSolo(false);
 	}
 
 	// refill jumps
-	if(((m_TileIndex == TILE_REFILL_JUMPS) || (m_TileFIndex == TILE_REFILL_JUMPS)) && !m_LastRefillJumps)
+	if((m_TileIndex == TILE_REFILL_JUMPS || m_TileFIndex == TILE_REFILL_JUMPS) && !m_LastRefillJumps)
 	{
 		m_Core.m_JumpedTotal = 0;
 		m_Core.m_Jumped = 0;
 		m_LastRefillJumps = true;
 	}
-	if((m_TileIndex != TILE_REFILL_JUMPS) && (m_TileFIndex != TILE_REFILL_JUMPS))
+	if(m_TileIndex != TILE_REFILL_JUMPS && m_TileFIndex != TILE_REFILL_JUMPS)
 	{
 		m_LastRefillJumps = false;
 	}

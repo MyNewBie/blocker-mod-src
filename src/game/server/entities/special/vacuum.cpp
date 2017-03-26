@@ -9,7 +9,7 @@
 #include "vacuum.h"
 
 CVacuum::CVacuum(CGameWorld *pGameWorld, vec2 Pos, int Owner)
-: CEntity(pGameWorld, NULL)
+: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE) // TODO: I don't believe this is desired to be CGameWorld::ENTTYPE_PROJECTILE? (passing 'NULL' made it be that)
 {
 	m_Pos = Pos;
 	m_Owner = Owner;

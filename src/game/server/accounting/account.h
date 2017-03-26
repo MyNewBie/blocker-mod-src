@@ -6,9 +6,9 @@
 
 class CAccount
 {
-	class IStorage *m_pStorage;
-	class CGameContext *m_pGameServer;
 	class CPlayer *m_pPlayer;
+	class CGameContext *m_pGameServer;
+	class IStorage *m_pStorage;
 
 	class CGameContext *GameServer() const { return m_pGameServer; }
 	class IStorage *Storage() const { return m_pStorage; }
