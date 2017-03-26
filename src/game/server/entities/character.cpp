@@ -2906,7 +2906,7 @@ void CCharacter::HandleQuest()
 			m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 		else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->IsAlive())
 			m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
-		else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams != 0)
+		else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams() != 0)
 			m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 		char Objective[102];
@@ -2946,7 +2946,7 @@ void CCharacter::HandleQuest()
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 			else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->IsAlive())
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
-			else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams != 0)
+			else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams() != 0)
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 			char Objective[102];
@@ -2984,7 +2984,7 @@ void CCharacter::HandleQuest()
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 			else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->IsAlive())
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
-			else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams != 0)
+			else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams() != 0)
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 			char Objective[102];
@@ -3011,7 +3011,7 @@ void CCharacter::HandleQuest()
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 			else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->IsAlive())
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
-			else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams != 0)
+			else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams() != 0)
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 			char Objective[102];
@@ -3038,7 +3038,7 @@ void CCharacter::HandleQuest()
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 			else if (!GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->IsAlive())
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
-			else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams != 0)
+			else if (GameServer()->GetPlayerChar(m_pPlayer->m_QuestData.m_RandomID)->Teams() != 0)
 				m_pPlayer->m_QuestData.m_RandomID = rand() % PlayerCount;
 
 			char Objective[102];
