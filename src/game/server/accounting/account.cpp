@@ -4,6 +4,8 @@
 // TODO: most of this includes can probably be removed
 #include <string.h>
 #include <fstream>
+#include <engine/config.h> 
+#include "account.h"
 #if defined(CONF_FAMILY_WINDOWS)
 #include <tchar.h>
 #include <direct.h>
@@ -194,7 +196,7 @@ void CAccount::Register(const char *pUsername, const char *pPassword)
 	if (!strpbrk(pUsername, Filter))
 #elif defined(CONF_FAMILY_WINDOWS)
 	static TCHAR * ValidChars = _T("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.-_");
-	if (_tcsspnp(Username, ValidChars))
+	if (_tcsspnp(pUsername, ValidChars))
 #else
 #error not implemented
 #endif
