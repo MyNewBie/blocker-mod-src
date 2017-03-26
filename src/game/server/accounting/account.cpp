@@ -64,7 +64,7 @@ void CAccount::Login(char *Username, char *Password)
 		return;
 	}
 
-	str_format(aBuf, sizeof(aBuf), "~/.teeworlds/accounts/+%s.acc", Username);
+	str_format(aBuf, sizeof(aBuf), "/root/.teeworlds/accounts/+%s.acc", Username);
 
 	char AccUsername[32];
 	char AccPassword[32];
@@ -208,7 +208,7 @@ void CAccount::Register(char *Username, char *Password)
 		dbg_msg("account", "Account folder created!");
 #endif
 
-	str_format(aBuf, sizeof(aBuf), "~/.teeworlds/accounts/+%s.acc", Username);
+	str_format(aBuf, sizeof(aBuf), "/root/.teeworlds/accounts/+%s.acc", Username);
 
 	FILE *Accfile;
 	Accfile = fopen(aBuf, "a+");
