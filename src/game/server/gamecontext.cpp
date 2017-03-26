@@ -608,7 +608,7 @@ void CGameContext::OnTick()
 		int PlayerCount = 0;
 		for (int i = 0; i < MAX_CLIENTS; i++)
 		{
-			if (GetPlayerChar(i) && GetPlayerChar(i)->IsAlive() && m_apPlayers[i]->m_Koh.m_InZone)
+			if (GetPlayerChar(i) && GetPlayerChar(i)->IsAlive() &&  m_apPlayers[i]->GetCharacter()->Team() == 0 && m_apPlayers[i]->m_Koh.m_InZone)
 				PlayerCount++;
 
 			if (PlayerCount > 1)

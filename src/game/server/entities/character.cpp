@@ -1796,47 +1796,49 @@ void CCharacter::HandleTiles(int Index)
 		}
 	}
 
-	// ZoneIn
-	if (GameServer()->m_KOH && (m_TileIndex == TILE_ZONE_IN) || (m_TileFIndex == TILE_ZONE_IN))
-	{
-		if (!m_pPlayer->m_Koh.m_InZone)
-			m_pPlayer->m_Koh.m_InZone = true;
-	}
-	else if (GameServer()->m_KOH && (m_TileIndex == TILE_ZONE_OUT) || (m_TileFIndex == TILE_ZONE_OUT))
-	{
-		if (m_pPlayer->m_Koh.m_InZone)
-			m_pPlayer->m_Koh.m_InZone = false;;
-	}
-
 	// King of the hill !
-	if(GameServer()->m_KOH)
-	if ((m_TileIndex == TILE_KOH) || (m_TileFIndex == TILE_KOH))
+	if (GameServer()->m_KOH && Team() == 0)
 	{
-		if (!GameServer()->m_PlayerContestant)// Check if we are in the zone
+		if (GameServer()->m_KOH && (m_TileIndex == TILE_ZONE_IN) || (m_TileFIndex == TILE_ZONE_IN))
 		{
-			char Gaining[246];
-			m_pPlayer->m_Koh.m_ZoneXp++;
-			str_format(Gaining, sizeof(Gaining), "King of the hill--Starblock(Low): %s In Control: Points (%d)", Server()->ClientName(m_Core.m_Id), m_pPlayer->m_Koh.m_ZonePoints);
-			GameServer()->SendBroadcast(Gaining, -1);
+			if (!m_pPlayer->m_Koh.m_InZone)
+				m_pPlayer->m_Koh.m_InZone = true;
 		}
-		if (m_pPlayer->m_Koh.m_ZoneXp == 800)
+		else if (GameServer()->m_KOH && (m_TileIndex == TILE_ZONE_OUT) || (m_TileFIndex == TILE_ZONE_OUT))
 		{
-			m_pPlayer->m_Koh.m_ZonePoints++;
-			m_pPlayer->m_Koh.m_ZoneXp = 0;
+			if (m_pPlayer->m_Koh.m_InZone)
+				m_pPlayer->m_Koh.m_InZone = false;;
 		}
-		if (m_pPlayer->m_Koh.m_ZonePoints >= 5)
+
+		if ((m_TileIndex == TILE_KOH) || (m_TileFIndex == TILE_KOH))
 		{
-			char Winner[246];
-			if (!m_pPlayer->m_AccData.m_UserID)
-				str_format(Winner, sizeof(Winner), "%s has won and dominated the hill!", Server()->ClientName(m_Core.m_Id));
-			else
+			if (!GameServer()->m_PlayerContestant)// Check if we are in the zone
 			{
-				str_format(Winner, sizeof(Winner), "%s has won and dominated the hill! Reward: 3 Pages", Server()->ClientName(m_Core.m_Id));
-				m_pPlayer->m_QuestData.m_Pages += 3;
+				char Gaining[246];
+				m_pPlayer->m_Koh.m_ZoneXp++;
+				str_format(Gaining, sizeof(Gaining), "King of the hill--Starblock(Low): %s In Control: Points (%d)", Server()->ClientName(m_Core.m_Id), m_pPlayer->m_Koh.m_ZonePoints);
+				GameServer()->SendBroadcast(Gaining, -1);
 			}
-			GameServer()->SendBroadcast(Winner, -1);
-			GameServer()->m_KOH = false;
+			if (m_pPlayer->m_Koh.m_ZoneXp == 800)
+			{
+				m_pPlayer->m_Koh.m_ZonePoints++;
+				m_pPlayer->m_Koh.m_ZoneXp = 0;
+			}
+			if (m_pPlayer->m_Koh.m_ZonePoints >= 5)
+			{
+				char Winner[246];
+				if (!m_pPlayer->m_AccData.m_UserID)
+					str_format(Winner, sizeof(Winner), "%s has won and dominated the hill!", Server()->ClientName(m_Core.m_Id));
+				else
+				{
+					str_format(Winner, sizeof(Winner), "%s has won and dominated the hill! Reward: 3 Pages", Server()->ClientName(m_Core.m_Id));
+					m_pPlayer->m_QuestData.m_Pages += 3;
+				}
+				GameServer()->SendBroadcast(Winner, -1);
+				GameServer()->m_KOH = false;
+			}
 		}
+
 	}
 
 	// rainbow tile : regular players
