@@ -47,7 +47,7 @@ void CLMB::Tick()
 		}
 		else if(Diff <= 0)
 		{
-			if(m_Participants.size() >= g_Config.m_SvLMBMinPlayer)
+			if(m_Participants.size() >= (unsigned)g_Config.m_SvLMBMinPlayer)
 			{
 				m_pGameServer->SendChatTarget(-1, "LMB has started.");
 				m_State = STATE_RUNNING;
@@ -64,7 +64,7 @@ void CLMB::Tick()
 				m_pGameServer->SendChatTarget(-1, aBuf);
 
 				m_State = STATE_STANDBY;
-				for(int i = 0; i < m_Participants.size(); i++)
+				for(unsigned int i = 0; i < m_Participants.size(); i++)
 				{
 					if(m_pGameServer->m_apPlayers[m_Participants[i]])
 						m_pGameServer->m_apPlayers[m_Participants[i]]->m_InLMB = LMB_NONREGISTERED;
@@ -142,10 +142,8 @@ bool CLMB::RegisterPlayer(int ID)
 
 bool CLMB::IsParticipant(int ID)
 {
-	if(FindParticipant(ID) == m_Participants.end())
-		return false;
-	
-	return true;
+	return !(FindParticipant(ID) == m_Participants.end());
+
 }
 
 std::vector<int>::iterator CLMB::FindParticipant(int ID)
@@ -156,7 +154,7 @@ std::vector<int>::iterator CLMB::FindParticipant(int ID)
 
 void CLMB::TeleportParticipants()
 {
-	for(int i = 0; i < m_Participants.size(); i++)
+	for(unsigned int i = 0; i < m_Participants.size(); i++)
 	{
 		vec2 ActPos; bool CanSpawn;
 		
@@ -170,10 +168,10 @@ void CLMB::TeleportParticipants()
 			}
 			else
 			{
-				m_pGameServer->SendChatTarget(m_Participants[i], "Oops! Something went wrong! Please assure that you are alive when the tournament starts.""");
+				m_pGameServer->SendChatTarget(m_Participants[i], "Oops! Something went wrong! Please assure that you are alive when the tournament starts.");
 				m_pGameServer->m_apPlayers[m_Participants[i]]->m_InLMB = LMB_NONREGISTERED;
 				RemoveParticipant(m_Participants[i]);
-			}			
+			}
 		}
 		else
 		{

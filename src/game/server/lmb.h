@@ -32,7 +32,7 @@ public:
 	
 	void TeleportParticipants();
 	
-	unsigned int m_LastLMB;
+	int m_LastLMB;
 	
 	enum
 	{
@@ -45,8 +45,8 @@ private:
 		
 	CGameContext * m_pGameServer;
 	std::vector<int> m_Participants;
-	unsigned int m_StartTick;
-	unsigned int m_EndTick;
+	int m_StartTick;
+	int m_EndTick;
 	
 	int m_State;
 };
