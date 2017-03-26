@@ -92,6 +92,7 @@ class CGameContext : public IGameServer
 	static void ConVote(IConsole::IResult *pResult, void *pUserData);
 	static void ConCountdown(IConsole::IResult *pResult, void *pUserData);
 	static void ConOpenLMB(IConsole::IResult *pResult, void *pUserData);
+	static void ConOpenKOH(IConsole::IResult *pResult, void *pUserData);
 	static void ConRegisterLMB(IConsole::IResult *pResult, void *pUserData);
 	static void ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
@@ -242,6 +243,8 @@ public:
 	int64 m_LastMapVote;
 	
 	CLMB m_LMB;
+	bool m_KOH;
+	bool m_PlayerContestant;
 
 private:
 

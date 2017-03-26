@@ -159,6 +159,8 @@ enum
 	// Passive : Googles Tiles
 	TILE_PASSIVE_IN = 160,
 	TILE_PASSIVE_OUT,
+	TILE_ZONE_IN,
+	TILE_ZONE_OUT,
 	// Googles Tiles
 	TILE_HEAVYHAMMER = 176,
 	TILE_EPICCIRCLES,
@@ -168,6 +170,7 @@ enum
 	TILE_VIP,
 	TILE_RAINBOW,
 	TILE_ADMIN,
+	TILE_KOH,
 
 	//End of higher tiles
 	//Layers

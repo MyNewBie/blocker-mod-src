@@ -807,6 +807,11 @@ void CCharacter::Tick()
 	if (m_Paused)
 		return;
 
+	if (this && IsAlive() && !GameServer()->m_KOH)
+	{
+		if (m_pPlayer->m_Koh.m_InZone || m_pPlayer->m_Koh.m_ZonePoints > 0 || m_pPlayer->m_Koh.m_ZoneXp > 0)
+			m_pPlayer->m_Koh.Reset();
+	}
 	// handle info spam
 	if (this && IsAlive() && (Server()->Tick() % 50) && m_pPlayer->m_IsEmote)
 		m_pPlayer->m_IsEmote = false;
@@ -823,7 +828,6 @@ void CCharacter::Tick()
 		m_TilePauser = false;
 	if (this && IsAlive() && (Server()->Tick() % 150) == 0 && m_AntiSpam) // Ugly asf TODO: FIX
 		m_AntiSpam = false;
-
 	if (this && IsAlive() && (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed))
 		HandlePassiveMode();
 
@@ -1282,6 +1286,35 @@ void CCharacter::Snap(int SnappingClient)
 	}
 	
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
+
+	if(GameServer()->m_KOH)
+	{
+		//calculate visible balls
+		float Panso = 1.0f;
+		Panso *= m_AnimIDNum;
+
+		int MaxBalls = round_to_int(Panso);
+		for (int i = 0; i < MaxBalls; i++)
+		{
+			CNetObj_Projectile *pFirstParticle = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_apAnimIDs[i], sizeof(CNetObj_Projectile)));
+			if (pFirstParticle && m_apAnimIDs[i] != -1)
+			{
+				float rad = g_Config.m_SvCircleRadius;
+
+				float TurnFac = 0.025f;
+
+				float PosX = 4732.000000 + cosf(2 * pi * (i / (float)m_AnimIDNum) + Server()->Tick()*TurnFac) * rad;
+				float PosY = 1722.000000 + sinf(2 * pi * (i / (float)m_AnimIDNum) + Server()->Tick()*TurnFac) * rad;
+
+				pFirstParticle->m_X = PosX;
+				pFirstParticle->m_Y = PosY;
+				pFirstParticle->m_VelX = 4;
+				pFirstParticle->m_VelY = 4;
+				pFirstParticle->m_StartTick = Server()->Tick() - 4;
+				pFirstParticle->m_Type = 0;
+			}
+		}
+	}
 
 	if (GetPlayer()->m_EpicCircle)
 	{
@@ -1760,6 +1793,49 @@ void CCharacter::HandleTiles(int Index)
 		{
 			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not an admin!");
 			Die(GetPlayer()->GetCID(), WEAPON_WORLD);
+		}
+	}
+
+	// ZoneIn
+	if (GameServer()->m_KOH && (m_TileIndex == TILE_ZONE_IN) || (m_TileFIndex == TILE_ZONE_IN))
+	{
+		if (!m_pPlayer->m_Koh.m_InZone)
+			m_pPlayer->m_Koh.m_InZone = true;
+	}
+	else if (GameServer()->m_KOH && (m_TileIndex == TILE_ZONE_OUT) || (m_TileFIndex == TILE_ZONE_OUT))
+	{
+		if (m_pPlayer->m_Koh.m_InZone)
+			m_pPlayer->m_Koh.m_InZone = false;;
+	}
+
+	// King of the hill !
+	if(GameServer()->m_KOH)
+	if ((m_TileIndex == TILE_KOH) || (m_TileFIndex == TILE_KOH))
+	{
+		if (!GameServer()->m_PlayerContestant)// Check if we are in the zone
+		{
+			char Gaining[246];
+			m_pPlayer->m_Koh.m_ZoneXp++;
+			str_format(Gaining, sizeof(Gaining), "King of the hill--Starblock(Low): %s In Control: Points (%d)", Server()->ClientName(m_Core.m_Id), m_pPlayer->m_Koh.m_ZonePoints);
+			GameServer()->SendBroadcast(Gaining, -1);
+		}
+		if (m_pPlayer->m_Koh.m_ZoneXp == 800)
+		{
+			m_pPlayer->m_Koh.m_ZonePoints++;
+			m_pPlayer->m_Koh.m_ZoneXp = 0;
+		}
+		if (m_pPlayer->m_Koh.m_ZonePoints >= 5)
+		{
+			char Winner[246];
+			if (!m_pPlayer->m_AccData.m_UserID)
+				str_format(Winner, sizeof(Winner), "%s has won and dominated the hill!", Server()->ClientName(m_Core.m_Id));
+			else
+			{
+				str_format(Winner, sizeof(Winner), "%s has won and dominated the hill! Reward: 3 Pages", Server()->ClientName(m_Core.m_Id));
+				m_pPlayer->m_QuestData.m_Pages += 3;
+			}
+			GameServer()->SendBroadcast(Winner, -1);
+			GameServer()->m_KOH = false;
 		}
 	}
 

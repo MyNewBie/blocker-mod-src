@@ -168,6 +168,7 @@ MACRO_CONFIG_INT(SvWbProt, sv_wbprot, 2, 0, 2, CFGFLAG_SERVER, "Wayblock protect
 MACRO_CONFIG_INT(SvBlackHoleExpiretime, sv_blackhole_expire_time, 20, 5, 1000, CFGFLAG_SERVER, "amount of time in seconds a blackhole expires")
 MACRO_CONFIG_INT(SvBlackHolescount, sv_blackholes_count, 3, 1, 10, CFGFLAG_SERVER, "amount of blackholes that can be set by one player")
 MACRO_CONFIG_INT(SvBlackHoleKills, sv_blackhole_kills, 1, 0, 1, CFGFLAG_SERVER, "black hole can kill?")
+MACRO_CONFIG_INT(SvCircleRadius, sv_circle_radius, 400, 0, 9999999999, CFGFLAG_SERVER, "Radius for king of the hill zone")
 MACRO_CONFIG_INT(SvRescue, sv_rescue, 0, 0, 1, CFGFLAG_SERVER, "Allow /rescue command so players can teleport themselves out of freeze")
 MACRO_CONFIG_INT(SvRescueDelay, sv_rescue_delay, 5, 0, 1000, CFGFLAG_SERVER, "Number of seconds inbetween two rescues")
 MACRO_CONFIG_INT(SvLMBRegDuration, sv_lmb_reg_duration, 5, 1, 60, CFGFLAG_SERVER, "Specify the duration where LMB registration is possible")

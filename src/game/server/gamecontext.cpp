@@ -603,6 +603,26 @@ void CGameContext::SwapTeams()
 */
 void CGameContext::OnTick()
 {
+	if (m_KOH)
+	{
+		int PlayerCount = 0;
+		for (int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if (GetPlayerChar(i) && GetPlayerChar(i)->IsAlive() && m_apPlayers[i]->m_Koh.m_InZone)
+				PlayerCount++;
+
+			if (PlayerCount > 1)
+				m_PlayerContestant = true;
+			else if (PlayerCount <= 1)
+				m_PlayerContestant = false;
+
+			if (PlayerCount <= 0)
+				SendBroadcast("King of the hill - Starblock(Low)", -1);
+			else if (m_PlayerContestant)
+				SendBroadcast("King of the hill - Starblock(Low) : PLAYER CONTESTANTS", -1);
+		}
+	}
+
 		if(m_CountdownInfo.m_Time > 0 && Server()->Tick() - m_CountdownInfo.m_LastAnnounce > 50)
 	{
 		unsigned int SecondsC = Server()->Tick() - m_CountdownInfo.m_StartTick;
@@ -1263,6 +1283,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
+					if (m_KOH)
+					{
+						SendChatTarget(ClientID, "You cannot use deathnotes right now");
+						return;
+					}
 					if (pPlayer->m_QuestData.m_Pages != 0)
 					{
 						char Name[256];
@@ -2644,6 +2669,12 @@ void CGameContext::ConOpenLMB(IConsole::IResult *pResult, void *pUserData)
 	pSelf->m_LMB.OpenRegistration();
 }
 
+void CGameContext::ConOpenKOH(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	pSelf->m_KOH = true;
+}
+
 void CGameContext::ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
 {
 	pfnCallback(pResult, pCallbackUserData);
@@ -2694,6 +2725,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("vote", "r['yes'|'no']", CFGFLAG_SERVER, ConVote, this, "Force a vote to yes/no");
     Console()->Register("countdown", "iir", CFGFLAG_SERVER, ConCountdown, this, "Starts a countdown for a server restart");
 	Console()->Register("open_lmb", "", CFGFLAG_SERVER, ConOpenLMB, this, "Opens registration for LMB");
+	Console()->Register("open_koh", "", CFGFLAG_SERVER, ConOpenKOH, this, "Opens KOH");
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 
 #define CONSOLE_COMMAND(name, params, flags, callback, userdata, help) m_pConsole->Register(name, params, flags, callback, userdata, help);
@@ -2704,6 +2736,7 @@ void CGameContext::OnConsoleInit()
 
 void CGameContext::OnInit(/*class IKernel *pKernel*/)
 {
+	m_KOH = false;
 	m_pServer = Kernel()->RequestInterface<IServer>();
 	m_pConsole = Kernel()->RequestInterface<IConsole>();
 	m_World.SetGameServer(this);

@@ -120,6 +120,22 @@ public:
 		int m_Max;
 	} m_Latency;
 	
+	struct
+	{
+		int m_ZoneXp;
+		int m_ZonePoints;
+
+		bool m_InZone;
+
+		void Reset()
+		{
+			m_ZoneXp = 0;
+			m_ZonePoints = 0;
+
+			m_InZone = false;
+		}
+	}m_Koh;
+
 	struct		//saved player infos when entering tournament; restores them after
 	{
 		vec2 m_SavedSpawn;
