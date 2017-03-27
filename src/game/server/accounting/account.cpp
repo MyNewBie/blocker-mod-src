@@ -25,10 +25,9 @@
 #include "account.h"
 
 
-CAccount::CAccount(CPlayer *pPlayer, CGameContext *pGameServer, IStorage *pStorage)
+CAccount::CAccount(CPlayer *pPlayer, CGameContext *pGameServer)
 		: m_pPlayer(pPlayer),
-		  m_pGameServer(pGameServer),
-		  m_pStorage(pStorage)
+		  m_pGameServer(pGameServer)
 {
 }
 
@@ -351,5 +350,10 @@ int CAccount::NextID()
 	return UserID + 1;
 
 	return 1;
+}
+
+class IStorage *CAccount::Storage() const
+{
+	return m_pGameServer->Storage();
 }
 
