@@ -807,6 +807,17 @@ void CCharacter::Tick()
 	if (m_Paused)
 		return;
 
+	if (this && IsAlive() && m_pPlayer->Temporary.m_PassiveMode)
+	{
+		bool TimeIsUp = m_pPlayer->Temporary.m_PassiveModeTime + 10800 * Server()->TickSpeed() > Server()->Tick() ? false : true;
+		if (TimeIsUp)
+		{
+			GameServer()->SendChatTarget(m_Core.m_Id, "Your time is up! Now disabling passive mode");
+			GameServer()->SendChatTarget(m_Core.m_Id, "You can always buy vip for lifetime usage!");
+			m_pPlayer->Temporary.m_PassiveMode = false;
+		}
+	}
+
 	if (this && IsAlive() && !GameServer()->m_KOH)
 	{
 		if (m_pPlayer->m_Koh.m_InZone || m_pPlayer->m_Koh.m_ZonePoints > 0 || m_pPlayer->m_Koh.m_ZoneXp > 0)
@@ -1917,7 +1928,7 @@ void CCharacter::HandleTiles(int Index)
 				m_TilePauser = true;
 			}
 		}
-		else if (g_Config.m_SvWbProt == 2 && m_pPlayer->m_AccData.m_Vip)
+		else if (g_Config.m_SvWbProt == 2 && (m_pPlayer->m_AccData.m_Vip || m_pPlayer->Temporary.m_PassiveMode))
 		{
 			if ((m_TileIndex == TILE_PASSIVE_IN || m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
 			{
@@ -2687,7 +2698,7 @@ void CCharacter::HandlePassiveMode()
 		if (pTarget && pMain->Core()->m_HookState != HOOK_GRABBED)
 		{
 			bool IsPassive = pTarget->m_PassiveMode;
-			bool IsMember = pTarget->GetPlayer()->m_AccData.m_Vip;
+			bool IsMember = (pTarget->GetPlayer()->m_AccData.m_Vip || pTarget->GetPlayer()->Temporary.m_PassiveMode);
 			if (IsPassive)
 			{
 				char Reason[64];

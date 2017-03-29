@@ -1218,11 +1218,13 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_pAccount->NewPassword(NewPassword);
 					return;
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "weapons", 7) == 0 && pPlayer->m_AccData.m_Vip)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "weapons", 7) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->Temporary.m_Weaponcalls > 0))
 				{
 					if (!GetPlayerChar(ClientID) || !GetPlayerChar(ClientID)->IsAlive())
 						return; // Tested and found a crashbug -- heres the fix 
 						GetPlayerChar(ClientID)->GiveAllWeapons();
+						if (pPlayer->Temporary.m_Weaponcalls > 0)
+							pPlayer->Temporary.m_Weaponcalls--;
 						SendChatTarget(ClientID, "Successfully gotten weapons");
 				}
 				/*else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "AM444", 5) == 0)

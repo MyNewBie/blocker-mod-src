@@ -136,6 +136,15 @@ public:
 		}
 	}m_Koh;
 
+	// Some things for rewards, user can get temporary access to X for X amount of time
+	struct
+	{
+		bool m_PassiveMode;
+
+		int m_Weaponcalls;
+		int64 m_PassiveModeTime;
+	}Temporary;
+
 	struct		//saved player infos when entering tournament; restores them after
 	{
 		vec2 m_SavedSpawn;

@@ -200,16 +200,26 @@ void CLMB::RemoveParticipant(int CID)
 	if(m_Participants.size() == 1 && m_State == STATE_RUNNING)
 	{
 		int ID = m_Participants[0];
-		CPlayer *Player = m_pGameServer->m_apPlayers[ID];
+		CPlayer *Winner = m_pGameServer->m_apPlayers[ID];
 		str_format(aBuf, sizeof(aBuf), "'%s' won!", m_pGameServer->Server()->ClientName(ID));
 		m_pGameServer->SendBroadcast(aBuf, -1);
 		
 		char aBuf2[256];
-		str_format(aBuf2, sizeof(aBuf2), Player->m_AccData.m_UserID ? "'%s' has won the LMB tournament and has been rewarded 3 pages! \n Congratulations!" : "'%s' has won the LMB tournament! Congratulations.", m_pGameServer->Server()->ClientName(ID));
+		str_format(aBuf2, sizeof(aBuf2), Winner->m_AccData.m_UserID ? "'%s' has won the LMB tournament and has been given rewards! \n Congratulations!" : "'%s' has won the LMB tournament! Congratulations.", m_pGameServer->Server()->ClientName(ID));
 		m_pGameServer->SendChatTarget(-1, aBuf2);
+		m_pGameServer->SendChatTarget(ID, "+3 pages!");
+		m_pGameServer->SendChatTarget(ID, "Access to /weapons cmd (LIMITED USAGE)!");
+		m_pGameServer->SendChatTarget(ID, "Temoporary access to passivemode for 2Hours! (Anti WB)");
 		
-		if (Player->m_AccData.m_UserID)
-			m_pGameServer->m_apPlayers[ID]->m_QuestData.m_Pages += 3;
+		/*Im thinking about doing temporary vip access too but i asked some players on their thoughts and they said
+		it might be too much*/
+		if (Winner->m_AccData.m_UserID)
+		{
+			Winner->m_QuestData.m_Pages += 3;
+			Winner->Temporary.m_Weaponcalls += 3;
+			Winner->Temporary.m_PassiveMode = true;
+			Winner->Temporary.m_PassiveModeTime = m_pGameServer->Server()->Tick();
+		}
 
 		dbg_msg("LMB", "%d has won!", ID);
 
