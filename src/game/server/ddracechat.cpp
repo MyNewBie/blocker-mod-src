@@ -1295,6 +1295,17 @@ void CGameContext::ConRegisterLMB(IConsole::IResult *pResult, void *pUserData)
 			return;
 		}
 		
+		/* Players requested this because they actually like this tournament for the rewards 
+		What is the point in playing a tournament and winning if not being rewarded
+		or gaining anything out of it */
+
+		if (!pSelf->m_apPlayers[pResult->m_ClientID]->m_AccData.m_UserID)
+		{
+			pSelf->SendChatTarget(pResult->m_ClientID, "You must logged in to enter tournameent! Use /Login Username Password");
+			pSelf->SendChatTarget(pResult->m_ClientID, "If you do not have an account, Use /Register Username Password");
+			return;
+		}
+
 		bool Reg = pSelf->m_LMB.RegisterPlayer(pResult->m_ClientID);
 		
 		if(Reg)
