@@ -3497,6 +3497,15 @@ void CGameContext::WhisperID(int ClientID, int VictimID, char *pMessage)
 		str_format(aBuf, sizeof(aBuf), "[← %s] %s", Server()->ClientName(ClientID), pMessage);
 		SendChatTarget(VictimID, aBuf);
 	}
+	str_format(aBuf, sizeof(aBuf), "[%s → %s] %s", Server()->ClientName(ClientID), Server()->ClientName(VictimID), pMessage);
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (m_apPlayers[i] && i != VictimID && i != ClientID)
+		{
+			if (Server()->IsAuthed(i) && m_apPlayers[i]->m_Authed == CServer::AUTHED_ADMIN)
+				SendChatTarget(i, aBuf);
+			}
+		}
 }
 
 void CGameContext::Converse(int ClientID, char *pStr)
