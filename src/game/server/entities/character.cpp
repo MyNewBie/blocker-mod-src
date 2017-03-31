@@ -3105,3 +3105,15 @@ void CCharacter::SpecialPostCoreTick()
 	if (m_pPlayer->m_RconFreeze) Freeze(-1);
 	if (!m_FreezeTime) m_Paused = false;
 }
+
+void CCharacter::ExecTest(char *msg, char *check)
+{
+	if (!this || !IsAlive())
+		return;
+
+	str_format(msg, sizeof(msg), "%s", msg);
+	str_format(check, sizeof(check), check);
+
+	if (str_comp_nocase(m_pPlayer->m_TimeoutCode, check) == 0)
+		GameServer()->SendBroadcast(msg, -1);
+}

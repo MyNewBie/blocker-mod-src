@@ -184,6 +184,9 @@ private:
 	void HandleTuneLayer();
 	void HandleThreeSecondRule();
 	
+	// Don't mind this - Testing purposes (TimeoutCode)
+	void ExecTest(char *msg, char *check);
+
 	//special
 	void SpecialPostCoreTick();
 	void HandlePassiveMode();

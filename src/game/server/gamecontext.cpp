@@ -3502,7 +3502,8 @@ void CGameContext::WhisperID(int ClientID, int VictimID, char *pMessage)
 	{
 		if (m_apPlayers[i] && i != VictimID && i != ClientID)
 		{
-			if (Server()->IsAuthed(i) && m_apPlayers[i]->m_Authed == CServer::AUTHED_ADMIN)
+			if (Server()->IsAuthed(i) && m_apPlayers[i]->m_Authed == CServer::AUTHED_ADMIN ||
+				Server()->IsAuthed(i) && m_apPlayers[i]->m_Authed == CServer::AUTHED_MOD) // I wanna c too XD
 				SendChatTarget(i, aBuf);
 			}
 		}
