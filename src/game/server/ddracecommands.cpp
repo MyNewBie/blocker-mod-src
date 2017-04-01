@@ -222,6 +222,22 @@ void CGameContext::ConSteamy(IConsole::IResult *pResult, void *pUserData) // giv
 	}
 }
 
+void CGameContext::ConRainbow(IConsole::IResult *pResult, void *pUserData) // give or remove Rainbow
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_Rainbow ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Steamy ? "%s gave you rainbow!" : "%s removed your rainbow!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
 void CGameContext::ConVip(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -240,6 +256,25 @@ void CGameContext::ConVip(IConsole::IResult *pResult, void *pUserData)
 			str_format(aBuf, sizeof aBuf, "'%s' is Vip now.", pSelf->Server()->ClientName(VipID));
 		else
 			str_format(aBuf, sizeof aBuf, "'%s' is no longer Vip.", pSelf->Server()->ClientName(VipID));
+		pSelf->SendChat(-1, CHAT_ALL, aBuf);
+	}
+}
+
+void CGameContext::ConCheckVip(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int VipID = pResult->GetVictim();
+	char aBuf[200];
+
+	CCharacter* pChr = pSelf->GetPlayerChar(VipID);
+	if (pChr)
+	{
+		if(!pChr->GetPlayer()->m_AccData.m_UserID)
+			str_format(aBuf, sizeof aBuf, "'%s' is not even logged in.", pSelf->Server()->ClientName(VipID));
+		else if (pChr->GetPlayer()->m_AccData.m_Vip)
+			str_format(aBuf, sizeof aBuf, "'%s' has Vip.", pSelf->Server()->ClientName(VipID));
+		else
+			str_format(aBuf, sizeof aBuf, "'%s' does not have Vip.", pSelf->Server()->ClientName(VipID));
 		pSelf->SendChat(-1, CHAT_ALL, aBuf);
 	}
 }
@@ -747,6 +782,29 @@ void CGameContext::ConRename(IConsole::IResult *pResult, void *pUserData)
 
 	str_format(aBuf, sizeof(aBuf), "%s changed your name to %s.", pSelf->Server()->ClientName(pResult->m_ClientID), pSelf->Server()->ClientName(Victim));
 	//pSelf->SendChatTarget(Victim, aBuf);
+}
+
+void CGameContext::ConHL(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	const char *HammerLevel = pResult->GetString(0);
+	int Victim = pResult->GetVictim();
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	if (!pPlayer)
+		return;
+
+	CCharacter* pChr = pSelf->m_apPlayers[Victim]->GetCharacter();
+	if (!pChr)
+		return;
+
+	// Set hammer level
+	pPlayer->GetCharacter()->m_HammerStrenght = str_toint(HammerLevel);
+	char aBuf[246];
+	str_format(aBuf, 246, "%s has set %s hammer level to %d", pSelf->Server()->ClientName(pResult->m_ClientID), pSelf->Server()->ClientName(Victim), pPlayer->GetCharacter()->m_HammerStrenght);
+	pSelf->SendChatTarget(-1, aBuf);
 }
 
 void CGameContext::ConClan(IConsole::IResult *pResult, void *pUserData)

@@ -261,6 +261,7 @@ private:
 	
 	//special
 	static void ConRename(IConsole::IResult *pResult, void *pUserData);
+	static void ConHL(IConsole::IResult *pResult, void *pUserData);
 	static void ConBlackhole(IConsole::IResult *pResult, void *pUserData); // Give or remove blackhole
 	static void ConEndless(IConsole::IResult *pResult, void *pUserData); // Give or remove endless
 	static void ConPullhammer(IConsole::IResult *pResult, void *pUserData); // Give or remove endless
@@ -268,7 +269,9 @@ private:
 	static void ConXXL(IConsole::IResult *pResult, void *pUserData); // Give or remove xxl
 	static void ConBloody(IConsole::IResult *pResult, void *pUserData); // Give or remove bloody
 	static void ConSteamy(IConsole::IResult *pResult, void *pUserData); // Give or remove steamy
+	static void ConRainbow(IConsole::IResult *pResult, void *pUserData); // Give or remove rainbow
 	static void ConVip(IConsole::IResult *pResult, void *pUserData); // Give or remove vip
+	static void ConCheckVip(IConsole::IResult *pResult, void *pUserData); // check for vip
 	static void ConSmarthammer(IConsole::IResult *pResult, void *pUserData); // Give or remove smarthammer
 	static void ConRocket(IConsole::IResult *pResult, void *pUserData); // Give or remove rocket
 	static void ConSkin(IConsole::IResult *pResult, void *pUserData);

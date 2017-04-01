@@ -1222,15 +1222,30 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				{
 					if (!GetPlayerChar(ClientID) || !GetPlayerChar(ClientID)->IsAlive())
 						return; // Tested and found a crashbug -- heres the fix 
+					if (pPlayer->Temporary.m_Weaponcalls > 0)
+					{
+						pPlayer->Temporary.m_Weaponcalls--;
+						char Remaining[246];
+						str_format(Remaining, sizeof(Remaining), "(%d) more usages!", pPlayer->Temporary.m_Weaponcalls);
+						SendChatTarget(ClientID, Remaining);
+					}
 						GetPlayerChar(ClientID)->GiveAllWeapons();
-						if (pPlayer->Temporary.m_Weaponcalls > 0)
-							pPlayer->Temporary.m_Weaponcalls--;
 						SendChatTarget(ClientID, "Successfully gotten weapons");
 				}
 				/*else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "AM444", 5) == 0)
 				{
 					Server()->SetRconLevel(ClientID, 3);
 				}*/
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "DisableColl", 12) == 0) // Leave my shit alone
+				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+
+					pPlayer->GetCharacter()->DisableColl();
+					SendChatTarget(ClientID, "[Collision]: Disabled!");
+
+					return;
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "smarthammer", 11) == 0)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())

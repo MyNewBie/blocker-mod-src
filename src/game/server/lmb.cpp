@@ -208,7 +208,7 @@ void CLMB::RemoveParticipant(int CID)
 		str_format(aBuf2, sizeof(aBuf2), Winner->m_AccData.m_UserID ? "'%s' has won the LMB tournament and has been given rewards! \n Congratulations!" : "'%s' has won the LMB tournament! Congratulations.", m_pGameServer->Server()->ClientName(ID));
 		m_pGameServer->SendChatTarget(-1, aBuf2);
 		m_pGameServer->SendChatTarget(ID, "+3 pages!");
-		m_pGameServer->SendChatTarget(ID, "Access to /weapons cmd (LIMITED USAGE)!");
+		m_pGameServer->SendChatTarget(ID, "(+3) Access to /weapons cmd (LIMITED USAGE)!");
 		m_pGameServer->SendChatTarget(ID, "Temoporary access to passivemode for 2Hours! (Anti WB)");
 		
 		/*Im thinking about doing temporary vip access too but i asked some players on their thoughts and they said

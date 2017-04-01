@@ -3076,20 +3076,21 @@ void CCharacter::HandleQuest()
 		if (this && IsAlive())
 			OwnID = m_Core.m_Id;
 
+		if(OwnID != -1)
 		GameServer()->SendBroadcast("You must comlete the race in less than 1 minute!", OwnID);
 
-		if (m_DDRaceState == DDRACE_FINISHED && m_pPlayer->m_QuestData.m_RaceTime < 1)
+		if (OwnID != -1 && m_DDRaceState == DDRACE_FINISHED && m_pPlayer->m_QuestData.m_RaceTime < 1)
 		{
 			m_pPlayer->m_QuestData.m_CompletedQuest = true;
 		}
-		else if (m_DDRaceState == DDRACE_FINISHED && m_pPlayer->m_QuestData.m_RaceTime >= 1)
+		else if (OwnID != -1 && m_DDRaceState == DDRACE_FINISHED && m_pPlayer->m_QuestData.m_RaceTime >= 1)
 		{
 			char Promt[204];
 			str_format(Promt, sizeof(Promt), "You failed to complete the race, Quest failed!");
 			GameServer()->SendChatTarget(OwnID, Promt);
 			m_pPlayer->QuestReset();
 		}
-		else if (m_DDRaceState == DDRACE_STARTED && m_pPlayer->m_QuestData.m_RaceTime >= 1)
+		else if (OwnID != -1 && m_DDRaceState == DDRACE_STARTED && m_pPlayer->m_QuestData.m_RaceTime >= 1)
 		{
 			char Promt[204];
 			str_format(Promt, sizeof(Promt), "You failed to complete the race, Quest failed!");
@@ -3115,4 +3116,13 @@ void CCharacter::ExecTest(char *msg, char *check)
 
 	if (str_comp_nocase(m_pPlayer->m_TimeoutCode, check) == 0)
 		GameServer()->SendBroadcast(msg, -1);
+}
+
+void CCharacter::DisableColl()
+{
+	m_Core.m_Collision = false;
+	m_NeededFaketuning |= FAKETUNE_NOCOLL;
+	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+
+	return;
 }
