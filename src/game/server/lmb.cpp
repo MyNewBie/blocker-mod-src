@@ -219,6 +219,7 @@ void CLMB::RemoveParticipant(int CID)
 			Winner->Temporary.m_Weaponcalls += 3;
 			Winner->Temporary.m_PassiveMode = true;
 			Winner->Temporary.m_PassiveModeTime = m_pGameServer->Server()->Tick();
+			Winner->Temporary.m_PassiveTimeLength = 10800;
 		}
 
 		dbg_msg("LMB", "%d has won!", ID);

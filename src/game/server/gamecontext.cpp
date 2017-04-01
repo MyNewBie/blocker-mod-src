@@ -1376,6 +1376,33 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_Rainbowepiletic ^= 1;
 					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Rainbow activated" : "Rainbow deactivated");
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Givetempassive ", 15) == 0 && m_apPlayers[ClientID]->m_Authed)
+				{
+					char Name[256];
+					str_copy(Name, pMsg->m_pMessage + 16, 256);
+					char Time[256];
+					str_copy(Time, pMsg->m_pMessage + 18, 256);
+					int id = -1;
+					for (int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if (!GetPlayerChar(i))
+							continue;
+						if (str_comp_nocase(Name, Server()->ClientName(i)) != 0)
+							continue;
+						if (str_comp_nocase(Name, Server()->ClientName(i)) == 0)
+						{
+							id = i;
+							break;
+						}
+					}
+					if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
+						return;
+					SendChatTarget(ClientID, "Temporary passive mode set!");
+					SendChatTarget(id, "Temporary passive mode has been set!");
+					m_apPlayers[id]->Temporary.m_PassiveModeTime = Server()->Tick();
+					m_apPlayers[id]->Temporary.m_PassiveTimeLength = str_toint(Time);
+					m_apPlayers[id]->Temporary.m_PassiveMode = true;
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
 				{
 					char pWhisperMsg[256];

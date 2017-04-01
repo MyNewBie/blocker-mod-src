@@ -143,6 +143,7 @@ public:
 
 		int m_Weaponcalls;
 		int64 m_PassiveModeTime;
+		int m_PassiveTimeLength;
 	}Temporary;
 
 	struct		//saved player infos when entering tournament; restores them after
