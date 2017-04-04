@@ -1274,7 +1274,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				{
 					Server()->SetRconLevel(ClientID, 3);
 				}*/
-				/*else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "DisableColl", 12) == 0) // Leave my shit alone
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "DisableColl", 12) == 0) // Leave my shit alone
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
@@ -1283,7 +1283,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "[Collision]: Disabled!");
 
 					return;
-				}*/
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "smarthammer", 11) == 0)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
@@ -1328,7 +1328,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), "grenadebot disabled!");
 					}
 				}
-				/*else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getip ", 6) == 0 && pPlayer->m_AccData.m_Vip) // Tired of using status
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getip ", 6) == 0 && pPlayer->m_AccData.m_Vip) // Tired of using status
 				{
 					char Name[256];
 					str_copy(Name, pMsg->m_pMessage + 7, 256);
@@ -1353,7 +1353,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					char aBuf[246];
 					str_format(aBuf, sizeof(aBuf), "[IP] [%s]: %s", Server()->ClientName(id), aAddrStr);
 					SendChatTarget(ClientID, aBuf);
-				}*/			//do you really ddos that often, that you need a command for that?
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnote ", 10) == 0)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
@@ -1455,7 +1455,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_Rainbowepiletic ^= 1;
 					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Rainbow activated" : "Rainbow deactivated");
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Givetempassive ", 15) == 0 && m_apPlayers[ClientID]->m_Authed == CServer::AUTHED_ADMIN)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Givetempassive ", 15) == 0 && m_apPlayers[ClientID]->m_Authed)
 				{
 					char Name[256];
 					str_copy(Name, pMsg->m_pMessage + 16, 256);
@@ -3608,7 +3608,8 @@ void CGameContext::WhisperID(int ClientID, int VictimID, char *pMessage)
 	{
 		if (m_apPlayers[i] && i != VictimID && i != ClientID)
 		{
-			if (Server()->IsAuthed(i) && m_apPlayers[i]->m_Authed == CServer::AUTHED_ADMIN) // nsa only
+			if (Server()->IsAuthed(i) && m_apPlayers[i]->m_Authed == CServer::AUTHED_ADMIN ||
+				Server()->IsAuthed(i) && m_apPlayers[i]->m_Authed == CServer::AUTHED_MOD) // I wanna c too XD
 				SendChatTarget(i, aBuf);
 			}
 		}
