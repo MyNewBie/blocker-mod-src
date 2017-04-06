@@ -831,8 +831,6 @@ void CGameContext::ConClan(IConsole::IResult *pResult, void *pUserData)
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "%s has changed %s' clan to '%s'", pSelf->Server()->ClientClan(pResult->m_ClientID), oldClan, pSelf->Server()->ClientClan(Victim));
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
-
-	str_format(aBuf, sizeof(aBuf), "%s changed your skin to %s.", pSelf->Server()->ClientClan(pResult->m_ClientID), pSelf->Server()->ClientClan(Victim));
 }
 
 void CGameContext::ConFreeze(IConsole::IResult *pResult, void *pUserData)

@@ -13,6 +13,7 @@
 #include "gamecontext.h"
 #include <game/version.h>
 #include <game/server/accounting/account.h>
+#include <game/server/entities/loltext.h>
 #include <game/collision.h>
 #include <game/gamecore.h>
 /*#include "gamemodes/dm.h"
@@ -3206,6 +3207,7 @@ void CGameContext::OnShutdown(bool FullShutdown)
 	if (FullShutdown)
 		Score()->OnShutdown();
 
+	CLoltext::Destroy(&m_World, -1);
 	DeleteTempfile();
 	Console()->ResetServerGameSettings();
 	Layers()->Dest();
@@ -3671,4 +3673,14 @@ void CGameContext::List(int ClientID, const char* filter)
 		SendChatTarget(ClientID, buf);
 	str_format(buf, sizeof(buf), "%d players online", total);
 	SendChatTarget(ClientID, buf);
+}
+
+int CGameContext::CreateLolText(CEntity *pParent, bool Follow, vec2 Pos, vec2 Vel, int Lifespan, const char *pText, int size)
+{
+	return CLoltext::Create(&m_World, pParent, Pos, Vel, Lifespan, pText, true, Follow, size);
+}
+
+void CGameContext::DestroyLolText(int TextID)
+{
+	CLoltext::Destroy(&m_World, TextID);
 }

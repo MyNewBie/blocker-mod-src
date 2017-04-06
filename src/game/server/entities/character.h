@@ -193,6 +193,10 @@ private:
 	void HandleRainbow();
 	void HandleQuest();
 	void HandleBots();
+	void HandleLevelSystem();
+	void HandleBlocking(bool die);
+	void HandleGameModes();
+	void Clean();
 	void SendZoneMsgs();
 
 	bool m_SetSavePos;

@@ -129,13 +129,15 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 
 	Accfile = fopen(aFullPath, "r");
 
-	fscanf(Accfile, "%s\n%s\n%s\n%d\n%d\n%d",
+	fscanf(Accfile, "%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d",
 		m_pPlayer->m_AccData.m_Username, // Done
 		m_pPlayer->m_AccData.m_Password, // Done
 		m_pPlayer->m_AccData.m_RconPassword,
 		&m_pPlayer->m_AccData.m_UserID,
 		&m_pPlayer->m_AccData.m_Vip,
-		&m_pPlayer->m_QuestData.m_Pages); // Done
+		&m_pPlayer->m_QuestData.m_Pages,
+		&m_pPlayer->m_Level,
+		&m_pPlayer->m_Exp); // Done
 
 	fclose(Accfile);
 
@@ -215,13 +217,15 @@ void CAccount::Register(const char *pUsername, const char *pPassword)
 		return;
 	}
 
-	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d\n%d",
+	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d",
 		pUsername,
 		pPassword,
 		"0",
 		NextID(),
 		m_pPlayer->m_AccData.m_Vip,
-		m_pPlayer->m_QuestData.m_Pages
+		m_pPlayer->m_QuestData.m_Pages,
+		m_pPlayer->m_Level,
+		m_pPlayer->m_Exp
 	);
 
 	io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
@@ -256,13 +260,15 @@ void CAccount::Apply()
 		return;
 	}
 
-	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d\n%d",
+	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d",
 		m_pPlayer->m_AccData.m_Username,
 		m_pPlayer->m_AccData.m_Password,
 		m_pPlayer->m_AccData.m_RconPassword,
 		m_pPlayer->m_AccData.m_UserID,
 		m_pPlayer->m_AccData.m_Vip,
-		m_pPlayer->m_QuestData.m_Pages);
+		m_pPlayer->m_QuestData.m_Pages,
+		m_pPlayer->m_Level,
+		m_pPlayer->m_Exp);
 
 	io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
 	io_close(Accfile);

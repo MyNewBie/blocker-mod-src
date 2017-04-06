@@ -61,6 +61,10 @@ public:
 	// used for spectator mode
 	int m_SpectatorID;
 	
+	// level system
+	int m_Level;
+	int m_Exp;
+
 	//special
 	int m_Vacuum;
     

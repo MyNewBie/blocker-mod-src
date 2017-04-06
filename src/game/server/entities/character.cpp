@@ -806,43 +806,11 @@ void CCharacter::Tick()
 {
 	if (m_Paused)
 		return;
-	
-	if (this && IsAlive() && m_pPlayer->Temporary.m_PassiveMode)
-	{
-		bool TimeIsUp = m_pPlayer->Temporary.m_PassiveModeTime + m_pPlayer->Temporary.m_PassiveTimeLength * Server()->TickSpeed() > Server()->Tick() ? false : true;
-		if (TimeIsUp)
-		{
-			GameServer()->SendChatTarget(m_Core.m_Id, "Your time is up! Now disabling passive mode");
-			GameServer()->SendChatTarget(m_Core.m_Id, "You can always buy vip for lifetime usage!");
-			m_pPlayer->Temporary.m_PassiveTimeLength = 0;
-			m_pPlayer->Temporary.m_PassiveMode = false;
-		}
-	}
 
-	if (this && IsAlive() && !GameServer()->m_KOH)
-	{
-		if (m_pPlayer->m_Koh.m_InZone || m_pPlayer->m_Koh.m_ZonePoints > 0 || m_pPlayer->m_Koh.m_ZoneXp > 0)
-			m_pPlayer->m_Koh.Reset();
-	}
-	// handle info spam
-	if (this && IsAlive() && (Server()->Tick() % 50) && m_pPlayer->m_IsEmote)
-		m_pPlayer->m_IsEmote = false;
-	if (this && IsAlive() && (Server()->Tick() % 80) == 0 && (WasInBloody || WasInCircles || WasInHH || WasInRainbow || WasInSteam || WasInXXL))
-	{
-		WasInBloody = false;
-		WasInCircles = false;
-		WasInHH = false;
-		WasInRainbow = false;
-		WasInSteam = false;
-		WasInXXL = false;
-	}
-	if (this && IsAlive() && (Server()->Tick() % 150) == 0 && m_TilePauser) // Ugly asf TODO: FIX
-		m_TilePauser = false;
-	if (this && IsAlive() && (Server()->Tick() % 150) == 0 && m_AntiSpam) // Ugly asf TODO: FIX
-		m_AntiSpam = false;
-	if (this && IsAlive() && (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed))
-		HandlePassiveMode();
+	Clean();
 
+	HandleGameModes();
+	HandleLevelSystem();
 	HandleQuest();
 	HandleBots();
 	HandleThreeSecondRule();
@@ -993,6 +961,8 @@ void CCharacter::Die(int Killer, int Weapon)
 			}
 		}
 	}
+
+	HandleBlocking(true);
 
 	if (GetPlayer()->GetCharacter() && GameServer()->GetPlayerChar(GetPlayer()->GetCharacter()->Core()->m_LastHookedPlayer))
 		GetPlayer()->m_Killedby = GetPlayer()->GetCharacter()->Core()->m_LastHookedPlayer;
@@ -3125,4 +3095,112 @@ void CCharacter::DisableColl()
 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
 
 	return;
+}
+
+void CCharacter::HandleLevelSystem()
+{
+	// First off give Exp
+	HandleBlocking(false);
+
+	// Handle level update
+	if (this && IsAlive() && m_pPlayer->m_AccData.m_UserID) // is Logged in
+	{
+		if (m_pPlayer->m_Exp >= (m_pPlayer->m_Level * 2))
+		{
+			m_pPlayer->m_Level++;
+			m_pPlayer->m_Exp = 0;
+
+			char aBuf[246];
+			str_format(aBuf, sizeof(aBuf), "[LevelUp+]: You are now level %d!", m_pPlayer->m_Level);
+			GameServer()->SendChatTarget(m_Core.m_Id, aBuf);
+		}
+	}
+}
+
+void CCharacter::HandleBlocking(bool die)
+{
+	if (die)
+	{
+		CCharacter *pECore = GameServer()->GetPlayerChar(m_Core.m_LastHookedPlayer);
+		if (this && IsAlive() && pECore && pECore->IsAlive())
+		{
+			GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
+			pECore->m_pPlayer->m_Exp += 3;
+		}
+	}
+	else
+	{
+		CCharacter *pECore = GameServer()->GetPlayerChar(m_Core.m_LastHookedPlayer);
+		if (this && IsAlive() && pECore && pECore->IsAlive())
+			if (m_FirstFreezeTick != 0)
+			{
+				// Make sure we not being saved, make sure no one is hooking us, to confirm block
+				if (pECore->m_Core.m_HookedPlayer != m_Core.m_Id)
+				{
+					// check if we've been officially blocked ( Time count )
+					if (Server()->Tick() > m_FirstFreezeTick + Server()->TickSpeed() * g_Config.m_SvBlockTime)
+					{
+						int MagicShit = m_FirstFreezeTick + Server()->TickSpeed() * g_Config.m_SvBlockTime;
+						if ((Server()->Tick() - 1) == MagicShit)
+						{
+							GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
+							pECore->m_pPlayer->m_Exp += 3;
+						}
+					}
+				}
+			}
+	}
+}
+
+void CCharacter::Clean()
+{
+	if (this && IsAlive() && m_pPlayer->m_AccData.m_UserID) // Show off our level!
+	{
+		const char *pClan = Server()->ClientClan(GetPlayer()->GetCID());
+		char aLevel[16];
+		str_format(aLevel, 16, "[Level]: %d", m_pPlayer->m_Level);
+
+		if (str_comp_nocase(aLevel, pClan) != 0) // No spam
+			Server()->SetClientClan(GetPlayer()->GetCID(), aLevel);
+	}
+
+	// handle info spam
+	if (this && IsAlive() && (Server()->Tick() % 50) && m_pPlayer->m_IsEmote)
+		m_pPlayer->m_IsEmote = false;
+	if (this && IsAlive() && (Server()->Tick() % 80) == 0 && (WasInBloody || WasInCircles || WasInHH || WasInRainbow || WasInSteam || WasInXXL))
+	{
+		WasInBloody = false;
+		WasInCircles = false;
+		WasInHH = false;
+		WasInRainbow = false;
+		WasInSteam = false;
+		WasInXXL = false;
+	}
+	if (this && IsAlive() && (Server()->Tick() % 150) == 0 && m_TilePauser) // Ugly asf TODO: FIX
+		m_TilePauser = false;
+	if (this && IsAlive() && (Server()->Tick() % 150) == 0 && m_AntiSpam) // Ugly asf TODO: FIX
+		m_AntiSpam = false;
+	if (this && IsAlive() && (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed))
+		HandlePassiveMode();
+}
+
+void CCharacter::HandleGameModes()
+{
+	if (this && IsAlive() && m_pPlayer->Temporary.m_PassiveMode)
+	{
+		bool TimeIsUp = m_pPlayer->Temporary.m_PassiveModeTime + m_pPlayer->Temporary.m_PassiveTimeLength * Server()->TickSpeed() > Server()->Tick() ? false : true;
+		if (TimeIsUp)
+		{
+			GameServer()->SendChatTarget(m_Core.m_Id, "Your time is up! Now disabling passive mode");
+			GameServer()->SendChatTarget(m_Core.m_Id, "You can always buy vip for lifetime usage!");
+			m_pPlayer->Temporary.m_PassiveTimeLength = 0;
+			m_pPlayer->Temporary.m_PassiveMode = false;
+		}
+	}
+
+	if (this && IsAlive() && !GameServer()->m_KOH)
+	{
+		if (m_pPlayer->m_Koh.m_InZone || m_pPlayer->m_Koh.m_ZonePoints > 0 || m_pPlayer->m_Koh.m_ZoneXp > 0)
+			m_pPlayer->m_Koh.Reset();
+	}
 }
