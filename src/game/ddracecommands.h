@@ -8,6 +8,7 @@
 
 //specials
 CONSOLE_COMMAND("kill_pl", "v[id]", CFGFLAG_SERVER, ConKillPlayer, this, "Kills player v and announces the kill")
+CONSOLE_COMMAND("levelreset_pl", "v[id]", CFGFLAG_SERVER, ConLevelReset, this, "reset player v level")
 CONSOLE_COMMAND("endless_pl", "v[id]", CFGFLAG_SERVER, ConEndless, this, "give/remove player v endless")
 CONSOLE_COMMAND("epic_circles_pl", "v[id]", CFGFLAG_SERVER, ConEpicCircles, this, "give/remove player v epic circles")
 CONSOLE_COMMAND("pullhammer_pl", "v[id]", CFGFLAG_SERVER, ConPullhammer, this, "give/remove player v pullhammer")

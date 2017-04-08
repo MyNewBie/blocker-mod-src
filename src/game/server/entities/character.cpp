@@ -3154,7 +3154,7 @@ void CCharacter::HandleBlocking(bool die)
 
 void CCharacter::Clean()
 {
-	if (this && IsAlive() && m_pPlayer->m_AccData.m_UserID) // Show off our level!
+	if (this && IsAlive() && m_pPlayer->m_AccData.m_UserID && !m_pPlayer->m_NoShowLevel) // Show off our level!
 	{
 		const char *pClan = Server()->ClientClan(GetPlayer()->GetCID());
 		char aLevel[16];

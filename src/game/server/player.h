@@ -64,6 +64,7 @@ public:
 	// level system
 	int m_Level;
 	int m_Exp;
+	bool m_NoShowLevel;
 
 	//special
 	int m_Vacuum;

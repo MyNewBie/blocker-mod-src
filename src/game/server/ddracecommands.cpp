@@ -94,6 +94,21 @@ void CGameContext::ConKillPlayer(IConsole::IResult *pResult, void *pUserData)
 	}
 }
 
+void CGameContext::ConLevelReset(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_Exp = 0;
+		pSelf->m_apPlayers[Victim]->m_Level = 0;
+		pSelf->m_apPlayers[Victim]->m_pAccount->Apply(); // save it
+	}
+}
+
 void CGameContext::ConBlackhole(IConsole::IResult *pResult, void *pUserData) // give or remove blackhole
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;

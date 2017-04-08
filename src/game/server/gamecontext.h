@@ -95,6 +95,7 @@ class CGameContext : public IGameServer
 	static void ConOpenLMB(IConsole::IResult *pResult, void *pUserData);
 	static void ConOpenKOH(IConsole::IResult *pResult, void *pUserData);
 	static void ConRegisterLMB(IConsole::IResult *pResult, void *pUserData);
+	static void ConToggleLevelDisplay(IConsole::IResult *pResult, void *pUserData);
 	static void ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
 	CGameContext(int Resetting);
@@ -264,6 +265,7 @@ private:
 	
 	//special
 	static void ConRename(IConsole::IResult *pResult, void *pUserData);
+	static void ConLevelReset(IConsole::IResult *pResult, void *pUserData);
 	static void ConHL(IConsole::IResult *pResult, void *pUserData);
 	static void ConBlackhole(IConsole::IResult *pResult, void *pUserData); // Give or remove blackhole
 	static void ConEndless(IConsole::IResult *pResult, void *pUserData); // Give or remove endless

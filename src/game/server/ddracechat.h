@@ -46,6 +46,7 @@ CHAT_COMMAND("rescue", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConRescue, this, "Telepo
 
 CHAT_COMMAND("kill", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConProtectedKill, this, "Kill yourself")
 CHAT_COMMAND("lmb", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConRegisterLMB, this, "Register yourself for an upcoming tournament.")
+CHAT_COMMAND("level", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConToggleLevelDisplay, this, "Toggle the display of your level")
 
 #if defined(CONF_SQL)
 CHAT_COMMAND("times", "?s[playername] ?i[number of times to skip]", CFGFLAG_CHAT|CFGFLAG_SERVER, ConTimes, this, "/times ?s?i shows last 5 times of the server or of a player beginning with name s starting with time i (i = 1 by default)")
