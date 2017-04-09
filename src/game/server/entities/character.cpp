@@ -2466,6 +2466,7 @@ bool CCharacter::UnFreeze()
 		m_FreezeTime = 0;
 		m_FreezeTick = 0;
 		m_FirstFreezeTick = 0;
+		m_LastBlockedTick = Server()->Tick();
 		if (m_Core.m_ActiveWeapon==WEAPON_HAMMER) m_ReloadTimer = 0;
 		return true;
 	}
@@ -3141,6 +3142,12 @@ void CCharacter::HandleLevelSystem()
 
 void CCharacter::HandleBlocking(bool die)
 {
+	if (this && IsAlive())
+	{
+		if (m_FreezeTime == 0 && m_LastBlockedTick == -1)
+			m_LastBlockedTick = Server()->Tick();
+	}
+
 	if (die)
 	{
 		CCharacter *pECore = GameServer()->GetPlayerChar(m_Core.m_LastHookedPlayer);
@@ -3163,12 +3170,13 @@ void CCharacter::HandleBlocking(bool die)
 			if (Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
 			{
 				GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
-				m_LastBlockedTick = Server()->Tick();
+				m_LastBlockedTick = -1;
 				pECore->m_pPlayer->m_Exp += 3;
 			}
 			else
 			{
 				GameServer()->SendChatTarget(pECore->m_Core.m_Id, "[AntiFarm]: This player must be alive longer to obtain points off him.");
+				m_LastBlockedTick = -1;
 				return;
 			}
 
@@ -3204,15 +3212,16 @@ void CCharacter::HandleBlocking(bool die)
 								GameServer()->SendChatTarget(pECore->m_Core.m_Id, "[AntiFarm]: You cant block your own dummy!");
 								return;
 							}
-							if (Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
+							if (m_LastBlockedTick != -1 && Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
 							{
 								GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
-								m_LastBlockedTick = Server()->Tick();
+								m_LastBlockedTick = -1;
 								pECore->m_pPlayer->m_Exp += 3;
 							}
 							else
 							{
 								GameServer()->SendChatTarget(pECore->m_Core.m_Id, "[AntiFarm]: This player must be alive longer to obtain points off him.");
+								m_LastBlockedTick = -1;
 								return;
 							}
 						}
@@ -3224,6 +3233,8 @@ void CCharacter::HandleBlocking(bool die)
 
 void CCharacter::Clean()
 {
+	if (this && IsAlive() && m_FreezeTime == 1)
+		m_LastBlockedTick = Server()->Tick();
 	// handle info spam
 	if (this && IsAlive() && (Server()->Tick() % 50) && m_pPlayer->m_IsEmote)
 		m_pPlayer->m_IsEmote = false;

@@ -223,7 +223,7 @@ public:
 	int m_FreezeTime;
 	int m_FreezeTick;
 	int m_FirstFreezeTick;
-	int m_LastBlockedTick;
+	int64 m_LastBlockedTick;
 	int m_PullingID;
 	int m_HammerStrenght;
 	bool m_DeepFreeze;
