@@ -991,10 +991,10 @@ void CCharacter::Die(int Killer, int Weapon)
 
 	// this is for auto respawn after 3 secs
 	m_pPlayer->m_DieTick = Server()->Tick();
-	m_LastBlockedTick = 0;
+
 	m_pPlayer->m_Vacuum = 0;
 	m_pPlayer->m_IsEmote = false;
-
+	m_LastBlockedTick = 0;
 	m_Alive = false;
 	GameServer()->m_World.RemoveEntity(this);
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = 0;
@@ -3099,6 +3099,8 @@ void CCharacter::DisableColl()
 
 void CCharacter::HandleLevelSystem()
 {
+	if (GameServer()->m_PlayerCount < 10)
+		return;
 
 	// First off give Exp
 	HandleBlocking(false);
