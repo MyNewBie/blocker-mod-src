@@ -991,7 +991,7 @@ void CCharacter::Die(int Killer, int Weapon)
 
 	// this is for auto respawn after 3 secs
 	m_pPlayer->m_DieTick = Server()->Tick();
-
+	m_LastBlockedTick = 0;
 	m_pPlayer->m_Vacuum = 0;
 	m_pPlayer->m_IsEmote = false;
 
@@ -3099,6 +3099,7 @@ void CCharacter::DisableColl()
 
 void CCharacter::HandleLevelSystem()
 {
+
 	// First off give Exp
 	HandleBlocking(false);
 
@@ -3115,6 +3116,25 @@ void CCharacter::HandleLevelSystem()
 			GameServer()->SendChatTarget(m_Core.m_Id, aBuf);
 		}
 	}
+
+	// Show off our level!
+	if (this && IsAlive() && m_pPlayer->m_AccData.m_UserID && !m_pPlayer->m_NoShowLevel)
+	{
+		const char *pClan = Server()->ClientClan(GetPlayer()->GetCID());
+		char aLevel[16];
+		str_format(aLevel, 16, "[Lvl]: %d", m_pPlayer->m_Level);
+
+		if (str_comp_nocase(aLevel, pClan) != 0) // No spam
+			Server()->SetClientClan(GetPlayer()->GetCID(), aLevel);
+	}
+
+	// Stop the fakers
+	if (this && IsAlive() && !m_pPlayer->m_AccData.m_UserID)
+	{
+		const char *pClan = Server()->ClientClan(GetPlayer()->GetCID());
+		if (str_find_nocase(pClan, "Lvl") || str_find_nocase(pClan, "Level"))
+			Server()->SetClientClan(m_Core.m_Id, "Loser");
+	}
 }
 
 void CCharacter::HandleBlocking(bool die)
@@ -3122,16 +3142,40 @@ void CCharacter::HandleBlocking(bool die)
 	if (die)
 	{
 		CCharacter *pECore = GameServer()->GetPlayerChar(m_Core.m_LastHookedPlayer);
-		if (this && IsAlive() && pECore && pECore->IsAlive())
+		if (this && IsAlive() && pECore && pECore->IsAlive() && Team() == 0 && pECore->Team() == 0)
 		{
-			GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
-			pECore->m_pPlayer->m_Exp += 3;
+			if (m_pPlayer->m_Afk) // cannot get points of blocking an afk player
+			{
+				GameServer()->SendChatTarget(pECore->m_Core.m_Id, "[AntiFarm]: You cant block an afk player!");
+				return;
+			}
+			char aAddrStrSelf[NETADDR_MAXSTRSIZE] = { 0 };
+			char aAddrStrEnemy[NETADDR_MAXSTRSIZE] = { 0 };
+			Server()->GetClientAddr(m_Core.m_Id, aAddrStrSelf, sizeof(aAddrStrSelf));
+			Server()->GetClientAddr(pECore->m_Core.m_Id, aAddrStrEnemy, sizeof(aAddrStrEnemy));
+			if (str_comp_nocase(aAddrStrSelf, aAddrStrEnemy) == 0) // Cannot block your own dummy
+			{
+				GameServer()->SendChatTarget(pECore->m_Core.m_Id, "[AntiFarm]: You cant block your own dummy!");
+				return;
+			}
+			if (Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
+			{
+				GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
+				m_LastBlockedTick = Server()->Tick();
+				pECore->m_pPlayer->m_Exp += 3;
+			}
+			else
+			{
+				GameServer()->SendChatTarget(pECore->m_Core.m_Id, "[AntiFarm]: This player must be alive longer to obtain points off him.");
+				return;
+			}
+
 		}
 	}
 	else
 	{
 		CCharacter *pECore = GameServer()->GetPlayerChar(m_Core.m_LastHookedPlayer);
-		if (this && IsAlive() && pECore && pECore->IsAlive())
+		if (this && IsAlive() && pECore && pECore->IsAlive() && Team() == 0 && pECore->Team() == 0)
 			if (m_FirstFreezeTick != 0)
 			{
 				// Make sure we not being saved, make sure no one is hooking us, to confirm block
@@ -3143,8 +3187,32 @@ void CCharacter::HandleBlocking(bool die)
 						int MagicShit = m_FirstFreezeTick + Server()->TickSpeed() * g_Config.m_SvBlockTime;
 						if ((Server()->Tick() - 1) == MagicShit)
 						{
-							GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
-							pECore->m_pPlayer->m_Exp += 3;
+							// ---------------------
+							if (m_pPlayer->m_Afk) // cannot get points of blocking an afk player
+							{
+								GameServer()->SendChatTarget(pECore->m_Core.m_Id, "[AntiFarm]: You cant block an afk player!");
+								return;
+							}
+							char aAddrStrSelf[NETADDR_MAXSTRSIZE] = { 0 };
+							char aAddrStrEnemy[NETADDR_MAXSTRSIZE] = { 0 };
+							Server()->GetClientAddr(m_Core.m_Id, aAddrStrSelf, sizeof(aAddrStrSelf));
+							Server()->GetClientAddr(pECore->m_Core.m_Id, aAddrStrEnemy, sizeof(aAddrStrEnemy));
+							if (str_comp_nocase(aAddrStrSelf, aAddrStrEnemy) == 0) // Cannot block your own dummy
+							{
+								GameServer()->SendChatTarget(pECore->m_Core.m_Id, "[AntiFarm]: You cant block your own dummy!");
+								return;
+							}
+							if (Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
+							{
+								GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
+								m_LastBlockedTick = Server()->Tick();
+								pECore->m_pPlayer->m_Exp += 3;
+							}
+							else
+							{
+								GameServer()->SendChatTarget(pECore->m_Core.m_Id, "[AntiFarm]: This player must be alive longer to obtain points off him.");
+								return;
+							}
 						}
 					}
 				}
@@ -3154,16 +3222,6 @@ void CCharacter::HandleBlocking(bool die)
 
 void CCharacter::Clean()
 {
-	if (this && IsAlive() && m_pPlayer->m_AccData.m_UserID && !m_pPlayer->m_NoShowLevel) // Show off our level!
-	{
-		const char *pClan = Server()->ClientClan(GetPlayer()->GetCID());
-		char aLevel[16];
-		str_format(aLevel, 16, "[Level]: %d", m_pPlayer->m_Level);
-
-		if (str_comp_nocase(aLevel, pClan) != 0) // No spam
-			Server()->SetClientClan(GetPlayer()->GetCID(), aLevel);
-	}
-
 	// handle info spam
 	if (this && IsAlive() && (Server()->Tick() % 50) && m_pPlayer->m_IsEmote)
 		m_pPlayer->m_IsEmote = false;

@@ -223,6 +223,7 @@ public:
 	int m_FreezeTime;
 	int m_FreezeTick;
 	int m_FirstFreezeTick;
+	int m_LastBlockedTick;
 	int m_PullingID;
 	int m_HammerStrenght;
 	bool m_DeepFreeze;
@@ -235,7 +236,6 @@ public:
 	bool m_XXL;
 	bool m_Bloody;
 	bool m_Steamy;
-
 	// Prevention spam for tiles
 	bool WasInRainbow;
 	bool WasInHH;
@@ -327,8 +327,8 @@ public:
 	void SetNinjaActivationDir(vec2 ActivationDir) { m_Ninja.m_ActivationDir = ActivationDir; };
 	void SetNinjaActivationTick(int ActivationTick) { m_Ninja.m_ActivationTick = ActivationTick; };
 	void SetNinjaCurrentMoveTime(int CurrentMoveTime) { m_Ninja.m_CurrentMoveTime = CurrentMoveTime; };
-
-	vec2 MousePos() { return vec2(m_LatestInput.m_TargetX + m_Pos.x, m_LatestInput.m_TargetY + m_Pos.y); };
+	
+	vec2 MousePos() { return vec2(m_Core.m_Input.m_TargetX + m_Pos.x, m_Core.m_Input.m_TargetY + m_Pos.y); };
 };
 
 enum

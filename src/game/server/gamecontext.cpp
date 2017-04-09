@@ -618,6 +618,15 @@ void CGameContext::SwapTeams()
 */
 void CGameContext::OnTick()
 {
+	int PlayerCount = 0;
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (GetPlayerChar(i) && GetPlayerChar(i)->IsAlive())
+			PlayerCount++;
+
+		m_PlayerCount = PlayerCount;
+	}
+
 	if (m_KOH)
 	{
 		int PlayerCount = 0;

@@ -107,6 +107,7 @@ MACRO_CONFIG_INT(GfxNoclip, gfx_noclip, 0, 0, 1, CFGFLAG_CLIENT|CFGFLAG_SAVE, "D
 
 // blocking
 MACRO_CONFIG_INT(SvBlockTime, sv_block_time, 3, 3, 10, CFGFLAG_SERVER, "time freezed for a player to be marked blocked")
+MACRO_CONFIG_INT(SvAntiFarmDuration, sv_antifarm_block_dur, 15, 5, 500, CFGFLAG_SERVER, "how long a player has to been living in seconds to get blocked for points")
 
 // dummy
 MACRO_CONFIG_STR(ClDummyName, dummy_name, 16, "brainless tee", CFGFLAG_SAVE|CFGFLAG_CLIENT, "Name of the Dummy")

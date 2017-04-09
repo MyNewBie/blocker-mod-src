@@ -251,6 +251,7 @@ public:
 	CLMB m_LMB;
 	bool m_KOH;
 	bool m_PlayerContestant;
+	int m_PlayerCount;
 
 private:
 
