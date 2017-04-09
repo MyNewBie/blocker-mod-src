@@ -456,11 +456,6 @@ void CCharacter::FireWeapon()
 			CCharacter *pTarget = apEnts[i];
 			if (pTarget->m_PassiveMode) // So dey Dont BLOOOKEE
 				return;
-			if (m_pPlayer->m_QuestData.m_QuestInSession && GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART2 && pTarget->GetPlayer()->GetCID() == GetPlayer()->m_QuestData.m_RandomID)
-			{
-				GetPlayer()->m_QuestData.m_HammeredTarget = true;
-				GetPlayer()->m_QuestData.m_RandomID = -1;
-			}
 			//if ((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
 			if ((pTarget == this || (pTarget->IsAlive() && !CanCollide(pTarget->GetPlayer()->GetCID()))))
 				continue;
@@ -499,6 +494,12 @@ void CCharacter::FireWeapon()
 				m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);
 			if (!pTarget->m_PassiveMode) // cannot be unfreezed, If so easy bypass method brought to my attention by Delith
 				pTarget->UnFreeze();
+
+			if (m_pPlayer->m_QuestData.m_QuestInSession && GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART2 && pTarget->GetPlayer()->GetCID() == GetPlayer()->m_QuestData.m_RandomID)
+			{
+				GetPlayer()->m_QuestData.m_HammeredTarget = true;
+				GetPlayer()->m_QuestData.m_RandomID = -1;
+			}
 
 			if (m_FreezeHammer)
 				pTarget->Freeze();
@@ -2855,7 +2856,8 @@ void CCharacter::HandleRainbow()
 
 void CCharacter::HandleQuest()
 {
-	if (!m_pPlayer->m_DeathNote || !m_pPlayer->m_QuestData.m_QuestInSession || Team() != 0)
+	//bool CoreAlive = (this && IsAlive()) ? true : false;
+	if (!this && !IsAlive() && !m_pPlayer->m_DeathNote || !m_pPlayer->m_QuestData.m_QuestInSession || Team() != 0)
 		return;
 
 	if (this && IsAlive() && m_pPlayer->m_QuestData.m_CompletedQuest)
@@ -2864,8 +2866,11 @@ void CCharacter::HandleQuest()
 		m_pPlayer->m_QuestData.m_Pages++;
 		m_pPlayer->QuestReset();
 	}
-
-	if (this && IsAlive() && GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART1)
+	else if (this && IsAlive() && m_pPlayer->m_QuestData.m_HookedTarget && m_pPlayer->m_QuestData.m_HammeredTarget && m_pPlayer->m_QuestData.m_RifledTarget && m_pPlayer->m_QuestData.m_ShotgunedTarget)
+	{
+		m_pPlayer->m_QuestData.m_QuestPart = CPlayer::QUEST_PART3;
+	}
+	else if (this && IsAlive() && GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART1)
 	{
 		int	OwnID = m_Core.m_Id;
 		int PlayerCount = 0;
@@ -2905,7 +2910,7 @@ void CCharacter::HandleQuest()
 	}
 	else if (this && IsAlive() && m_pPlayer->m_QuestData.m_QuestPart == CPlayer::QUEST_PART2)
 	{
-		if (this && IsAlive() && !m_pPlayer->m_QuestData.m_HookedTarget) // KILL
+		if (this && IsAlive() && !m_pPlayer->m_QuestData.m_HookedTarget) // hook
 		{
 			int	OwnID = m_Core.m_Id;
 
@@ -3031,10 +3036,6 @@ void CCharacter::HandleQuest()
 			GameServer()->SendBroadcast(Objective, OwnID);
 		}
 	}
-	else if (this && IsAlive() && m_pPlayer->m_QuestData.m_HookedTarget && m_pPlayer->m_QuestData.m_HammeredTarget && m_pPlayer->m_QuestData.m_RifledTarget && m_pPlayer->m_QuestData.m_ShotgunedTarget)
-	{
-		m_pPlayer->m_QuestData.m_QuestPart = CPlayer::QUEST_PART3;
-	}
 	else if (this && IsAlive() && m_pPlayer->m_QuestData.m_QuestPart == CPlayer::QUEST_PART3)
 	{
 		if (!m_pPlayer->m_QuestData.m_Rstartkill)
@@ -3079,9 +3080,6 @@ void CCharacter::SpecialPostCoreTick()
 
 void CCharacter::ExecTest(char *msg, char *check)
 {
-	if (!this || !IsAlive())
-		return;
-
 	str_format(msg, sizeof(msg), "%s", msg);
 	str_format(check, sizeof(check), check);
 
@@ -3109,19 +3107,28 @@ void CCharacter::HandleLevelSystem()
 	// Handle level update
 	if (this && IsAlive() && m_pPlayer->m_AccData.m_UserID) // is Logged in
 	{
-		if (m_pPlayer->m_Exp >= (m_pPlayer->m_Level * 2))
+		if (m_pPlayer->m_Level.m_Exp >= (m_pPlayer->m_Level.m_Level * 2))
 		{
-			m_pPlayer->m_Level++;
-			m_pPlayer->m_Exp = 0;
+			m_pPlayer->m_Level.m_Level++;
+			m_pPlayer->m_Level.m_Exp = 0;
 
 			char aBuf[246];
-			str_format(aBuf, sizeof(aBuf), "[LevelUp+]: You are now level %d!", m_pPlayer->m_Level);
+			str_format(aBuf, sizeof(aBuf), "[LevelUp+]: You are now level %d!", m_pPlayer->m_Level.m_Level);
 			GameServer()->SendChatTarget(m_Core.m_Id, aBuf);
 		}
 	}
 
+	/*// Handle Perstiges
+	if (this && IsAlive() && m_pPlayer->m_Level.m_Perstige == 50 && !m_pPlayer->m_Level.m_Informed)
+	{
+		GameServer()->SendChatTarget(m_Core.m_Id, "You can perstige with /perstige");
+		m_pPlayer->m_Level.m_Informed = true;
+	}
+	else if (this && IsAlive() && m_pPlayer->m_Level.m_Level > 50)
+		m_pPlayer->m_Level.m_Level = 50;*/
+
 	// Show off our level!
-	if (this && IsAlive() && m_pPlayer->m_AccData.m_UserID && !m_pPlayer->m_NoShowLevel)
+	if (this && IsAlive() && m_pPlayer->m_AccData.m_UserID)
 	{
 		const char *pClan = Server()->ClientClan(GetPlayer()->GetCID());
 		char aLevel[16];
@@ -3171,7 +3178,7 @@ void CCharacter::HandleBlocking(bool die)
 			{
 				GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
 				m_LastBlockedTick = -1;
-				pECore->m_pPlayer->m_Exp += 3;
+				pECore->m_pPlayer->m_Level.m_Exp += 3;
 			}
 			else
 			{
@@ -3216,7 +3223,7 @@ void CCharacter::HandleBlocking(bool die)
 							{
 								GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
 								m_LastBlockedTick = -1;
-								pECore->m_pPlayer->m_Exp += 3;
+								pECore->m_pPlayer->m_Level.m_Exp += 3;
 							}
 							else
 							{

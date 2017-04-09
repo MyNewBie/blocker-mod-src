@@ -103,8 +103,8 @@ void CGameContext::ConLevelReset(IConsole::IResult *pResult, void *pUserData)
 
 	if (pSelf->m_apPlayers[Victim])
 	{
-		pSelf->m_apPlayers[Victim]->m_Exp = 0;
-		pSelf->m_apPlayers[Victim]->m_Level = 0;
+		pSelf->m_apPlayers[Victim]->m_Level.m_Exp = 0;
+		pSelf->m_apPlayers[Victim]->m_Level.m_Level = 0;
 		pSelf->m_apPlayers[Victim]->m_pAccount->Apply(); // save it
 	}
 }

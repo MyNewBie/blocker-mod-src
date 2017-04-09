@@ -1321,37 +1321,6 @@ void CGameContext::ConRegisterLMB(IConsole::IResult *pResult, void *pUserData)
 	}
 }
 
-void CGameContext::ConToggleLevelDisplay(IConsole::IResult *pResult, void *pUserData)
-{
-	CGameContext *pSelf = (CGameContext *)pUserData;
-
-	if (!CheckClientID(pResult->m_ClientID))
-		return;
-
-	if (pSelf->m_apPlayers[pResult->m_ClientID]->GetTeam() == TEAM_SPECTATORS)
-	{
-		pSelf->SendChatTarget(pResult->m_ClientID, "You cannot use this command while being in spec.");
-		return;
-	}
-	else
-	{
-		if (!pSelf->m_apPlayers[pResult->m_ClientID]->m_AccData.m_UserID)
-		{
-			pSelf->SendChatTarget(pResult->m_ClientID, "You must logged in to use this command! Use /Login Username Password");
-			pSelf->SendChatTarget(pResult->m_ClientID, "If you do not have an account, Use /Register Username Password");
-			return;
-		}
-
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_NoShowLevel ^= 1;
-
-		bool State = pSelf->m_apPlayers[pResult->m_ClientID]->m_NoShowLevel;
-
-		if (State)
-			pSelf->SendChatTarget(pResult->m_ClientID, "You are now displaying your level.");
-		else
-			pSelf->SendChatTarget(pResult->m_ClientID, "You are no longer displayer your level.");
-	}
-}
 #if defined(CONF_SQL)
 void CGameContext::ConPoints(IConsole::IResult *pResult, void *pUserData)
 {

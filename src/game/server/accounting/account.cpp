@@ -136,8 +136,8 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 		&m_pPlayer->m_AccData.m_UserID,
 		&m_pPlayer->m_AccData.m_Vip,
 		&m_pPlayer->m_QuestData.m_Pages,
-		&m_pPlayer->m_Level,
-		&m_pPlayer->m_Exp); // Done
+		&m_pPlayer->m_Level.m_Level,
+		&m_pPlayer->m_Level.m_Exp); // Done
 
 	fclose(Accfile);
 
@@ -224,8 +224,8 @@ void CAccount::Register(const char *pUsername, const char *pPassword)
 		NextID(),
 		m_pPlayer->m_AccData.m_Vip,
 		m_pPlayer->m_QuestData.m_Pages,
-		m_pPlayer->m_Level,
-		m_pPlayer->m_Exp
+		m_pPlayer->m_Level.m_Level,
+		m_pPlayer->m_Level.m_Exp
 	);
 
 	io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
@@ -267,8 +267,8 @@ void CAccount::Apply()
 		m_pPlayer->m_AccData.m_UserID,
 		m_pPlayer->m_AccData.m_Vip,
 		m_pPlayer->m_QuestData.m_Pages,
-		m_pPlayer->m_Level,
-		m_pPlayer->m_Exp);
+		m_pPlayer->m_Level.m_Level,
+		m_pPlayer->m_Level.m_Exp);
 
 	io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
 	io_close(Accfile);

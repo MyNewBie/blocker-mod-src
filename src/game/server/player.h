@@ -62,9 +62,15 @@ public:
 	int m_SpectatorID;
 	
 	// level system
-	int m_Level;
-	int m_Exp;
-	bool m_NoShowLevel;
+	struct
+	{
+		int m_Level;
+		int m_Exp;
+		int m_Perstige;
+
+		bool m_Reseted; // REMOVE SOON
+		bool m_Informed;
+	} m_Level;
 
 	//special
 	int m_Vacuum;
