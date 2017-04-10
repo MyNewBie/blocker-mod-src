@@ -1270,6 +1270,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				{
 					if (!GetPlayerChar(ClientID) || !GetPlayerChar(ClientID)->IsAlive())
 						return; // Tested and found a crashbug -- heres the fix 
+					if (m_LMB.State() == m_LMB.STATE_RUNNING)
+					{
+						SendChatTarget(ClientID, "You cannot use weapons right now");
+						return;
+					}
 					if (pPlayer->Temporary.m_Weaponcalls > 0)
 					{
 						pPlayer->Temporary.m_Weaponcalls--;

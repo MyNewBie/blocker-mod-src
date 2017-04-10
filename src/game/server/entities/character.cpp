@@ -2716,7 +2716,7 @@ void CCharacter::HandleBots()
 		{
 			if (distance(m_Pos, pTarget->m_Pos) < 65)
 			{
-				if (pTarget->m_Pos.y < m_Pos.y)
+				if (pTarget->m_Core.m_Vel.y < 0)
 				{
 					m_LatestInput.m_TargetX = pTarget->m_Pos.x - m_Pos.x;
 					m_LatestInput.m_TargetY = pTarget->m_Pos.y - m_Pos.y;
@@ -2866,7 +2866,7 @@ void CCharacter::HandleQuest()
 		m_pPlayer->m_QuestData.m_Pages++;
 		m_pPlayer->QuestReset();
 	}
-	else if (this && IsAlive() && m_pPlayer->m_QuestData.m_HookedTarget && m_pPlayer->m_QuestData.m_HammeredTarget && m_pPlayer->m_QuestData.m_RifledTarget && m_pPlayer->m_QuestData.m_ShotgunedTarget)
+	else if (this && IsAlive() && m_pPlayer->m_QuestData.m_HookedTarget && m_pPlayer->m_QuestData.m_HammeredTarget && m_pPlayer->m_QuestData.m_RifledTarget && m_pPlayer->m_QuestData.m_ShotgunedTarget && m_pPlayer->m_QuestData.m_QuestPart != CPlayer::QUEST_PART3)
 	{
 		m_pPlayer->m_QuestData.m_QuestPart = CPlayer::QUEST_PART3;
 	}
@@ -3043,31 +3043,31 @@ void CCharacter::HandleQuest()
 			Die(m_Core.m_Id, WEAPON_GAME);
 			m_pPlayer->m_QuestData.m_Rstartkill = true;
 		}
-
-		int OwnID = -1;
-		if (this && IsAlive())
-			OwnID = m_Core.m_Id;
-
-		if(OwnID != -1)
-		GameServer()->SendBroadcast("You must comlete the race in less than 1 minute!", OwnID);
-
-		if (OwnID != -1 && m_DDRaceState == DDRACE_FINISHED && m_pPlayer->m_QuestData.m_RaceTime < 1)
+		else if(this && IsAlive())
 		{
-			m_pPlayer->m_QuestData.m_CompletedQuest = true;
-		}
-		else if (OwnID != -1 && m_DDRaceState == DDRACE_FINISHED && m_pPlayer->m_QuestData.m_RaceTime >= 1)
-		{
-			char Promt[204];
-			str_format(Promt, sizeof(Promt), "You failed to complete the race, Quest failed!");
-			GameServer()->SendChatTarget(OwnID, Promt);
-			m_pPlayer->QuestReset();
-		}
-		else if (OwnID != -1 && m_DDRaceState == DDRACE_STARTED && m_pPlayer->m_QuestData.m_RaceTime >= 1)
-		{
-			char Promt[204];
-			str_format(Promt, sizeof(Promt), "You failed to complete the race, Quest failed!");
-			GameServer()->SendChatTarget(OwnID, Promt);
-			GetPlayer()->QuestReset();
+			int OwnID = m_Core.m_Id;
+
+			if (this && IsAlive())
+				GameServer()->SendBroadcast("You must comlete the race in less than 1 minute!", OwnID);
+
+			if (m_DDRaceState == DDRACE_FINISHED && m_pPlayer->m_QuestData.m_RaceTime < 1)
+			{
+				m_pPlayer->m_QuestData.m_CompletedQuest = true;
+			}
+			else if (m_DDRaceState == DDRACE_FINISHED && m_pPlayer->m_QuestData.m_RaceTime >= 1)
+			{
+				char Promt[204];
+				str_format(Promt, sizeof(Promt), "You failed to complete the race, Quest failed!");
+				GameServer()->SendChatTarget(OwnID, Promt);
+				m_pPlayer->QuestReset();
+			}
+			else if (m_DDRaceState == DDRACE_STARTED && m_pPlayer->m_QuestData.m_RaceTime >= 1)
+			{
+				char Promt[204];
+				str_format(Promt, sizeof(Promt), "You failed to complete the race, Quest failed!");
+				GameServer()->SendChatTarget(OwnID, Promt);
+				GetPlayer()->QuestReset();
+			}
 		}
 	}
 }

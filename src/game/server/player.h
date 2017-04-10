@@ -78,6 +78,7 @@ public:
 	bool m_RconFreeze;
 	bool m_IsReady;
 	bool m_IsRocket;
+	bool m_IsBot;
 
 	//
 	int m_Vote;
