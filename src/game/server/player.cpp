@@ -28,6 +28,23 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_NumInputs = 0;
 	m_KillMe = 0;
 	m_EpicCircle = false;
+	m_aSkins[0] = "bluekitty";
+	m_aSkins[1] = "bluestripe";
+    m_aSkins[2] = "brownbear";
+    m_aSkins[3] = "cammo";
+    m_aSkins[4] = "cammostripes";
+    m_aSkins[5] = "coala";
+    m_aSkins[6] = "default";
+    m_aSkins[7] = "limekitty";
+    m_aSkins[8] = "pinky";
+    m_aSkins[9] = "redbopp";
+    m_aSkins[10] = "redstripe";
+    m_aSkins[11] = "saddo";
+	m_aSkins[12] = "toptri";
+	m_aSkins[13] = "twinbop";
+	m_aSkins[14] = "twintri";
+	m_aSkins[15] = "warpaint";
+
 	Reset();
 }
 
@@ -39,6 +56,8 @@ CPlayer::~CPlayer()
 
 void CPlayer::Reset()
 {
+	m_RandIndex = rand() % 16;
+	 m_pSkin = m_aSkins[m_RandIndex].c_str();
 	m_DieTick = Server()->Tick();
 	m_JoinTick = Server()->Tick();
 	if (m_pCharacter)
@@ -295,16 +314,26 @@ void CPlayer::Snap(int SnappingClient)
 		return;
 
 	int id = m_ClientID;
-	if (SnappingClient > -1 && !Server()->Translate(id, SnappingClient)) return;
+		if (SnappingClient > -1 && !Server()->Translate(id, SnappingClient))
+		return;
 
 	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, id, sizeof(CNetObj_ClientInfo)));
 
 	if(!pClientInfo)
 		return;
 
-	StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
-	StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
-	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
+	if(g_Config.m_SvAnonymousBlock)
+	{
+		StrToInts(&pClientInfo->m_Name0, 4, " ");
+		StrToInts(&pClientInfo->m_Clan0, 3, " ");
+		pClientInfo->m_Country = -1;
+	} else
+	{
+		StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
+		StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
+		pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
+	}
+	
 	if (m_StolenSkin && SnappingClient != m_ClientID && g_Config.m_SvSkinStealAction == 1)
 	{
 		StrToInts(&pClientInfo->m_Skin0, 6, "pinky");
@@ -313,10 +342,24 @@ void CPlayer::Snap(int SnappingClient)
 		pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
 	} else
 	{
-		StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
-		pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
-		pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
-		pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
+		if(g_Config.m_SvAnonymousBlock)
+		{
+			if (Server()->Tick() >= m_LastTriggerTick + Server()->TickSpeed()*2) {
+				m_LastTriggerTick = Server()->Tick();
+				m_RandIndex = rand() % 16;
+				m_pSkin = m_aSkins[m_RandIndex].c_str();	
+			}
+			StrToInts(&pClientInfo->m_Skin0, 6, m_pSkin);
+			pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
+			pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
+			pClientInfo->m_UseCustomColor = 0;
+		} else
+		{
+			StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
+			pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
+			pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
+			pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
+		}
 	}
 
 	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, id, sizeof(CNetObj_PlayerInfo)));
@@ -348,6 +391,9 @@ void CPlayer::Snap(int SnappingClient)
 		pPlayerInfo->m_Score = -9999;
 	else
 		pPlayerInfo->m_Score = abs(m_Score) * -1;
+	
+	if(g_Config.m_SvAnonymousBlock)
+		pPlayerInfo->m_Score = -9999;
 }
 
 void CPlayer::FakeSnap()
@@ -366,8 +412,8 @@ void CPlayer::FakeSnap()
 		return;
 
 	StrToInts(&pClientInfo->m_Name0, 4, " ");
-	StrToInts(&pClientInfo->m_Clan0, 3, "");
-	StrToInts(&pClientInfo->m_Skin0, 6, "default");
+	StrToInts(&pClientInfo->m_Clan0, 3, " ");
+	StrToInts(&pClientInfo->m_Skin0, 6, m_pSkin);
 
 	if(m_Paused != PAUSED_SPEC)
 		return;
@@ -455,7 +501,8 @@ void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 		if(m_pCharacter)
 			m_pCharacter->ResetInput();
 
-		m_PlayerFlags = NewInput->m_PlayerFlags;
+		if(!g_Config.m_SvAnonymousBlock)
+			m_PlayerFlags = NewInput->m_PlayerFlags;
 		return;
 	}
 

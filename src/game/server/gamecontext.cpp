@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <base/tl/sorted_array.h>
 
+#include <string>
 #include <new>
 #include <base/math.h>
 #include <engine/shared/config.h>
@@ -351,12 +352,18 @@ void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, in
 		str_format(aBuf, sizeof(aBuf), "*** %s", aText);
 	Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, Team!=CHAT_ALL?"teamchat":"chat", aBuf);
 
+	//beginning of anonymousblock
+	
 	if(Team == CHAT_ALL)
 	{
 		CNetMsg_Sv_Chat Msg;
 		Msg.m_Team = 0;
 		Msg.m_ClientID = ChatterClientID;
-		Msg.m_pMessage = aText;
+		if(ChatterClientID >= 0 && g_Config.m_SvAnonymousBlock)
+			str_format(aBuf, sizeof(aBuf), "%s: %s", Server()->ClientName(ChatterClientID), aText);
+		else
+			str_format(aBuf, sizeof(aBuf), "%s", aText);
+		Msg.m_pMessage = aBuf;
 
 		// pack one for the recording only
 		if(g_Config.m_SvDemoChat)
@@ -373,11 +380,17 @@ void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, in
 	}
 	else
 	{
+		//beginning of anonymousblock
+		
 		CTeamsCore * Teams = &((CGameControllerDDRace*)m_pController)->m_Teams.m_Core;
 		CNetMsg_Sv_Chat Msg;
 		Msg.m_Team = 1;
 		Msg.m_ClientID = ChatterClientID;
-		Msg.m_pMessage = aText;
+		if(g_Config.m_SvAnonymousBlock)
+			str_format(aBuf, sizeof(aBuf), "%s: %s", Server()->ClientName(ChatterClientID), aText);
+		else
+			str_format(aBuf, sizeof(aBuf), "%s", aText);
+		Msg.m_pMessage = aBuf;
 
 		// pack one for the recording only
 		if(g_Config.m_SvDemoChat)

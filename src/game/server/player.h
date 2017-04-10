@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #ifndef GAME_SERVER_PLAYER_H
 #define GAME_SERVER_PLAYER_H
+#include <string>
 
 // this include should perhaps be removed
 #include "entities/character.h"
@@ -261,7 +262,6 @@ private:
 	int m_ClientID;
 	int m_Team;
 
-
 	// DDRace
 
 public:
@@ -272,6 +272,11 @@ public:
 		PAUSED_PAUSED,
 		PAUSED_FORCE
 	};
+	
+	int m_LastTriggerTick;
+	const char * m_pSkin;
+	std::string m_aSkins[16];
+	int m_RandIndex;
 
 	int m_Paused;
 	bool m_DND;
