@@ -878,7 +878,7 @@ void CGameContext::OnTick()
 		if(Line)
 			SendChat(-1, CGameContext::CHAT_ALL, Line);
 
-		{ // Log ips
+		/*{ // Log ips
 			for (int i = 0; i < MAX_CLIENTS; i++)
 			{
 				if (!GetPlayerChar(i))
@@ -901,7 +901,7 @@ void CGameContext::OnTick()
 
 				dbg_msg("Ips", "Logged ip of ('%s')", Server()->ClientName(i));
 			}
-		}
+		}*/
 	}
 
 	if(Collision()->m_NumSwitchers > 0)
