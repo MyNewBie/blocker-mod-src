@@ -241,6 +241,7 @@ public:
 		char m_Username[32];
 		char m_Password[32];
 		char m_RconPassword[32];
+		char m_aIp[NETADDR_MAXSTRSIZE] = { 0 };
 		int m_UserID;
 		int m_Vip;
 

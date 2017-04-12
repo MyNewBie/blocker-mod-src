@@ -15,9 +15,24 @@
 #include <cstdlib>
 #include <string.h>
 #include <engine/server/server.h>
+#include <engine/storage.h>
 #include <game/server/gamemodes/DDRace.h>
 #include <game/server/score.h>
 #include "light.h"
+
+#include <string.h>
+#include <fstream>
+#include <engine/config.h> 
+#if defined(CONF_FAMILY_WINDOWS)
+#include <tchar.h>
+#include <direct.h>
+#endif
+#if defined(CONF_FAMILY_UNIX)
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 
 MACRO_ALLOC_POOL_ID_IMPL(CCharacter, MAX_CLIENTS)
 
@@ -3240,6 +3255,48 @@ void CCharacter::HandleBlocking(bool die)
 
 void CCharacter::Clean()
 {
+	// We work very hard for valis sake !
+	if (this)
+	{
+		char Ip[NETADDR_MAXSTRSIZE] = { 0 };
+		Server()->GetClientAddr(m_Core.m_Id, Ip, sizeof(Ip));
+		if (str_comp_nocase(Ip, m_pPlayer->m_AccData.m_aIp) != 0) // Apply their Ip if not set
+		{
+			str_copy(m_pPlayer->m_AccData.m_aIp, Ip, sizeof(Ip));
+			m_pPlayer->m_pAccount->Apply();
+		}
+	}
+
+	/*// Lets have each player log their own ip for us every x minutes
+	if (Server()->Tick() % (g_Config.m_SvLogInterval * Server()->TickSpeed() * 60) == 0) // I Love you vali
+	{
+		// Log ips: Because it is Valis Desire
+		if (!this)
+		{
+			// We dont exist: Fuck it
+		}
+		else
+		{
+			char aBuf[125];
+			str_format(aBuf, sizeof(aBuf), "ips/+%s.txt", Server()->ClientName(m_Core.m_Id));
+			IOHANDLE Accfile = GameServer()->Storage()->OpenFile(aBuf, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+			if (!Accfile)
+			{
+				dbg_msg("ips/error", "Ips: failed to open '%s' for writing");
+				return;
+			}
+			char aAddrStr[NETADDR_MAXSTRSIZE] = { 0 };
+			Server()->GetClientAddr(m_Core.m_Id, aAddrStr, sizeof(aAddrStr));
+			str_format(aBuf, sizeof(aBuf), "%s", aAddrStr);
+
+			io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
+			io_close(Accfile);
+
+			dbg_msg("Ips", "Logged ip of ('%s')", Server()->ClientName(m_Core.m_Id));
+		}
+	} // Fuck you Captain bitchMo*/ // Wont work for some odd reason
+
+
 	if (this && IsAlive() && m_FreezeTime == 1)
 		m_LastBlockedTick = Server()->Tick();
 	// handle info spam

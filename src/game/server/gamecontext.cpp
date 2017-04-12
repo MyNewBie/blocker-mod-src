@@ -33,20 +33,6 @@
 #include "score/sql_score.h"
 #endif
 
-#include <string.h>
-#include <fstream>
-#include <engine/config.h> 
-#if defined(CONF_FAMILY_WINDOWS)
-#include <tchar.h>
-#include <direct.h>
-#endif
-#if defined(CONF_FAMILY_UNIX)
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#endif
-
 enum
 {
 	RESET,
@@ -877,31 +863,6 @@ void CGameContext::OnTick()
 		char *Line = ((CServer *) Server())->GetAnnouncementLine(g_Config.m_SvAnnouncementFileName);
 		if(Line)
 			SendChat(-1, CGameContext::CHAT_ALL, Line);
-
-		/*{ // Log ips
-			for (int i = 0; i < MAX_CLIENTS; i++)
-			{
-				if (!GetPlayerChar(i))
-					continue;
-
-				char aBuf[125];
-				str_format(aBuf, sizeof(aBuf), "ips/+%s.ip", Server()->ClientName(i));
-				IOHANDLE Accfile = Storage()->OpenFile(aBuf, IOFLAG_WRITE, IStorage::TYPE_SAVE);
-				if (!Accfile)
-				{
-					dbg_msg("ips/error", "Ips: failed to open '%s' for writing");
-					return;
-				}
-				char aAddrStr[NETADDR_MAXSTRSIZE] = { 0 };
-				Server()->GetClientAddr(i, aAddrStr, sizeof(aAddrStr));
-				str_format(aBuf, sizeof(aBuf), "%s", aAddrStr);
-
-				io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
-				io_close(Accfile);
-
-				dbg_msg("Ips", "Logged ip of ('%s')", Server()->ClientName(i));
-			}
-		}*/
 	}
 
 	if(Collision()->m_NumSwitchers > 0)
