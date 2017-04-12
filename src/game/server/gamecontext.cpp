@@ -1443,7 +1443,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 
 					pPlayer->QuestReset();
-					SendChatTarget(ClientID, "Quest has been stopped and your progress has been reset!");
+					if(pPlayer->m_QuestData.QuestActive())
+						SendChatTarget(ClientID, "Quest has been stopped and your progress has been reset!");
+					else
+						SendChatTarget(ClientID, "You are not currently in a quest, type /beginquest to start one!");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "questinfo", 9) == 0)
 				{
