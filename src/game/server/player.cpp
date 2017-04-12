@@ -839,10 +839,22 @@ void CPlayer::HandleQuest()
 	if(!GetCharacter() || !GetCharacter()->IsAlive())
 		return;
 
-	if (m_QuestData.m_QuestPart == QUEST_NONE || GetCharacter()->Team() != 0)
+	if (m_QuestData.m_QuestPart == QUEST_NONE || m_QuestData.m_QuestPart == QUEST_FINISHED || GetCharacter()->Team() != 0)
 		return;
 
 	const int OwnID = GetCharacter()->Core()->m_Id;
+
+	if(m_QuestData.m_QuestPart != QUEST_PART_RACE)
+	{
+		if(!Server()->ClientIngame(m_QuestData.m_VictimID))
+		{
+			GameServer()->SendChatTarget(OwnID, "[QUEST] Your victim has left the game, selecting a new one");
+			m_QuestData.m_QuestPart--;
+			QuestSetNextPart();
+
+			return;
+		}
+	}
 
 	// update special quest parts
 	switch(m_QuestData.m_QuestPart)
