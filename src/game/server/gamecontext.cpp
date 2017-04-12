@@ -1418,8 +1418,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "beginquest", 10) == 0)
 				{
-					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive() || pPlayer->m_QuestData.QuestActive())
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
+
+					if (pPlayer->m_QuestData.QuestActive())
+					{
+						SendChatTarget(ClientID, "You are in a quest already, type /questinfo to show your objective");
+						return;
+					}
 
 					if (!pPlayer->m_AccData.m_UserID)
 					{
