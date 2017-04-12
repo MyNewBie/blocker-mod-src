@@ -861,9 +861,11 @@ void CPlayer::HandleQuest()
 	{
 		case QUEST_PART_RACE:
 		{
-			if(g_Config.m_SvQuestRaceTime && Server()->Tick() > m_QuestData.m_RaceStartTick + Server()->TickSpeed() * 60)
+			if(g_Config.m_SvQuestRaceTime && Server()->Tick() > m_QuestData.m_RaceStartTick + g_Config.m_SvQuestRaceTime*60 * Server()->TickSpeed())
 			{
-				GameServer()->SendChatTarget(OwnID, "[QUEST] Quest failed, you couldn't complete the race in under one minute");
+				char aBuf[128];
+				str_format(aBuf, sizeof(aBuf), "[QUEST] Quest failed, you couldn't complete the race in under %i minute%s", g_Config.m_SvQuestRaceTime, g_Config.m_SvQuestRaceTime == 1 ? "" : "s");
+				GameServer()->SendChatTarget(OwnID, aBuf);
 				QuestReset();
 			}
 			else if(GetCharacter()->m_DDRaceState == DDRACE_FINISHED)
@@ -881,6 +883,14 @@ void CPlayer::HandleQuest()
 						GameServer()->SendChatTarget(OwnID, aBuf);
 					}
 					m_QuestData.m_RaceStartTick = Server()->Tick();
+				}
+				else if(m_QuestData.m_RaceStartTick != 0 && GetCharacter()->m_DDRaceState != DDRACE_STARTED)
+				{
+					char aBuf[128];
+					str_format(aBuf, sizeof(aBuf), "[QUEST] Quest failed, you aborted the race");
+					GameServer()->SendBroadcast(aBuf, OwnID);
+					GameServer()->SendChatTarget(OwnID, aBuf);
+					QuestReset();
 				}
 			}
 		} break;
@@ -915,9 +925,9 @@ void CPlayer::QuestTellObjective()
 		case QUEST_PART_RACE:
 		{
 			if(g_Config.m_SvQuestRaceTime)
-				str_format(aMessage, sizeof(aMessage), "Complete the race in less than %i minute%s!", g_Config.m_SvQuestRaceTime, g_Config.m_SvQuestRaceTime == 1 ? "" : "s");
+				str_format(aMessage, sizeof(aMessage), "Kill yourself and go complete the race in less than %i minute%s!", g_Config.m_SvQuestRaceTime, g_Config.m_SvQuestRaceTime == 1 ? "" : "s");
 			else
-				str_format(aMessage, sizeof(aMessage), "Complete the race!");
+				str_format(aMessage, sizeof(aMessage), "Kill yourself and go Complete the race!");
 		} break;
 		case QUEST_PART_BLOCK:
 			str_format(aMessage, sizeof(aMessage), "You must block %s!", pVictimName);
