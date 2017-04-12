@@ -445,34 +445,34 @@ void CGameTeams::OnTeamFinish(CPlayer** Players, unsigned int Size)
 		GameServer()->Score()->SaveTeamScore(PlayerCIDs, Size, time);
 }
 
-void CGameTeams::OnFinish(CPlayer* Player)
+void CGameTeams::OnFinish(CPlayer* pPlayer)
 {
-	if (!Player || !Player->IsPlaying())
+	if (!pPlayer || !pPlayer->IsPlaying())
 		return;
 	//TODO:DDRace:btd: this ugly
-	float time = (float) (Server()->Tick() - GetStartTime(Player))
+	float time = (float) (Server()->Tick() - GetStartTime(pPlayer))
 			/ ((float) Server()->TickSpeed());
 	if (time < 0.000001f)
 		return;
-	CPlayerData *pData = GameServer()->Score()->PlayerData(Player->GetCID());
+	CPlayerData *pData = GameServer()->Score()->PlayerData(pPlayer->GetCID());
 	char aBuf[128];
-	SetCpActive(Player, -2);
+	SetCpActive(pPlayer, -2);
 	str_format(aBuf, sizeof(aBuf),
 			"%s finished in: %d minute(s) %5.2f second(s)",
-			Server()->ClientName(Player->GetCID()), (int) time / 60,
+			Server()->ClientName(pPlayer->GetCID()), (int) time / 60,
 			time - ((int) time / 60 * 60));
-	Player->m_QuestData.m_RaceTime = (int)time / 60;
+
 	if (g_Config.m_SvHideScore || !g_Config.m_SvSaveWorseScores)
-		GameServer()->SendChatTarget(Player->GetCID(), aBuf);
+		GameServer()->SendChatTarget(pPlayer->GetCID(), aBuf);
 	else
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 
-	float diff = fabs(time - pData->m_BestTime);
+	float diff = fabsf(time - pData->m_BestTime);
 
 	if (time - pData->m_BestTime < 0)
 	{
 		// new record \o/
-		Server()->SaveDemo(Player->GetCID(), time);
+		Server()->SaveDemo(pPlayer->GetCID(), time);
 
 		if (diff >= 60)
 			str_format(aBuf, sizeof(aBuf), "New record: %d minute(s) %5.2f second(s) better.",
@@ -481,17 +481,17 @@ void CGameTeams::OnFinish(CPlayer* Player)
 			str_format(aBuf, sizeof(aBuf), "New record: %5.2f second(s) better.",
 					diff);
 		if (g_Config.m_SvHideScore || !g_Config.m_SvSaveWorseScores)
-			GameServer()->SendChatTarget(Player->GetCID(), aBuf);
+			GameServer()->SendChatTarget(pPlayer->GetCID(), aBuf);
 		else
 			GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 	}
 	else if (pData->m_BestTime != 0) // tee has already finished?
 	{
-		Server()->StopRecord(Player->GetCID());
+		Server()->StopRecord(pPlayer->GetCID());
 
 		if (diff <= 0.005)
 		{
-			GameServer()->SendChatTarget(Player->GetCID(),
+			GameServer()->SendChatTarget(pPlayer->GetCID(),
 					"You finished with your best time.");
 		}
 		else
@@ -503,12 +503,12 @@ void CGameTeams::OnFinish(CPlayer* Player)
 				str_format(aBuf, sizeof(aBuf),
 						"%5.2f second(s) worse, better luck next time.",
 						diff);
-			GameServer()->SendChatTarget(Player->GetCID(), aBuf); //this is private, sent only to the tee
+			GameServer()->SendChatTarget(pPlayer->GetCID(), aBuf); //this is private, sent only to the tee
 		}
 	}
 	else
 	{
-		Server()->SaveDemo(Player->GetCID(), time);
+		Server()->SaveDemo(pPlayer->GetCID(), time);
 	}
 
 	bool CallSaveScore = false;
@@ -519,15 +519,15 @@ void CGameTeams::OnFinish(CPlayer* Player)
 	if (!pData->m_BestTime || time < pData->m_BestTime)
 	{
 		// update the score
-		pData->Set(time, GetCpCurrent(Player));
+		pData->Set(time, GetCpCurrent(pPlayer));
 		CallSaveScore = true;
 	}
 
 	if (CallSaveScore)
-		if (g_Config.m_SvNamelessScore || str_comp_num(Server()->ClientName(Player->GetCID()), "nameless tee",
+		if (g_Config.m_SvNamelessScore || str_comp_num(Server()->ClientName(pPlayer->GetCID()), "nameless tee",
 				12) != 0)
-			GameServer()->Score()->SaveScore(Player->GetCID(), time,
-					GetCpCurrent(Player));
+			GameServer()->Score()->SaveScore(pPlayer->GetCID(), time,
+					GetCpCurrent(pPlayer));
 
 	bool NeedToSendNewRecord = false;
 	// update server best time
@@ -535,7 +535,7 @@ void CGameTeams::OnFinish(CPlayer* Player)
 			|| time < GameServer()->m_pController->m_CurrentRecord)
 	{
 		// check for nameless
-		if (g_Config.m_SvNamelessScore || str_comp_num(Server()->ClientName(Player->GetCID()), "nameless tee",
+		if (g_Config.m_SvNamelessScore || str_comp_num(Server()->ClientName(pPlayer->GetCID()), "nameless tee",
 				12) != 0)
 		{
 			GameServer()->m_pController->m_CurrentRecord = time;
@@ -544,7 +544,7 @@ void CGameTeams::OnFinish(CPlayer* Player)
 		}
 	}
 
-	SetDDRaceState(Player, DDRACE_FINISHED);
+	SetDDRaceState(pPlayer, DDRACE_FINISHED);
 	// set player score
 	if (!pData->m_CurrentTime || pData->m_CurrentTime > time)
 	{
@@ -554,18 +554,18 @@ void CGameTeams::OnFinish(CPlayer* Player)
 		{
 			if (GetPlayer(i) && GetPlayer(i)->m_ClientVersion >= VERSION_DDRACE)
 			{
-				if (!g_Config.m_SvHideScore || i == Player->GetCID())
+				if (!g_Config.m_SvHideScore || i == pPlayer->GetCID())
 				{
 					CNetMsg_Sv_PlayerTime Msg;
 					Msg.m_Time = time * 100.0;
-					Msg.m_ClientID = Player->GetCID();
+					Msg.m_ClientID = pPlayer->GetCID();
 					Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, i);
 				}
 			}
 		}
 	}
 
-	if (NeedToSendNewRecord && Player->m_ClientVersion >= VERSION_DDRACE)
+	if (NeedToSendNewRecord && pPlayer->m_ClientVersion >= VERSION_DDRACE)
 	{
 		for (int i = 0; i < MAX_CLIENTS; i++)
 		{
@@ -577,7 +577,7 @@ void CGameTeams::OnFinish(CPlayer* Player)
 		}
 	}
 
-	if (Player->m_ClientVersion >= VERSION_DDRACE)
+	if (pPlayer->m_ClientVersion >= VERSION_DDRACE)
 	{
 		CNetMsg_Sv_DDRaceTime Msg;
 		Msg.m_Time = (int) (time * 100.0f);
@@ -590,12 +590,12 @@ void CGameTeams::OnFinish(CPlayer* Player)
 			Msg.m_Check = (int) Diff;
 		}
 
-		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, Player->GetCID());
+		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, pPlayer->GetCID());
 	}
 
 	int TTime = 0 - (int) time;
-	if (Player->m_Score < TTime)
-		Player->m_Score = TTime;
+	if (pPlayer->m_Score < TTime)
+		pPlayer->m_Score = TTime;
 
 }
 

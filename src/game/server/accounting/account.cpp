@@ -130,15 +130,16 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 	Accfile = fopen(aFullPath, "r");
 
 	fscanf(Accfile, "%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%s",
-		m_pPlayer->m_AccData.m_Username, // Done
-		m_pPlayer->m_AccData.m_Password, // Done
-		m_pPlayer->m_AccData.m_RconPassword,
+		m_pPlayer->m_AccData.m_aUsername, // Done
+		m_pPlayer->m_AccData.m_aPassword, // Done
+		m_pPlayer->m_AccData.m_aRconPassword,
 		&m_pPlayer->m_AccData.m_UserID,
 		&m_pPlayer->m_AccData.m_Vip,
 		&m_pPlayer->m_QuestData.m_Pages,
 		&m_pPlayer->m_Level.m_Level,
 		&m_pPlayer->m_Level.m_Exp,
-		&m_pPlayer->m_AccData.m_aIp); // Done
+		m_pPlayer->m_AccData.m_aIp
+	); // Done
 
 	fclose(Accfile);
 
@@ -254,7 +255,7 @@ bool CAccount::Exists(const char *Username)
 void CAccount::Apply()
 {
 	char aBuf[256];
-	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", m_pPlayer->m_AccData.m_Username);
+	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", m_pPlayer->m_AccData.m_aUsername);
 	IOHANDLE Accfile = Storage()->OpenFile(aBuf, IOFLAG_WRITE, IStorage::TYPE_SAVE);
 	if(!Accfile)
 	{
@@ -263,9 +264,9 @@ void CAccount::Apply()
 	}
 
 	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%s",
-		m_pPlayer->m_AccData.m_Username,
-		m_pPlayer->m_AccData.m_Password,
-		m_pPlayer->m_AccData.m_RconPassword,
+		m_pPlayer->m_AccData.m_aUsername,
+		m_pPlayer->m_AccData.m_aPassword,
+		m_pPlayer->m_AccData.m_aRconPassword,
 		m_pPlayer->m_AccData.m_UserID,
 		m_pPlayer->m_AccData.m_Vip,
 		m_pPlayer->m_QuestData.m_Pages,
@@ -279,9 +280,10 @@ void CAccount::Apply()
 
 void CAccount::Reset()
 {
-	mem_zero(m_pPlayer->m_AccData.m_Username, sizeof(m_pPlayer->m_AccData.m_Username));
-	mem_zero(m_pPlayer->m_AccData.m_Password, sizeof(m_pPlayer->m_AccData.m_Password));
-	mem_zero(m_pPlayer->m_AccData.m_RconPassword, sizeof(m_pPlayer->m_AccData.m_RconPassword));
+	mem_zero(m_pPlayer->m_AccData.m_aUsername, sizeof(m_pPlayer->m_AccData.m_aUsername));
+	mem_zero(m_pPlayer->m_AccData.m_aPassword, sizeof(m_pPlayer->m_AccData.m_aPassword));
+	mem_zero(m_pPlayer->m_AccData.m_aRconPassword, sizeof(m_pPlayer->m_AccData.m_aRconPassword));
+	mem_zero(m_pPlayer->m_AccData.m_aIp, sizeof(m_pPlayer->m_AccData.m_aIp));
 	m_pPlayer->m_AccData.m_UserID = 0;
 	m_pPlayer->m_AccData.m_Vip = 0;
 }
@@ -292,9 +294,9 @@ void CAccount::Delete()
 	if (m_pPlayer->m_AccData.m_UserID)
 	{
 		Reset();
-		str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", m_pPlayer->m_AccData.m_Username);
+		str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", m_pPlayer->m_AccData.m_aUsername);
 		if(Storage()->RemoveFile(aBuf, IStorage::TYPE_SAVE))
-			dbg_msg("account", "Account deleted ('%s')", m_pPlayer->m_AccData.m_Username);
+			dbg_msg("account", "Account deleted ('%s')", m_pPlayer->m_AccData.m_aUsername);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account deleted!");
 	}
 	else
@@ -316,11 +318,11 @@ void CAccount::NewPassword(const char *pNewPassword)
 		return;
 	}
 
-	str_copy(m_pPlayer->m_AccData.m_Password, pNewPassword, 32);
+	str_copy(m_pPlayer->m_AccData.m_aPassword, pNewPassword, 32);
 	Apply();
 
 
-	dbg_msg("account", "Password changed - ('%s')", m_pPlayer->m_AccData.m_Username);
+	dbg_msg("account", "Password changed - ('%s')", m_pPlayer->m_AccData.m_aUsername);
 	GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Password successfully changed!");
 }
 

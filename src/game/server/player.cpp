@@ -274,6 +274,8 @@ void CPlayer::Tick()
 	{
 		GameServer()->SendTuningParams(m_ClientID, m_TuneZone);
 	}
+
+	HandleQuest();
 }
 
 void CPlayer::PostTick()
@@ -829,30 +831,192 @@ void CPlayer::FindDuplicateSkins()
 
 void CPlayer::QuestReset()
 {
-	m_QuestData.m_CompletedQuest = false;
-	m_QuestData.m_QuestInSession = false;
-	m_QuestData.m_HookedTarget = false;
-	m_QuestData.m_HammeredTarget = false;
-	m_QuestData.m_RifledTarget = false;
-	m_QuestData.m_ShotgunedTarget = false;
-	m_QuestData.m_QuestPart = 0;
-	m_QuestData.m_Rstartkill = false;
-	m_QuestData.m_RandomID = -1;
-	m_QuestData.m_RaceTime = 0;
+	m_QuestData.Reset();
 }
+
+void CPlayer::HandleQuest()
+{
+	if(!GetCharacter() || !GetCharacter()->IsAlive())
+		return;
+
+	if (m_QuestData.m_QuestPart == QUEST_NONE || GetCharacter()->Team() != 0)
+		return;
+
+	const int OwnID = GetCharacter()->Core()->m_Id;
+
+	// update special quest parts
+	switch(m_QuestData.m_QuestPart)
+	{
+		case QUEST_PART_RACE:
+		{
+			if(g_Config.m_SvQuestRaceTime && Server()->Tick() > m_QuestData.m_RaceStartTick + Server()->TickSpeed() * 60)
+			{
+				GameServer()->SendChatTarget(OwnID, "[QUEST] Quest failed, you couldn't complete the race in under one minute");
+				QuestReset();
+			}
+			else if(GetCharacter()->m_DDRaceState == DDRACE_FINISHED)
+				QuestSetNextPart();
+			else
+			{
+				// he just started the race
+				if(m_QuestData.m_RaceStartTick == 0 && GetCharacter()->m_DDRaceState == DDRACE_STARTED)
+				{
+					if(g_Config.m_SvQuestRaceTime)
+					{
+						char aBuf[128];
+						str_format(aBuf, sizeof(aBuf), "[QUEST] Now hurry! You got %i minute%s to finish the race!", g_Config.m_SvQuestRaceTime, g_Config.m_SvQuestRaceTime == 1 ? "" : "s");
+						GameServer()->SendBroadcast(aBuf, OwnID);
+						GameServer()->SendChatTarget(OwnID, aBuf);
+					}
+					m_QuestData.m_RaceStartTick = Server()->Tick();
+				}
+			}
+		} break;
+		case QUEST_PART_HOOK:
+		{
+			if(GetCharacter()->m_Core.m_HookedPlayer == m_QuestData.m_VictimID)
+				QuestSetNextPart();
+		} break;
+		case QUEST_PART_BLOCK:
+		{
+			CCharacter *pVictim = GameServer()->GetPlayerChar(m_QuestData.m_VictimID);
+			if (pVictim && pVictim->IsAlive() && pVictim->Core()->m_LastHookedPlayer == OwnID && pVictim->m_FirstFreezeTick != 0)
+				QuestSetNextPart();
+		} break;
+	}
+}
+
+void CPlayer::QuestTellObjective()
+{
+	const int OwnID = GetCharacter()->m_Core.m_Id;
+
+	if(m_QuestData.m_QuestPart == QUEST_NONE)
+	{
+		GameServer()->SendChatTarget(OwnID, "You don't have a quest at the moment. Type /beginquest to start one!");
+		return;
+	}
+
+	char aMessage[128];
+	const char *pVictimName = Server()->ClientName(m_QuestData.m_VictimID);
+	switch(m_QuestData.m_QuestPart)
+	{
+		case QUEST_PART_RACE:
+		{
+			if(g_Config.m_SvQuestRaceTime)
+				str_format(aMessage, sizeof(aMessage), "Complete the race in less than %i minute%s!", g_Config.m_SvQuestRaceTime, g_Config.m_SvQuestRaceTime == 1 ? "" : "s");
+			else
+				str_format(aMessage, sizeof(aMessage), "Complete the race!");
+		} break;
+		case QUEST_PART_BLOCK:
+			str_format(aMessage, sizeof(aMessage), "You must block %s!", pVictimName);
+			break;
+		case QUEST_PART_HOOK:
+			str_format(aMessage, sizeof(aMessage), "You must hook %s!", pVictimName);
+			break;
+		case QUEST_PART_HAMMER:
+			str_format(aMessage, sizeof(aMessage), "You must hammer %s!", pVictimName);
+			break;
+		case QUEST_PART_LASER:
+			str_format(aMessage, sizeof(aMessage), "You must shoot %s with laser/rifle!", pVictimName);
+			break;
+		case QUEST_PART_SHOTGUN:
+			str_format(aMessage, sizeof(aMessage), "You must shoot %s with shotgun!", pVictimName);
+			break;
+		default: // shouldn't happen... and if it does because someone made a dumb mistake, this is a nice easter egg :D
+			str_format(aMessage, sizeof(aMessage), "You must tell an admin that there's an error in the program!");
+	}
+
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), "[QUEST %i/%i] %s", m_QuestData.m_QuestPart, NUM_QUESTS, aMessage);
+
+	GameServer()->SendBroadcast(aBuf, OwnID);
+	GameServer()->SendChatTarget(OwnID, aBuf);
+
+}
+
+void CPlayer::QuestSetNextPart()
+{
+	if(!GetCharacter())
+	{
+		dbg_msg("ERROR", "--------------------------------------------------");
+		dbg_msg("ERROR", "%s:%i", __FILE__, __LINE__);
+		dbg_msg("ERROR", "  CPlayer::QuestSetNextPart called");
+		dbg_msg("ERROR", "  but GetCharacter() == NULL ?!");
+		dbg_msg("ERROR", "--------------------------------------------------");
+	}
+
+	const int OwnID = GetCharacter()->m_Core.m_Id;
+
+	// advance to the next quest part
+	m_QuestData.m_QuestPart++;
+
+
+	if(m_QuestData.m_QuestPart >= QUEST_FINISHED) // handle finished quest
+	{
+		GameServer()->SendChatTarget(OwnID, "Congratulations, you received +1 Pages for completing the quest!");
+		m_QuestData.m_Pages++;
+		QuestReset();
+
+		return;
+	}
+
+	if(m_QuestData.m_QuestPart == QUEST_PART_RACE) // prepare [the player for] the next quest part
+	{
+		m_QuestData.m_RaceStartTick = 0;
+	}
+	else
+	{
+		// count players
+		int PlayerCount = 0;
+		for (int i = 0; i < MAX_CLIENTS; i++)
+		{
+			CCharacter *pChr = GameServer()->GetPlayerChar(i);
+			if ((pChr && pChr->IsAlive()) &&
+					!(!GameServer()->GetPlayerChar(i) ||
+					  !GameServer()->GetPlayerChar(i)->IsAlive() ||
+					  GameServer()->GetPlayerChar(i)->Team() != 0 ||
+					  GameServer()->GetPlayerChar(i)->GetPlayer()->m_Afk))
+				PlayerCount++;
+		}
+
+		if(PlayerCount <= 1)
+		{
+			GameServer()->SendChatTarget(OwnID,"Sorry, you can't proceed with the quest right now...");
+			QuestReset();
+		}
+		else
+		{
+			// find out a new victim
+			do
+			{
+				m_QuestData.m_VictimID = rand() % PlayerCount;
+			} while (m_QuestData.m_VictimID == OwnID ||
+					 !GameServer()->GetPlayerChar(m_QuestData.m_VictimID) ||
+					 !GameServer()->GetPlayerChar(m_QuestData.m_VictimID)->IsAlive() ||
+					 GameServer()->GetPlayerChar(m_QuestData.m_VictimID)->Team() != 0 ||
+					 GameServer()->GetPlayerChar(m_QuestData.m_VictimID)->GetPlayer()->m_Afk
+					);
+
+			// tell him what to do next
+		}
+	}
+
+	QuestTellObjective();
+}
+
 
 
 void CPlayer::SaveStats()
 {
 	if(!GetCharacter()) // It already checks for alive
 		return;
-	
+
 	m_SavedStats.m_SavedSpawn = GetCharacter()->Core()->m_Pos;
 	m_SavedStats.m_SavedShotgun = GetCharacter()->GetWeaponGot(WEAPON_SHOTGUN);
 	m_SavedStats.m_SavedGrenade = GetCharacter()->GetWeaponGot(WEAPON_GRENADE);
 	m_SavedStats.m_SavedLaser = GetCharacter()->GetWeaponGot(WEAPON_RIFLE);
 	m_SavedStats.m_SavedEHook = GetCharacter()->m_EndlessHook;
-		
+
 	if(GetCharacter()->m_DDRaceState == DDRACE_STARTED)
 		m_SavedStats.m_SavedStartTick = GetCharacter()->m_StartTime;
 }

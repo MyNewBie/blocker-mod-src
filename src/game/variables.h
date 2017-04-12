@@ -169,6 +169,7 @@ MACRO_CONFIG_STR(SvServerType, sv_server_type, 64, "none", CFGFLAG_SERVER, "Type
 MACRO_CONFIG_INT(SvSendVotesPerTick, sv_send_votes_per_tick, 5, 1, 15, CFGFLAG_SERVER, "Number of vote options being send per tick")
 
 MACRO_CONFIG_INT(SvWbProt, sv_wbprot, 2, 0, 2, CFGFLAG_SERVER, "Wayblock protection, 1 - everyone, 2 - members only")
+MACRO_CONFIG_INT(SvQuestRaceTime, sv_quest_race_time, 0, 0, 60, CFGFLAG_SERVER, "[map config] Minutes a player has to complete the race quest")
 MACRO_CONFIG_INT(SvBlackHoleExpiretime, sv_blackhole_expire_time, 20, 5, 1000, CFGFLAG_SERVER, "amount of time in seconds a blackhole expires")
 MACRO_CONFIG_INT(SvBlackHolescount, sv_blackholes_count, 3, 1, 10, CFGFLAG_SERVER, "amount of blackholes that can be set by one player")
 MACRO_CONFIG_INT(SvBlackHoleKills, sv_blackhole_kills, 1, 0, 1, CFGFLAG_SERVER, "black hole can kill?")

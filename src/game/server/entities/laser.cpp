@@ -70,21 +70,22 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 			Temp.y = 0;
 		if(!pHit->m_PassiveMode)
 		pHit->Core()->m_Vel = Temp;
-		if (pOwnerChar->GetPlayer()->m_QuestData.m_QuestInSession && pOwnerChar->GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART2 && pHit->GetPlayer()->GetCID() == pOwnerChar->GetPlayer()->m_QuestData.m_RandomID)
+		if (pOwnerChar->GetPlayer()->m_QuestData.QuestActive() &&
+				pOwnerChar->GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART_SHOTGUN && pHit->GetPlayer()->GetCID() == pOwnerChar->GetPlayer()->m_QuestData.m_VictimID)
 		{
-			pOwnerChar->GetPlayer()->m_QuestData.m_ShotgunedTarget = true;
-			pOwnerChar->GetPlayer()->m_QuestData.m_RandomID = -1;
+			pOwnerChar->GetPlayer()->QuestSetNextPart();
 		}
 	}
 	else if (m_Type == WEAPON_RIFLE)
 	{
-		if (pOwnerChar->GetPlayer()->m_QuestData.m_QuestInSession && pOwnerChar->GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART2 && pHit->GetPlayer()->GetCID() == pOwnerChar->GetPlayer()->m_QuestData.m_RandomID)
+		if (pOwnerChar->GetPlayer()->m_QuestData.QuestActive() &&
+				pOwnerChar->GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART_LASER && pHit->GetPlayer()->GetCID() == pOwnerChar->GetPlayer()->m_QuestData.m_VictimID)
 		{
-			pOwnerChar->GetPlayer()->m_QuestData.m_RifledTarget = true;
-			pOwnerChar->GetPlayer()->m_QuestData.m_RandomID = -1;
+			pOwnerChar->GetPlayer()->QuestSetNextPart();
 		}
+
 		if(!pHit->m_PassiveMode) // cannot be unfreezed, If so easy bypass method brought to my attention by Delith
-		pHit->UnFreeze();
+			pHit->UnFreeze();
 	}
 	return true;
 }
