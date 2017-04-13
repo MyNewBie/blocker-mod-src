@@ -80,7 +80,7 @@ public:
 	void SetRefreshTime(CPlayer* Player, int RefreshTime);
 	void SetCpActive(CPlayer* Player, int CpActive);
 	void OnTeamFinish(CPlayer** Players, unsigned int Size);
-	void OnFinish(CPlayer* Player);
+	void OnFinish(CPlayer* pPlayer);
 	void KillSavedTeam(int Team);
 
 	bool TeeFinished(int ClientID)

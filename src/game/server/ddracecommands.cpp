@@ -7,6 +7,8 @@
 #include <game/server/gamemodes/DDRace.h>
 #include <game/version.h>
 #include <game/generated/nethash.cpp>
+#include <game/client/components/console.h>
+
 #if defined(CONF_SQL)
 #include <game/server/score/sql_score.h>
 #endif
@@ -232,7 +234,7 @@ void CGameContext::ConSteamy(IConsole::IResult *pResult, void *pUserData) // giv
 	{
 		pSelf->m_apPlayers[Victim]->GetCharacter()->m_Steamy ^= 1;
 		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Steamy ? "%s gave you steampy!" : "%s removed your steamy!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Steamy ? "%s gave you steamy!" : "%s removed your steamy!", pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
 	}
 }
@@ -248,7 +250,7 @@ void CGameContext::ConRainbow(IConsole::IResult *pResult, void *pUserData) // gi
 	{
 		pSelf->m_apPlayers[Victim]->m_Rainbow ^= 1;
 		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Steamy ? "%s gave you rainbow!" : "%s removed your rainbow!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Rainbow ? "%s gave you rainbow!" : "%s removed your rainbow!", pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
 	}
 }
@@ -257,21 +259,31 @@ void CGameContext::ConVip(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	int VipID = pResult->GetVictim();
-	char aBuf[200];
 
 	CCharacter* pChr = pSelf->GetPlayerChar(VipID);
-	if (pChr)
+	CPlayer *pPlayer = pSelf->m_apPlayers[VipID];
+
+	char aBuf[64];
+	if(pPlayer)
 	{
 		if (pChr->GetPlayer()->m_AccData.m_UserID)
 		{
 			pChr->GetPlayer()->m_AccData.m_Vip ^= 1;
 			pChr->GetPlayer()->m_pAccount->Apply();
+
+			if (pChr->GetPlayer()->m_AccData.m_Vip)
+				str_format(aBuf, sizeof aBuf, "'%s' is Vip now.", pSelf->Server()->ClientName(VipID));
+			else
+				str_format(aBuf, sizeof aBuf, "'%s' is no longer Vip.", pSelf->Server()->ClientName(VipID));
+			pSelf->SendChat(-1, CHAT_ALL, aBuf);
 		}
-		if (pChr->GetPlayer()->m_AccData.m_Vip)
-			str_format(aBuf, sizeof aBuf, "'%s' is Vip now.", pSelf->Server()->ClientName(VipID));
 		else
-			str_format(aBuf, sizeof aBuf, "'%s' is no longer Vip.", pSelf->Server()->ClientName(VipID));
-		pSelf->SendChat(-1, CHAT_ALL, aBuf);
+			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "vip", "Player must be logged in to receive vip");
+	}
+	else
+	{
+		str_format(aBuf, sizeof(aBuf), "There is no player with ID %i", VipID);
+		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "vip", aBuf);
 	}
 }
 

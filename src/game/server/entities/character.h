@@ -191,13 +191,14 @@ private:
 	void SpecialPostCoreTick();
 	void HandlePassiveMode();
 	void HandleRainbow();
-	void HandleQuest();
 	void HandleBots();
 	void HandleLevelSystem();
 	void HandleBlocking(bool die);
 	void HandleGameModes();
 	void Clean();
 	void SendZoneMsgs();
+
+	void QuestSetNextPart();
 
 	bool m_SetSavePos;
 	vec2 m_PrevSavePos;

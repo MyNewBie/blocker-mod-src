@@ -133,7 +133,7 @@ public:
 		int m_Max;
 	} m_Latency;
 	
-	struct
+	struct CKoh
 	{
 		int m_ZoneXp;
 		int m_ZonePoints;
@@ -147,7 +147,7 @@ public:
 
 			m_InZone = false;
 		}
-	}m_Koh;
+	} m_Koh;
 
 	// Some things for rewards, user can get temporary access to X for X amount of time
 	struct
@@ -157,9 +157,9 @@ public:
 		int m_Weaponcalls;
 		int64 m_PassiveModeTime;
 		int m_PassiveTimeLength;
-	}Temporary;
+	} Temporary;
 
-	struct		//saved player infos when entering tournament; restores them after
+	struct CSavedStats // saved player infos when entering tournament; restores them after
 	{
 		vec2 m_SavedSpawn;
 		bool m_SavedShotgun;
@@ -178,7 +178,7 @@ public:
 			m_SavedEHook = false;
 			m_SavedStartTick = 0;
 		}
-	}m_SavedStats;
+	} m_SavedStats;
 	
 	void SaveStats();
 	
@@ -193,32 +193,44 @@ public:
 		bool m_Active;
 	} m_Bots;
 
+	// the order of these is the order in which the quest parts have to be completed!
 	enum
 	{
-		QUEST_PART1 = 1,
-		QUEST_PART2,
-		QUEST_PART3,
+		QUEST_NONE = 0,
+		QUEST_PART_HAMMER,
+		QUEST_PART_HOOK,
+		QUEST_PART_BLOCK,
+		QUEST_PART_LASER,
+		QUEST_PART_SHOTGUN,
+		QUEST_PART_RACE,
+		QUEST_FINISHED,
+
+		NUM_QUESTS = QUEST_FINISHED
 	};
 
-	struct
+	struct CQuestData
 	{
-		// Main
-		bool m_CompletedQuest,
-			m_RifledTarget,
-			m_HookedTarget,
-			m_ShotgunedTarget,
-			m_HammeredTarget;
-
-		bool m_QuestInSession;
-		bool m_Rstartkill;
-
-		int m_RandomID;
-		int m_RaceTime;
-		int m_Pages;
 		int m_QuestPart;
+		int m_Pages;
+
+		union { int m_VictimID, m_RaceStartTick; };
+
+		void Reset()
+		{
+			m_QuestPart = QUEST_NONE;
+		}
+
+		bool QuestActive() const
+		{
+			return m_QuestPart != QUEST_NONE && m_QuestPart != QUEST_FINISHED;
+		}
+
 	} m_QuestData;
 
+	void HandleQuest();
 	void QuestReset();
+	void QuestSetNextPart();
+	void QuestTellObjective();
 
 	bool m_EpicCircle;
 	bool m_Rainbowepiletic; // Epiletic rainbow!
@@ -238,10 +250,10 @@ public:
 	struct
 	{
 		// Main
-		char m_Username[32];
-		char m_Password[32];
-		char m_RconPassword[32];
-		char m_aIp[NETADDR_MAXSTRSIZE] = { 0 };
+		char m_aUsername[32];
+		char m_aPassword[32];
+		char m_aRconPassword[32];
+		char m_aIp[NETADDR_MAXSTRSIZE];
 		int m_UserID;
 		int m_Vip;
 
