@@ -15,6 +15,7 @@ class CPlayer
 	MACRO_ALLOC_POOL_ID()
 
 	friend class CSaveTee;
+	friend class CAccount;
 
 public:
 	CPlayer(CGameContext *pGameServer, int ClientID, int Team);
@@ -138,14 +139,13 @@ public:
 		int m_ZoneXp;
 		int m_ZonePoints;
 
-		bool m_InZone;
+		int m_InZones;
 
 		void Reset()
 		{
 			m_ZoneXp = 0;
 			m_ZonePoints = 0;
-
-			m_InZone = false;
+			m_InZones = 0;
 		}
 	} m_Koh;
 

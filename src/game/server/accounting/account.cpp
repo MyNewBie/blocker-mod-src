@@ -25,9 +25,8 @@
 #include "account.h"
 
 
-CAccount::CAccount(CPlayer *pPlayer, CGameContext *pGameServer)
-		: m_pPlayer(pPlayer),
-		  m_pGameServer(pGameServer)
+CAccount::CAccount(CPlayer *pPlayer)
+		: m_pPlayer(pPlayer)
 {
 }
 
@@ -254,6 +253,9 @@ bool CAccount::Exists(const char *Username)
 
 void CAccount::Apply()
 {
+	if(!Storage())
+		return;
+
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", m_pPlayer->m_AccData.m_aUsername);
 	IOHANDLE Accfile = Storage()->OpenFile(aBuf, IOFLAG_WRITE, IStorage::TYPE_SAVE);
@@ -365,6 +367,11 @@ int CAccount::NextID()
 
 class IStorage *CAccount::Storage() const
 {
-	return m_pGameServer->Storage();
+	return m_pStorage;
+}
+
+class CGameContext *CAccount::GameServer()
+{
+	return m_pPlayer->GameServer();
 }
 

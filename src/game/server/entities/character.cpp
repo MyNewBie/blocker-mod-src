@@ -1286,31 +1286,33 @@ void CCharacter::Snap(int SnappingClient)
 	
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
 
-	if(GameServer()->m_KOH)
+	if(GameServer()->m_KOHActive)
 	{
 		//calculate visible balls
-		float Panso = 1.0f;
-		Panso *= m_AnimIDNum;
-
-		int MaxBalls = round_to_int(Panso);
-		for (int i = 0; i < MaxBalls; i++)
+		for(int z = 0; z < GameServer()->m_KOH.size(); z++)
 		{
-			CNetObj_Projectile *pFirstParticle = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_apAnimIDs[i], sizeof(CNetObj_Projectile)));
-			if (pFirstParticle && m_apAnimIDs[i] != -1)
+			float Panso = 1.0f;
+			Panso *= m_AnimIDNum;
+
+			int MaxBalls = round_to_int(Panso);
+			for (int i = 0; i < MaxBalls; i++)
 			{
-				float rad = g_Config.m_SvCircleRadius;
+				CNetObj_Projectile *pFirstParticle = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_apAnimIDs[i], sizeof(CNetObj_Projectile)));
+				if (pFirstParticle && m_apAnimIDs[i] != -1)
+				{
+					float rad = g_Config.m_SvKOHCircleRadius;
+					float TurnFac = 0.025f;
 
-				float TurnFac = 0.025f;
+					float PosX = GameServer()->m_KOH[z].m_Center.x*32 + cosf(2 * pi * (i / (float)m_AnimIDNum) + Server()->Tick()*TurnFac) * rad;
+					float PosY = GameServer()->m_KOH[z].m_Center.y*32 + sinf(2 * pi * (i / (float)m_AnimIDNum) + Server()->Tick()*TurnFac) * rad;
 
-				float PosX = 4732.000000 + cosf(2 * pi * (i / (float)m_AnimIDNum) + Server()->Tick()*TurnFac) * rad;
-				float PosY = 1722.000000 + sinf(2 * pi * (i / (float)m_AnimIDNum) + Server()->Tick()*TurnFac) * rad;
-
-				pFirstParticle->m_X = PosX;
-				pFirstParticle->m_Y = PosY;
-				pFirstParticle->m_VelX = 4;
-				pFirstParticle->m_VelY = 4;
-				pFirstParticle->m_StartTick = Server()->Tick() - 4;
-				pFirstParticle->m_Type = 0;
+					pFirstParticle->m_X = round_to_int(PosX);
+					pFirstParticle->m_Y = round_to_int(PosY);
+					pFirstParticle->m_VelX = 4;
+					pFirstParticle->m_VelY = 4;
+					pFirstParticle->m_StartTick = Server()->Tick() - 4;
+					pFirstParticle->m_Type = 0;
+				}
 			}
 		}
 	}
@@ -1796,25 +1798,23 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// King of the hill !
-	if (GameServer()->m_KOH && Team() == 0)
+	if (GameServer()->m_KOHActive && Team() == 0)
 	{
-		if (GameServer()->m_KOH && (m_TileIndex == TILE_ZONE_IN || m_TileFIndex == TILE_ZONE_IN))
+		for(int z = 0; z < GameServer()->m_KOH.size(); z++)
 		{
-			m_pPlayer->m_Koh.m_InZone = true;
-		}
-		else if (GameServer()->m_KOH && (m_TileIndex == TILE_ZONE_OUT || m_TileFIndex == TILE_ZONE_OUT))
-		{
-			m_pPlayer->m_Koh.m_InZone = false;
-		}
+			CGameContext::CKOH *pKOH = &(GameServer()->m_KOH[z]);
 
-		if (m_TileIndex == TILE_KOH || m_TileFIndex == TILE_KOH)
-		{
-			if (!GameServer()->m_PlayerContestant)// Check if we are in the zone
+			// only handle zones that we are in
+			if(!(GetPlayer()->m_Koh.m_InZones & (1 << z)))
+				continue;
+
+			// Check if we are alone in the zone
+			if (pKOH->m_NumContestants == 1)
 			{
-				char Gaining[246];
+				char aGaining[256];
 				m_pPlayer->m_Koh.m_ZoneXp++;
-				str_format(Gaining, sizeof(Gaining), "King of the hill--Starblock(Low): %s In Control: Points (%d)", Server()->ClientName(m_Core.m_Id), m_pPlayer->m_Koh.m_ZonePoints);
-				GameServer()->SendBroadcast(Gaining, -1);
+				str_format(aGaining, sizeof(aGaining), "King of the hill -- ZONE %i\n%s in control - %d/5 points [%i%%]", z, Server()->ClientName(m_Core.m_Id), m_pPlayer->m_Koh.m_ZonePoints, round_to_int(((float)m_pPlayer->m_Koh.m_ZoneXp/800.0f)*100.0f));
+				GameServer()->SendBroadcast(aGaining, -1);
 			}
 			if (m_pPlayer->m_Koh.m_ZoneXp == 800)
 			{
@@ -1823,16 +1823,17 @@ void CCharacter::HandleTiles(int Index)
 			}
 			if (m_pPlayer->m_Koh.m_ZonePoints >= 5)
 			{
-				char Winner[246];
+				char aWinner[256];
 				if (!m_pPlayer->m_AccData.m_UserID)
-					str_format(Winner, sizeof(Winner), "%s has won and dominated the hill!", Server()->ClientName(m_Core.m_Id));
+					str_format(aWinner, sizeof(aWinner), "%s has won and dominated the hill %i! (login to get rewards!)", Server()->ClientName(m_Core.m_Id), z);
 				else
 				{
-					str_format(Winner, sizeof(Winner), "%s has won and dominated the hill! Reward: 3 Pages", Server()->ClientName(m_Core.m_Id));
+					str_format(aWinner, sizeof(aWinner), "%s has won and dominated the hill %i! Reward: 3 Pages", Server()->ClientName(m_Core.m_Id), z);
 					m_pPlayer->m_QuestData.m_Pages += 3;
 				}
-				GameServer()->SendBroadcast(Winner, -1);
-				GameServer()->m_KOH = false;
+				GameServer()->SendBroadcast(aWinner, -1);
+				GameServer()->SendChatTarget(-1, aWinner);
+				GameServer()->m_KOHActive = false;
 			}
 		}
 
@@ -3040,15 +3041,12 @@ void CCharacter::HandleBlocking(bool die)
 void CCharacter::Clean()
 {
 	// We work very hard for valis sake !
-	if (this)
+	char Ip[NETADDR_MAXSTRSIZE] = { 0 };
+	Server()->GetClientAddr(m_Core.m_Id, Ip, sizeof(Ip));
+	if (str_comp_nocase(Ip, m_pPlayer->m_AccData.m_aIp) != 0) // Apply their Ip if not set
 	{
-		char Ip[NETADDR_MAXSTRSIZE] = { 0 };
-		Server()->GetClientAddr(m_Core.m_Id, Ip, sizeof(Ip));
-		if (str_comp_nocase(Ip, m_pPlayer->m_AccData.m_aIp) != 0) // Apply their Ip if not set
-		{
-			str_copy(m_pPlayer->m_AccData.m_aIp, Ip, sizeof(Ip));
-			m_pPlayer->m_pAccount->Apply();
-		}
+		str_copy(m_pPlayer->m_AccData.m_aIp, Ip, sizeof(Ip));
+		m_pPlayer->m_pAccount->Apply();
 	}
 
 	/*// Lets have each player log their own ip for us every x minutes
@@ -3105,9 +3103,9 @@ void CCharacter::Clean()
 
 void CCharacter::HandleGameModes()
 {
-	if (this && IsAlive() && m_pPlayer->Temporary.m_PassiveMode)
+	if (IsAlive() && m_pPlayer->Temporary.m_PassiveMode)
 	{
-		bool TimeIsUp = m_pPlayer->Temporary.m_PassiveModeTime + m_pPlayer->Temporary.m_PassiveTimeLength * Server()->TickSpeed() > Server()->Tick() ? false : true;
+		bool TimeIsUp = m_pPlayer->Temporary.m_PassiveModeTime + m_pPlayer->Temporary.m_PassiveTimeLength * Server()->TickSpeed() <= Server()->Tick();
 		if (TimeIsUp)
 		{
 			GameServer()->SendChatTarget(m_Core.m_Id, "Your time is up! Now disabling passive mode");
@@ -3117,9 +3115,8 @@ void CCharacter::HandleGameModes()
 		}
 	}
 
-	if (this && IsAlive() && !GameServer()->m_KOH)
+	if (IsAlive() && !GameServer()->m_KOHActive)
 	{
-		if (m_pPlayer->m_Koh.m_InZone || m_pPlayer->m_Koh.m_ZonePoints > 0 || m_pPlayer->m_Koh.m_ZoneXp > 0)
-			m_pPlayer->m_Koh.Reset();
+		m_pPlayer->m_Koh.Reset();
 	}
 }

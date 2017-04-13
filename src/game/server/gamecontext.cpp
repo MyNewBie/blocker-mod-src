@@ -617,36 +617,53 @@ void CGameContext::SwapTeams()
 */
 void CGameContext::OnTick()
 {
-	int PlayerCount = 0;
+	m_PlayerCount = 0;
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (GetPlayerChar(i) && GetPlayerChar(i)->IsAlive())
-			PlayerCount++;
-
-		m_PlayerCount = PlayerCount;
+			m_PlayerCount++;
 	}
 
-	if (m_KOH)
+	if(m_KOHActive)
 	{
-		int PlayerCount = 0;
-		for (int i = 0; i < MAX_CLIENTS; i++)
+		for(int z = 0; z < m_KOH.size(); z++)
 		{
-			if (GetPlayerChar(i) && GetPlayerChar(i)->IsAlive() &&  m_apPlayers[i]->GetCharacter()->Team() == 0 && m_apPlayers[i]->m_Koh.m_InZone)
-				PlayerCount++;
+			CKOH *pKOH = &(m_KOH[z]);
 
-			if (PlayerCount > 1)
-				m_PlayerContestant = true;
-			else if (PlayerCount <= 1)
-				m_PlayerContestant = false;
+			// count number of people in the zone
+			int PrevNumContestants = pKOH->m_NumContestants;
+			pKOH->m_NumContestants = 0;
+			for (int i = 0; i < MAX_CLIENTS; i++)
+			{
+				CCharacter *pChr = GetPlayerChar(i);
+				if(!pChr || !GetPlayerChar(i)->IsAlive())
+					continue;
 
-			if (PlayerCount <= 0)
-				SendBroadcast("King of the hill - Starblock(Low)", -1);
-			else if (m_PlayerContestant)
-				SendBroadcast("King of the hill - Starblock(Low) : PLAYER CONTESTANTS", -1);
+				m_apPlayers[i]->m_Koh.m_InZones = 0;
+				if(distance(pChr->Core()->m_Pos, pKOH->m_Center*32) < g_Config.m_SvKOHCircleRadius)
+				{
+					m_apPlayers[i]->m_Koh.m_InZones |= (1 << z); // save in which zones a player is
+					pKOH->m_NumContestants++;
+				}
+			}
+
+			// notify people of changes
+			int Delta = pKOH->m_NumContestants - PrevNumContestants;
+			if(Delta && pKOH->m_NumContestants != PrevNumContestants)
+			{
+				char aBuf[128];
+				str_format(aBuf, sizeof(aBuf), "King of the Hill - ZONE %i\n%i Contestants (%s%i)", z,
+						   pKOH->m_NumContestants,
+						   Delta > 0 ? "+" : "",
+						   Delta
+				);
+				SendBroadcast(aBuf, -1);
+			}
 		}
+
 	}
 
-		if(m_CountdownInfo.m_Time > 0 && Server()->Tick() - m_CountdownInfo.m_LastAnnounce > 50)
+	if(m_CountdownInfo.m_Time > 0 && Server()->Tick() - m_CountdownInfo.m_LastAnnounce > 50)
 	{
 		unsigned int SecondsC = Server()->Tick() - m_CountdownInfo.m_StartTick;
 		SecondsC /= 50;
@@ -1192,6 +1209,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), "Please, use '/login <username> <password>'");
 						return;
 					}
+					pPlayer->m_pAccount->SetStorage(Storage());
 					pPlayer->m_pAccount->Login(Username, Password);
 					return;
 				}
@@ -1202,6 +1220,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), "Not logged in");
 						return;
 					}
+					pPlayer->m_pAccount->SetStorage(Storage());
 					pPlayer->m_pAccount->Apply();
 					pPlayer->m_pAccount->Reset();
 
@@ -1320,7 +1339,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
-					if (m_KOH || m_LMB.State() == m_LMB.STATE_RUNNING)
+					if (m_KOHActive || m_LMB.State() == m_LMB.STATE_RUNNING)
 					{
 						SendChatTarget(ClientID, "You cannot use deathnotes right now");
 						return;
@@ -2754,7 +2773,9 @@ void CGameContext::ConOpenLMB(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConOpenKOH(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	pSelf->m_KOH = true;
+	pSelf->m_KOHActive = true;
+	for(int i = 0; i < pSelf->m_KOH.size(); i++)
+		pSelf->m_KOH[i].m_NumContestants = 0;
 }
 
 void CGameContext::ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
@@ -2819,7 +2840,6 @@ void CGameContext::OnConsoleInit()
 
 void CGameContext::OnInit(/*class IKernel *pKernel*/)
 {
-	m_KOH = false;
 	m_pServer = Kernel()->RequestInterface<IServer>();
 	m_pConsole = Kernel()->RequestInterface<IConsole>();
 	m_World.SetGameServer(this);
@@ -2928,8 +2948,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	CMapItemLayerTilemap *pTileMap = m_Layers.GameLayer();
 	CTile *pTiles = (CTile *)Kernel()->RequestInterface<IMap>()->GetData(pTileMap->m_Data);
 
-
-
+	m_KOHActive = false;
 
 	/*
 	num_spawn_points[0] = 0;
@@ -2975,6 +2994,14 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 				m_Tuning.Set("player_hooking", 0);
 				dbg_msg("game layer", "found no player hooking tile");
 			}
+			else if(Index == TILE_KOH)
+			{
+				CKOH KOH;
+				KOH.m_Center = vec2(x,y);
+				dbg_msg("game layer", "got KOH tile at (%.2f|%.2f)", KOH.m_Center.x, KOH.m_Center.y);
+				m_KOH.add(KOH);
+			}
+
 
 			if(Index >= ENTITY_OFFSET)
 			{
@@ -3011,6 +3038,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 					m_Tuning.Set("player_hooking", 0);
 					dbg_msg("front layer", "found no player hooking tile");
 				}
+
 				if(Index >= ENTITY_OFFSET)
 				{
 					vec2 Pos(x*32.0f+16.0f, y*32.0f+16.0f);

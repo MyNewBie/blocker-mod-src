@@ -248,9 +248,16 @@ public:
 	int64 m_LastMapVote;
 	
 	CLMB m_LMB;
-	bool m_KOH;
-	bool m_PlayerContestant;
+	bool m_KOHActive;
 	int m_PlayerCount;
+
+	struct CKOH // probably doesn't belong here, but whatever
+	{
+		int m_NumContestants;
+		vec2 m_Center;
+	};
+	array<CKOH> m_KOH;
+
 
 private:
 

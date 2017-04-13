@@ -70,7 +70,8 @@ void CPlayer::Reset()
 	m_WeakHookSpawn = false;
 
 	// city - label everything vali so its easier to find pls
-	m_pAccount = new CAccount(this, m_pGameServer);
+	m_pAccount = new CAccount(this);
+	m_pAccount->SetStorage(GameServer()->Storage());
 	if (m_AccData.m_UserID)
 		m_pAccount->Apply();
 
@@ -442,7 +443,10 @@ void CPlayer::FakeSnap()
 void CPlayer::OnDisconnect(const char *pReason)
 {
 	if (m_AccData.m_UserID)
+	{
+		m_pAccount->SetStorage(GameServer()->Storage());
 		m_pAccount->Apply(); // Save important Shit b4 leaving
+	}
 	// City
 	if (m_AccData.m_UserID)
 		m_pAccount->Reset();
@@ -495,9 +499,9 @@ void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 
 	if(NewInput->m_PlayerFlags&PLAYERFLAG_CHATTING)
 	{
-	// skip the input if chat is active
+		// skip the input if chat is active
 		if(m_PlayerFlags&PLAYERFLAG_CHATTING)
-		return;
+			return;
 
 		// reset input
 		if(m_pCharacter)
@@ -526,8 +530,8 @@ void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 
 	// check for activity
 	if(NewInput->m_Direction || m_LatestActivity.m_TargetX != NewInput->m_TargetX ||
-		m_LatestActivity.m_TargetY != NewInput->m_TargetY || NewInput->m_Jump ||
-		NewInput->m_Fire&1 || NewInput->m_Hook)
+	   m_LatestActivity.m_TargetY != NewInput->m_TargetY || NewInput->m_Jump ||
+	   NewInput->m_Fire&1 || NewInput->m_Hook)
 	{
 		m_LatestActivity.m_TargetX = NewInput->m_TargetX;
 		m_LatestActivity.m_TargetY = NewInput->m_TargetY;
@@ -623,7 +627,7 @@ void CPlayer::TryRespawn()
 	vec2 SpawnPos;
 
 	int Team = m_Team;
-	
+
 	if(m_InLMB == LMB_PARTICIPATE)	//LMB=1 means registered
 		Team += 2;
 	if(!GameServer()->m_pController->CanSpawn(Team, &SpawnPos))	//we cant spawn being in LMB!
@@ -634,35 +638,35 @@ void CPlayer::TryRespawn()
 	m_WeakHookSpawn = false;
 	m_Spawning = false;
 	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World);
-	
+
 	if(!m_InLMB && (m_SavedStats.m_SavedSpawn.x || m_SavedStats.m_SavedSpawn.y))
 		SpawnPos = m_SavedStats.m_SavedSpawn;
-	
+
 	m_pCharacter->Spawn(this, SpawnPos);
 	GameServer()->CreatePlayerSpawn(SpawnPos, m_pCharacter->Teams()->TeamMask(m_pCharacter->Team(), -1, m_ClientID));
-	
+
 	if(!m_InLMB)
 	{
 		if(m_SavedStats.m_SavedShotgun)
 			m_pCharacter->GiveWeapon(WEAPON_SHOTGUN);
-		
+
 		if(m_SavedStats.m_SavedGrenade)
 			m_pCharacter->GiveWeapon(WEAPON_GRENADE);
-		
+
 		if(m_SavedStats.m_SavedLaser)
 			m_pCharacter->GiveWeapon(WEAPON_RIFLE);
-		
+
 		m_pCharacter->m_EndlessHook = m_SavedStats.m_SavedEHook;
-		
+
 		if(m_SavedStats.m_SavedStartTick)
 		{
 			m_pCharacter->Teams()->OnCharacterStart(GetCID());
 			m_pCharacter->m_StartTime = m_SavedStats.m_SavedStartTick;
 		}
-		
+
 		m_SavedStats.Reset();
 	}
-		
+
 
 	if(g_Config.m_SvTeam == 3)
 	{
@@ -676,7 +680,7 @@ void CPlayer::TryRespawn()
 
 		Controller->m_Teams.SetForceCharacterTeam(GetCID(), NewTeam);
 	}
-	
+
 	if(m_InLMB == LMB_PARTICIPATE)
 		m_pCharacter->Freeze(g_Config.m_SvLMBSpawnFreezeTime);
 }
@@ -714,10 +718,10 @@ bool CPlayer::AfkTimer(int NewTargetX, int NewTargetY)
 			if(m_Sent1stAfkWarning == 0 && m_LastPlaytime < time_get()-time_freq()*(int)(g_Config.m_SvMaxAfkTime*0.5))
 			{
 				sprintf(
-					m_pAfkMsg,
-					"You have been afk for %d seconds now. Please note that you get kicked after not playing for %d seconds.",
-					(int)(g_Config.m_SvMaxAfkTime*0.5),
-					g_Config.m_SvMaxAfkTime
+						m_pAfkMsg,
+						"You have been afk for %d seconds now. Please note that you get kicked after not playing for %d seconds.",
+						(int)(g_Config.m_SvMaxAfkTime*0.5),
+						g_Config.m_SvMaxAfkTime
 				);
 				m_pGameServer->SendChatTarget(m_ClientID, m_pAfkMsg);
 				m_Sent1stAfkWarning = 1;
@@ -725,10 +729,10 @@ bool CPlayer::AfkTimer(int NewTargetX, int NewTargetY)
 			else if(m_Sent2ndAfkWarning == 0 && m_LastPlaytime < time_get()-time_freq()*(int)(g_Config.m_SvMaxAfkTime*0.9))
 			{
 				sprintf(
-					m_pAfkMsg,
-					"You have been afk for %d seconds now. Please note that you get kicked after not playing for %d seconds.",
-					(int)(g_Config.m_SvMaxAfkTime*0.9),
-					g_Config.m_SvMaxAfkTime
+						m_pAfkMsg,
+						"You have been afk for %d seconds now. Please note that you get kicked after not playing for %d seconds.",
+						(int)(g_Config.m_SvMaxAfkTime*0.9),
+						g_Config.m_SvMaxAfkTime
 				);
 				m_pGameServer->SendChatTarget(m_ClientID, m_pAfkMsg);
 				m_Sent2ndAfkWarning = 1;
@@ -818,9 +822,9 @@ void CPlayer::FindDuplicateSkins()
 		{
 			if (GameServer()->m_apPlayers[i]->m_StolenSkin) continue;
 			if ((GameServer()->m_apPlayers[i]->m_TeeInfos.m_UseCustomColor == m_TeeInfos.m_UseCustomColor) &&
-			(GameServer()->m_apPlayers[i]->m_TeeInfos.m_ColorFeet == m_TeeInfos.m_ColorFeet) &&
-			(GameServer()->m_apPlayers[i]->m_TeeInfos.m_ColorBody == m_TeeInfos.m_ColorBody) &&
-			!str_comp(GameServer()->m_apPlayers[i]->m_TeeInfos.m_SkinName, m_TeeInfos.m_SkinName))
+				(GameServer()->m_apPlayers[i]->m_TeeInfos.m_ColorFeet == m_TeeInfos.m_ColorFeet) &&
+				(GameServer()->m_apPlayers[i]->m_TeeInfos.m_ColorBody == m_TeeInfos.m_ColorBody) &&
+				!str_comp(GameServer()->m_apPlayers[i]->m_TeeInfos.m_SkinName, m_TeeInfos.m_SkinName))
 			{
 				m_StolenSkin = 1;
 				return;
