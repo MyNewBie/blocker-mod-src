@@ -1265,14 +1265,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return; // Tested and found a crashbug -- heres the fix 
 					if (m_LMB.State() == m_LMB.STATE_RUNNING)
 					{
-						SendChatTarget(ClientID, "You cannot use weapons right now");
+						SendChatTarget(ClientID, "You cannot use weapons while in LMB");
 						return;
 					}
 					if (pPlayer->Temporary.m_Weaponcalls > 0)
 					{
 						pPlayer->Temporary.m_Weaponcalls--;
 						char aRemaining[64];
-						str_format(aRemaining, sizeof(aRemaining), "(%d) more usages!", pPlayer->Temporary.m_Weaponcalls);
+						str_format(aRemaining, sizeof(aRemaining), "%d usage%s remaining", pPlayer->Temporary.m_Weaponcalls, pPlayer->Temporary.m_Weaponcalls == 1 ? "" : "s");
 						SendChatTarget(ClientID, aRemaining);
 					}
 					GetPlayerChar(ClientID)->GiveAllWeapons();
@@ -1292,51 +1292,24 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					return;
 				}*/
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "smarthammer", 11) == 0)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "smarthammer", 11) == 0 && pPlayer->m_Authed)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
-					if (!pPlayer->m_Authed)
-					{
-						char Msg[100];
-						str_format(Msg, 100, "No such command: smarthammer.");	//sneaky
-						SendChatTarget(pPlayer->GetCID(), Msg);
-						return;
-					}
-					else if (!pPlayer->m_Bots.m_SmartHammer)
-					{
-						pPlayer->m_Bots.m_SmartHammer = true;
-						SendChatTarget(pPlayer->GetCID(), "Smarthammer enabled!");
-					}
-					else
-					{
-						pPlayer->m_Bots.m_SmartHammer = false;
-						SendChatTarget(pPlayer->GetCID(), "Smarthammer disabled!");
-					}
+
+					pPlayer->m_Bots.m_SmartHammer ^= true;
+					SendChatTarget(pPlayer->GetCID(), pPlayer->m_Bots.m_SmartHammer ? "Smarthammer enabled" : "Smarthammer disabled");
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "grenadebot", 10) == 0)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "grenadebot", 10) == 0 && pPlayer->m_Authed)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
-					if (!pPlayer->m_Authed)
-					{
-						char Msg[100];
-						str_format(Msg, 100, "No such command: grenadebot.");	//sneaky
-						SendChatTarget(pPlayer->GetCID(), Msg);
-						return;
-					}
-					else if (!pPlayer->m_Bots.m_Grenadebot)
-					{
-						pPlayer->m_Bots.m_Grenadebot = true;
-						SendChatTarget(pPlayer->GetCID(), "grenadebot enabled!");
-					}
-					else
-					{
-						pPlayer->m_Bots.m_Grenadebot = false;
-						SendChatTarget(pPlayer->GetCID(), "grenadebot disabled!");
-					}
+
+					pPlayer->m_Bots.m_Grenadebot ^= true;
+					SendChatTarget(pPlayer->GetCID(), pPlayer->m_Bots.m_Grenadebot ? "Grenadebot enabled!" : "Grenadebot disabled!");
+
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getip ", 6) == 0 && pPlayer->m_AccData.m_Vip) // Tired of using status
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getip ", 6) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->m_Authed)) // Tired of using status
 				{
 					char Name[256];
 					str_copy(Name, pMsg->m_pMessage + 7, 256);
@@ -1437,8 +1410,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "beginquest", 10) == 0)
 				{
-					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive() || pPlayer->m_QuestData.QuestActive())
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
+
+					if (pPlayer->m_QuestData.QuestActive())
+					{
+						SendChatTarget(ClientID, "You are in a quest already, type /questinfo to show your objective");
+						return;
+					}
 
 					if (!pPlayer->m_AccData.m_UserID)
 					{
@@ -1456,7 +1435,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 
 					pPlayer->QuestReset();
-					SendChatTarget(ClientID, "Quest has been stopped and your progress has been reset!");
+					if(pPlayer->m_QuestData.QuestActive())
+						SendChatTarget(ClientID, "Quest has been stopped and your progress has been reset!");
+					else
+						SendChatTarget(ClientID, "You are not currently in a quest, type /beginquest to start one!");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "questinfo", 9) == 0)
 				{

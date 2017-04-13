@@ -865,20 +865,11 @@ void CPlayer::HandleQuest()
 	{
 		case QUEST_PART_RACE:
 		{
-			if(g_Config.m_SvQuestRaceTime && Server()->Tick() > m_QuestData.m_RaceStartTick + g_Config.m_SvQuestRaceTime*60 * Server()->TickSpeed())
+			if(GetCharacter()->m_DDRaceState == DDRACE_STARTED)
 			{
-				char aBuf[128];
-				str_format(aBuf, sizeof(aBuf), "[QUEST] Quest failed, you couldn't complete the race in under %i minute%s", g_Config.m_SvQuestRaceTime, g_Config.m_SvQuestRaceTime == 1 ? "" : "s");
-				GameServer()->SendChatTarget(OwnID, aBuf);
-				QuestReset();
-			}
-			else if(GetCharacter()->m_DDRaceState == DDRACE_FINISHED)
-				QuestSetNextPart();
-			else
-			{
-				// he just started the race
-				if(m_QuestData.m_RaceStartTick == 0 && GetCharacter()->m_DDRaceState == DDRACE_STARTED)
+				if(m_QuestData.m_RaceStartTick == 0)
 				{
+					// he just started the race
 					if(g_Config.m_SvQuestRaceTime)
 					{
 						char aBuf[128];
@@ -888,7 +879,19 @@ void CPlayer::HandleQuest()
 					}
 					m_QuestData.m_RaceStartTick = Server()->Tick();
 				}
-				else if(m_QuestData.m_RaceStartTick != 0 && GetCharacter()->m_DDRaceState != DDRACE_STARTED)
+				else if(g_Config.m_SvQuestRaceTime && Server()->Tick() > m_QuestData.m_RaceStartTick + g_Config.m_SvQuestRaceTime*60 * Server()->TickSpeed())
+				{
+					char aBuf[128];
+					str_format(aBuf, sizeof(aBuf), "[QUEST] Quest failed, you couldn't complete the race in under %i minute%s", g_Config.m_SvQuestRaceTime, g_Config.m_SvQuestRaceTime == 1 ? "" : "s");
+					GameServer()->SendChatTarget(OwnID, aBuf);
+					QuestReset();
+				}
+			}
+			else if(GetCharacter()->m_DDRaceState == DDRACE_FINISHED && m_QuestData.m_RaceStartTick)
+				QuestSetNextPart();
+			else
+			{
+				if(m_QuestData.m_RaceStartTick != 0)
 				{
 					char aBuf[128];
 					str_format(aBuf, sizeof(aBuf), "[QUEST] Quest failed, you aborted the race");
