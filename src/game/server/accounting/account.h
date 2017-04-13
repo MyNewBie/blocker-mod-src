@@ -7,13 +7,14 @@
 class CAccount
 {
 	class CPlayer *m_pPlayer;
-	class CGameContext *m_pGameServer;
+	class IStorage *m_pStorage;
 
-	class CGameContext *GameServer() const { return m_pGameServer; }
 	class IStorage *Storage() const;
+	class CGameContext *GameServer();
 
 public:
-	CAccount(class CPlayer *pPlayer, class CGameContext *pGameServer);
+	CAccount(class CPlayer *pPlayer);
+	void SetStorage(class IStorage *pStorage) { m_pStorage = pStorage; }
 
 	void Login(const char *pUsername, const char *pPassword);
 	void Register(const char *pUsername, const char *pPassword);

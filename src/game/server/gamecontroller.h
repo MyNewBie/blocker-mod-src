@@ -13,6 +13,8 @@ typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 #else
 #include <stdint.h>
+#include <base/tl/array.h>
+
 #endif
 
 /*
@@ -71,6 +73,7 @@ protected:
 	int m_GameFlags;
 	int m_UnbalancedTick;
 	bool m_ForceBalanced;
+
 
 public:
 	const char *m_pGameType;
