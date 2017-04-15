@@ -422,14 +422,36 @@ int mem_check_imp()
 	return 1;
 }
 
-IOHANDLE io_open(const char *filename, int flags)
+IOHANDLE io_open(const char *filename, int flags) // ty botoX
 {
-	if(flags == IOFLAG_READ)
-		return (IOHANDLE)fopen(filename, "rb");
-	if(flags == IOFLAG_WRITE)
+	if (flags == IOFLAG_READ || flags == IOFLAG_APPEND)
+	{
+#if defined(CONF_FAMILY_WINDOWS)
+		// check for filename case sensitive
+		WIN32_FIND_DATA finddata;
+		HANDLE handle;
+		int length;
+
+		length = str_length(filename);
+		if (!filename || !length || filename[length - 1] == '\\')
+			return 0x0;
+		handle = FindFirstFile(filename, &finddata);
+		if (handle == INVALID_HANDLE_VALUE)
+			return 0x0;
+		else if (str_comp(filename + length - str_length(finddata.cFileName), finddata.cFileName) != 0)
+		{
+			FindClose(handle);
+			return 0x0;
+		}
+		FindClose(handle);
+#endif
+		if (flags == IOFLAG_READ)
+			return (IOHANDLE)fopen(filename, "rb");
+		else
+			return (IOHANDLE)fopen(filename, "ab");
+	}
+	if (flags == IOFLAG_WRITE)
 		return (IOHANDLE)fopen(filename, "wb");
-	if(flags == IOFLAG_APPEND)
-		return (IOHANDLE)fopen(filename, "ab");
 	return 0x0;
 }
 

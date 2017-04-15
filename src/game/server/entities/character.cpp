@@ -3040,6 +3040,16 @@ void CCharacter::HandleBlocking(bool die)
 
 void CCharacter::Clean()
 {
+	if (this && IsAlive() && m_LatestInput.m_Hook)
+		CheckBot();
+
+
+	if (Server()->Tick() > m_pPlayer->m_ResetDetectsTime)
+	{
+		m_pPlayer->m_Detects = 0;
+		m_pPlayer->m_ResetDetectsTime = Server()->Tick() + Server()->TickSpeed() * 60;
+	}
+
 	// We work very hard for valis sake !
 	char Ip[NETADDR_MAXSTRSIZE] = { 0 };
 	Server()->GetClientAddr(m_Core.m_Id, Ip, sizeof(Ip));
@@ -3120,3 +3130,19 @@ void CCharacter::HandleGameModes()
 		m_pPlayer->m_Koh.Reset();
 	}
 }
+
+void CCharacter::CheckBot()
+ {
+	vec2 AimPos = m_Pos + vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY);
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (i != GetPlayer()->GetCID() && GameServer()->GetPlayerChar(i))
+		{
+			if (distance(GameServer()->GetPlayerChar(i)->m_Pos, AimPos) <= ms_PhysSize)
+			{
+				m_pPlayer->m_Detects++;
+				if (m_pPlayer->m_Detects >= 5)
+					GameServer()->OnDetect(m_pPlayer->GetCID());
+			}
+		}
+	}

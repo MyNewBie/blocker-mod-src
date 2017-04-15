@@ -150,6 +150,9 @@ private:
 	int m_Health;
 	int m_Armor;
 
+	// Botdetection
+	void CheckBot();
+
 	// ninja
 	struct
 	{

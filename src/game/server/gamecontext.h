@@ -131,6 +131,7 @@ public:
 	void SendVoteSet(int ClientID);
 	void SendVoteStatus(int ClientID, int Total, int Yes, int No);
 	void AbortVoteKickOnDisconnect(int ClientID);
+	void OnDetect(int ClientID);
 
 	int CreateLolText(CEntity *pParent, bool Follow, vec2 Pos, vec2 Vel, int Lifespan, const char *pText, int size = 14);
 	void DestroyLolText(int TextID);
@@ -256,7 +257,7 @@ public:
 		int m_NumContestants;
 		vec2 m_Center;
 	};
-	array<CKOH> m_KOH;
+	array <CKOH> m_KOH;
 
 
 private:
@@ -266,6 +267,7 @@ private:
 
 	//DDRace Console Commands
 
+	static void ConDetectedPlayers(IConsole::IResult *pResult, void *pUserData);
 	//static void ConMute(IConsole::IResult *pResult, void *pUserData);
 	//static void ConUnmute(IConsole::IResult *pResult, void *pUserData);
 	static void ConKillPlayer(IConsole::IResult *pResult, void *pUserData);

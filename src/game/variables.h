@@ -105,6 +105,10 @@ MACRO_CONFIG_STR(UiDemoSelected, ui_demo_selected, 256, "", CFGFLAG_CLIENT|CFGFL
 
 MACRO_CONFIG_INT(GfxNoclip, gfx_noclip, 0, 0, 1, CFGFLAG_CLIENT|CFGFLAG_SAVE, "Disable clipping")
 
+// This time we will have a working Bot detection!
+// Bot detetion configs
+MACRO_CONFIG_INT(SvLogDetects, sv_log_detects, 1, 0, 1, CFGFLAG_SERVER, "Write detected players into: detected_players.txt")
+
 // blocking
 MACRO_CONFIG_INT(SvBlockTime, sv_block_time, 3, 3, 10, CFGFLAG_SERVER, "time freezed for a player to be marked blocked")
 MACRO_CONFIG_INT(SvAntiFarmDuration, sv_antifarm_block_dur, 15, 5, 500, CFGFLAG_SERVER, "how long a player has to been living in seconds to get blocked for points")

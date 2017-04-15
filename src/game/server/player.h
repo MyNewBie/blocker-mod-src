@@ -100,6 +100,11 @@ public:
 
 	int m_SendVoteIndex;
 
+	// Botdetection
+	bool m_BotDetected;
+	int m_Detects;
+	int64 m_ResetDetectsTime;
+
 	// TODO: clean this up
 	struct
 	{

@@ -615,6 +615,45 @@ void CGameContext::SwapTeams()
 	(void)m_pController->CheckTeamBalance();
 }
 */
+
+void CGameContext::OnDetect(int ClientID)
+{
+	if (m_apPlayers[ClientID]->m_BotDetected)
+		return;
+
+	char aBuf[256];
+	char aIP[NETADDR_MAXSTRSIZE];
+
+	m_apPlayers[ClientID]->m_BotDetected = true;
+	str_format(aBuf, sizeof(aBuf), "%d:'%s' has been detected!", ClientID, Server()->ClientName(ClientID));
+
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (m_apPlayers[i] && Server()->IsAuthed(i))
+			SendChatTarget(i, aBuf);
+	}
+
+	if (g_Config.m_SvLogDetects)
+	{
+		IOHANDLE File;
+		File = io_open("detected_players.txt", IOFLAG_APPEND);
+		if (!File)
+		{
+			File = io_open("detected_players.txt", IOFLAG_WRITE);
+			if (!File)
+			{
+				dbg_msg("server", "Failed to open detected_players.txt for writing");
+				return;
+			}
+		}
+		Server()->GetClientAddr(ClientID, aIP, sizeof(aIP));
+		str_format(aBuf, sizeof(aBuf), "Name: \"%s\" IP: \"%s\"", Server()->ClientName(ClientID), aIP);
+		io_write(File, aBuf, str_length(aBuf));
+		io_write_newline(File);
+		io_close(File);
+	}
+}
+
 void CGameContext::OnTick()
 {
 	m_PlayerCount = 0;
@@ -2778,6 +2817,22 @@ void CGameContext::ConOpenKOH(IConsole::IResult *pResult, void *pUserData)
 		pSelf->m_KOH[i].m_NumContestants = 0;
 }
 
+void CGameContext::ConDetectedPlayers(IConsole::IResult *pResult, void *pUserData)
+ {
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	char aBuf[128];
+	
+		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", "Detected players:");
+	for (int i = 0; i < MAX_CLIENTS; i++)
+		 {
+		if (pSelf->m_apPlayers[i] && pSelf->m_apPlayers[i]->m_BotDetected)
+			 {
+			str_format(aBuf, sizeof(aBuf), "%d:'%s' has been detected", i, pSelf->Server()->ClientName(i));
+			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
+			}
+		}
+	}
+
 void CGameContext::ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
 {
 	pfnCallback(pResult, pCallbackUserData);
@@ -2830,6 +2885,7 @@ void CGameContext::OnConsoleInit()
     Console()->Register("countdown", "iir", CFGFLAG_SERVER, ConCountdown, this, "Starts a countdown for a server restart");
 	Console()->Register("open_lmb", "", CFGFLAG_SERVER, ConOpenLMB, this, "Opens registration for LMB");
 	Console()->Register("open_koh", "", CFGFLAG_SERVER, ConOpenKOH, this, "Opens KOH");
+	Console()->Register("detected", "", CFGFLAG_SERVER, ConDetectedPlayers, this, "Shows currently detected players");
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 
 #define CONSOLE_COMMAND(name, params, flags, callback, userdata, help) m_pConsole->Register(name, params, flags, callback, userdata, help);
