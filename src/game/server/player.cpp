@@ -1008,9 +1008,9 @@ void CPlayer::QuestSetNextPart()
 				PlayerCount++;
 		}
 
-		if(PlayerCount <= 1)
+		if(PlayerCount <= 9)
 		{
-			GameServer()->SendChatTarget(OwnID,"Sorry, you can't proceed with the quest right now...");
+			GameServer()->SendChatTarget(OwnID,"Sorry, you can't start quests when less than 10 players are playing on the server.");
 			QuestReset();
 		}
 		else
