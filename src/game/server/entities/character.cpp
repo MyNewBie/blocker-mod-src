@@ -1317,7 +1317,7 @@ void CCharacter::Snap(int SnappingClient)
 		}
 	}
 
-	if (GetPlayer()->m_EpicCircle)
+	if (GetPlayer()->m_EpicCircle && !GameServer()->m_KOHActive)
 	{
 		//calculate visible balls
 		float Panso = 1.0f;
@@ -1891,7 +1891,7 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// epic circles
-	if (((m_TileIndex == TILE_EPICCIRCLES || m_TileFIndex == TILE_EPICCIRCLES)) && !WasInCircles)
+	if (((m_TileIndex == TILE_EPICCIRCLES || m_TileFIndex == TILE_EPICCIRCLES)) && !WasInCircles && !GameServer()->m_KOHActive)
 	{
 		m_pPlayer->m_EpicCircle ^= 1;
 		m_pPlayer->m_EpicCircle ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got epic circles!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost epic circles!");
@@ -3043,6 +3043,11 @@ void CCharacter::Clean()
 	if (this && IsAlive() && m_LatestInput.m_Hook)
 		CheckBot();
 
+	if (this && IsAlive() && m_pPlayer->m_EpicCircle && GameServer()->m_KOHActive)
+	{
+		GameServer()->SendChatTarget(m_Core.m_Id, "For the greater good, we disabled your epic circles :)"); // SALUT!!!!! xD
+		m_pPlayer->m_EpicCircle = false;
+	}
 
 	if (Server()->Tick() > m_pPlayer->m_ResetDetectsTime)
 	{
