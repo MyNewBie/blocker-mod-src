@@ -111,6 +111,8 @@ MACRO_CONFIG_INT(SvLogDetects, sv_log_detects, 1, 0, 1, CFGFLAG_SERVER, "Write d
 
 // blocking
 MACRO_CONFIG_INT(SvBlockTime, sv_block_time, 3, 3, 10, CFGFLAG_SERVER, "time freezed for a player to be marked blocked")
+MACRO_CONFIG_INT(SvQuestCount, sv_player_quest_count, 8, 3, 64, CFGFLAG_SERVER, "amount of playrs needed to begin quests")
+MACRO_CONFIG_INT(SvLvlCount, sv_player_lvlsystem_count, 8, 3, 64, CFGFLAG_SERVER, "amount of players needed for the lvl system to enable")
 MACRO_CONFIG_INT(SvAntiFarmDuration, sv_antifarm_block_dur, 15, 5, 500, CFGFLAG_SERVER, "how long a player has to been living in seconds to get blocked for points")
 
 // dummy

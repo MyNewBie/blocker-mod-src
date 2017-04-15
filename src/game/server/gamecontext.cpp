@@ -1449,7 +1449,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "beginquest", 10) == 0)
 				{
-					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive() || m_PlayerCount < g_Config.m_SvQuestCount)
 						return;
 
 					if (pPlayer->m_QuestData.QuestActive())

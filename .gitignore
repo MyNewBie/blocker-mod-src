@@ -58,3 +58,4 @@ buildlog.txt
 
 *.acc
 autoexec_server.cfg
+detected_players.txt

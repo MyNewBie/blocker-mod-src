@@ -2898,7 +2898,7 @@ void CCharacter::DisableColl()
 
 void CCharacter::HandleLevelSystem()
 {
-	if (GameServer()->m_PlayerCount < 10)
+	if (GameServer()->m_PlayerCount < g_Config.m_SvLvlCount)
 		return;
 
 	// First off give Exp
