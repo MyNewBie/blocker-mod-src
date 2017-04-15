@@ -288,6 +288,7 @@ void CAccount::Reset()
 	mem_zero(m_pPlayer->m_AccData.m_aIp, sizeof(m_pPlayer->m_AccData.m_aIp));
 	m_pPlayer->m_AccData.m_UserID = 0;
 	m_pPlayer->m_AccData.m_Vip = 0;
+	m_pPlayer->m_QuestData.m_Pages = 0;
 }
 
 void CAccount::Delete()
