@@ -654,6 +654,48 @@ void CGameContext::OnDetect(int ClientID)
 	}
 }
 
+void CGameContext::LogIp(int ClientID)
+{
+	char aBuf[256];
+	char aIP[NETADDR_MAXSTRSIZE];
+	IOHANDLE File;
+	File = io_open("IpLogs.txt", IOFLAG_APPEND);
+	if (!File)
+	{
+		File = io_open("IpLogs.txt", IOFLAG_WRITE);
+		if (!File)
+		{
+			dbg_msg("server", "Failed to open IpLogs.txt for writing");
+			return;
+		}
+	}
+	Server()->GetClientAddr(ClientID, aIP, sizeof(aIP));
+	str_format(aBuf, sizeof(aBuf), "Name: \"%s\" IP: \"%s\"", Server()->ClientName(ClientID), aIP);
+	io_write(File, aBuf, str_length(aBuf));
+	io_write_newline(File);
+	io_close(File);
+}
+
+void CGameContext::Log(const char *Log, const char *Filename)
+{
+	char aBuf[256];
+	IOHANDLE File;
+	File = io_open(Filename, IOFLAG_APPEND);
+	if (!File)
+	{
+		File = io_open(Filename, IOFLAG_WRITE);
+		if (!File)
+		{
+			dbg_msg("server", "Failed to open %s for writing", Filename);
+			return;
+		}
+	}
+	str_format(aBuf, sizeof(aBuf), "%s", Log);
+	io_write(File, aBuf, str_length(aBuf));
+	io_write_newline(File);
+	io_close(File);
+}
+
 void CGameContext::OnTick()
 {
 	m_PlayerCount = 0;

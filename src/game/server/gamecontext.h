@@ -133,6 +133,8 @@ public:
 	void SendVoteStatus(int ClientID, int Total, int Yes, int No);
 	void AbortVoteKickOnDisconnect(int ClientID);
 	void OnDetect(int ClientID);
+	void LogIp(int ClientID);
+	void Log(const char* Log, const char* Filename);
 
 	int CreateLolText(CEntity *pParent, bool Follow, vec2 Pos, vec2 Vel, int Lifespan, const char *pText, int size = 14);
 	void DestroyLolText(int TextID);
