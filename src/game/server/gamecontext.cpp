@@ -1378,7 +1378,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
-					if (m_KOHActive || m_LMB.State() == m_LMB.STATE_RUNNING)
+					if (m_KOHActive || m_LMB.State() == m_LMB.STATE_RUNNING || m_LMB.State() == m_LMB.STATE_REGISTRATION)
 					{
 						SendChatTarget(ClientID, "You cannot use deathnotes right now");
 						return;

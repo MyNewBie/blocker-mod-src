@@ -162,6 +162,7 @@ void CLMB::TeleportParticipants()
 		{
 			if(m_pGameServer->m_apPlayers[m_Participants[i]]->GetCharacter() && m_pGameServer->m_apPlayers[m_Participants[i]]->m_InLMB == LMB_REGISTERED)
 			{
+				m_pGameServer->m_World.ReleaseHooked(i);
 				m_pGameServer->m_apPlayers[m_Participants[i]]->SaveStats();
 				m_pGameServer->m_apPlayers[m_Participants[i]]->KillCharacter();
 				m_pGameServer->m_apPlayers[m_Participants[i]]->m_InLMB = LMB_PARTICIPATE;
