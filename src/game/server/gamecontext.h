@@ -256,7 +256,7 @@ public:
 		int m_NumContestants;
 		vec2 m_Center;
 	};
-	array<CKOH> m_KOH;
+	std::vector<CKOH> m_KOH;
 
 
 private:

@@ -626,7 +626,7 @@ void CGameContext::OnTick()
 
 	if(m_KOHActive)
 	{
-		for(int z = 0; z < m_KOH.size(); z++)
+		for(unsigned z = 0; z < m_KOH.size(); z++)
 		{
 			CKOH *pKOH = &(m_KOH[z]);
 
@@ -2774,7 +2774,7 @@ void CGameContext::ConOpenKOH(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	pSelf->m_KOHActive = true;
-	for(int i = 0; i < pSelf->m_KOH.size(); i++)
+	for(unsigned i = 0; i < pSelf->m_KOH.size(); i++)
 		pSelf->m_KOH[i].m_NumContestants = 0;
 }
 
@@ -2999,7 +2999,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 				CKOH KOH;
 				KOH.m_Center = vec2(x,y);
 				dbg_msg("game layer", "got KOH tile at (%.2f|%.2f)", KOH.m_Center.x, KOH.m_Center.y);
-				m_KOH.add(KOH);
+				m_KOH.push_back(KOH);
 			}
 
 
