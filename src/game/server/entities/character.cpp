@@ -1289,7 +1289,7 @@ void CCharacter::Snap(int SnappingClient)
 	if(GameServer()->m_KOHActive)
 	{
 		//calculate visible balls
-		for(int z = 0; z < GameServer()->m_KOH.size(); z++)
+		for(unsigned z = 0; z < GameServer()->m_KOH.size(); z++)
 		{
 			float Panso = 1.0f;
 			Panso *= m_AnimIDNum;
@@ -1800,7 +1800,7 @@ void CCharacter::HandleTiles(int Index)
 	// King of the hill !
 	if (GameServer()->m_KOHActive && Team() == 0)
 	{
-		for(int z = 0; z < GameServer()->m_KOH.size(); z++)
+		for(unsigned z = 0; z < GameServer()->m_KOH.size(); z++)
 		{
 			CGameContext::CKOH *pKOH = &(GameServer()->m_KOH[z]);
 
@@ -3132,17 +3132,18 @@ void CCharacter::HandleGameModes()
 }
 
 void CCharacter::CheckBot()
- {
+{
 	vec2 AimPos = m_Pos + vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY);
-	for (int i = 0; i < MAX_CLIENTS; i++)
+	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (i != GetPlayer()->GetCID() && GameServer()->GetPlayerChar(i))
+		if(i != GetPlayer()->GetCID() && GameServer()->GetPlayerChar(i))
 		{
-			if (distance(GameServer()->GetPlayerChar(i)->m_Pos, AimPos) <= ms_PhysSize)
+			if(distance(GameServer()->GetPlayerChar(i)->m_Pos, AimPos) <= ms_PhysSize)
 			{
 				m_pPlayer->m_Detects++;
-				if (m_pPlayer->m_Detects >= 5)
+				if(m_pPlayer->m_Detects >= 5)
 					GameServer()->OnDetect(m_pPlayer->GetCID());
 			}
 		}
 	}
+}

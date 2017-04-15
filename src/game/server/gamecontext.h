@@ -3,6 +3,7 @@
 #ifndef GAME_SERVER_GAMECONTEXT_H
 #define GAME_SERVER_GAMECONTEXT_H
 
+#include <vector>
 #include <engine/server.h>
 #include <engine/console.h>
 #include <engine/shared/memheap.h>
@@ -257,7 +258,7 @@ public:
 		int m_NumContestants;
 		vec2 m_Center;
 	};
-	array <CKOH> m_KOH;
+	std::vector<CKOH> m_KOH;
 
 
 private:
