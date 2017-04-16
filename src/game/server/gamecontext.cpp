@@ -1416,6 +1416,58 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(aBuf, sizeof(aBuf), "[IP] [%s]: %s", Server()->ClientName(id), aAddrStr);
 					SendChatTarget(ClientID, aBuf);
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "givepage ", 9) == 0 && Server()->IsAuthed(ClientID))
+				{
+					char aId[32];
+					char aAmount[32];
+					char aReason[32];
+					str_copy(aId, pMsg->m_pMessage + 10, 32);
+					str_copy(aAmount, pMsg->m_pMessage + 12, 32);
+					str_copy(aReason, pMsg->m_pMessage + 14, 32);
+					int id = str_toint(aId);
+
+					if (!m_apPlayers[id]->GetCharacter())
+						return;
+
+					char LogMsg[230];
+					char Info[100];
+					m_apPlayers[id]->m_QuestData.m_Pages += str_toint(aAmount);
+					
+					str_format(LogMsg, sizeof(LogMsg), "%s gave %d pages to %s - Reason: \"%s\"", Server()->ClientName(ClientID), str_toint(aAmount), Server()->ClientName(id), aReason);
+					str_format(Info, 100, "You have received %d pages from %s", str_toint(aAmount), Server()->ClientName(ClientID));
+					SendChatTarget(id, Info);
+					Log(LogMsg, "SlishteePagesLogs.txt");
+
+				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "vip ", 4) == 0 && Server()->IsAuthed(ClientID))
+				{
+					char aId[32];
+					char aReason[32];
+					str_copy(aId, pMsg->m_pMessage + 5, 32);
+					str_copy(aReason, pMsg->m_pMessage + 7, 32);
+					int id = str_toint(aId);
+
+					if (!m_apPlayers[id]->GetCharacter())
+						return;
+
+					char LogMsg[230];
+					m_apPlayers[id]->m_AccData.m_Vip ^= 1;
+
+					bool IsVip = m_apPlayers[id]->m_AccData.m_Vip;
+					if (IsVip)
+					{
+						SendChatTarget(id, "You are now vip!");
+						str_format(LogMsg, sizeof(LogMsg), "%s gave vip to %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
+					}
+					else
+					{
+						SendChatTarget(id, "You are no longer vip!");
+						str_format(LogMsg, sizeof(LogMsg), "%s removed vip from %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
+					}
+
+					Log(LogMsg, "SlishteeVipLogs.txt");
+					
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnote ", 10) == 0)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
