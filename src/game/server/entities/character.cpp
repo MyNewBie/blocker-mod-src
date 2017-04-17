@@ -2942,7 +2942,7 @@ void CCharacter::HandleLevelSystem()
 	if (this && IsAlive() && !m_pPlayer->m_AccData.m_UserID)
 	{
 		const char *pClan = Server()->ClientClan(GetPlayer()->GetCID());
-		if (str_find_nocase(pClan, "Lvl") || str_find_nocase(pClan, "Level"))
+		if (str_find_nocase(pClan, "Lvl") || str_find_nocase(pClan, "Level") || str_find_nocase(pClan, "LvI"))
 			Server()->SetClientClan(m_Core.m_Id, "Loser");
 	}
 }
