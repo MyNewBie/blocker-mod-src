@@ -1439,7 +1439,7 @@ void CClient::ProcessConnlessPacket(CNetChunk *pPacket)
 			str_copy(Info.m_aClients[i].m_aClan, Up.GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), sizeof(Info.m_aClients[i].m_aClan));
 			Info.m_aClients[i].m_Country = str_toint(Up.GetString());
 			Info.m_aClients[i].m_Score = str_toint(Up.GetString());
-			Info.m_aClients[i].m_Player = str_toint(Up.GetString()) != 0 ? true : false;
+			Info.m_aClients[i].m_Player = str_toint(Up.GetString()) != 0;
 		}
 
 		if(!Up.Error())
@@ -1461,21 +1461,29 @@ void CClient::ProcessConnlessPacket(CNetChunk *pPacket)
 				}
 			}
 
-			if (Is64Player(&Info))
+			if((pEntry = m_ServerBrowser.Find(pPacket->m_Address)))
 			{
-				pEntry = m_ServerBrowser.Find(pPacket->m_Address);
-				if (pEntry)
+				if (Is256Player(&Info))
 				{
-					pEntry->m_Is64 = true;
+					pEntry->m_PType = CServerBrowser::CServerEntry::PTYPE_256;
+					m_ServerBrowser.RequestImpl256(pEntry->m_Addr, pEntry); // Force a quick update
+					//m_ServerBrowser.QueueRequest(pEntry);
+				}
+				else if (Is64Player(&Info))
+				{
+					pEntry->m_PType = CServerBrowser::CServerEntry::PTYPE_64;
 					m_ServerBrowser.RequestImpl64(pEntry->m_Addr, pEntry); // Force a quick update
 					//m_ServerBrowser.QueueRequest(pEntry);
 				}
+				else
+					pEntry->m_PType = CServerBrowser::CServerEntry::PTYPE_16;
 			}
 		}
 	}
 
-	// server info 64
-	if(pPacket->m_DataSize >= (int)sizeof(SERVERBROWSE_INFO64) && mem_comp(pPacket->m_pData, SERVERBROWSE_INFO64, sizeof(SERVERBROWSE_INFO64)) == 0)
+	// server info 64/256
+	if((pPacket->m_DataSize >= (int)sizeof(SERVERBROWSE_INFO64) && mem_comp(pPacket->m_pData, SERVERBROWSE_INFO64, sizeof(SERVERBROWSE_INFO64)) == 0) ||
+			(pPacket->m_DataSize >= (int)sizeof(SERVERBROWSE_INFO256) && mem_comp(pPacket->m_pData, SERVERBROWSE_INFO256, sizeof(SERVERBROWSE_INFO256)) == 0))
 	{
 		// we got ze info
 		CUnpacker Up;
@@ -1486,7 +1494,7 @@ void CClient::ProcessConnlessPacket(CNetChunk *pPacket)
 		if (pEntry)
 			Info = pEntry->m_Info;
 
-		Up.Reset((unsigned char*)pPacket->m_pData+sizeof(SERVERBROWSE_INFO64), pPacket->m_DataSize-sizeof(SERVERBROWSE_INFO64));
+		Up.Reset((unsigned char*)pPacket->m_pData+sizeof(SERVERBROWSE_INFO), pPacket->m_DataSize-sizeof(SERVERBROWSE_INFO));
 		int Token = str_toint(Up.GetString());
 		str_copy(Info.m_aVersion, Up.GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), sizeof(Info.m_aVersion));
 		str_copy(Info.m_aName, Up.GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), sizeof(Info.m_aName));
@@ -1513,14 +1521,14 @@ void CClient::ProcessConnlessPacket(CNetChunk *pPacket)
 			str_copy(Info.m_aClients[i].m_aClan, Up.GetString(CUnpacker::SANITIZE_CC|CUnpacker::SKIP_START_WHITESPACES), sizeof(Info.m_aClients[i].m_aClan));
 			Info.m_aClients[i].m_Country = str_toint(Up.GetString());
 			Info.m_aClients[i].m_Score = str_toint(Up.GetString());
-			Info.m_aClients[i].m_Player = str_toint(Up.GetString()) != 0 ? true : false;
+			Info.m_aClients[i].m_Player = str_toint(Up.GetString()) != 0;
 		}
 
 		if(!Up.Error())
 		{
 			// sort players
 			if (Offset + 24 >= Info.m_NumClients)
-				qsort(Info.m_aClients, Info.m_NumClients, sizeof(*Info.m_aClients), PlayerScoreNameComp);
+				qsort(Info.m_aClients, (size_t)Info.m_NumClients, sizeof(*Info.m_aClients), PlayerScoreNameComp);
 
 			m_ServerBrowser.Set(pPacket->m_Address, IServerBrowser::SET_TOKEN, Token, &Info);
 

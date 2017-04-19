@@ -580,67 +580,52 @@ void CServerBrowser::Refresh(int Type)
 	}
 }
 
+#define MACRO_RequestImpl_CODE(SERVERBROWSE_GETINFO_TYPE) \
+	static unsigned char Buffer[sizeof(SERVERBROWSE_GETINFO_TYPE)+1]; \
+	CNetChunk Packet; \
+ \
+	if(g_Config.m_Debug) \
+	{ \
+		char aAddrStr[NETADDR_MAXSTRSIZE]; \
+		net_addr_str(&Addr, aAddrStr, sizeof(aAddrStr), true); \
+		char aBuf[256]; \
+		str_format(aBuf, sizeof(aBuf),"requesting server info '%s' from %s", #SERVERBROWSE_GETINFO_TYPE, aAddrStr); \
+		m_pConsole->Print(IConsole::OUTPUT_LEVEL_DEBUG, "client_srvbrowse", aBuf); \
+	} \
+ \
+	mem_copy(Buffer, SERVERBROWSE_GETINFO_TYPE, sizeof(SERVERBROWSE_GETINFO_TYPE)); \
+	Buffer[sizeof(SERVERBROWSE_GETINFO_TYPE)] = m_CurrentToken; \
+ \
+	Packet.m_ClientID = -1; \
+	Packet.m_Address = Addr; \
+	Packet.m_Flags = NETSENDFLAG_CONNLESS; \
+	Packet.m_DataSize = sizeof(Buffer); \
+	Packet.m_pData = Buffer; \
+ \
+	m_pNetClient->Send(&Packet); \
+ \
+	if(pEntry) \
+		pEntry->m_RequestTime = time_get();
+
 void CServerBrowser::RequestImpl(const NETADDR &Addr, CServerEntry *pEntry) const
 {
-	unsigned char Buffer[sizeof(SERVERBROWSE_GETINFO)+1];
-	CNetChunk Packet;
-
-	if(g_Config.m_Debug)
-	{
-		char aAddrStr[NETADDR_MAXSTRSIZE];
-		net_addr_str(&Addr, aAddrStr, sizeof(aAddrStr), true);
-		char aBuf[256];
-		str_format(aBuf, sizeof(aBuf),"requesting server info from %s", aAddrStr);
-		m_pConsole->Print(IConsole::OUTPUT_LEVEL_DEBUG, "client_srvbrowse", aBuf);
-	}
-
-	mem_copy(Buffer, SERVERBROWSE_GETINFO, sizeof(SERVERBROWSE_GETINFO));
-	Buffer[sizeof(SERVERBROWSE_GETINFO)] = m_CurrentToken;
-
-	Packet.m_ClientID = -1;
-	Packet.m_Address = Addr;
-	Packet.m_Flags = NETSENDFLAG_CONNLESS;
-	Packet.m_DataSize = sizeof(Buffer);
-	Packet.m_pData = Buffer;
-
-	m_pNetClient->Send(&Packet);
-
-	if(pEntry)
-		pEntry->m_RequestTime = time_get();
+	MACRO_RequestImpl_CODE(SERVERBROWSE_GETINFO)
 }
 
 void CServerBrowser::RequestImpl64(const NETADDR &Addr, CServerEntry *pEntry) const
 {
-	unsigned char Buffer[sizeof(SERVERBROWSE_GETINFO64)+1];
-	CNetChunk Packet;
+	MACRO_RequestImpl_CODE(SERVERBROWSE_GETINFO64)
+}
 
-	if(g_Config.m_Debug)
-	{
-		char aAddrStr[NETADDR_MAXSTRSIZE];
-		net_addr_str(&Addr, aAddrStr, sizeof(aAddrStr), true);
-		char aBuf[256];
-		str_format(aBuf, sizeof(aBuf),"requesting server info 64 from %s", aAddrStr);
-		m_pConsole->Print(IConsole::OUTPUT_LEVEL_DEBUG, "client_srvbrowse", aBuf);
-	}
-
-	mem_copy(Buffer, SERVERBROWSE_GETINFO64, sizeof(SERVERBROWSE_GETINFO64));
-	Buffer[sizeof(SERVERBROWSE_GETINFO64)] = m_CurrentToken;
-
-	Packet.m_ClientID = -1;
-	Packet.m_Address = Addr;
-	Packet.m_Flags = NETSENDFLAG_CONNLESS;
-	Packet.m_DataSize = sizeof(Buffer);
-	Packet.m_pData = Buffer;
-
-	m_pNetClient->Send(&Packet);
-
-	if(pEntry)
-		pEntry->m_RequestTime = time_get();
+void CServerBrowser::RequestImpl256(const NETADDR &Addr, CServerEntry *pEntry) const
+{
+	MACRO_RequestImpl_CODE(SERVERBROWSE_GETINFO256)
 }
 
 void CServerBrowser::Request(const NETADDR &Addr) const
 {
-	// Call both because we can't know what kind the server is
+	// Call all because we can't know what kind the server is ((well this is becoming kinda spammy))
+	RequestImpl256(Addr, 0);
 	RequestImpl64(Addr, 0);
 	RequestImpl(Addr, 0);
 }
@@ -774,7 +759,9 @@ void CServerBrowser::Update(bool ForceResort)
 
 		if(pEntry->m_RequestTime == 0)
 		{
-			if (pEntry->m_Is64)
+			if(pEntry->m_PType == CServerEntry::PTYPE_256)
+				RequestImpl256(pEntry->m_Addr, pEntry);
+			else if(pEntry->m_PType == CServerEntry::PTYPE_64)
 				RequestImpl64(pEntry->m_Addr, pEntry);
 			else
 				RequestImpl(pEntry->m_Addr, pEntry);

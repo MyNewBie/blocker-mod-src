@@ -11,9 +11,16 @@ public:
 	class CServerEntry
 	{
 	public:
+		enum
+		{
+			PTYPE_16=0,
+			PTYPE_64,
+			PTYPE_256
+		};
+
 		NETADDR m_Addr;
 		int64 m_RequestTime;
-		bool m_Is64;
+		int m_PType;
 		int m_GotInfo;
 		CServerInfo m_Info;
 
@@ -94,6 +101,7 @@ public:
 	void SetBaseInfo(class CNetClient *pClient, const char *pNetVersion);
 
 	void RequestImpl64(const NETADDR &Addr, CServerEntry *pEntry) const;
+	void RequestImpl256(const NETADDR &Addr, CServerEntry *pEntry) const;
 	void QueueRequest(CServerEntry *pEntry);
 	CServerEntry *Find(const NETADDR &Addr);
 	int GetCurrentType() { return m_ServerlistType; };

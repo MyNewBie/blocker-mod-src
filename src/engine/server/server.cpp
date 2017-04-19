@@ -1354,7 +1354,7 @@ void CServer::DummyLeave(int DummyID, const char *pReason)
 	m_NetServer.DummyDelete(DummyID);
 }
 
-void CServer::SendServerInfoConnless(const NETADDR *pAddr, int Token, bool Extended)
+void CServer::SendServerInfoConnless(const NETADDR *pAddr, int Token, int InfoType)
 {
 	const int MaxRequests = g_Config.m_SvServerInfoPerSecond;
 	int64 Now = Tick();
@@ -1370,14 +1370,17 @@ void CServer::SendServerInfoConnless(const NETADDR *pAddr, int Token, bool Exten
 	}
 
 	bool Short = m_ServerInfoNumRequests > MaxRequests || m_ServerInfoHighLoad;
-	SendServerInfo(pAddr, Token, Extended, 0, Short);
+	SendServerInfo(pAddr, Token, InfoType, 0, Short);
 }
 
-void CServer::SendServerInfo(const NETADDR *pAddr, int Token, bool Extended, int Offset, bool Short)
+void CServer::SendServerInfo(const NETADDR *pAddr, int Token, int InfoType, int Offset, bool Short)
 {
 	CNetChunk Packet;
 	CPacker p;
 	char aBuf[128];
+
+	const bool Extended = InfoType >= SERVERINFO_EXTENDED;
+//	const bool Is256 = InfoType == SERVERINFO_256;
 
 	Packet.m_ClientID = -1;
 	Packet.m_Address = *pAddr;
@@ -1389,16 +1392,23 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, bool Extended, int
 	{
 		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
 		{
-			if(GameServer()->IsClientPlayer(i))
-				PlayerCount++;
+			if(GameServer()->IsClientDummy(i) && !g_Config.m_SvServerinfoDummies)
+				DummyCount++;
+			else
+			{
+				if(GameServer()->IsClientPlayer(i))
+					PlayerCount++;
 
-			ClientCount++;
+				ClientCount++;
+			}
 		}
 	}
 
 	p.Reset();
 
-	if(Extended)
+	if(InfoType == SERVERINFO_256)
+		p.AddRaw(SERVERBROWSE_INFO256, sizeof(SERVERBROWSE_INFO256));
+	else if(InfoType == SERVERINFO_EXTENDED)
 		p.AddRaw(SERVERBROWSE_INFO64, sizeof(SERVERBROWSE_INFO64));
 	else
 		p.AddRaw(SERVERBROWSE_INFO, sizeof(SERVERBROWSE_INFO));
@@ -1407,17 +1417,27 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, bool Extended, int
 	p.AddString(aBuf, 6);
 
 	p.AddString(GameServer()->Version(), 32);
-	if (Extended)
+	if(InfoType == SERVERINFO_256)
 	{
-			p.AddString(g_Config.m_SvName, 256);
+		p.AddString(g_Config.m_SvName, 256);
 	}
-	else
+	else if(InfoType == SERVERINFO_EXTENDED)
+	{
+		if (m_NetServer.MaxClients() <= DDNET_MAX_CLIENTS)
+			p.AddString(g_Config.m_SvName, 256);
+		else
+		{
+			str_format(aBuf, sizeof(aBuf), "%s [%d/%d]", g_Config.m_SvName, ClientCount+DummyCount, m_NetServer.MaxClients());
+			p.AddString(aBuf, 256);
+		}
+	}
+	else // vanilla
 	{
 		if (m_NetServer.MaxClients() <= VANILLA_MAX_CLIENTS)
 			p.AddString(g_Config.m_SvName, 64);
 		else
 		{
-			str_format(aBuf, sizeof(aBuf), "%s [%d/%d]", g_Config.m_SvName, ClientCount, m_NetServer.MaxClients());
+			str_format(aBuf, sizeof(aBuf), "%s [%d/%d]", g_Config.m_SvName, ClientCount+DummyCount, m_NetServer.MaxClients());
 			p.AddString(aBuf, 64);
 		}
 	}
@@ -1433,8 +1453,19 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, bool Extended, int
 	str_format(aBuf, sizeof(aBuf), "%d", i);
 	p.AddString(aBuf, 2);
 
-	int MaxClients = m_NetServer.MaxClients();
-	if (!Extended)
+	int MaxClients = /*m_NetServer.MaxClients()*/g_Config.m_SvMaxClients-DummyCount;
+	if (InfoType == SERVERINFO_EXTENDED)
+	{
+		if (ClientCount >= DDNET_MAX_CLIENTS)
+		{
+			if (ClientCount < MaxClients)
+				ClientCount = DDNET_MAX_CLIENTS - 1;
+			else
+				ClientCount = DDNET_MAX_CLIENTS;
+		}
+		if (MaxClients > DDNET_MAX_CLIENTS) MaxClients = DDNET_MAX_CLIENTS;
+	}
+	else if(InfoType == SERVERINFO_VANILLA)
 	{
 		if (ClientCount >= VANILLA_MAX_CLIENTS)
 		{
@@ -1448,6 +1479,8 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, bool Extended, int
 
 	if (PlayerCount > ClientCount)
 		PlayerCount = ClientCount;
+
+	dbg_msg("DENNIS", "sending serverinfo %i with %i clients and %i dummies (max: %i)", InfoType, ClientCount, DummyCount, MaxClients);
 
 	str_format(aBuf, sizeof(aBuf), "%d", PlayerCount); p.AddString(aBuf, 3); // num players
 	str_format(aBuf, sizeof(aBuf), "%d", MaxClients-g_Config.m_SvSpectatorSlots); p.AddString(aBuf, -1); // max players
@@ -1473,6 +1506,9 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, bool Extended, int
 	{
 		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
 		{
+			if(GameServer()->IsClientDummy(i) && !g_Config.m_SvServerinfoDummies)
+				continue;
+
 			if (Skip-- > 0)
 				continue;
 			if (--Take < 0)
@@ -1492,7 +1528,7 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, bool Extended, int
 	m_NetServer.Send(&Packet);
 
 	if (Extended && Take < 0)
-		SendServerInfo(pAddr, Token, Extended, Offset + ClientsPerPacket);
+		SendServerInfo(pAddr, Token, InfoType, Offset + ClientsPerPacket);
 }
 
 void CServer::UpdateServerInfo()
@@ -1501,8 +1537,8 @@ void CServer::UpdateServerInfo()
 	{
 		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
 		{
-			SendServerInfo(m_NetServer.ClientAddr(i), -1, true);
-			SendServerInfo(m_NetServer.ClientAddr(i), -1, false);
+			for(int InfoType = SERVERINFO_NUM_TYPES-1; InfoType >= SERVERINFO_VANILLA; InfoType++)
+				SendServerInfo(m_NetServer.ClientAddr(i), -1, InfoType);
 		}
 	}
 }
@@ -1522,25 +1558,28 @@ void CServer::PumpNetwork()
 			// stateless
 			if(!m_Register.RegisterProcessPacket(&Packet))
 			{
-				bool ServerInfo = false;
-				bool Extended = false;
+				int ServerInfo = -1;
 
 				if(Packet.m_DataSize == sizeof(SERVERBROWSE_GETINFO)+1 &&
 					mem_comp(Packet.m_pData, SERVERBROWSE_GETINFO, sizeof(SERVERBROWSE_GETINFO)) == 0)
 				{
-					ServerInfo = true;
-					Extended = false;
+					ServerInfo = SERVERINFO_VANILLA;
 				}
 				else if(Packet.m_DataSize == sizeof(SERVERBROWSE_GETINFO64)+1 &&
 					mem_comp(Packet.m_pData, SERVERBROWSE_GETINFO64, sizeof(SERVERBROWSE_GETINFO64)) == 0)
 				{
-					ServerInfo = true;
-					Extended = true;
+					ServerInfo = SERVERINFO_EXTENDED;
 				}
-				if(ServerInfo)
+				else if(Packet.m_DataSize == sizeof(SERVERBROWSE_GETINFO256)+1 &&
+					mem_comp(Packet.m_pData, SERVERBROWSE_GETINFO256, sizeof(SERVERBROWSE_GETINFO256)) == 0)
+				{
+					ServerInfo = SERVERINFO_256;
+				}
+
+				if(ServerInfo > -1)
 				{
 					int Token = ((unsigned char *)Packet.m_pData)[sizeof(SERVERBROWSE_GETINFO)];
-					SendServerInfoConnless(&Packet.m_Address, Token, Extended);
+					SendServerInfoConnless(&Packet.m_Address, Token, ServerInfo);
 				}
 			}
 		}
@@ -2541,5 +2580,5 @@ int* CServer::GetIdMap(int ClientID)
 
 int* CServer::GetIdMap64(int ClientID)
 {
-	return &m_aIdMap[DDNET_MAX_CLIENTS * ClientID];
+	return &m_aIdMap64[DDNET_MAX_CLIENTS * ClientID];
 }

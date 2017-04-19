@@ -190,6 +190,8 @@ MACRO_CONFIG_INT(SvLMBMaxPlayer, sv_lmb_max_player, MAX_CLIENTS, 2, MAX_CLIENTS,
 MACRO_CONFIG_INT(SvLMBSpawnFreezeTime, sv_lmb_spawn_freeze_time, 3, 0, 5, CFGFLAG_SERVER, "Specifies the amount of time a player is frozen at the spawn")
 MACRO_CONFIG_INT(SvLMBCooldown, sv_lmb_cooldown, 30, 0, 120, CFGFLAG_SERVER, "Minutes that have to pass unless a new round can start.")
 
+MACRO_CONFIG_INT(SvServerinfoDummies, sv_serverinfo_dummies, 0, 0, 1, CFGFLAG_SERVER, "Include dummies in the serverinfos (might get you a masterban)")
+
 // debug
 #ifdef CONF_DEBUG // this one can crash the server if not used correctly
 	MACRO_CONFIG_INT(DbgDummies, dbg_dummies, 0, 0, 15, CFGFLAG_SERVER, "")

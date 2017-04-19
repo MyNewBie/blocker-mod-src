@@ -230,6 +230,7 @@ public:
 
 	virtual bool IsClientReady(int ClientID);
 	virtual bool IsClientPlayer(int ClientID);
+	virtual bool IsClientDummy(int ClientID);
 
 	virtual const char *GameType();
 	virtual const char *Version();

@@ -54,6 +54,13 @@ bool Is64Player(const CServerInfo *pInfo)
 	    || IsDDNet(pInfo);
 }
 
+bool Is256Player(const CServerInfo *pInfo)
+{
+	return str_find(pInfo->m_aGameType, "256")
+	    || str_find(pInfo->m_aName, "256")
+	    || IsDDNet(pInfo);
+}
+
 bool IsPlus(const CServerInfo *pInfo)
 {
 	return str_find(pInfo->m_aGameType, "+");
