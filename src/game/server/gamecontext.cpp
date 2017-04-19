@@ -1544,7 +1544,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "beginquest", 10) == 0)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive() || m_PlayerCount < g_Config.m_SvQuestCount)
+					{
+						if (m_PlayerCount < g_Config.m_SvQuestCount)
+							SendChatTarget(ClientID, "There are not enough players for the quest engine to run");
 						return;
+					}
 
 					if (pPlayer->m_QuestData.QuestActive())
 					{
