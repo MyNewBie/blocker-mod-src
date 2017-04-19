@@ -47,6 +47,14 @@ CHAT_COMMAND("times", "?s?i", CFGFLAG_CHAT|CFGFLAG_SERVER, ConTimes, this, "/tim
 CHAT_COMMAND("points", "?r", CFGFLAG_CHAT|CFGFLAG_SERVER, ConPoints, this, "Shows the global points of a player beginning with name r (your rank by default)")
 CHAT_COMMAND("top5points", "?i", CFGFLAG_CHAT|CFGFLAG_SERVER, ConTopPoints, this, "Shows five points of the global point ladder beginning with rank i (1 by default)")
 #endif
+
+CHAT_COMMAND("dummy", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConDummy, this, "Spawns one more dummy")
+CHAT_COMMAND("dummy_delete", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConDummyDelete, this, "Deletes one more dummy")
+CHAT_COMMAND("delete", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConDummyDelete, this, "Deletes one more dummy")
+
+CHAT_COMMAND("d", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConDummy, this, "Spawns one more dummy")
+CHAT_COMMAND("dd", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConDummyDelete, this, "Deletes one more dummy")
+
 #undef CHAT_COMMAND
 
 #endif

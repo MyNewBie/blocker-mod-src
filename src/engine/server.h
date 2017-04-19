@@ -165,6 +165,10 @@ public:
 	virtual void GetClientAddr(int ClientID, NETADDR *pAddr) = 0;
 
 	virtual int* GetIdMap(int ClientID) = 0;
+	
+	virtual void DummyJoin(int DummyID, const char *pDummyName, const char *pDummyClan, int Country) = 0;
+	virtual void DummyLeave(int DummyID, const char *pDummyName = 0) = 0;
+
 };
 
 class IGameServer : public IInterface

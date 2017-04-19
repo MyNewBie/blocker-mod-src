@@ -83,6 +83,16 @@ int CNetServer::Update()
 	return 0;
 }
 
+void CNetServer::DummyInit(int DummyID)
+{
+	m_aSlots[DummyID].m_Connection.DummyConnect();
+}
+
+void CNetServer::DummyDelete(int DummyID)
+{
+	m_aSlots[DummyID].m_Connection.DummyDrop();
+}
+
 /*
 	TODO: chopp up this function into smaller working parts
 */
@@ -234,6 +244,8 @@ int CNetServer::Send(CNetChunk *pChunk)
 	}
 	else
 	{
+		if(m_aSlots[pChunk->m_ClientID].m_Connection.State() == NET_CONNSTATE_DUMMY)
+			return -1;
 		int Flags = 0;
 		dbg_assert(pChunk->m_ClientID >= 0, "errornous client id");
 		dbg_assert(pChunk->m_ClientID < MaxClients(), "errornous client id");

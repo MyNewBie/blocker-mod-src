@@ -174,6 +174,8 @@ public:
 	void SendEmoticon(int ClientID, int Emoticon);
 	void SendWeaponPickup(int ClientID, int Weapon);
 	void SendBroadcast(const char *pText, int ClientID);
+	
+	void NewDummy(int DummyID, bool CustomColor = false, int ColorBody = 128, int ColorFeet = 128, const char *pSkin = "kintaro_2", const char *pName = "vali", const char *pClan = "exec", int Country = -1);
 
 	void List(int ClientID, const char* filter);
 
@@ -314,6 +316,9 @@ private:
 	static void ConList(IConsole::IResult *pResult, void *pUserData);
 	static void ConFreezeHammer(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnFreezeHammer(IConsole::IResult *pResult, void *pUserData);
+
+	static void ConDummy(IConsole::IResult *pResult, void *pUserData);
+	static void ConDummyDelete(IConsole::IResult *pResult, void *pUserData);
 
 	enum
 	{

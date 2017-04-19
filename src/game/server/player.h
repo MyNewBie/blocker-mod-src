@@ -174,6 +174,10 @@ public:
 #if defined(CONF_SQL)
 	int64 m_LastSQLQuery;
 #endif
+
+public:
+	bool m_IsDummy;
+
 };
 
 #endif
