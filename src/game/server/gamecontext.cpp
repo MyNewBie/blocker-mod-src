@@ -2906,7 +2906,7 @@ void CGameContext::ConOpenLMB(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConOpenKOH(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	pSelf->m_KOHActive = true;
+	pSelf->m_KOHActive ^= 1; // Toggle
 	for(unsigned i = 0; i < pSelf->m_KOH.size(); i++)
 		pSelf->m_KOH[i].m_NumContestants = 0;
 }
