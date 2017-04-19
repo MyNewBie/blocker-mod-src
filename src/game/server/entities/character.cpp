@@ -1311,7 +1311,7 @@ void CCharacter::Snap(int SnappingClient)
 					pFirstParticle->m_VelX = 4;
 					pFirstParticle->m_VelY = 4;
 					pFirstParticle->m_StartTick = Server()->Tick() - 4;
-					pFirstParticle->m_Type = 0;
+					pFirstParticle->m_Type = g_Config.m_SvKOHCircleType;
 				}
 			}
 		}
