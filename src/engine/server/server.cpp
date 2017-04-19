@@ -1480,7 +1480,7 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, int InfoType, int 
 	if (PlayerCount > ClientCount)
 		PlayerCount = ClientCount;
 
-	dbg_msg("DENNIS", "sending serverinfo %i with %i clients and %i dummies (max: %i)", InfoType, ClientCount, DummyCount, MaxClients);
+//	dbg_msg("DENNIS", "sending serverinfo %i with %i clients and %i dummies (max: %i)", InfoType, ClientCount, DummyCount, MaxClients);
 
 	str_format(aBuf, sizeof(aBuf), "%d", PlayerCount); p.AddString(aBuf, 3); // num players
 	str_format(aBuf, sizeof(aBuf), "%d", MaxClients-g_Config.m_SvSpectatorSlots); p.AddString(aBuf, -1); // max players
@@ -1506,11 +1506,15 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, int InfoType, int 
 	{
 		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
 		{
+			// skip everything that has already been sent
+			if (Skip-- > 0)
+				continue;
+
+			// send dummies?
 			if(GameServer()->IsClientDummy(i) && !g_Config.m_SvServerinfoDummies)
 				continue;
 
-			if (Skip-- > 0)
-				continue;
+			// limit the number of clients per packet
 			if (--Take < 0)
 				break;
 
@@ -1537,7 +1541,7 @@ void CServer::UpdateServerInfo()
 	{
 		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
 		{
-			for(int InfoType = SERVERINFO_NUM_TYPES-1; InfoType >= SERVERINFO_VANILLA; InfoType++)
+			for(int InfoType = SERVERINFO_NUM_TYPES-1; InfoType >= SERVERINFO_VANILLA; InfoType--)
 				SendServerInfo(m_NetServer.ClientAddr(i), -1, InfoType);
 		}
 	}
