@@ -239,6 +239,89 @@ void CGameWorld::UpdatePlayerMaps()
 	}
 }
 
+void CGameWorld::UpdatePlayerMaps64()
+{
+	if (Server()->Tick() % g_Config.m_SvMapUpdateRate != 0) return;
+
+	std::pair<float,int> dist[MAX_CLIENTS];
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (!Server()->ClientIngame(i)) continue;
+		int *aIdMap = Server()->GetIdMap64(i);
+
+		// compute distances
+		for (int j = 0; j < MAX_CLIENTS; j++)
+		{
+			dist[j].second = j;
+			if (!Server()->ClientIngame(j) || !GameServer()->m_apPlayers[j])
+			{
+				dist[j].first = 1e10;
+				continue;
+			}
+			CCharacter* ch = GameServer()->m_apPlayers[j]->GetCharacter();
+			if (!ch)
+			{
+				dist[j].first = 1e9;
+				continue;
+			}
+			// copypasted chunk from character.cpp Snap() follows
+			CCharacter* SnapChar = GameServer()->GetPlayerChar(i);
+			if(SnapChar && !SnapChar->m_Super &&
+				!GameServer()->m_apPlayers[i]->m_Paused && GameServer()->m_apPlayers[i]->GetTeam() != -1 &&
+				!ch->CanCollide(i) &&
+				(!GameServer()->m_apPlayers[i] ||
+					GameServer()->m_apPlayers[i]->m_ClientVersion == VERSION_VANILLA ||
+					(GameServer()->m_apPlayers[i]->m_ClientVersion >= VERSION_DDRACE &&
+					!GameServer()->m_apPlayers[i]->m_ShowOthers
+					)
+				)
+			)
+				dist[j].first = 1e8;
+			else
+				dist[j].first = 0;
+
+			dist[j].first += distance(GameServer()->m_apPlayers[i]->m_ViewPos, GameServer()->m_apPlayers[j]->GetCharacter()->m_Pos);
+		}
+
+		// always send the player himself
+		dist[i].first = 0;
+
+		// compute reverse map
+		int rMap[MAX_CLIENTS];
+		for (int j = 0; j < MAX_CLIENTS; j++)
+			rMap[j] = -1;
+
+		for (int j = 0; j < DDNET_MAX_CLIENTS; j++)
+		{
+			if (aIdMap[j] == -1) continue;
+			if (dist[aIdMap[j]].first > 5e9) aIdMap[j] = -1;
+			else rMap[aIdMap[j]] = j;
+		}
+
+		std::nth_element(&dist[0], &dist[DDNET_MAX_CLIENTS - 1], &dist[MAX_CLIENTS], distCompare);
+
+		int mapc = 0;
+		int demand = 0;
+		for (int j = 0; j < DDNET_MAX_CLIENTS - 1; j++)
+		{
+			int k = dist[j].second;
+			if (rMap[k] != -1 || dist[j].first > 5e9) continue;
+			while (mapc < DDNET_MAX_CLIENTS && aIdMap[mapc] != -1) mapc++;
+			if (mapc < DDNET_MAX_CLIENTS - 1)
+				aIdMap[mapc] = k;
+			else
+				demand++;
+		}
+		for (int j = MAX_CLIENTS - 1; j > DDNET_MAX_CLIENTS - 2; j--)
+		{
+			int k = dist[j].second;
+			if (rMap[k] != -1 && demand-- > 0)
+				aIdMap[rMap[k]] = -1;
+		}
+		aIdMap[DDNET_MAX_CLIENTS - 1] = -1; // player with empty name to say chat msgs
+	}
+}
+
 void CGameWorld::Tick()
 {
 	if(m_ResetRequested)
@@ -280,6 +363,7 @@ void CGameWorld::Tick()
 	RemoveEntities();
 
 	UpdatePlayerMaps();
+	UpdatePlayerMaps64();
 }
 
 // TODO: should be more general

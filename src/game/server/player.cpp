@@ -75,12 +75,21 @@ void CPlayer::Reset()
 	if (m_AccData.m_UserID)
 		m_pAccount->Apply();
 
-	int* idMap = Server()->GetIdMap(m_ClientID);
-	for (int i = 1;i < VANILLA_MAX_CLIENTS;i++)
+	// clear vanilla IdMap
 	{
-		idMap[i] = -1;
+		int *aIdMap = Server()->GetIdMap(m_ClientID);
+		for (int i = 1; i < VANILLA_MAX_CLIENTS; i++)
+			aIdMap[i] = -1;
+		aIdMap[0] = m_ClientID;
 	}
-	idMap[0] = m_ClientID;
+
+	// clear ddnet IdMap
+	{
+		int *aIdMap = Server()->GetIdMap64(m_ClientID);
+		for (int i = 1; i < DDNET_MAX_CLIENTS; i++)
+			aIdMap[i] = -1;
+		aIdMap[0] = m_ClientID;
+	}
 
 	// DDRace
 
@@ -136,6 +145,7 @@ void CPlayer::Reset()
 	GameServer()->Score()->PlayerData(m_ClientID)->Reset();
 
 	m_ClientVersion = VERSION_VANILLA;
+	m_Is256 = false;
 	m_ShowOthers = g_Config.m_SvShowOthersDefault;
 	m_ShowAll = g_Config.m_SvShowAllDefault;
 	m_SpecTeam = 0;
@@ -316,11 +326,11 @@ void CPlayer::Snap(int SnappingClient)
 	if(!Server()->ClientIngame(m_ClientID))
 		return;
 
-	int id = m_ClientID;
-		if (SnappingClient > -1 && !Server()->Translate(id, SnappingClient))
+	int ID = m_ClientID;
+	if(SnappingClient > -1 && !Server()->Translate(&ID, SnappingClient))
 		return;
 
-	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, id, sizeof(CNetObj_ClientInfo)));
+	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, ID, sizeof(CNetObj_ClientInfo)));
 
 	if(!pClientInfo)
 		return;
@@ -330,7 +340,8 @@ void CPlayer::Snap(int SnappingClient)
 		StrToInts(&pClientInfo->m_Name0, 4, " ");
 		StrToInts(&pClientInfo->m_Clan0, 3, " ");
 		pClientInfo->m_Country = -1;
-	} else
+	}
+	else
 	{
 		StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
 		StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
@@ -343,20 +354,22 @@ void CPlayer::Snap(int SnappingClient)
 		pClientInfo->m_UseCustomColor = 0;
 		pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
 		pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
-	} else
+	}
+	else
 	{
 		if(g_Config.m_SvAnonymousBlock)
 		{
 			if (Server()->Tick() >= m_LastTriggerTick + Server()->TickSpeed()*2) {
 				m_LastTriggerTick = Server()->Tick();
 				m_RandIndex = rand() % 16;
-				m_pSkin = m_aSkins[m_RandIndex].c_str();	
+				m_pSkin = m_aSkins[m_RandIndex].c_str();
 			}
 			StrToInts(&pClientInfo->m_Skin0, 6, m_pSkin);
 			pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
 			pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
 			pClientInfo->m_UseCustomColor = 0;
-		} else
+		}
+		else
 		{
 			StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
 			pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
@@ -365,15 +378,15 @@ void CPlayer::Snap(int SnappingClient)
 		}
 	}
 
-	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, id, sizeof(CNetObj_PlayerInfo)));
+	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, ID, sizeof(CNetObj_PlayerInfo)));
 	if(!pPlayerInfo)
 		return;
 
 	pPlayerInfo->m_Latency = SnappingClient == -1 ? m_Latency.m_Min : GameServer()->m_apPlayers[SnappingClient]->m_aActLatency[m_ClientID];
 	pPlayerInfo->m_Local = 0;
-	pPlayerInfo->m_ClientID = id;
+	pPlayerInfo->m_ClientID = ID;
 	pPlayerInfo->m_Score = abs(m_Score) * -1;
-	pPlayerInfo->m_Team = (m_ClientVersion < VERSION_DDNET_OLD || m_Paused != PAUSED_SPEC || m_ClientID != SnappingClient) && m_Paused < PAUSED_PAUSED ? m_Team : TEAM_SPECTATORS;
+	pPlayerInfo->m_Team = (!m_Is256 || m_Paused != PAUSED_SPEC || m_ClientID != SnappingClient) && m_Paused < PAUSED_PAUSED ? m_Team : TEAM_SPECTATORS;
 
 	if(m_ClientID == SnappingClient && (m_Paused != PAUSED_SPEC || m_ClientVersion >= VERSION_DDNET_OLD))
 		pPlayerInfo->m_Local = 1;
@@ -404,10 +417,14 @@ void CPlayer::FakeSnap()
 	// This is problematic when it's sent before we know whether it's a non-64-player-client
 	// Then we can't spectate players at the start
 
-	if(m_ClientVersion >= VERSION_DDNET_OLD)
+	if(m_Is256)
 		return;
 
-	int FakeID = VANILLA_MAX_CLIENTS - 1;
+	int FakeID;
+	if(m_ClientVersion < VERSION_DDNET_OLD)
+		FakeID = VANILLA_MAX_CLIENTS - 1;
+	else
+		FakeID = DDNET_MAX_CLIENTS -1;
 
 	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, FakeID, sizeof(CNetObj_ClientInfo)));
 
@@ -486,7 +503,7 @@ void CPlayer::OnPredictedInput(CNetObj_PlayerInput *NewInput)
 	// Magic number when we can hope that client has successfully identified itself
 	if(m_NumInputs == 20)
 	{
-		if(g_Config.m_SvClientSuggestion[0] != '\0' && m_ClientVersion <= VERSION_DDNET_OLD)
+		if(g_Config.m_SvClientSuggestion[0] != '\0' && m_ClientVersion <= VERSION_DDNET_OLD) // TODO: suggest some 256 client
 			GameServer()->SendBroadcast(g_Config.m_SvClientSuggestion, m_ClientID);
 	}
 }

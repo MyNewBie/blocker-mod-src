@@ -87,7 +87,7 @@ public:
 	int m_VotePos;
 	//
 	int m_LastVoteCall;
-	int m_LastVoteTry;
+	int64 m_LastVoteTry;
 	int m_LastChat;
 	int m_LastSetTeam;
 	int m_LastSetSpectatorMode;
@@ -309,6 +309,7 @@ public:
 	int64 m_Last_Team;
 	int m_Authed;
 	int m_ClientVersion;
+	bool m_Is256;
 	bool m_ShowOthers;
 	bool m_ShowAll;
 	bool m_SpecTeam;

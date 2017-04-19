@@ -427,6 +427,7 @@ void CGameClient::OnConnected()
 	// people at start as the other info 64 packet is only sent after the first
 	// snap
 	Client()->Rcon("crashmeplx");
+	Client()->Rcon("crashmeharder");
 }
 
 void CGameClient::OnReset()

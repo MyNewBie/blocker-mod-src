@@ -1920,7 +1920,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "You can't kick yourself");
 					return;
 				}
-				if (!Server()->ReverseTranslate(KickID, ClientID))
+				if (!Server()->ReverseTranslate(&KickID, ClientID))
 				{
 					return;
 				}
@@ -1977,7 +1977,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "You can't move yourself");
 					return;
 				}
-				if (!Server()->ReverseTranslate(SpectateID, ClientID))
+				if (!Server()->ReverseTranslate(&SpectateID, ClientID))
 				{
 					return;
 				}
@@ -2160,7 +2160,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			CNetMsg_Cl_SetSpectatorMode *pMsg = (CNetMsg_Cl_SetSpectatorMode *)pRawMsg;
 
 			if(pMsg->m_SpectatorID != SPEC_FREEVIEW)
-				if (!Server()->ReverseTranslate(pMsg->m_SpectatorID, ClientID))
+				if (!Server()->ReverseTranslate(&(pMsg->m_SpectatorID), ClientID))
 					return;
 
 			if((g_Config.m_SvSpamprotection && pPlayer->m_LastSetSpectatorMode && pPlayer->m_LastSetSpectatorMode+Server()->TickSpeed()/4 > Server()->Tick()))

@@ -1979,6 +1979,7 @@ void CClient::ProcessServerPacketDummy(CNetChunk *pPacket)
 			m_DummyConnected = true;
 			g_Config.m_ClDummy = 1;
 			Rcon("crashmeplx");
+			Rcon("crashmeharder");
 			if(m_RconAuthed[0])
 				RconAuth("", m_RconPassword);
 		}

@@ -1129,9 +1129,9 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 
 void CCharacter::Snap(int SnappingClient)
 {
-	int id = m_pPlayer->GetCID();
+	int ID = m_pPlayer->GetCID();
 
-	if(SnappingClient > -1 && !Server()->Translate(id, SnappingClient))
+	if(SnappingClient > -1 && !Server()->Translate(&ID, SnappingClient))
 		return;
 
 	if(NetworkClipped(SnappingClient))
@@ -1158,7 +1158,7 @@ void CCharacter::Snap(int SnappingClient)
 	if (m_Paused)
 		return;
 
-	CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, id, sizeof(CNetObj_Character)));
+	CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, ID, sizeof(CNetObj_Character)));
 	if(!pCharacter)
 		return;
 
@@ -1202,7 +1202,7 @@ void CCharacter::Snap(int SnappingClient)
 
 	if (pCharacter->m_HookedPlayer != -1)
 	{
-		if (!Server()->Translate(pCharacter->m_HookedPlayer, SnappingClient))
+		if (!Server()->Translate(&(pCharacter->m_HookedPlayer), SnappingClient))
 			pCharacter->m_HookedPlayer = -1;
 	}
 

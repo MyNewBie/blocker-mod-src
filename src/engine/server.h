@@ -23,6 +23,7 @@ public:
 		const char *m_pName;
 		int m_Latency;
 		int m_ClientVersion;
+		bool m_Is256;
 	};
 
 	int Tick() const { return m_CurrentGameTick; }
@@ -70,17 +71,16 @@ public:
 
 	int SendPackMsgTranslate(CNetMsg_Sv_Emoticon *pMsg, int Flags, int ClientID)
 	{
-		return Translate(pMsg->m_ClientID, ClientID) && SendPackMsgOne(pMsg, Flags, ClientID);
+		return Translate(&(pMsg->m_ClientID), ClientID) && SendPackMsgOne(pMsg, Flags, ClientID);
 	}
-
-	char msgbuf[1000];
 
 	int SendPackMsgTranslate(CNetMsg_Sv_Chat *pMsg, int Flags, int ClientID)
 	{
-		if (pMsg->m_ClientID >= 0 && !Translate(pMsg->m_ClientID, ClientID))
+		if (pMsg->m_ClientID >= 0 && !Translate(&(pMsg->m_ClientID), ClientID))
 		{
-			str_format(msgbuf, sizeof(msgbuf), "%s: %s", ClientName(pMsg->m_ClientID), pMsg->m_pMessage);
-			pMsg->m_pMessage = msgbuf;
+			static char aBuf[1024];
+			str_format(aBuf, sizeof(aBuf), "%s: %s", ClientName(pMsg->m_ClientID), pMsg->m_pMessage);
+			pMsg->m_pMessage = aBuf;
 			pMsg->m_ClientID = VANILLA_MAX_CLIENTS - 1;
 		}
 		return SendPackMsgOne(pMsg, Flags, ClientID);
@@ -88,8 +88,8 @@ public:
 
 	int SendPackMsgTranslate(CNetMsg_Sv_KillMsg *pMsg, int Flags, int ClientID)
 	{
-		if (!Translate(pMsg->m_Victim, ClientID)) return 0;
-		if (!Translate(pMsg->m_Killer, ClientID)) pMsg->m_Killer = pMsg->m_Victim;
+		if (!Translate(&(pMsg->m_Victim), ClientID)) return 0;
+		if (!Translate(&(pMsg->m_Killer), ClientID)) pMsg->m_Killer = pMsg->m_Victim;
 		return SendPackMsgOne(pMsg, Flags, ClientID);
 	}
 
@@ -102,36 +102,50 @@ public:
 		return SendMsg(&Packer, Flags, ClientID);
 	}
 
-	bool Translate(int& target, int client)
+	bool Translate(int *pTarget, int Client)
 	{
-		CClientInfo info;
-		GetClientInfo(client, &info);
-		if (info.m_ClientVersion >= VERSION_DDNET_OLD)
+		CClientInfo Info;
+		GetClientInfo(Client, &Info);
+		if(Info.m_Is256)
 			return true;
-		int* map = GetIdMap(client);
-		bool found = false;
-		for (int i = 0; i < VANILLA_MAX_CLIENTS; i++)
+		int *aIdMap;
+		int Limit;
+		if(Info.m_ClientVersion < VERSION_DDNET_OLD)
 		{
-			if (target == map[i])
+			aIdMap = GetIdMap(Client);
+			Limit = VANILLA_MAX_CLIENTS;
+		}
+		else
+		{
+			aIdMap = GetIdMap64(Client);
+			Limit = DDNET_MAX_CLIENTS;
+		}
+
+		for (int i = 0; i < Limit; i++)
+		{
+			if (*pTarget == aIdMap[i])
 			{
-				target = i;
-				found = true;
-				break;
+				*pTarget = i;
+				return true;
 			}
 		}
-		return found;
+		return false;
 	}
 
-	bool ReverseTranslate(int& target, int client)
+	bool ReverseTranslate(int *pTarget, int client)
 	{
-		CClientInfo info;
-		GetClientInfo(client, &info);
-		if (info.m_ClientVersion >= VERSION_DDNET_OLD)
+		CClientInfo Info;
+		GetClientInfo(client, &Info);
+		if(Info.m_Is256)
 			return true;
-		int* map = GetIdMap(client);
-		if (map[target] == -1)
+		int *aIdMap;
+		if(Info.m_ClientVersion < VERSION_DDNET_OLD)
+			aIdMap = GetIdMap(client);
+		else
+			aIdMap = GetIdMap64(client);
+		if(aIdMap[*pTarget] == -1)
 			return false;
-		target = map[target];
+		*pTarget = aIdMap[*pTarget];
 		return true;
 	}
 
@@ -168,6 +182,7 @@ public:
 	virtual void GetClientAddr(int ClientID, NETADDR *pAddr) = 0;
 
 	virtual int* GetIdMap(int ClientID) = 0;
+	virtual int* GetIdMap64(int ClientID) = 0;
 
 	virtual bool DnsblWhite(int ClientID) = 0;
 

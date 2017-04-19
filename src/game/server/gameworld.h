@@ -39,6 +39,7 @@ private:
 	class IServer *m_pServer;
 
 	void UpdatePlayerMaps();
+	void UpdatePlayerMaps64();
 
 public:
 	class CGameContext *GameServer() { return m_pGameServer; }

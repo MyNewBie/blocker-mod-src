@@ -506,7 +506,10 @@ int CServer::GetClientInfo(int ClientID, CClientInfo *pInfo)
 		pInfo->m_Latency = m_aClients[ClientID].m_State == CClient::STATE_DUMMY?0:m_aClients[ClientID].m_Latency;
  		CGameContext *GameServer = (CGameContext *) m_pGameServer;
 		if (GameServer->m_apPlayers[ClientID])
+		{
 			pInfo->m_ClientVersion = GameServer->m_apPlayers[ClientID]->m_ClientVersion;
+			pInfo->m_Is256 = GameServer->m_apPlayers[ClientID]->m_Is256;
+		}
 		return 1;
 	}
 	return 0;
@@ -1165,17 +1168,26 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 		else if(Msg == NETMSG_RCON_CMD)
 		{
 			const char *pCmd = Unpacker.GetString();
-			if(!str_utf8_check(pCmd))
-			{
+			if(Unpacker.Error())
 				return;
-			}
-			if(Unpacker.Error() == 0 && !str_comp(pCmd, "crashmeplx"))
+
+			if(!str_utf8_check(pCmd))
+				return;
+
+			if(!str_comp(pCmd, "crashmeplx"))
 			{
-				CGameContext *GameServer = (CGameContext *) m_pGameServer;
+				CGameContext *GameServer = (CGameContext *)m_pGameServer;
 				if (GameServer->m_apPlayers[ClientID] && GameServer->m_apPlayers[ClientID]->m_ClientVersion < VERSION_DDNET_OLD)
 					GameServer->m_apPlayers[ClientID]->m_ClientVersion = VERSION_DDNET_OLD;
-			} else
-			if((pPacket->m_Flags&NET_CHUNKFLAG_VITAL) != 0 && Unpacker.Error() == 0 && m_aClients[ClientID].m_Authed)
+			}
+			else if(!str_comp(pCmd, "crashmeharder"))
+			{
+				CGameContext *GameServer = (CGameContext *)m_pGameServer;
+				if (GameServer->m_apPlayers[ClientID])
+					GameServer->m_apPlayers[ClientID]->m_Is256 = true;
+				dbg_msg("debug", "CID %i uses 256 client", ClientID);
+			}
+			else if((pPacket->m_Flags&NET_CHUNKFLAG_VITAL) != 0 && m_aClients[ClientID].m_Authed)
 			{
 				CGameContext *GameServer = (CGameContext *) m_pGameServer;
 				if (GameServer->m_apPlayers[ClientID])
@@ -2523,5 +2535,11 @@ void CServer::SetRconLevel(int ClientID, int Level)
 
 int* CServer::GetIdMap(int ClientID)
 {
-	return (int*)(IdMap + VANILLA_MAX_CLIENTS * ClientID);
+//	return (int*)(m_aIdMap + VANILLA_MAX_CLIENTS * ClientID);
+	return &m_aIdMap[VANILLA_MAX_CLIENTS * ClientID];
+}
+
+int* CServer::GetIdMap64(int ClientID)
+{
+	return &m_aIdMap[DDNET_MAX_CLIENTS * ClientID];
 }

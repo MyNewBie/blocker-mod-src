@@ -172,7 +172,8 @@ public:
 	};
 
 	CClient m_aClients[MAX_CLIENTS];
-	int IdMap[MAX_CLIENTS * VANILLA_MAX_CLIENTS];
+	int m_aIdMap[DDNET_MAX_CLIENTS * VANILLA_MAX_CLIENTS];
+	int m_aIdMap64[MAX_CLIENTS * DDNET_MAX_CLIENTS];
 
 	CSnapshotDelta m_SnapshotDelta;
 	CSnapshotBuilder m_SnapshotBuilder;
@@ -340,6 +341,7 @@ public:
 	void SetRconLevel(int ClientID, int Level);
 
 	virtual int* GetIdMap(int ClientID);
+	virtual int* GetIdMap64(int ClientID);
 
 	void InitDnsbl(int ClientID);
 	bool DnsblWhite(int ClientID)
