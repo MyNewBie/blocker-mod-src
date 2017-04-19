@@ -137,7 +137,8 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 		&m_pPlayer->m_QuestData.m_Pages,
 		&m_pPlayer->m_Level.m_Level,
 		&m_pPlayer->m_Level.m_Exp,
-		m_pPlayer->m_AccData.m_aIp
+		m_pPlayer->m_AccData.m_aIp,
+		&m_pPlayer->m_AccData.m_Weaponkits
 	); // Done
 
 	fclose(Accfile);
@@ -227,7 +228,8 @@ void CAccount::Register(const char *pUsername, const char *pPassword)
 		m_pPlayer->m_QuestData.m_Pages,
 		m_pPlayer->m_Level.m_Level,
 		m_pPlayer->m_Level.m_Exp,
-		m_pPlayer->m_AccData.m_aIp
+		m_pPlayer->m_AccData.m_aIp,
+		m_pPlayer->m_AccData.m_Weaponkits
 	);
 
 	io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
@@ -274,7 +276,8 @@ void CAccount::Apply()
 		m_pPlayer->m_QuestData.m_Pages,
 		m_pPlayer->m_Level.m_Level,
 		m_pPlayer->m_Level.m_Exp,
-		m_pPlayer->m_AccData.m_aIp);
+		m_pPlayer->m_AccData.m_aIp,
+		m_pPlayer->m_AccData.m_Weaponkits);
 
 	io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
 	io_close(Accfile);

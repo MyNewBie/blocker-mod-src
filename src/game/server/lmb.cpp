@@ -209,7 +209,7 @@ void CLMB::RemoveParticipant(int CID)
 		str_format(aBuf2, sizeof(aBuf2), Winner->m_AccData.m_UserID ? "'%s' has won the LMB tournament and has been given rewards! \n Congratulations!" : "'%s' has won the LMB tournament! Congratulations.", m_pGameServer->Server()->ClientName(ID));
 		m_pGameServer->SendChatTarget(-1, aBuf2);
 		m_pGameServer->SendChatTarget(ID, "+2 pages!");
-		m_pGameServer->SendChatTarget(ID, "(+3) Access to /weapons cmd (LIMITED USAGE)!");
+		m_pGameServer->SendChatTarget(ID, "(+3) WeaponKits (use /weapons)!");
 		m_pGameServer->SendChatTarget(ID, "Temoporary access to passivemode for 2Hours! (Anti WB)");
 		
 		/*Im thinking about doing temporary vip access too but i asked some players on their thoughts and they said
@@ -217,7 +217,7 @@ void CLMB::RemoveParticipant(int CID)
 		if (Winner->m_AccData.m_UserID)
 		{
 			Winner->m_QuestData.m_Pages += 2;
-			Winner->Temporary.m_Weaponcalls += 3;
+			Winner->m_AccData.m_Weaponkits += 3;
 			Winner->Temporary.m_PassiveMode = true;
 			Winner->Temporary.m_PassiveModeTime = m_pGameServer->Server()->Tick();
 			Winner->Temporary.m_PassiveTimeLength = 10800;

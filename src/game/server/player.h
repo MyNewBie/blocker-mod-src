@@ -159,7 +159,6 @@ public:
 	{
 		bool m_PassiveMode;
 
-		int m_Weaponcalls;
 		int64 m_PassiveModeTime;
 		int m_PassiveTimeLength;
 	} Temporary;
@@ -259,6 +258,7 @@ public:
 		char m_aPassword[32];
 		char m_aRconPassword[32];
 		char m_aIp[NETADDR_MAXSTRSIZE];
+		int m_Weaponkits;
 		int m_UserID;
 		int m_Vip;
 

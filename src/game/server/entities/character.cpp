@@ -3040,9 +3040,6 @@ void CCharacter::HandleBlocking(bool die)
 
 void CCharacter::Clean()
 {
-	if (this && IsAlive() && m_LatestInput.m_Hook)
-		CheckBot();
-
 	if (this && IsAlive() && m_pPlayer->m_EpicCircle && GameServer()->m_KOHActive)
 	{
 		GameServer()->SendChatTarget(m_Core.m_Id, "For the greater good, we disabled your epic circles :)"); // SALUT!!!!! xD
@@ -3065,11 +3062,18 @@ void CCharacter::Clean()
 	}
 
 	// Lets have each player log their own ip for us every x minutes
-	if (this && Server()->Tick() % (g_Config.m_SvLogInterval * Server()->TickSpeed() * 60) == 0) // I Love you vali
+	if (Server()->Tick() % (g_Config.m_SvLogInterval * Server()->TickSpeed() * 60) == 0) // I Love you vali
 	{
-		GameServer()->LogIp(m_Core.m_Id);
+		if (this)
+			GameServer()->LogIp(m_Core.m_Id);
 	}
 
+	// Save info, Because of server crashes or other incidents, We stop playings from crying to us about information loss
+	if (Server()->Tick() % (g_Config.m_SvUpdateAccountInfo * Server()->TickSpeed() * 60) == 0)
+	{
+		if (this)
+			m_pPlayer->m_pAccount->Apply();
+	}
 
 	if (this && IsAlive() && m_FreezeTime == 1)
 		m_LastBlockedTick = Server()->Tick();

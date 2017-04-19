@@ -1340,7 +1340,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_pAccount->NewPassword(aNewPassword);
 					return;
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "weapons", 7) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->Temporary.m_Weaponcalls > 0))
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "weapons", 7) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->m_AccData.m_Weaponkits > 0))
 				{
 					if (!GetPlayerChar(ClientID) || !GetPlayerChar(ClientID)->IsAlive())
 						return; // Tested and found a crashbug -- heres the fix 
@@ -1349,11 +1349,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(ClientID, "You cannot use weapons while in LMB");
 						return;
 					}
-					if (pPlayer->Temporary.m_Weaponcalls > 0)
+					if (pPlayer->m_AccData.m_Weaponkits > 0)
 					{
-						pPlayer->Temporary.m_Weaponcalls--;
+						pPlayer->m_AccData.m_Weaponkits--;
 						char aRemaining[64];
-						str_format(aRemaining, sizeof(aRemaining), "%d usage%s remaining", pPlayer->Temporary.m_Weaponcalls, pPlayer->Temporary.m_Weaponcalls == 1 ? "" : "s");
+						str_format(aRemaining, sizeof(aRemaining), "Remaining kits: %d", pPlayer->m_AccData.m_Weaponkits);
 						SendChatTarget(ClientID, aRemaining);
 					}
 					GetPlayerChar(ClientID)->GiveAllWeapons();
@@ -1502,7 +1502,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						char aBuf[128];
 						str_format(aBuf, sizeof(aBuf), "%s used a Deathnote to kill you!", Server()->ClientName(ClientID));
 						SendChatTarget(id, aBuf);
-						str_format(aBuf, sizeof(aBuf), "Successfully killed %s", Server()->ClientName(id));
+						str_format(aBuf, sizeof(aBuf), "Successfully killed %s, Pages: ", Server()->ClientName(id), pPlayer->m_QuestData.m_Pages);
 						SendChatTarget(ClientID, aBuf);
 						pPlayer->m_QuestData.m_Pages--;
 					}
