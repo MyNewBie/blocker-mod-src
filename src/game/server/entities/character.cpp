@@ -392,7 +392,7 @@ void CCharacter::FireWeapon()
 	if (FullAuto && (m_LatestInput.m_Fire & 1) && m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
 		WillFire = true;
 
-	if (!WillFire && !m_HammerUpBot)
+	if (!WillFire && !m_Fire)
 	{
 		if (m_Pullhammer)
 			m_PullingID = -1;
@@ -2729,6 +2729,9 @@ void CCharacter::HandleBots()
 		bool isFreeze;
 		if (pTarget && pTarget->IsAlive())
 			isFreeze = pTarget->m_FreezeTime > 0 ? true : false;
+
+		m_Fire = false;
+
 		if (pTarget && pTarget->IsAlive() && !isFreeze)
 		{
 			if (distance(m_Pos, pTarget->m_Pos) < 65)
@@ -2737,39 +2740,99 @@ void CCharacter::HandleBots()
 				{
 					m_LatestInput.m_TargetX = pTarget->m_Pos.x - m_Pos.x;
 					m_LatestInput.m_TargetY = pTarget->m_Pos.y - m_Pos.y;
-					m_HammerUpBot = true;
+					m_Fire = true;
 				}
 			}
-			else if (m_HammerUpBot)
-				m_HammerUpBot = false;
 		}
-		else if (m_HammerUpBot)
-			m_HammerUpBot = false;
 	}
-	else if(this && IsAlive() && m_HammerUpBot)
-		m_HammerUpBot = false;
 
 	/*if (this && IsAlive() && m_pPlayer->m_Bots.m_Grenadebot && m_Core.m_ActiveWeapon == WEAPON_GRENADE)
 	{
 		CCharacter *pMe = m_pPlayer->GetCharacter();
-
+		CCharacter *pEe = GameWorld()->ClosestCharacter(pMe->m_Pos + MousePos(), 130.f, pMe);
+		CCharacterCore* apTarget[MAX_CLIENTS];
+		vec2 AimPoint;
 		if (!pMe)
 			return;
 
-		int Team = m_pPlayer->GetTeam();
 		vec2 Pos = pMe->m_Pos;
 
-		CCharacterCore* apTarget[MAX_CLIENTS];
-		int Count = 0;
-
-		for (int c = 0; c < MAX_CLIENTS; c++)
+		if (pEe && pEe->IsAlive())
 		{
-			if (c == m_pPlayer->GetCID())
-				continue;
-			if (GameServer()->m_apPlayers[c] && GameServer()->m_apPlayers[c]->GetCharacter() && (GameServer()->m_apPlayers[c]->GetTeam() != Team || !GameServer()->m_pController->IsTeamplay()))
-				apTarget[Count++] = GameServer()->m_apPlayers[c]->GetCharacter()->GetCore();
+			int c = pEe->GetPlayer()->GetCID();
+			int GoodDir = -1;
+
+			vec2 aProjectilePos[BOT_HOOK_DIRS];
+
+			const int NbLoops = 10;
+
+			vec2 aTargetPos[MAX_CLIENTS];
+			vec2 aTargetVel[MAX_CLIENTS];
+
+			float Curvature = 0, Speed = 0, Time = 0;
+			Curvature = GameServer()->Tuning()->m_ShotgunCurvature;
+			Speed = GameServer()->Tuning()->m_ShotgunSpeed;
+			Time = GameServer()->Tuning()->m_ShotgunLifetime;
+
+			int DTick = (int)(Time * GameServer()->Server()->TickSpeed() / NbLoops);
+
+			aTargetPos[c] = apTarget[c]->m_Pos;
+			aTargetVel[c] = apTarget[c]->m_Vel*DTick;
+
+			for (int i = 0; i < BOT_HOOK_DIRS; i++) {
+				vec2 dir = direction(2 * i*pi / BOT_HOOK_DIRS);
+				aProjectilePos[i] = Pos + dir*28.*0.75;
+			}
+
+			int aIsDead[BOT_HOOK_DIRS] = { 0 };
+
+			for (int k = 0; k < NbLoops && GoodDir == -1; k++) {
+				for (int i = 0; i < BOT_HOOK_DIRS; i++) {
+					if (aIsDead[i])
+						continue;
+					vec2 dir = direction(2 * i*pi / BOT_HOOK_DIRS);
+					vec2 NextPos = CalcPos(Pos + dir*28.*0.75, dir, Curvature, Speed, (k + 1) * Time / NbLoops);
+					// vec2 NextPos = aProjectilePos[i];
+					// NextPos.x += dir.x*DTime;
+					// NextPos.y += dir.y*DTime + Curvature*(DTime*DTime)*(2*k+1);
+					aIsDead[i] = GameServer()->Collision()->FastIntersectLine(aProjectilePos[i], NextPos, &NextPos, 0);
+					for (int c = 0; c < 64; c++)
+					{
+						vec2 InterPos = closest_point_on_line(aProjectilePos[i], NextPos, aTargetPos[c]);
+						if (distance(aTargetPos[c], InterPos)< 28) {
+							GoodDir = i;
+							break;
+						}
+					}
+					aProjectilePos[i] = NextPos;
+				}
+				for (int c = 0; c < 64; c++)
+				{
+					//Collision()->MoveBox(&aTargetPos[c], &aTargetVel[c], vec2(28.f,28.f), 0);
+					GameServer()->Collision()->FastIntersectLine(aTargetPos[c], aTargetPos[c] + aTargetVel[c], 0, &aTargetPos[c]);
+					aTargetVel[c].y += GameServer()->Tuning()->m_Gravity*DTick*DTick;
+				}
+				if (GoodDir != -1)
+				{
+					AimPoint = direction(2 * GoodDir*pi / BOT_HOOK_DIRS) * 50;
+					break;
+				}
+			}
 		}
-	}*/ // Finish later vali needs help
+		if (m_Core.m_ActiveWeapon == WEAPON_GRENADE)
+		{
+			if (m_LatestInput.m_Fire)
+			{
+				m_LatestInput.m_TargetX = AimPoint.x;
+				m_LatestInput.m_TargetY = AimPoint.y;
+			}
+		}
+
+		// Accuracy
+		float Angle = angle(AimPoint) + (random_int() % 64 - 32)*pi / 1024.0f;
+		AimPoint = direction(Angle)*length(AimPoint);
+	} 
+
 	/*if (GetPlayer()->m_Bots.m_AutoHook)
 	{
 		CCharacter *pMain = GetPlayer()->GetCharacter();

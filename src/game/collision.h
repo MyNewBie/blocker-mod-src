@@ -15,7 +15,16 @@ class CCollision
 	int m_Height;
 	class CLayers *m_pLayers;
 
+	bool IsTileSolid(int x, int y) const;
+	int GetTileX(int x, int y) const;
+
 public:
+	enum
+	{
+		COLFLAG_SOLID = 1,
+		COLFLAG_DEATH = 2,
+		COLFLAG_NOHOOK = 4,
+	};
 	CCollision();
 	void Init(class CLayers *pLayers);
 	bool CheckPoint(float x, float y) { return IsSolid(round_to_int(x), round_to_int(y)); }
@@ -24,6 +33,7 @@ public:
 	int GetWidth() { return m_Width; };
 	int GetHeight() { return m_Height; };
 	int IntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision);
+	int FastIntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision) const;
 	int IntersectLineTeleWeapon(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision, int *pTeleNr);
 	int IntersectLineTeleHook(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision, int *pTeleNr);
 	void MovePoint(vec2 *pInoutPos, vec2 *pInoutVel, float Elasticity, int *pBounces);
