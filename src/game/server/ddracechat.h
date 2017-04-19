@@ -53,12 +53,11 @@ CHAT_COMMAND("points", "?r[playername]", CFGFLAG_CHAT|CFGFLAG_SERVER, ConPoints,
 CHAT_COMMAND("top5points", "?i[number]", CFGFLAG_CHAT|CFGFLAG_SERVER, ConTopPoints, this, "Shows five points of the global point ladder beginning with rank i (1 by default)")
 #endif
 
-CHAT_COMMAND("dummy", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConDummy, this, "Spawns one more dummy")
-CHAT_COMMAND("dummy_delete", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConDummyDelete, this, "Deletes one more dummy")
-CHAT_COMMAND("delete", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConDummyDelete, this, "Deletes one more dummy")
-
-CHAT_COMMAND("d", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConDummy, this, "Spawns one more dummy")
-CHAT_COMMAND("dd", "", CFGFLAG_CHAT|CFGFLAG_SERVER, ConDummyDelete, this, "Deletes one more dummy")
+CHAT_COMMAND("dummy", "?i[num=1]", CFGFLAG_CHAT|CFGFLAG_SERVER, ConDummy, this, "Spawns i more dummies")
+CHAT_COMMAND("dummy_delete", "?i[num=1]", CFGFLAG_CHAT|CFGFLAG_SERVER, ConDummyDelete, this, "Deletes i dummies")
+// short-hand aliases
+CHAT_COMMAND("d", "?i[num=1]", CFGFLAG_CHAT|CFGFLAG_SERVER, ConDummy, this, "Spawns i more dummies")
+CHAT_COMMAND("dd", "?i[num=1]", CFGFLAG_CHAT|CFGFLAG_SERVER, ConDummyDelete, this, "Deletes i dummies")
 
 #undef CHAT_COMMAND
 

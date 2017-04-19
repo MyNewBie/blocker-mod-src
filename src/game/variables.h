@@ -111,8 +111,8 @@ MACRO_CONFIG_INT(SvLogDetects, sv_log_detects, 1, 0, 1, CFGFLAG_SERVER, "Write d
 
 // blocking
 MACRO_CONFIG_INT(SvBlockTime, sv_block_time, 3, 3, 10, CFGFLAG_SERVER, "time freezed for a player to be marked blocked")
-MACRO_CONFIG_INT(SvQuestCount, sv_player_quest_count, 8, 3, 64, CFGFLAG_SERVER, "amount of playrs needed to begin quests")
-MACRO_CONFIG_INT(SvLvlCount, sv_player_lvlsystem_count, 8, 3, 64, CFGFLAG_SERVER, "amount of players needed for the lvl system to enable")
+MACRO_CONFIG_INT(SvQuestCount, sv_player_quest_count, 8, 3, MAX_CLIENTS, CFGFLAG_SERVER, "amount of playrs needed to begin quests")
+MACRO_CONFIG_INT(SvLvlCount, sv_player_lvlsystem_count, 8, 3, MAX_CLIENTS, CFGFLAG_SERVER, "amount of players needed for the lvl system to enable")
 MACRO_CONFIG_INT(SvAntiFarmDuration, sv_antifarm_block_dur, 15, 5, 500, CFGFLAG_SERVER, "how long a player has to been living in seconds to get blocked for points")
 
 // dummy
@@ -185,8 +185,8 @@ MACRO_CONFIG_INT(SvRescueDelay, sv_rescue_delay, 5, 0, 1000, CFGFLAG_SERVER, "Nu
 MACRO_CONFIG_INT(SvLMBRegDuration, sv_lmb_reg_duration, 5, 1, 60, CFGFLAG_SERVER, "Specify the duration where LMB registration is possible")
 MACRO_CONFIG_INT(SvLMBFreezeTime, sv_lmb_freeze_time, 15, 5, 30, CFGFLAG_SERVER, "Specifies the time a player needs to be frozen to die")
 MACRO_CONFIG_INT(SvLMBTournamentTime, sv_lmb_tournament_time, 5, 1, 20, CFGFLAG_SERVER, "Specifies the maximum time a tournament runs.")
-MACRO_CONFIG_INT(SvLMBMinPlayer, sv_lmb_min_player, 2, 2, 64, CFGFLAG_SERVER, "Specifies the minimum players required to start")
-MACRO_CONFIG_INT(SvLMBMaxPlayer, sv_lmb_max_player, 64, 2, 64, CFGFLAG_SERVER, "Specifies the maximum playercount")
+MACRO_CONFIG_INT(SvLMBMinPlayer, sv_lmb_min_player, 2, 2, MAX_CLIENTS, CFGFLAG_SERVER, "Specifies the minimum players required to start")
+MACRO_CONFIG_INT(SvLMBMaxPlayer, sv_lmb_max_player, MAX_CLIENTS, 2, MAX_CLIENTS, CFGFLAG_SERVER, "Specifies the maximum playercount")
 MACRO_CONFIG_INT(SvLMBSpawnFreezeTime, sv_lmb_spawn_freeze_time, 3, 0, 5, CFGFLAG_SERVER, "Specifies the amount of time a player is frozen at the spawn")
 MACRO_CONFIG_INT(SvLMBCooldown, sv_lmb_cooldown, 30, 0, 120, CFGFLAG_SERVER, "Minutes that have to pass unless a new round can start.")
 

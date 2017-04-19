@@ -1221,27 +1221,44 @@ void CGameContext::ConSetTimerType(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConDummy(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *) pUserData;
-	for(int i = 0; i < g_Config.m_SvMaxClients; i++)
+	int Num = 1;
+	if(pResult->NumArguments() > 0)
+		Num = clamp(pResult->GetInteger(0), 1, g_Config.m_SvMaxClients);
+
+	int n = 0;
+	for(int i = 0; i < g_Config.m_SvMaxClients && n < Num; i++)
 	{
 		if(pSelf->m_apPlayers[i])
 			continue;
 
 		pSelf->NewDummy(i, true);
-		return;
+		n++;
 	}
+
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "Spawned %i/%i requested dumm%s", n, Num, Num == 1 ? "y" : "ies");
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "dummy", aBuf);
 }
 void CGameContext::ConDummyDelete(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *) pUserData;
+	int Num = 1;
+	if(pResult->NumArguments() > 0)
+		Num = clamp(pResult->GetInteger(0), 1, g_Config.m_SvMaxClients);
 
-	for(int i = 0; i < g_Config.m_SvMaxClients; i++)
+	int n = 0;
+	for(int i = 0; i < g_Config.m_SvMaxClients && n < Num; i++)
 	{
 		if(!pSelf->m_apPlayers[i] || !pSelf->m_apPlayers[i]->m_IsDummy)
 			continue;
 
 		pSelf->Server()->DummyLeave(i/*, "Any Reason?"*/);
-		return;
+		n++;
 	}
+
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "Deleted %i/%i requested dumm%s", n, Num, Num == 1 ? "y" : "ies");
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "dummy", aBuf);
 }
 
 void CGameContext::ConRescue(IConsole::IResult *pResult, void *pUserData)
