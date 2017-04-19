@@ -18,6 +18,12 @@ XSC
 XWA
 == 904
 
+XEU
+== 905
+
+XCA
+== 906
+
 #south sudan, non official code#
 SS
 == 737
@@ -560,6 +566,9 @@ PT
 
 PR
 == 630
+
+PS
+== 275
 
 QA
 == 634

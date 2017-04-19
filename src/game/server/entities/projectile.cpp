@@ -41,7 +41,7 @@ CProjectile::CProjectile
 	m_Layer = Layer;
 	m_Number = Number;
 	m_Freeze = Freeze;
-	
+
 	m_TuneZone = GameServer()->Collision()->IsTune(GameServer()->Collision()->GetMapIndex(m_Pos));
 
 	GameWorld()->InsertEntity(this);
@@ -71,7 +71,7 @@ vec2 CProjectile::GetPos(float Time)
 				Curvature = GameServer()->TuningList()[m_TuneZone].m_GrenadeCurvature;
 				Speed = GameServer()->TuningList()[m_TuneZone].m_GrenadeSpeed;
 			}
-				
+
 			break;
 
 		case WEAPON_SHOTGUN:
@@ -85,7 +85,7 @@ vec2 CProjectile::GetPos(float Time)
 				Curvature = GameServer()->TuningList()[m_TuneZone].m_ShotgunCurvature;
 				Speed = GameServer()->TuningList()[m_TuneZone].m_ShotgunSpeed;
 			}
-			
+
 			break;
 
 		case WEAPON_GUN:
@@ -114,13 +114,13 @@ void CProjectile::Tick()
 	vec2 CurPos = GetPos(Ct);
 	vec2 ColPos;
 	vec2 NewPos;
-	int Collide = GameServer()->Collision()->IntersectLine(PrevPos, CurPos, &ColPos, &NewPos, false);
+	int Collide = GameServer()->Collision()->IntersectLine(PrevPos, CurPos, &ColPos, &NewPos);
 	CCharacter *pOwnerChar = 0;
 
 	if(m_Owner >= 0)
 		pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 
-	CCharacter *pTargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, ColPos, m_Freeze ? 1.0f : 6.0f, ColPos, pOwnerChar);
+	CCharacter *pTargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, ColPos, m_Freeze ? 1.0f : 6.0f, ColPos, pOwnerChar, m_Owner);
 
 	if(m_LifeSpan > -1)
 		m_LifeSpan--;
@@ -166,7 +166,7 @@ void CProjectile::Tick()
 			if (m_Bouncing == 1)
 				m_Direction.x = -m_Direction.x;
 			else if(m_Bouncing == 2)
-				m_Direction.y =- m_Direction.y;
+				m_Direction.y = -m_Direction.y;
 			if (fabs(m_Direction.x) < 1e-6)
 				m_Direction.x = 0;
 			if (fabs(m_Direction.y) < 1e-6)
@@ -276,7 +276,7 @@ void CProjectile::SetBouncing(int Value)
 void CProjectile::FillExtraInfo(CNetObj_Projectile *pProj)
 {
 	const int MaxPos = 0x7fffffff/100;
-	if(abs(m_Pos.y)+1 >= MaxPos || abs(m_Pos.x)+1 >= MaxPos)
+	if(abs((int)m_Pos.y)+1 >= MaxPos || abs((int)m_Pos.x)+1 >= MaxPos)
 	{
 		//If the modified data would be too large to fit in an integer, send normal data instead
 		FillInfo(pProj);

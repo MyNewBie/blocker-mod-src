@@ -37,6 +37,9 @@ public:
 	virtual void GetClientAddr(int ClientID, char *pAddrStr, int Size) = 0;
 	virtual void RestrictRconOutput(int ClientID) = 0;
 
+	virtual void SendRconLine(int ClientID, const char *pLine) = 0; //for Member tile TODO: Realy needed?
+	virtual void SetRconLevel(int ClientID, int Level) = 0;
+
 	virtual int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID) = 0;
 
 	template<class T>
@@ -165,10 +168,11 @@ public:
 	virtual void GetClientAddr(int ClientID, NETADDR *pAddr) = 0;
 
 	virtual int* GetIdMap(int ClientID) = 0;
-	
+
+	virtual bool DnsblWhite(int ClientID) = 0;
+
 	virtual void DummyJoin(int DummyID, const char *pDummyName, const char *pDummyClan, int Country) = 0;
 	virtual void DummyLeave(int DummyID, const char *pDummyName = 0) = 0;
-
 };
 
 class IGameServer : public IInterface
@@ -178,7 +182,10 @@ protected:
 public:
 	virtual void OnInit() = 0;
 	virtual void OnConsoleInit() = 0;
-	virtual void OnShutdown() = 0;
+	virtual void OnMapChange(char *pNewMapName, int MapNameSize) = 0;
+
+	// FullShutdown is true if the program is about to exit (not if the map is changed)
+	virtual void OnShutdown(bool FullShutdown = false) = 0;
 
 	virtual void OnTick() = 0;
 	virtual void OnPreSnap() = 0;

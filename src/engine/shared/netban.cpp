@@ -205,6 +205,12 @@ void CNetBan::CBanPool<T, HashCount>::Update(CBan<CDataType> *pBan, const CBanIn
 	}
 }
 
+void CNetBan::UnbanAll()
+{
+	m_BanAddrPool.Reset();
+	m_BanRangePool.Reset();
+}
+
 template<class T, int HashCount>
 void CNetBan::CBanPool<T, HashCount>::Reset()
 {
@@ -312,13 +318,13 @@ void CNetBan::Init(IConsole *pConsole, IStorage *pStorage)
 	net_host_lookup("localhost", &m_LocalhostIPV4, NETTYPE_IPV4);
 	net_host_lookup("localhost", &m_LocalhostIPV6, NETTYPE_IPV6);
 
-	Console()->Register("ban", "s?ir", CFGFLAG_SERVER|CFGFLAG_MASTER|CFGFLAG_STORE, ConBan, this, "Ban ip for x minutes for any reason");
-	Console()->Register("ban_range", "ss?ir", CFGFLAG_SERVER|CFGFLAG_MASTER|CFGFLAG_STORE, ConBanRange, this, "Ban ip range for x minutes for any reason");
-	Console()->Register("unban", "s", CFGFLAG_SERVER|CFGFLAG_MASTER|CFGFLAG_STORE, ConUnban, this, "Unban ip/banlist entry");
-	Console()->Register("unban_range", "ss", CFGFLAG_SERVER|CFGFLAG_MASTER|CFGFLAG_STORE, ConUnbanRange, this, "Unban ip range");
+	Console()->Register("ban", "s[ip|id] ?i[minutes] r[reason]", CFGFLAG_SERVER|CFGFLAG_MASTER|CFGFLAG_STORE, ConBan, this, "Ban ip for x minutes for any reason");
+	Console()->Register("ban_range", "s[first ip] s[last ip] ?i[minutes] r[reason]", CFGFLAG_SERVER|CFGFLAG_MASTER|CFGFLAG_STORE, ConBanRange, this, "Ban ip range for x minutes for any reason");
+	Console()->Register("unban", "s[ip|entry]", CFGFLAG_SERVER|CFGFLAG_MASTER|CFGFLAG_STORE, ConUnban, this, "Unban ip/banlist entry");
+	Console()->Register("unban_range", "s[first ip] s[last ip]", CFGFLAG_SERVER|CFGFLAG_MASTER|CFGFLAG_STORE, ConUnbanRange, this, "Unban ip range");
 	Console()->Register("unban_all", "", CFGFLAG_SERVER|CFGFLAG_MASTER|CFGFLAG_STORE, ConUnbanAll, this, "Unban all entries");
 	Console()->Register("bans", "", CFGFLAG_SERVER|CFGFLAG_MASTER|CFGFLAG_STORE, ConBans, this, "Show banlist");
-	Console()->Register("bans_save", "s", CFGFLAG_SERVER|CFGFLAG_MASTER|CFGFLAG_STORE, ConBansSave, this, "Save banlist in a file");
+	Console()->Register("bans_save", "s[file]", CFGFLAG_SERVER|CFGFLAG_MASTER|CFGFLAG_STORE, ConBansSave, this, "Save banlist in a file");
 }
 
 void CNetBan::Update()
@@ -364,7 +370,7 @@ int CNetBan::UnbanByRange(const CNetRange *pRange)
 {
 	if(pRange->IsValid())
 		return Unban(&m_BanRangePool, pRange);
-	
+
 	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "net_ban", "ban failed (invalid range)");
 	return -1;
 }
@@ -400,8 +406,15 @@ int CNetBan::UnbanByIndex(int Index)
 	return Result;
 }
 
-bool CNetBan::IsBanned(const NETADDR *pAddr, char *pBuf, unsigned BufferSize) const
+bool CNetBan::IsBanned(const NETADDR *pOrigAddr, char *pBuf, unsigned BufferSize) const
 {
+	NETADDR addr;
+	const NETADDR *pAddr = pOrigAddr;
+	if (pOrigAddr->type == NETTYPE_WEBSOCKET_IPV4) {
+		mem_copy(&addr, pOrigAddr, sizeof(NETADDR));
+		pAddr = &addr;
+		addr.type = NETTYPE_IPV4;
+	}
 	CNetHash aHash[17];
 	int Length = CNetHash::MakeHashArray(pAddr, aHash);
 
@@ -425,7 +438,7 @@ bool CNetBan::IsBanned(const NETADDR *pAddr, char *pBuf, unsigned BufferSize) co
 			}
 		}
 	}
-	
+
 	return false;
 }
 

@@ -56,8 +56,10 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 
 		if(!g_Config.m_SvOldLaser)
 			Temp = pHit->Core()->m_Vel + normalize(m_PrevPos - pHit->Core()->m_Pos) * Strength;
-		else
+		else if(pOwnerChar)
 			Temp = pHit->Core()->m_Vel + normalize(pOwnerChar->Core()->m_Pos - pHit->Core()->m_Pos) * Strength;
+		else
+			Temp = pHit->Core()->m_Vel;
 		if(Temp.x > 0 && ((pHit->m_TileIndex == TILE_STOP && pHit->m_TileFlags == ROTATION_270) || (pHit->m_TileIndexL == TILE_STOP && pHit->m_TileFlagsL == ROTATION_270) || (pHit->m_TileIndexL == TILE_STOPS && (pHit->m_TileFlagsL == ROTATION_90 || pHit->m_TileFlagsL ==ROTATION_270)) || (pHit->m_TileIndexL == TILE_STOPA) || (pHit->m_TileFIndex == TILE_STOP && pHit->m_TileFFlags == ROTATION_270) || (pHit->m_TileFIndexL == TILE_STOP && pHit->m_TileFFlagsL == ROTATION_270) || (pHit->m_TileFIndexL == TILE_STOPS && (pHit->m_TileFFlagsL == ROTATION_90 || pHit->m_TileFFlagsL == ROTATION_270)) || (pHit->m_TileFIndexL == TILE_STOPA) || (pHit->m_TileSIndex == TILE_STOP && pHit->m_TileSFlags == ROTATION_270) || (pHit->m_TileSIndexL == TILE_STOP && pHit->m_TileSFlagsL == ROTATION_270) || (pHit->m_TileSIndexL == TILE_STOPS && (pHit->m_TileSFlagsL == ROTATION_90 || pHit->m_TileSFlagsL == ROTATION_270)) || (pHit->m_TileSIndexL == TILE_STOPA)))
 			Temp.x = 0;
 		if(Temp.x < 0 && ((pHit->m_TileIndex == TILE_STOP && pHit->m_TileFlags == ROTATION_90) || (pHit->m_TileIndexR == TILE_STOP && pHit->m_TileFlagsR == ROTATION_90) || (pHit->m_TileIndexR == TILE_STOPS && (pHit->m_TileFlagsR == ROTATION_90 || pHit->m_TileFlagsR == ROTATION_270)) || (pHit->m_TileIndexR == TILE_STOPA) || (pHit->m_TileFIndex == TILE_STOP && pHit->m_TileFFlags == ROTATION_90) || (pHit->m_TileFIndexR == TILE_STOP && pHit->m_TileFFlagsR == ROTATION_90) || (pHit->m_TileFIndexR == TILE_STOPS && (pHit->m_TileFFlagsR == ROTATION_90 || pHit->m_TileFFlagsR == ROTATION_270)) || (pHit->m_TileFIndexR == TILE_STOPA) || (pHit->m_TileSIndex == TILE_STOP && pHit->m_TileSFlags == ROTATION_90) || (pHit->m_TileSIndexR == TILE_STOP && pHit->m_TileSFlagsR == ROTATION_90) || (pHit->m_TileSIndexR == TILE_STOPS && (pHit->m_TileSFlagsR == ROTATION_90 || pHit->m_TileSFlagsR == ROTATION_270)) || (pHit->m_TileSIndexR == TILE_STOPA)))
@@ -66,11 +68,24 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 			Temp.y = 0;
 		if(Temp.y > 0 && ((pHit->m_TileIndex == TILE_STOP && pHit->m_TileFlags == ROTATION_0) || (pHit->m_TileIndexT == TILE_STOP && pHit->m_TileFlagsT == ROTATION_0) || (pHit->m_TileIndexT == TILE_STOPS && (pHit->m_TileFlagsT == ROTATION_0 || pHit->m_TileFlagsT == ROTATION_180)) || (pHit->m_TileIndexT == TILE_STOPA) || (pHit->m_TileFIndex == TILE_STOP && pHit->m_TileFFlags == ROTATION_0) || (pHit->m_TileFIndexT == TILE_STOP && pHit->m_TileFFlagsT == ROTATION_0) || (pHit->m_TileFIndexT == TILE_STOPS && (pHit->m_TileFFlagsT == ROTATION_0 || pHit->m_TileFFlagsT == ROTATION_180)) || (pHit->m_TileFIndexT == TILE_STOPA) || (pHit->m_TileSIndex == TILE_STOP && pHit->m_TileSFlags == ROTATION_0) || (pHit->m_TileSIndexT == TILE_STOP && pHit->m_TileSFlagsT == ROTATION_0) || (pHit->m_TileSIndexT == TILE_STOPS && (pHit->m_TileSFlagsT == ROTATION_0 || pHit->m_TileSFlagsT == ROTATION_180)) || (pHit->m_TileSIndexT == TILE_STOPA)))
 			Temp.y = 0;
+		if(!pHit->m_PassiveMode)
 		pHit->Core()->m_Vel = Temp;
+		if (pOwnerChar->GetPlayer()->m_QuestData.QuestActive() &&
+				pOwnerChar->GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART_SHOTGUN && pHit->GetPlayer()->GetCID() == pOwnerChar->GetPlayer()->m_QuestData.m_VictimID)
+		{
+			pOwnerChar->GetPlayer()->QuestSetNextPart();
+		}
 	}
 	else if (m_Type == WEAPON_RIFLE)
 	{
-		pHit->UnFreeze();
+		if (pOwnerChar->GetPlayer()->m_QuestData.QuestActive() &&
+				pOwnerChar->GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART_LASER && pHit->GetPlayer()->GetCID() == pOwnerChar->GetPlayer()->m_QuestData.m_VictimID)
+		{
+			pOwnerChar->GetPlayer()->QuestSetNextPart();
+		}
+
+		if(!pHit->m_PassiveMode) // cannot be unfreezed, If so easy bypass method brought to my attention by Delith
+			pHit->UnFreeze();
 	}
 	return true;
 }
@@ -99,7 +114,7 @@ void CLaser::DoBounce()
 
 	vec2 To = m_Pos + m_Dir * m_Energy;
 
-	Res = GameServer()->Collision()->IntersectLineTeleWeapon(m_Pos, To, &Coltile, &To, &z, false);
+	Res = GameServer()->Collision()->IntersectLineTeleWeapon(m_Pos, To, &Coltile, &To, &z);
 
 	if(Res)
 	{
@@ -116,7 +131,7 @@ void CLaser::DoBounce()
 			if(Res == -1)
 			{
 				f = GameServer()->Collision()->GetTile(round_to_int(Coltile.x), round_to_int(Coltile.y));
-				GameServer()->Collision()->SetCollisionAt(round_to_int(Coltile.x), round_to_int(Coltile.y), CCollision::COLFLAG_SOLID);
+				GameServer()->Collision()->SetCollisionAt(round_to_int(Coltile.x), round_to_int(Coltile.y), TILE_SOLID);
 			}
 			GameServer()->Collision()->MovePoint(&TempPos, &TempDir, 1.0f, 0);
 			if(Res == -1)
@@ -131,7 +146,7 @@ void CLaser::DoBounce()
 			else
 				m_Energy -= distance(m_From, m_Pos) + GameServer()->TuningList()[m_TuneZone].m_LaserBounceCost;
 
-			if (Res&CCollision::COLFLAG_TELE && ((CGameControllerDDRace*)GameServer()->m_pController)->m_TeleOuts[z-1].size())
+			if (Res == TILE_TELEINWEAPON && ((CGameControllerDDRace*)GameServer()->m_pController)->m_TeleOuts[z-1].size())
 			{
 				int Num = ((CGameControllerDDRace*)GameServer()->m_pController)->m_TeleOuts[z-1].size();
 				m_TelePos = ((CGameControllerDDRace*)GameServer()->m_pController)->m_TeleOuts[z-1][(!Num)?Num:rand() % Num];
@@ -142,11 +157,11 @@ void CLaser::DoBounce()
 				m_Bounces++;
 				m_WasTele = false;
 			}
-			
+
 			int BounceNum = GameServer()->Tuning()->m_LaserBounceNum;
 			if (m_TuneZone)
 				BounceNum = GameServer()->TuningList()[m_TuneZone].m_LaserBounceNum;
-			
+
 			if(m_Bounces > BounceNum)
 				m_Energy = -1;
 
@@ -177,9 +192,9 @@ void CLaser::Tick()
 		Delay = GameServer()->TuningList()[m_TuneZone].m_LaserBounceDelay;
 	else
 		Delay = GameServer()->Tuning()->m_LaserBounceDelay;
-		
+
 	if(Server()->Tick() > m_EvalTick+(Server()->TickSpeed()*Delay/1000.0f))
-		DoBounce();	
+		DoBounce();
 }
 
 void CLaser::TickPaused()

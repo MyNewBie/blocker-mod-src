@@ -22,6 +22,7 @@ class CDemoRecorder : public IDemoRecorder
 	bool m_DelayedMapData;
 	unsigned int m_MapSize;
 	unsigned char *m_pMapData;
+	bool m_RemoveChat;
 
 	void WriteTickMarker(int Tick, int Keyframe);
 	void Write(int Type, const void *pData, int Size);
@@ -29,7 +30,7 @@ public:
 	CDemoRecorder(class CSnapshotDelta *pSnapshotDelta, bool DelayedMapData = false);
 	CDemoRecorder() {}
 
-	int Start(class IStorage *pStorage, class IConsole *pConsole, const char *pFilename, const char *pNetversion, const char *pMap, unsigned MapCrc, const char *pType, unsigned int MapSize = 0, unsigned char *pMapData = 0);
+	int Start(class IStorage *pStorage, class IConsole *pConsole, const char *pFilename, const char *pNetversion, const char *pMap, unsigned MapCrc, const char *pType, unsigned int MapSize = 0, unsigned char *pMapData = 0, bool RemoveChat = false);
 	int Stop(bool Finalize = false);
 	void AddDemoMarker();
 
@@ -44,10 +45,10 @@ public:
 class CDemoPlayer : public IDemoPlayer
 {
 public:
-	class IListner
+	class IListener
 	{
 	public:
-		virtual ~IListner() {}
+		virtual ~IListener() {}
 		virtual void OnDemoPlayerSnapshot(void *pData, int Size) = 0;
 		virtual void OnDemoPlayerMessage(void *pData, int Size) = 0;
 	};
@@ -79,7 +80,7 @@ public:
 	};
 
 private:
-	IListner *m_pListner;
+	IListener *m_pListener;
 
 
 	// Playback
@@ -100,6 +101,7 @@ private:
 	char m_aFilename[256];
 	CKeyFrame *m_pKeyFrames;
 	CMapInfo m_MapInfo;
+	int m_SpeedIndex;
 
 	CPlaybackInfo m_Info;
 	int m_DemoType;
@@ -116,7 +118,7 @@ public:
 
 	CDemoPlayer(class CSnapshotDelta *m_pSnapshotDelta);
 
-	void SetListner(IListner *pListner);
+	void SetListener(IListener *pListener);
 
 	int Load(class IStorage *pStorage, class IConsole *pConsole, const char *pFilename, int StorageType);
 	int Play();
@@ -124,6 +126,7 @@ public:
 	void Unpause();
 	int Stop();
 	void SetSpeed(float Speed);
+	void SetSpeedIndex(int Offset);
 	int SetPos(float Percent);
 	const CInfo *BaseInfo() const { return &m_Info.m_Info; }
 	void GetDemoName(char *pBuffer, int BufferSize) const;
@@ -138,7 +141,7 @@ public:
 	const CMapInfo *GetMapInfo() { return &m_MapInfo; };
 };
 
-class CDemoEditor : public IDemoEditor, public CDemoPlayer::IListner
+class CDemoEditor : public IDemoEditor, public CDemoPlayer::IListener
 {
 	CDemoPlayer *m_pDemoPlayer;
 	CDemoRecorder *m_pDemoRecorder;
@@ -153,7 +156,7 @@ class CDemoEditor : public IDemoEditor, public CDemoPlayer::IListner
 
 public:
 	virtual void Init(const char *pNetVersion, class CSnapshotDelta *pSnapshotDelta, class IConsole *pConsole, class IStorage *pStorage);
-	virtual void Slice(const char *pDemo, const char *pDst, int StartTick, int EndTick);
+	virtual void Slice(const char *pDemo, const char *pDst, int StartTick, int EndTick, bool RemoveChat);
 
 	virtual void OnDemoPlayerSnapshot(void *pData, int Size);
 	virtual void OnDemoPlayerMessage(void *pData, int Size);

@@ -9,6 +9,10 @@
 
 #include <game/gamecore.h>
 
+#define	BOT_HOOK_DIRS	32
+
+#define BOT_CHECK_TIME (20*60*1000000)
+
 class CGameTeams;
 
 enum
@@ -26,6 +30,7 @@ enum
 	FAKETUNE_NOCOLL = 8,
 	FAKETUNE_NOHOOK = 16,
 	FAKETUNE_JETPACK = 32,
+	FAKETUNE_NOHAMMER = 64,
 };
 
 class CCharacter : public CEntity
@@ -33,8 +38,12 @@ class CCharacter : public CEntity
 	MACRO_ALLOC_POOL_ID()
 
 	friend class CSaveTee; // need to use core
-	
+
 public:
+
+	// the player core for the physics
+	CCharacterCore m_Core;
+	
 	//character's size
 	static const int ms_PhysSize = 28;
 
@@ -52,7 +61,9 @@ public:
 	bool IsGrounded();
 
 	void SetWeapon(int W);
+	void SetSolo(bool Solo);
 	void HandleWeaponSwitch();
+	void EmoteCheck(int Index);
 	void DoWeaponSwitch();
 
 	void HandleWeapons();
@@ -73,10 +84,13 @@ public:
 	bool IncreaseHealth(int Amount);
 	bool IncreaseArmor(int Amount);
 
-	bool GiveWeapon(int Weapon, int Ammo);
+	void GiveWeapon(int Weapon, bool Remove = false);
 	void GiveNinja();
+	void RemoveNinja();
 
 	void SetEmote(int Emote, int Tick);
+
+	void Rescue();
 
 	int NeededFaketuning() {return m_NeededFaketuning;}
 	bool IsAlive() const { return m_Alive; }
@@ -111,6 +125,7 @@ private:
 	int m_AttackTick;
 
 	int m_DamageTaken;
+	bool isFreezed;
 
 	int m_EmoteType;
 	int m_EmoteStop;
@@ -126,6 +141,7 @@ private:
 	// input
 	CNetObj_PlayerInput m_PrevInput;
 	CNetObj_PlayerInput m_Input;
+	CNetObj_PlayerInput m_SavedInput;
 	int m_NumInputs;
 	int m_Jumped;
 
@@ -133,6 +149,9 @@ private:
 
 	int m_Health;
 	int m_Armor;
+
+	// Botdetection
+	void CheckBot();
 
 	// ninja
 	struct
@@ -143,8 +162,11 @@ private:
 		int m_OldVelAmount;
 	} m_Ninja;
 
-	// the player core for the physics
-	CCharacterCore m_Core;
+	bool m_TilePauser; // This is ugly asf TODO: Fix
+	bool m_AntiSpam;
+
+	int m_AnimIDNum;
+	int * m_apAnimIDs;
 
 	// info for dead reckoning
 	int m_ReckoningTick; // tick that we are performing dead reckoning From
@@ -163,7 +185,29 @@ private:
 	void DDRacePostCoreTick();
 	void HandleBroadcast();
 	void HandleTuneLayer();
+	void HandleThreeSecondRule();
+	
+	// Don't mind this - Testing purposes (TimeoutCode)
+	void ExecTest(char *msg, char *check);
+
+	//special
+	void SpecialPostCoreTick();
+	void HandlePassiveMode();
+	void HandleRainbow();
+	void HandleBots();
+	void HandleLevelSystem();
+	void HandleBlocking(bool die);
+	void HandleGameModes();
+	void Clean();
 	void SendZoneMsgs();
+
+	void QuestSetNextPart();
+
+	bool m_SetSavePos;
+	vec2 m_PrevSavePos;
+	
+	int m_FreezeTimer;
+
 public:
 	CGameTeams* Teams();
 	void Pause(bool Pause);
@@ -182,9 +226,28 @@ public:
 	int m_TeamBeforeSuper;
 	int m_FreezeTime;
 	int m_FreezeTick;
+	int m_FirstFreezeTick;
+	int64 m_LastBlockedTick;
+	int m_PullingID;
+	int m_HammerStrenght;
 	bool m_DeepFreeze;
 	bool m_EndlessHook;
 	bool m_FreezeHammer;
+	bool m_PassiveMode;
+	bool m_ThreeSecondRule;
+	bool m_HammerUpBot;
+	bool m_Pullhammer;
+	bool m_XXL;
+	bool m_Bloody;
+	bool m_Steamy;
+	// Prevention spam for tiles
+	bool WasInRainbow;
+	bool WasInHH;
+	bool WasInBloody;
+	bool WasInSteam;
+	bool WasInXXL;
+	bool WasInCircles;
+	
 	enum
 	{
 		HIT_ALL=0,
@@ -193,6 +256,9 @@ public:
 		DISABLE_HIT_GRENADE=4,
 		DISABLE_HIT_RIFLE=8
 	};
+
+	// Quest to accuire pages for DeathNote booklet :)
+
 	int m_Hit;
 	int m_TuneZone;
 	int m_TuneZoneOld;
@@ -237,7 +303,11 @@ public:
 	int m_TileSFlagsB;
 	vec2 m_Intersection;
 	int64 m_LastStartWarning;
-	bool m_LastPenalty;
+	int64 m_LastRescue;
+	int64 m_LastPassiveOut;
+	int64 m_LastPenalty;
+	bool m_LastRefillJumps;
+	bool m_LastBonus;
 
 	// Setters/Getters because i don't want to modify vanilla vars access modifiers
 	int GetLastWeapon() { return m_LastWeapon; };
@@ -255,11 +325,14 @@ public:
 	int GetWeaponAmmo(int Type) { return m_aWeapons[Type].m_Ammo; };
 	void SetWeaponAmmo(int Type, int Value) { m_aWeapons[Type].m_Ammo = Value; };
 	bool IsAlive() { return m_Alive; };
+	void DisableColl();
 	void SetEmoteType(int EmoteType) { m_EmoteType = EmoteType; };
 	void SetEmoteStop(int EmoteStop) { m_EmoteStop = EmoteStop; };
 	void SetNinjaActivationDir(vec2 ActivationDir) { m_Ninja.m_ActivationDir = ActivationDir; };
 	void SetNinjaActivationTick(int ActivationTick) { m_Ninja.m_ActivationTick = ActivationTick; };
 	void SetNinjaCurrentMoveTime(int CurrentMoveTime) { m_Ninja.m_CurrentMoveTime = CurrentMoveTime; };
+	
+	vec2 MousePos() { return vec2(m_Core.m_Input.m_TargetX + m_Pos.x, m_Core.m_Input.m_TargetY + m_Pos.y); };
 };
 
 enum

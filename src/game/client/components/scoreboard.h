@@ -21,7 +21,6 @@ class CScoreboard : public CComponent
 	void RenderSpectators(float x, float y, float w);
 	void RenderScoreboard(float x, float y, float w, int Team, const char *pTitle, int maxRendered = 8, int type = NEUTRAL);
 	void RenderRecordingNotification(float x);
-	void RenderLocalTime(float x);
 
 	static void ConKeyScoreboard(IConsole::IResult *pResult, void *pUserData);
 

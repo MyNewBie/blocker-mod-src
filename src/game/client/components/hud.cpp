@@ -59,14 +59,12 @@ void CHud::RenderGameTimer()
 
 		CServerInfo Info;
 		Client()->GetServerInfo(&Info);
-		bool IsGameTypeRace = str_find_nocase(Info.m_aGameType, "race") || str_find_nocase(Info.m_aGameType, "fastcap");
-		bool IsGameTypeDDRace = str_find_nocase(Info.m_aGameType, "ddrace") || str_find_nocase(Info.m_aGameType, "mkrace");
 
 		if(Time <= 0 && g_Config.m_ClShowDecisecs)
 			str_format(Buf, sizeof(Buf), "00:00.0");
 		else if(Time <= 0)
 			str_format(Buf, sizeof(Buf), "00:00");
-		else if(IsGameTypeRace && !IsGameTypeDDRace && m_ServerRecord >= 0)
+		else if(IsRace(&Info) && !IsDDRace(&Info) && m_ServerRecord >= 0)
 			str_format(Buf, sizeof(Buf), "%02d:%02d", (int)(m_ServerRecord*100)/60, ((int)(m_ServerRecord*100)%60));
 		else if(g_Config.m_ClShowDecisecs)
 			str_format(Buf, sizeof(Buf), "%02d:%02d.%d", Time/60, Time%60, m_DDRaceTick/10);
@@ -220,8 +218,7 @@ void CHud::RenderScoreHud()
 				{
 					CServerInfo Info;
 					Client()->GetServerInfo(&Info);
-					bool IsGameTypeRace = str_find_nocase(Info.m_aGameType, "race") || str_find_nocase(Info.m_aGameType, "fastcap");
-					if(IsGameTypeRace && g_Config.m_ClDDRaceScoreBoard)
+					if(IsRace(&Info) && g_Config.m_ClDDRaceScoreBoard)
 					{
 						if (apPlayerInfo[t]->m_Score != -9999)
 							str_format(aScore[t], sizeof(aScore[t]), "%02d:%02d", abs(apPlayerInfo[t]->m_Score)/60, abs(apPlayerInfo[t]->m_Score)%60);
@@ -255,7 +252,7 @@ void CHud::RenderScoreHud()
 				TextRender()->Text(0, Whole-ScoreWidthMax+(ScoreWidthMax-aScoreWidth[t])/2-Split, StartY+t*20, 14.0f, aScore[t], -1);
 
 				if(apPlayerInfo[t])
- 				{
+				{
 					// draw name
 					int ID = apPlayerInfo[t]->m_ClientID;
 					if(ID >= 0 && ID < MAX_CLIENTS)
@@ -311,7 +308,7 @@ void CHud::MapscreenToGroup(float CenterX, float CenterY, CMapItemGroup *pGroup)
 	Graphics()->MapScreen(Points[0], Points[1], Points[2], Points[3]);
 }
 
-void CHud::RenderFps()
+void CHud::RenderTextInfo()
 {
 	if(g_Config.m_ClShowfps)
 	{
@@ -321,6 +318,12 @@ void CHud::RenderFps()
 		char Buf[512];
 		str_format(Buf, sizeof(Buf), "%d", (int)m_AverageFPS);
 		TextRender()->Text(0, m_Width-10-TextRender()->TextWidth(0,12,Buf,-1), 5, 12, Buf, -1);
+	}
+	if(g_Config.m_ClShowpred)
+	{
+		char aBuf[64];
+		str_format(aBuf, sizeof(aBuf), "%d", Client()->GetPredictionTime());
+		TextRender()->Text(0, m_Width-10-TextRender()->TextWidth(0,12,aBuf,-1), g_Config.m_ClShowfps ? 20 : 5, 12, aBuf, -1);
 	}
 }
 
@@ -422,7 +425,7 @@ void CHud::RenderVoting()
 	Base.y += Base.h+6;
 	UI()->DoLabel(&Base, Localize("Vote yes"), 16.0f, -1);
 	UI()->DoLabel(&Base, Localize("Vote no"), 16.0f, 1);
-	if( Input()->KeyDown(KEY_MOUSE_1) )
+	if( Input()->KeyPress(KEY_MOUSE_1) )
 	{
 		float mx, my;
 		Input()->MouseRelative(&mx, &my);
@@ -535,6 +538,30 @@ void CHud::RenderSpectatorHud()
 	TextRender()->Text(0, m_Width-174.0f, m_Height-13.0f, 8.0f, aBuf, -1);
 }
 
+void CHud::RenderLocalTime(float x)
+{
+	if(!g_Config.m_ClShowLocalTimeAlways && !m_pClient->m_pScoreboard->Active())
+		return;
+
+	//draw the box
+	Graphics()->BlendNormal();
+	Graphics()->TextureSet(-1);
+	Graphics()->QuadsBegin();
+	Graphics()->SetColor(0.0f, 0.0f, 0.0f, 0.4f);
+	RenderTools()->DrawRoundRectExt(x-30.0f, 0.0f, 25.0f, 12.5f, 3.75f, CUI::CORNER_B);
+	Graphics()->QuadsEnd();
+
+	time_t rawtime;
+	struct tm *timeinfo;
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+
+	//draw the text
+	char aBuf[64];
+	str_format(aBuf, sizeof(aBuf), "%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min);
+	TextRender()->Text(0, x-25.0f, 2.5f, 5.0f, aBuf, -1);
+}
+
 void CHud::OnRender()
 {
 	if(!m_pClient->m_Snap.m_pGameInfoObj)
@@ -565,7 +592,8 @@ void CHud::OnRender()
 		if (g_Config.m_ClShowhudScore)
 			RenderScoreHud();
 		RenderWarmupTimer();
-		RenderFps();
+		RenderTextInfo();
+		RenderLocalTime((m_Width/7)*3);
 		if(Client()->State() != IClient::STATE_DEMOPLAYBACK)
 			RenderConnectionWarning();
 		RenderTeambalanceWarning();
@@ -578,7 +606,6 @@ void CHud::OnRender()
 
 void CHud::OnMessage(int MsgType, void *pRawMsg)
 {
-
 	if(MsgType == NETMSGTYPE_SV_DDRACETIME)
 	{
 		m_DDRaceTimeReceived = true;
@@ -609,9 +636,32 @@ void CHud::OnMessage(int MsgType, void *pRawMsg)
 	}
 	else if(MsgType == NETMSGTYPE_SV_RECORD)
 	{
+		CServerInfo Info;
+		Client()->GetServerInfo(&Info);
+
 		CNetMsg_Sv_Record *pMsg = (CNetMsg_Sv_Record *)pRawMsg;
-		m_ServerRecord = (float)pMsg->m_ServerTimeBest/100;
-		m_PlayerRecord = (float)pMsg->m_PlayerTimeBest/100;
+
+		// NETMSGTYPE_SV_RACETIME on old race servers
+		if(!IsDDRace(&Info) && IsRace(&Info))
+		{
+			m_DDRaceTimeReceived = true;
+
+			m_DDRaceTime = pMsg->m_ServerTimeBest; // First value: m_Time
+			m_DDRaceTick = 0;
+
+			m_LastReceivedTimeTick = Client()->GameTick();
+
+			if(pMsg->m_PlayerTimeBest) // Second value: m_Check
+			{
+				m_CheckpointDiff = (float)pMsg->m_PlayerTimeBest/100;
+				m_CheckpointTick = Client()->GameTick();
+			}
+		}
+		else
+		{
+			m_ServerRecord = (float)pMsg->m_ServerTimeBest/100;
+			m_PlayerRecord = (float)pMsg->m_PlayerTimeBest/100;
+		}
 	}
 }
 

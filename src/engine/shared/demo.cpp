@@ -7,6 +7,7 @@
 #include <engine/storage.h>
 
 #include <engine/shared/config.h>
+#include <game/generated/protocol.h>
 
 #include "compression.h"
 #include "demo.h"
@@ -15,8 +16,9 @@
 #include "snapshot.h"
 
 static const unsigned char gs_aHeaderMarker[7] = {'T', 'W', 'D', 'E', 'M', 'O', 0};
-static const unsigned char gs_ActVersion = 4;
+static const unsigned char gs_ActVersion = 5;
 static const unsigned char gs_OldVersion = 3;
+static const unsigned char gs_VersionTickCompression = 5; // demo files with this version or higher will use `CHUNKTICKFLAG_TICK_COMPRESSED`
 static const int gs_LengthOffset = 152;
 static const int gs_NumMarkersOffset = 176;
 
@@ -30,10 +32,11 @@ CDemoRecorder::CDemoRecorder(class CSnapshotDelta *pSnapshotDelta, bool DelayedM
 }
 
 // Record
-int CDemoRecorder::Start(class IStorage *pStorage, class IConsole *pConsole, const char *pFilename, const char *pNetVersion, const char *pMap, unsigned Crc, const char *pType, unsigned int MapSize, unsigned char *pMapData)
+int CDemoRecorder::Start(class IStorage *pStorage, class IConsole *pConsole, const char *pFilename, const char *pNetVersion, const char *pMap, unsigned Crc, const char *pType, unsigned int MapSize, unsigned char *pMapData, bool RemoveChat)
 {
 	m_MapSize = MapSize;
 	m_pMapData = pMapData;
+	m_RemoveChat = RemoveChat;
 
 	IOHANDLE DemoFile = pStorage->OpenFile(pFilename, IOFLAG_WRITE, IStorage::TYPE_SAVE);
 	if(!DemoFile)
@@ -152,8 +155,10 @@ enum
 {
 	CHUNKTYPEFLAG_TICKMARKER = 0x80,
 	CHUNKTICKFLAG_KEYFRAME = 0x40, // only when tickmarker is set
+	CHUNKTICKFLAG_TICK_COMPRESSED = 0x20, // when we store the tick value in the first chunk
 
-	CHUNKMASK_TICK = 0x3f,
+	CHUNKMASK_TICK = 0x1f,
+	CHUNKMASK_TICK_LEGACY = 0x3f,
 	CHUNKMASK_TYPE = 0x60,
 	CHUNKMASK_SIZE = 0x1f,
 
@@ -166,7 +171,7 @@ enum
 
 void CDemoRecorder::WriteTickMarker(int Tick, int Keyframe)
 {
-	if(m_LastTickMarker == -1 || Tick-m_LastTickMarker > 63 || Keyframe)
+	if(m_LastTickMarker == -1 || Tick-m_LastTickMarker > CHUNKMASK_TICK || Keyframe)
 	{
 		unsigned char aChunk[5];
 		aChunk[0] = CHUNKTYPEFLAG_TICKMARKER;
@@ -183,7 +188,7 @@ void CDemoRecorder::WriteTickMarker(int Tick, int Keyframe)
 	else
 	{
 		unsigned char aChunk[1];
-		aChunk[0] = CHUNKTYPEFLAG_TICKMARKER | (Tick-m_LastTickMarker);
+		aChunk[0] = CHUNKTYPEFLAG_TICKMARKER | CHUNKTICKFLAG_TICK_COMPRESSED | (Tick-m_LastTickMarker);
 		io_write(m_File, aChunk, sizeof(aChunk));
 	}
 
@@ -273,6 +278,23 @@ void CDemoRecorder::RecordSnapshot(int Tick, const void *pData, int Size)
 
 void CDemoRecorder::RecordMessage(const void *pData, int Size)
 {
+	if (m_RemoveChat)
+	{
+		CUnpacker Unpacker;
+		Unpacker.Reset(pData, Size);
+
+		// unpack msgid and system flag
+		int Msg = Unpacker.GetInt();
+		int Sys = Msg&1;
+		Msg >>= 1;
+
+		if(Unpacker.Error())
+			return;
+
+		if(!Sys && Msg == NETMSGTYPE_SV_CHAT)
+			return;
+	}
+
 	Write(CHUNKTYPE_MESSAGE, pData, Size);
 }
 
@@ -347,14 +369,15 @@ CDemoPlayer::CDemoPlayer(class CSnapshotDelta *pSnapshotDelta)
 {
 	m_File = 0;
 	m_pKeyFrames = 0;
+	m_SpeedIndex = 4;
 
 	m_pSnapshotDelta = pSnapshotDelta;
 	m_LastSnapshotDataSize = -1;
 }
 
-void CDemoPlayer::SetListner(IListner *pListner)
+void CDemoPlayer::SetListener(IListener *pListener)
 {
-	m_pListner = pListner;
+	m_pListener = pListener;
 }
 
 
@@ -365,25 +388,33 @@ int CDemoPlayer::ReadChunkHeader(int *pType, int *pSize, int *pTick)
 	*pSize = 0;
 	*pType = 0;
 
+	if(m_File == NULL)
+		return -1;
+
 	if(io_read(m_File, &Chunk, sizeof(Chunk)) != sizeof(Chunk))
 		return -1;
 
 	if(Chunk&CHUNKTYPEFLAG_TICKMARKER)
 	{
 		// decode tick marker
-		int Tickdelta = Chunk&(CHUNKMASK_TICK);
+		int Tickdelta_legacy = Chunk&(CHUNKMASK_TICK_LEGACY); // compatibility
 		*pType = Chunk&(CHUNKTYPEFLAG_TICKMARKER|CHUNKTICKFLAG_KEYFRAME);
 
-		if(Tickdelta == 0)
+		if(m_Info.m_Header.m_Version < gs_VersionTickCompression && Tickdelta_legacy != 0)
+		{
+			*pTick += Tickdelta_legacy;
+		}
+		else if(Chunk&(CHUNKTICKFLAG_TICK_COMPRESSED))
+		{
+			int Tickdelta = Chunk&(CHUNKMASK_TICK);
+			*pTick += Tickdelta;
+		}
+		else
 		{
 			unsigned char aTickdata[4];
 			if(io_read(m_File, aTickdata, sizeof(aTickdata)) != sizeof(aTickdata))
 				return -1;
 			*pTick = (aTickdata[0]<<24) | (aTickdata[1]<<16) | (aTickdata[2]<<8) | aTickdata[3];
-		}
-		else
-		{
-			*pTick += Tickdelta;
 		}
 
 	}
@@ -542,8 +573,8 @@ void CDemoPlayer::DoTick()
 
 			if(DataSize >= 0)
 			{
-				if(m_pListner)
-					m_pListner->OnDemoPlayerSnapshot(aNewsnap, DataSize);
+				if(m_pListener)
+					m_pListener->OnDemoPlayerSnapshot(aNewsnap, DataSize);
 
 				m_LastSnapshotDataSize = DataSize;
 				mem_copy(m_aLastSnapshotData, aNewsnap, DataSize);
@@ -562,16 +593,16 @@ void CDemoPlayer::DoTick()
 
 			m_LastSnapshotDataSize = DataSize;
 			mem_copy(m_aLastSnapshotData, aData, DataSize);
-			if(m_pListner)
-				m_pListner->OnDemoPlayerSnapshot(aData, DataSize);
+			if(m_pListener)
+				m_pListener->OnDemoPlayerSnapshot(aData, DataSize);
 		}
 		else
 		{
 			// if there were no snapshots in this tick, replay the last one
-			if(!GotSnapshot && m_pListner && m_LastSnapshotDataSize != -1)
+			if(!GotSnapshot && m_pListener && m_LastSnapshotDataSize != -1)
 			{
 				GotSnapshot = 1;
-				m_pListner->OnDemoPlayerSnapshot(m_aLastSnapshotData, m_LastSnapshotDataSize);
+				m_pListener->OnDemoPlayerSnapshot(m_aLastSnapshotData, m_LastSnapshotDataSize);
 			}
 
 			// check the remaining types
@@ -582,8 +613,8 @@ void CDemoPlayer::DoTick()
 			}
 			else if(ChunkType == CHUNKTYPE_MESSAGE)
 			{
-				if(m_pListner)
-					m_pListner->OnDemoPlayerMessage(aData, DataSize);
+				if(m_pListener)
+					m_pListener->OnDemoPlayerMessage(aData, DataSize);
 			}
 		}
 	}
@@ -627,6 +658,7 @@ int CDemoPlayer::Load(class IStorage *pStorage, class IConsole *pConsole, const 
 	m_Info.m_Info.m_CurrentTick = -1;
 	m_Info.m_PreviousTick = -1;
 	m_Info.m_Info.m_Speed = 1;
+	m_SpeedIndex = 4;
 
 	m_LastSnapshotDataSize = -1;
 
@@ -788,6 +820,12 @@ void CDemoPlayer::SetSpeed(float Speed)
 	m_Info.m_Info.m_Speed = Speed;
 }
 
+void CDemoPlayer::SetSpeedIndex(int Offset)
+{
+	m_SpeedIndex = clamp(m_SpeedIndex + Offset, 0, (int)(sizeof(g_aSpeeds)/sizeof(g_aSpeeds[0])-1));
+	SetSpeed(g_aSpeeds[m_SpeedIndex]);
+}
+
 int CDemoPlayer::Update(bool RealTime)
 {
 	int64 Now = time_get();
@@ -910,7 +948,7 @@ void CDemoEditor::Init(const char *pNetVersion, class CSnapshotDelta *pSnapshotD
 	m_pStorage = pStorage;
 }
 
-void CDemoEditor::Slice(const char *pDemo, const char *pDst, int StartTick, int EndTick)
+void CDemoEditor::Slice(const char *pDemo, const char *pDst, int StartTick, int EndTick, bool RemoveChat)
 {
 	class CDemoPlayer DemoPlayer(m_pSnapshotDelta);
 	class CDemoRecorder DemoRecorder(m_pSnapshotDelta);
@@ -918,17 +956,17 @@ void CDemoEditor::Slice(const char *pDemo, const char *pDst, int StartTick, int 
 	m_pDemoPlayer = &DemoPlayer;
 	m_pDemoRecorder = &DemoRecorder;
 
-	m_pDemoPlayer->SetListner(this);
+	m_pDemoPlayer->SetListener(this);
 
-	m_SliceFrom = StartTick;	
+	m_SliceFrom = StartTick;
 	m_SliceTo = EndTick;
 	m_Stop = false;
 
 	if (m_pDemoPlayer->Load(m_pStorage, m_pConsole, pDemo, IStorage::TYPE_ALL) == -1)
 		return;
-	
+
 	const CDemoPlayer::CMapInfo *pMapInfo = m_pDemoPlayer->GetMapInfo();
-	if (m_pDemoRecorder->Start(m_pStorage, m_pConsole, pDst, m_pNetVersion, pMapInfo->m_aName, pMapInfo->m_Crc, "client") == -1)
+	if (m_pDemoRecorder->Start(m_pStorage, m_pConsole, pDst, m_pNetVersion, pMapInfo->m_aName, pMapInfo->m_Crc, "client", 0, 0, RemoveChat) == -1)
 		return;
 
 
@@ -937,8 +975,6 @@ void CDemoEditor::Slice(const char *pDemo, const char *pDst, int StartTick, int 
 
 	while (m_pDemoPlayer->IsPlaying() && !m_Stop) {
 		m_pDemoPlayer->Update(false);
-
-		pInfo = m_pDemoPlayer->Info();
 
 		if (pInfo->m_Info.m_Paused)
 			break;

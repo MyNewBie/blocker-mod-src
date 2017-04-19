@@ -1,5 +1,6 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
+#include <base/vmath.h>
 #include <engine/shared/config.h>
 #include <game/mapitems.h>
 
@@ -127,9 +128,9 @@ bool IGameController::CanSpawn(int Team, vec2 *pOutPos)
 	}
 	else
 	{*/
-		EvaluateSpawnType(&Eval, 0);
-		EvaluateSpawnType(&Eval, 1);
-		EvaluateSpawnType(&Eval, 2);
+        EvaluateSpawnType(&Eval, Team);
+		//EvaluateSpawnType(&Eval, 1);
+		//EvaluateSpawnType(&Eval, 2);
 	//}
 
 	*pOutPos = Eval.m_Pos;
@@ -352,7 +353,7 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 	{
 		new CGun(&GameServer()->m_World, Pos, false, false, Layer, Number);
 	}
-	
+
 	if(Type != -1)
 	{
 		//CPickup *pPickup = new CPickup(&GameServer()->m_World, Type, SubType);
@@ -403,7 +404,7 @@ const char *IGameController::GetTeamName(int Team)
 
 void IGameController::StartRound()
 {
-	ResetGame();
+	/*ResetGame();
 
 	m_RoundStartTick = Server()->Tick();
 	m_SuddenDeath = 0;
@@ -415,14 +416,14 @@ void IGameController::StartRound()
 	Server()->DemoRecorder_HandleAutoStart();
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "start round type='%s' teamplay='%d'", m_pGameType, m_GameFlags&GAMEFLAG_TEAMS);
-	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
+	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);*/
 }
 
 void IGameController::ChangeMap(const char *pToMap)
 {
 	/*str_copy(m_aMapWish, pToMap, sizeof(m_aMapWish));
 	EndRound();*/
-	str_copy(g_Config.m_SvMap, pToMap, sizeof(m_aMapWish));
+	str_copy(g_Config.m_SvMap, pToMap, sizeof(g_Config.m_SvMap));
 }
 
 /*void IGameController::CycleMap()
@@ -551,6 +552,17 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 	}
 	if(Weapon == WEAPON_SELF)
 		pVictim->GetPlayer()->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()*3.0f;*/
+		
+	if(pVictim->GetPlayer()->m_InLMB == LMB_PARTICIPATE)
+	{
+		if(GameServer()->m_LMB.State() == CLMB::STATE_RUNNING)
+		{
+			GameServer()->SendChatTarget(pVictim->GetPlayer()->GetCID(), "You are out!");	
+		}
+		GameServer()->m_LMB.RemoveParticipant(pVictim->GetPlayer()->GetCID());
+		pVictim->GetPlayer()->m_InLMB = LMB_NONREGISTERED;
+	}
+	
 	return 0;
 }
 
@@ -560,8 +572,8 @@ void IGameController::OnCharacterSpawn(class CCharacter *pChr)
 	pChr->IncreaseHealth(10);
 
 	// give default weapons
-	pChr->GiveWeapon(WEAPON_HAMMER, -1);
-	pChr->GiveWeapon(WEAPON_GUN, -1);
+	pChr->GiveWeapon(WEAPON_HAMMER);
+	pChr->GiveWeapon(WEAPON_GUN);
 }
 
 void IGameController::DoWarmup(int Seconds)
@@ -611,11 +623,11 @@ void IGameController::Tick()
 	if(m_Warmup)
 	{
 		m_Warmup--;
-		if(!m_Warmup)
-			StartRound();
+		//if(!m_Warmup)
+		//	StartRound();
 	}
 
-	if(m_GameOverTick != -1)
+	/*if(m_GameOverTick != -1)
 	{
 		// game over.. wait for restart
 		if(Server()->Tick() > m_GameOverTick+Server()->TickSpeed()*10)
@@ -624,7 +636,7 @@ void IGameController::Tick()
 			StartRound();
 			m_RoundCount++;
 		}
-	}
+	}*/
 
 	/*
 	// game is Paused

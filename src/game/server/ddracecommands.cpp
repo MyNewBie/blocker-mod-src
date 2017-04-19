@@ -3,9 +3,12 @@
 #include <engine/shared/config.h>
 #include <engine/server/server.h>
 #include <game/server/teams.h>
+#include <game/server/accounting/account.h>
 #include <game/server/gamemodes/DDRace.h>
 #include <game/version.h>
 #include <game/generated/nethash.cpp>
+#include <game/client/components/console.h>
+
 #if defined(CONF_SQL)
 #include <game/server/score/sql_score.h>
 #endif
@@ -88,7 +91,219 @@ void CGameContext::ConKillPlayer(IConsole::IResult *pResult, void *pUserData)
 		str_format(aBuf, sizeof(aBuf), "%s was killed by %s",
 				pSelf->Server()->ClientName(Victim),
 				pSelf->Server()->ClientName(pResult->m_ClientID));
+		if(pSelf->m_apPlayers[pResult->m_ClientID]->m_AccData.m_Vip)
 		pSelf->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
+	}
+}
+
+void CGameContext::ConLevelReset(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_Level.m_Exp = 0;
+		pSelf->m_apPlayers[Victim]->m_Level.m_Level = 0;
+		pSelf->m_apPlayers[Victim]->m_pAccount->SetStorage(pSelf->Storage());
+		pSelf->m_apPlayers[Victim]->m_pAccount->Apply(); // save it
+	}
+}
+
+void CGameContext::ConBlackhole(IConsole::IResult *pResult, void *pUserData) // give or remove blackhole
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_Blackhole ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Blackhole ? "%s gave you blackhole gun!" : "%s removed your blackhole gun!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConEndless(IConsole::IResult *pResult, void *pUserData) // give or remove endless
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->GetCharacter()->m_EndlessHook ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_EndlessHook ? "%s gave you endless!" : "%s removed your endless!" ,pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConPullhammer(IConsole::IResult *pResult, void *pUserData) // give or remove pullhammer
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->GetCharacter()->m_Pullhammer ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Pullhammer ? "%s gave you pullhammer!" : "%s removed your pullhammer!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConSmarthammer(IConsole::IResult *pResult, void *pUserData) // give or remove smarthammer
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_Bots.m_SmartHammer ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Bots.m_SmartHammer ? "%s gave you smarthammer!" : "%s removed your smarthammer!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConEpicCircles(IConsole::IResult *pResult, void *pUserData) // give or remove epic circles
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_EpicCircle ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_EpicCircle ? "%s gave you epic circles!" : "%s removed your epic circles!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConXXL(IConsole::IResult *pResult, void *pUserData) // give or remove xxl
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->GetCharacter()->m_XXL ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_XXL ? "%s gave you xxl!" : "%s removed your xxl!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConBloody(IConsole::IResult *pResult, void *pUserData) // give or remove bloody
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->GetCharacter()->m_Bloody ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Bloody ? "%s gave you bloody!" : "%s removed your bloody!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConSteamy(IConsole::IResult *pResult, void *pUserData) // give or remove steamy
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->GetCharacter()->m_Steamy ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Steamy ? "%s gave you steamy!" : "%s removed your steamy!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConRainbow(IConsole::IResult *pResult, void *pUserData) // give or remove Rainbow
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_Rainbow ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Rainbow ? "%s gave you rainbow!" : "%s removed your rainbow!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConVip(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int VipID = pResult->GetVictim();
+
+	CCharacter* pChr = pSelf->GetPlayerChar(VipID);
+	CPlayer *pPlayer = pSelf->m_apPlayers[VipID];
+
+	char aBuf[64];
+	if(pPlayer)
+	{
+		if (pChr->GetPlayer()->m_AccData.m_UserID)
+		{
+			pChr->GetPlayer()->m_AccData.m_Vip ^= 1;
+			pChr->GetPlayer()->m_pAccount->Apply();
+
+			if (pChr->GetPlayer()->m_AccData.m_Vip)
+				str_format(aBuf, sizeof aBuf, "'%s' is Vip now.", pSelf->Server()->ClientName(VipID));
+			else
+				str_format(aBuf, sizeof aBuf, "'%s' is no longer Vip.", pSelf->Server()->ClientName(VipID));
+			pSelf->SendChat(-1, CHAT_ALL, aBuf);
+		}
+		else
+			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "vip", "Player must be logged in to receive vip");
+	}
+	else
+	{
+		str_format(aBuf, sizeof(aBuf), "There is no player with ID %i", VipID);
+		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "vip", aBuf);
+	}
+}
+
+void CGameContext::ConCheckVip(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int VipID = pResult->GetVictim();
+	char aBuf[200];
+
+	CCharacter* pChr = pSelf->GetPlayerChar(VipID);
+	if (pChr)
+	{
+		if(!pChr->GetPlayer()->m_AccData.m_UserID)
+			str_format(aBuf, sizeof aBuf, "'%s' is not even logged in.", pSelf->Server()->ClientName(VipID));
+		else if (pChr->GetPlayer()->m_AccData.m_Vip)
+			str_format(aBuf, sizeof aBuf, "'%s' has Vip.", pSelf->Server()->ClientName(VipID));
+		else
+			str_format(aBuf, sizeof aBuf, "'%s' does not have Vip.", pSelf->Server()->ClientName(VipID));
+		pSelf->SendChat(-1, CHAT_ALL, aBuf);
 	}
 }
 
@@ -135,7 +350,7 @@ void CGameContext::ConUnSolo(IConsole::IResult *pResult, void *pUserData)
 		return;
 	CCharacter* pChr = pSelf->GetPlayerChar(pResult->m_ClientID);
 	if (pChr)
-		pChr->Teams()->m_Core.SetSolo(pResult->m_ClientID, false);
+		pChr->SetSolo(false);
 }
 
 void CGameContext::ConUnDeep(IConsole::IResult *pResult, void *pUserData)
@@ -166,6 +381,14 @@ void CGameContext::ConRifle(IConsole::IResult *pResult, void *pUserData)
 	pSelf->ModifyWeapons(pResult, pUserData, WEAPON_RIFLE, false);
 }
 
+void CGameContext::ConJetpack(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	CCharacter* pChr = pSelf->GetPlayerChar(pResult->m_ClientID);
+	if (pChr)
+		pChr->m_Jetpack = true;
+}
+
 void CGameContext::ConWeapons(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *) pUserData;
@@ -190,6 +413,14 @@ void CGameContext::ConUnRifle(IConsole::IResult *pResult, void *pUserData)
 	pSelf->ModifyWeapons(pResult, pUserData, WEAPON_RIFLE, true);
 }
 
+void CGameContext::ConUnJetpack(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	CCharacter* pChr = pSelf->GetPlayerChar(pResult->m_ClientID);
+	if (pChr)
+		pChr->m_Jetpack = false;
+}
+
 void CGameContext::ConUnWeapons(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *) pUserData;
@@ -211,10 +442,11 @@ void CGameContext::ConRemoveWeapon(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ModifyWeapons(IConsole::IResult *pResult, void *pUserData,
 		int Weapon, bool Remove)
 {
-	CGameContext *pSelf = (CGameContext *) pUserData;
-	if (!CheckClientID(pResult->m_ClientID))
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	CCharacter* pChr = GetPlayerChar(pResult->m_ClientID);
+	if (!pChr)
 		return;
-	int ClientID = pResult->m_ClientID;
+
 	if (clamp(Weapon, -1, NUM_WEAPONS - 1) != Weapon)
 	{
 		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info",
@@ -222,47 +454,15 @@ void CGameContext::ModifyWeapons(IConsole::IResult *pResult, void *pUserData,
 		return;
 	}
 
-	CCharacter* pChr = GetPlayerChar(ClientID);
-	if (!pChr)
-		return;
-
 	if (Weapon == -1)
 	{
-		if (Remove
-				&& (pChr->GetActiveWeapon() == WEAPON_SHOTGUN
-						|| pChr->GetActiveWeapon() == WEAPON_GRENADE
-						|| pChr->GetActiveWeapon() == WEAPON_RIFLE))
-			pChr->SetActiveWeapon(WEAPON_GUN);
-
-		if (Remove)
-		{
-			pChr->SetWeaponGot(WEAPON_SHOTGUN, false);
-			pChr->SetWeaponGot(WEAPON_GRENADE, false);
-			pChr->SetWeaponGot(WEAPON_RIFLE, false);
-		}
-		else
-			pChr->GiveAllWeapons();
-	}
-	else if (Weapon != WEAPON_NINJA)
-	{
-		if (Remove && pChr->GetActiveWeapon() == Weapon)
-			pChr->SetActiveWeapon(WEAPON_GUN);
-
-		if (Remove)
-			pChr->SetWeaponGot(Weapon, false);
-		else
-			pChr->GiveWeapon(Weapon, -1);
+		pChr->GiveWeapon(WEAPON_SHOTGUN);
+		pChr->GiveWeapon(WEAPON_GRENADE);
+		pChr->GiveWeapon(WEAPON_RIFLE);
 	}
 	else
 	{
-		if (Remove)
-		{
-			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info",
-					"you can't remove ninja");
-			return;
-		}
-
-		pChr->GiveNinja();
+		pChr->GiveWeapon(Weapon, Remove);
 	}
 
 	pChr->m_DDRaceState = DDRACE_CHEAT;
@@ -304,6 +504,7 @@ void CGameContext::ConToCheckTeleporter(IConsole::IResult *pResult, void *pUserD
 			pChr->m_Pos = TelePos;
 			pChr->m_PrevPos = TelePos;
 			pChr->m_DDRaceState = DDRACE_CHEAT;
+			pChr->m_TeleCheckpoint = TeleTo;
 		}
 	}
 }
@@ -327,6 +528,58 @@ void CGameContext::ConTeleport(IConsole::IResult *pResult, void *pUserData)
 			pChr->m_DDRaceState = DDRACE_CHEAT;
 		}
 	}
+}
+
+void CGameContext::ConRocket(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	if(!pPlayer)
+		return;
+	
+	pSelf->ModifyWeapons(pResult, pUserData, WEAPON_GRENADE, false);
+
+	char aBuf[128];
+	if (!pPlayer->m_IsRocket)
+	{
+		pPlayer->m_IsRocket = true;
+
+		str_format(aBuf, sizeof(aBuf), "You got rocket by %s.", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+	else
+	{
+		pPlayer->m_IsRocket = false;
+		str_format(aBuf, sizeof(aBuf), "%s removed your rocket.", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConSkin(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	const char *Skin = pResult->GetString(0);
+	int Victim = pResult->GetVictim();
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	if(!pPlayer)
+		return;
+
+	CCharacter* pChr = pSelf->m_apPlayers[Victim]->GetCharacter();;
+	if(!pChr)
+		return;
+
+	//change skin
+	str_copy(pSelf->m_apPlayers[Victim]->m_TeeInfos.m_SkinName, Skin, sizeof(pSelf->m_apPlayers[Victim]->m_TeeInfos.m_SkinName));
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), "%s's skin changed to %s" ,pSelf->Server()->ClientName(Victim), Skin);
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
 }
 
 void CGameContext::ConKill(IConsole::IResult *pResult, void *pUserData)
@@ -528,4 +781,147 @@ void CGameContext::ConUnFreezeHammer(IConsole::IResult *pResult, void *pUserData
 	pSelf->SendChat(-1, CHAT_ALL, aBuf);
 
 	pChr->m_FreezeHammer = false;
+}
+
+void CGameContext::ConRename(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	const char *newName = pResult->GetString(0);
+	int Victim = pResult->GetVictim();
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	if(!pPlayer)
+		return;
+
+	CCharacter* pChr = pSelf->m_apPlayers[Victim]->GetCharacter();
+	if(!pChr)
+		return;
+
+	//change name
+	char oldName[MAX_NAME_LENGTH];
+	str_copy(oldName, pSelf->Server()->ClientName(Victim), MAX_NAME_LENGTH);
+
+	pSelf->Server()->SetClientName(Victim, newName);
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), "%s has changed %s's name to '%s'", pSelf->Server()->ClientName(pResult->m_ClientID), oldName, pSelf->Server()->ClientName(Victim));
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
+
+	str_format(aBuf, sizeof(aBuf), "%s changed your name to %s.", pSelf->Server()->ClientName(pResult->m_ClientID), pSelf->Server()->ClientName(Victim));
+	//pSelf->SendChatTarget(Victim, aBuf);
+}
+
+void CGameContext::ConHL(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	const char *HammerLevel = pResult->GetString(0);
+	int Victim = pResult->GetVictim();
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	if (!pPlayer)
+		return;
+
+	CCharacter* pChr = pSelf->m_apPlayers[Victim]->GetCharacter();
+	if (!pChr)
+		return;
+
+	// Set hammer level
+	pPlayer->GetCharacter()->m_HammerStrenght = str_toint(HammerLevel);
+	char aBuf[246];
+	str_format(aBuf, 246, "%s has set %s hammer level to %d", pSelf->Server()->ClientName(pResult->m_ClientID), pSelf->Server()->ClientName(Victim), pPlayer->GetCharacter()->m_HammerStrenght);
+	pSelf->SendChatTarget(-1, aBuf);
+}
+
+void CGameContext::ConClan(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	const char *newClan = pResult->GetString(0);
+	int Victim = pResult->GetVictim();
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	if(!pPlayer)
+		return;
+
+	CCharacter* pChr = pSelf->m_apPlayers[Victim]->GetCharacter();
+	if(!pChr)
+		return;
+
+	//change name
+	char oldClan[MAX_CLAN_LENGTH];
+	str_copy(oldClan, pSelf->Server()->ClientClan(Victim), MAX_CLAN_LENGTH);
+
+	pSelf->Server()->SetClientClan(Victim, newClan);
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), "%s has changed %s' clan to '%s'", pSelf->Server()->ClientClan(pResult->m_ClientID), oldClan, pSelf->Server()->ClientClan(Victim));
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
+}
+
+void CGameContext::ConFreeze(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Seconds = -1;
+	int Victim = pResult->GetVictim();
+
+	char aBuf[128];
+
+	if(pResult->NumArguments() == 1)
+		Seconds = clamp(pResult->GetInteger(0), -2, 9999);
+
+	CCharacter* pChr = pSelf->GetPlayerChar(Victim);
+	if(!pChr)
+		return;
+
+	if(pSelf->m_apPlayers[Victim])
+	{
+		pChr->Freeze(Seconds);
+		pChr->GetPlayer()->m_RconFreeze = Seconds != -2;
+		CServer* pServ = (CServer*)pSelf->Server();
+		if(Seconds >= 0)
+			str_format(aBuf, sizeof(aBuf), "'%s' ClientID=%d has been Frozen for %d.", pServ->ClientName(Victim), Victim, Seconds);
+		else if(Seconds == -2)
+		{
+			pChr->m_DeepFreeze = true;
+			str_format(aBuf, sizeof(aBuf), "'%s' ClientID=%d has been Deep Frozen.", pServ->ClientName(Victim), Victim);
+		}
+		else
+			str_format(aBuf, sizeof(aBuf), "'%s' ClientID=%d is Frozen until you unfreeze him.", pServ->ClientName(Victim), Victim);
+		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
+	}
+
+}
+
+void CGameContext::ConUnFreeze(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+	static bool Warning = false;
+	char aBuf[128];
+	CCharacter* pChr = pSelf->GetPlayerChar(Victim);
+	if(!pChr)
+		return;
+	if(pChr->m_DeepFreeze && !Warning)
+	{
+		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "warning", "This client is deeply frozen, repeat the command to defrost him.");
+		Warning = true;
+		return;
+	}
+	if(pChr->m_DeepFreeze && Warning)
+	{
+		pChr->m_DeepFreeze = false;
+		Warning = false;
+	}
+	pChr->m_FreezeTime = 2;
+	pChr->GetPlayer()->m_RconFreeze = false;
+	CServer* pServ = (CServer*)pSelf->Server();
+	str_format(aBuf, sizeof(aBuf), "'%s' ClientID=%d has been defrosted.", pServ->ClientName(Victim), Victim);
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
 }

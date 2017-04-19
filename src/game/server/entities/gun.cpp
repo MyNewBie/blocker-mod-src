@@ -21,7 +21,7 @@ CGun::CGun(CGameWorld *pGameWorld, vec2 Pos, bool Freeze, bool Explosive, int La
 	m_EvalTick = Server()->Tick();
 	m_Freeze = Freeze;
 	m_Explosive = Explosive;
-	
+
 	GameWorld()->InsertEntity(this);
 }
 
@@ -29,14 +29,14 @@ CGun::CGun(CGameWorld *pGameWorld, vec2 Pos, bool Freeze, bool Explosive, int La
 void CGun::Fire()
 {
 	CCharacter *Ents[MAX_CLIENTS];
-	int IdInTeam[MAX_CLIENTS]; 
+	int IdInTeam[MAX_CLIENTS];
 	int LenInTeam[MAX_CLIENTS];
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
 		IdInTeam[i] = -1;
 		LenInTeam[i] = 0;
 	}
-	
+
 	int Num = -1;
 	Num =  GameServer()->m_World.FindEntities(m_Pos, g_Config.m_SvPlasmaRange, (CEntity**)Ents, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 
@@ -48,7 +48,7 @@ void CGun::Fire()
 			continue;
 		if(m_Layer == LAYER_SWITCH && !GameServer()->Collision()->m_pSwitchers[m_Number].m_Status[Target->Team()])
 			continue;
-		int res = GameServer()->Collision()->IntersectLine(m_Pos, Target->m_Pos,0,0,false);
+		int res = GameServer()->Collision()->IntersectLine(m_Pos, Target->m_Pos,0,0);
 		if (!res)
 		{
 			int Len = length(Target->m_Pos - m_Pos);
@@ -75,7 +75,7 @@ void CGun::Fire()
 		{
 			if (IdInTeam[Target->Team()] != i)
 			{
-				int res = GameServer()->Collision()->IntersectLine(m_Pos, Target->m_Pos,0,0,false);
+				int res = GameServer()->Collision()->IntersectLine(m_Pos, Target->m_Pos,0,0);
 				if (!res)
 				{
 					new CPlasma(&GameServer()->m_World, m_Pos, normalize(Target->m_Pos - m_Pos), m_Freeze, m_Explosive, Target->Team());
@@ -84,9 +84,9 @@ void CGun::Fire()
 			}
 		}
 	}
-	
+
 }
-	
+
 void CGun::Reset()
 {
 	GameServer()->m_World.DestroyEntity(this);
@@ -111,7 +111,7 @@ void CGun::Tick()
 }
 
 void CGun::Snap(int SnappingClient)
-{	
+{
 	if(NetworkClipped(SnappingClient))
 		return;
 

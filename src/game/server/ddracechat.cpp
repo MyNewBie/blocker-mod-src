@@ -18,19 +18,21 @@ void CGameContext::ConCredits(IConsole::IResult *pResult, void *pUserData)
 	CGameContext *pSelf = (CGameContext *) pUserData;
 
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "credit",
-		"DDRaceNetwork is maintained by deen.");
+		"DDNet is run by the DDNet staff (DDNet.tw/staff)");
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "credit",
-		"Many ideas from the great community,");
+		"Great maps and many ideas from the great community");
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "credit",
-		"Help and code by eeeee, HMH, east, CookieMichal,");
+		"Help and code by eeeee, HMH, east, CookieMichal, Learath2,");
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "credit",
-		"Savander, laxa, Tobii, BeaR, Wohoo, nuborn, DoNe & others.");
+		"Savander, laxa, Tobii, BeaR, Wohoo, nuborn, timakro, Shiki,");
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "credit",
+		"trml, Soreu, hi_leute_gll, Lady Saavik, Chairn, heinrich5991,");
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "credit",
+		"swick, oy & others.");
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "credit",
 		"Based on DDRace by the DDRace developers,");
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "credit",
 		"which is a mod of Teeworlds by the Teeworlds developers.");
-	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "credit",
-		"Check the changes on ddnet.tw");
 }
 
 void CGameContext::ConInfo(IConsole::IResult *pResult, void *pUserData)
@@ -43,11 +45,11 @@ void CGameContext::ConInfo(IConsole::IResult *pResult, void *pUserData)
 			"Git revision hash: " GIT_SHORTREV_HASH);
 #endif
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info",
-			"Official site: ddnet.tw");
+			"Official site: DDNet.tw");
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info",
-			"For more Info /cmdlist");
+			"For more info: /cmdlist");
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info",
-			"Or visit ddnet.tw");
+			"Or visit DDNet.tw");
 }
 
 void CGameContext::ConHelp(IConsole::IResult *pResult, void *pUserData)
@@ -68,9 +70,18 @@ void CGameContext::ConHelp(IConsole::IResult *pResult, void *pUserData)
 		const char *pArg = pResult->GetString(0);
 		const IConsole::CCommandInfo *pCmdInfo =
 				pSelf->Console()->GetCommandInfo(pArg, CFGFLAG_SERVER, false);
-		if (pCmdInfo && pCmdInfo->m_pHelp)
-			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "help",
-					pCmdInfo->m_pHelp);
+		if (pCmdInfo)
+		{
+			if (pCmdInfo->m_pParams)
+			{
+				char aBuf[256];
+				str_format(aBuf, sizeof(aBuf), "Usage: %s %s", pCmdInfo->m_pName, pCmdInfo->m_pParams);
+				pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "help", aBuf);
+			}
+
+			if (pCmdInfo->m_pHelp)
+				pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "help", pCmdInfo->m_pHelp);
+		}
 		else
 			pSelf->Console()->Print(
 					IConsole::OUTPUT_LEVEL_STANDARD,
@@ -233,69 +244,25 @@ void CGameContext::ConRules(IConsole::IResult *pResult, void *pUserData)
 				"Be nice.");
 		Printed = true;
 	}
-	if (g_Config.m_SvRulesLine1[0])
+	#define _RL(n) g_Config.m_SvRulesLine ## n
+	char *pRuleLines[] = {
+		_RL(1), _RL(2), _RL(3), _RL(4), _RL(5),
+		_RL(6), _RL(7), _RL(8), _RL(9), _RL(10),
+	};
+	for(unsigned i = 0; i < sizeof(pRuleLines) / sizeof(pRuleLines[0]); i++)
 	{
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "rules",
-				g_Config.m_SvRulesLine1);
-		Printed = true;
-	}
-	if (g_Config.m_SvRulesLine2[0])
-	{
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "rules",
-				g_Config.m_SvRulesLine2);
-		Printed = true;
-	}
-	if (g_Config.m_SvRulesLine3[0])
-	{
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "rules",
-				g_Config.m_SvRulesLine3);
-		Printed = true;
-	}
-	if (g_Config.m_SvRulesLine4[0])
-	{
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "rules",
-				g_Config.m_SvRulesLine4);
-		Printed = true;
-	}
-	if (g_Config.m_SvRulesLine5[0])
-	{
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "rules",
-				g_Config.m_SvRulesLine5);
-		Printed = true;
-	}
-	if (g_Config.m_SvRulesLine6[0])
-	{
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "rules",
-				g_Config.m_SvRulesLine6);
-		Printed = true;
-	}
-	if (g_Config.m_SvRulesLine7[0])
-	{
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "rules",
-				g_Config.m_SvRulesLine7);
-		Printed = true;
-	}
-	if (g_Config.m_SvRulesLine8[0])
-	{
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "rules",
-				g_Config.m_SvRulesLine8);
-		Printed = true;
-	}
-	if (g_Config.m_SvRulesLine9[0])
-	{
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "rules",
-				g_Config.m_SvRulesLine9);
-		Printed = true;
-	}
-	if (g_Config.m_SvRulesLine10[0])
-	{
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "rules",
-				g_Config.m_SvRulesLine10);
-		Printed = true;
+		if(pRuleLines[i][0])
+		{
+			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD,
+				"rules", pRuleLines[i]);
+			Printed = true;
+		}
 	}
 	if (!Printed)
+	{
 		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "rules",
 				"No Rules Defined, Kill em all!!");
+	}
 }
 
 void CGameContext::ConToggleSpec(IConsole::IResult *pResult, void *pUserData)
@@ -317,7 +284,7 @@ void CGameContext::ConToggleSpec(IConsole::IResult *pResult, void *pUserData)
 
 	if (pPlayer->GetCharacter() == 0)
 	{
-	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "pause",
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "spec",
 	"You can't spec while you are dead/a spectator.");
 	return;
 	}
@@ -329,8 +296,8 @@ void CGameContext::ConToggleSpec(IConsole::IResult *pResult, void *pUserData)
 
 	if (pPlayer->m_Paused == CPlayer::PAUSED_FORCE)
 	{
-		str_format(aBuf, sizeof(aBuf), "You are force-paused. %ds left.", pPlayer->m_ForcePauseTime/pSelf->Server()->TickSpeed());
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "pause", aBuf);
+		str_format(aBuf, sizeof(aBuf), "You are force-specced. %ds left.", pPlayer->m_ForcePauseTime/pSelf->Server()->TickSpeed());
+		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "spec", aBuf);
 		return;
 	}
 
@@ -349,7 +316,7 @@ void CGameContext::ConTogglePause(IConsole::IResult *pResult, void *pUserData)
 
 	if (pPlayer->GetCharacter() == 0)
 	{
-	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "spec",
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "pause",
 	"You can't pause while you are dead/a spectator.");
 	return;
 	}
@@ -357,7 +324,7 @@ void CGameContext::ConTogglePause(IConsole::IResult *pResult, void *pUserData)
 	if(pPlayer->m_Paused == CPlayer::PAUSED_FORCE)
 	{
 		str_format(aBuf, sizeof(aBuf), "You are force-paused. %ds left.", pPlayer->m_ForcePauseTime/pSelf->Server()->TickSpeed());
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "spec", aBuf);
+		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "pause", aBuf);
 		return;
 	}
 
@@ -383,7 +350,7 @@ void CGameContext::ConTeamTop5(IConsole::IResult *pResult, void *pUserData)
 		return;
 	}
 
-	if (pResult->NumArguments() > 0 && pResult->GetInteger(0) >= 0)
+	if (pResult->NumArguments() > 0 && pResult->GetInteger(0) > 0)
 		pSelf->Score()->ShowTeamTop5(pResult, pResult->m_ClientID, pUserData,
 				pResult->GetInteger(0));
 	else
@@ -414,7 +381,7 @@ void CGameContext::ConTop5(IConsole::IResult *pResult, void *pUserData)
 		return;
 	}
 
-	if (pResult->NumArguments() > 0 && pResult->GetInteger(0) >= 0)
+	if (pResult->NumArguments() > 0 && pResult->GetInteger(0) > 0)
 		pSelf->Score()->ShowTop5(pResult, pResult->m_ClientID, pUserData,
 				pResult->GetInteger(0));
 	else
@@ -614,12 +581,36 @@ void CGameContext::ConSave(IConsole::IResult *pResult, void *pUserData)
 	if(g_Config.m_SvUseSQL)
 		if(pPlayer->m_LastSQLQuery + pSelf->Server()->TickSpeed() >= pSelf->Server()->Tick())
 			return;
-#endif
 
 	int Team = ((CGameControllerDDRace*) pSelf->m_pController)->m_Teams.m_Core.Team(pResult->m_ClientID);
-	pSelf->Score()->SaveTeam(Team, pResult->GetString(0), pResult->m_ClientID);
 
-#if defined(CONF_SQL)
+	const char* pCode = pResult->GetString(0);
+	char aCountry[5];
+	if(str_length(pCode) > 3 && pCode[0] >= 'A' && pCode[0] <= 'Z' && pCode[1] >= 'A'
+		&& pCode[1] <= 'Z' && pCode[2] >= 'A' && pCode[2] <= 'Z')
+	{
+		if(pCode[3] == ' ')
+		{
+			str_copy(aCountry, pCode, 4);
+			pCode = pCode + 4;
+		}
+		else if(str_length(pCode) > 4 && pCode[4] == ' ')
+		{
+			str_copy(aCountry, pCode, 5);
+			pCode = pCode + 5;
+		}
+		else
+		{
+			str_copy(aCountry, g_Config.m_SvSqlServerName, sizeof(aCountry));
+		}
+	}
+	else
+	{
+		str_copy(aCountry, g_Config.m_SvSqlServerName, sizeof(aCountry));
+	}
+
+	pSelf->Score()->SaveTeam(Team, pCode, pResult->m_ClientID, aCountry);
+
 	if(g_Config.m_SvUseSQL)
 		pPlayer->m_LastSQLQuery = pSelf->Server()->Tick();
 #endif
@@ -754,6 +745,13 @@ void CGameContext::ConLockTeam(IConsole::IResult *pResult, void *pUserData)
 				if (((CGameControllerDDRace*) pSelf->m_pController)->m_Teams.m_Core.Team(i) == Team)
 					pSelf->SendChatTarget(i, aBuf);
 		}
+		else if(!g_Config.m_SvTeamLock)
+		{
+			pSelf->Console()->Print(
+					IConsole::OUTPUT_LEVEL_STANDARD,
+					"print",
+					"Team locking is disabled on this server");
+		}
 		else
 		{
 			((CGameControllerDDRace*) pSelf->m_pController)->m_Teams.SetTeamLock(Team, true);
@@ -782,7 +780,16 @@ void CGameContext::ConJoinTeam(IConsole::IResult *pResult, void *pUserData)
 	if (!pPlayer)
 		return;
 
-	if (pSelf->m_VoteCloseTime && pSelf->m_VoteCreator == pResult->m_ClientID)
+	if(pPlayer->m_InLMB == LMB_PARTICIPATE)
+	{
+		pSelf->Console()->Print(
+			IConsole::OUTPUT_LEVEL_STANDARD,
+			"join",
+			"You can't join teams while being a participant in LMB.");
+		return;
+	}
+
+	if (pSelf->m_VoteCloseTime && pSelf->m_VoteCreator == pResult->m_ClientID && (pSelf->m_VoteKick || pSelf->m_VoteSpec))
 	{
 		pSelf->Console()->Print(
 				IConsole::OUTPUT_LEVEL_STANDARD,
@@ -1210,6 +1217,7 @@ void CGameContext::ConSetTimerType(IConsole::IResult *pResult, void *pUserData)
 	}
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD,"timer",aBuf);
 }
+
 void CGameContext::ConDummy(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *) pUserData;
@@ -1217,7 +1225,7 @@ void CGameContext::ConDummy(IConsole::IResult *pResult, void *pUserData)
 	{
 		if(pSelf->m_apPlayers[i])
 			continue;
-	
+
 		pSelf->NewDummy(i, true);
 		return;
 	}
@@ -1225,18 +1233,39 @@ void CGameContext::ConDummy(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConDummyDelete(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *) pUserData;
-	
+
 	for(int i = 0; i < g_Config.m_SvMaxClients; i++)
 	{
 		if(!pSelf->m_apPlayers[i] || !pSelf->m_apPlayers[i]->m_IsDummy)
 			continue;
-		
+
 		pSelf->Server()->DummyLeave(i/*, "Any Reason?"*/);
-			return;
+		return;
 	}
 }
 
-void CGameContext::ConProtectedKill(IConsole::IResult *pResult, void *pUserData){
+void CGameContext::ConRescue(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *) pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
+	if (!pPlayer)
+		return;
+	CCharacter* pChr = pPlayer->GetCharacter();
+	if (!pChr)
+		return;
+
+	if (!g_Config.m_SvRescue) {
+		pSelf->SendChatTarget(pPlayer->GetCID(), "Rescue is not enabled on this server");
+		return;
+	}
+
+	pChr->Rescue();
+}
+
+void CGameContext::ConProtectedKill(IConsole::IResult *pResult, void *pUserData)
+{
 	CGameContext *pSelf = (CGameContext *) pUserData;
 	if (!CheckClientID(pResult->m_ClientID))
 		return;
@@ -1259,6 +1288,65 @@ void CGameContext::ConProtectedKill(IConsole::IResult *pResult, void *pUserData)
 			//pSelf->SendChatTarget(pResult->m_ClientID, aBuf);
 	}
 }
+
+void CGameContext::ConRegisterLMB(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *) pUserData;
+
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+
+	if(pSelf->m_apPlayers[pResult->m_ClientID]->GetTeam() == TEAM_SPECTATORS)
+	{
+		pSelf->SendChatTarget(pResult->m_ClientID, "You cannot register for the tournament while being in spec.");
+		return;
+	}
+
+
+	if(pSelf->m_LMB.State() == CLMB::STATE_STANDBY)
+	{
+		pSelf->SendChatTarget(pResult->m_ClientID, "LMB is closed now. Please wait until the registration has opened.");
+		return;
+	}
+	else if(pSelf->m_LMB.State() == CLMB::STATE_RUNNING)
+	{
+		pSelf->SendChatTarget(pResult->m_ClientID, "LMB is running right now. Please wait for the next round to start.");
+		return;
+	}
+	else
+	{
+		if(pSelf->m_LMB.ParticipantNum() >= g_Config.m_SvLMBMaxPlayer && !pSelf->m_LMB.IsParticipant(pResult->m_ClientID))
+		{
+			pSelf->SendChatTarget(pResult->m_ClientID, "Sorry, the tournament is already full.");
+			return;
+		}
+
+		/* Players requested this because they actually like this tournament for the rewards
+		What is the point in playing a tournament and winning if not being rewarded
+		or gaining anything out of it */
+
+		if (!pSelf->m_apPlayers[pResult->m_ClientID]->m_AccData.m_UserID)
+		{
+			pSelf->SendChatTarget(pResult->m_ClientID, "You must logged in to enter tournameent! Use /Login Username Password");
+			pSelf->SendChatTarget(pResult->m_ClientID, "If you do not have an account, Use /Register Username Password");
+			return;
+		}
+
+		bool Reg = pSelf->m_LMB.RegisterPlayer(pResult->m_ClientID);
+
+		if(Reg)
+				pSelf->SendChatTarget(pResult->m_ClientID, "[LMB] Registered.");
+		else
+			    pSelf->SendChatTarget(pResult->m_ClientID, "[LMB] Unregistered.");
+
+		pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(64, true);
+
+		/*char aBuf[256];
+		str_format(aBuf, sizeof(aBuf), "%d player registered. [Min : %d]", pSelf->m_LMB.ParticipantNum(), g_Config.m_SvLMBMinPlayer);
+		pSelf->SendBroadcast(aBuf, -1);*/
+	}
+}
+
 #if defined(CONF_SQL)
 void CGameContext::ConPoints(IConsole::IResult *pResult, void *pUserData)
 {

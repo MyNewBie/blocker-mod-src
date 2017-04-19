@@ -20,7 +20,6 @@
 #include <engine/serverbrowser.h>
 #include <engine/storage.h>
 #include <engine/textrender.h>
-#include <engine/autoupdate.h>
 #include <engine/shared/config.h>
 
 #include <game/version.h>
@@ -49,7 +48,7 @@ vec4 CMenus::ms_ColorTabbarActiveIngame;
 
 #if defined(__ANDROID__)
 float CMenus::ms_ButtonHeight = 50.0f;
-float CMenus::ms_ListheaderHeight = 50.0f;
+float CMenus::ms_ListheaderHeight = 17.0f;
 float CMenus::ms_ListitemAdditionalHeight = 33.0f;
 #else
 float CMenus::ms_ButtonHeight = 25.0f;
@@ -73,6 +72,7 @@ CMenus::CMenus()
 	m_NeedSendDummyinfo = false;
 	m_MenuActive = true;
 	m_UseMouseButtons = true;
+	m_MouseSlow = false;
 
 	m_EscapePressed = false;
 	m_EnterPressed = false;
@@ -87,9 +87,8 @@ CMenus::CMenus()
 	m_FriendlistSelectedIndex = -1;
 	m_DoubleClickIndex = -1;
 
-	m_DDRacePage = PAGE_BROWSER;
-
 	m_DemoPlayerState = DEMOPLAYER_NONE;
+	m_Dummy = false;
 }
 
 vec4 CMenus::ButtonColorMul(const void *pID)
@@ -223,7 +222,7 @@ int CMenus::DoButton_CheckBox_Number(const void *pID, const char *pText, int Che
 	return DoButton_CheckBox_Common(pID, pText, aBuf, pRect);
 }
 
-int CMenus::DoEditBox(void *pID, const CUIRect *pRect, char *pStr, unsigned StrSize, float FontSize, float *Offset, bool Hidden, int Corners)
+int CMenus::DoEditBox(void *pID, const CUIRect *pRect, char *pStr, unsigned StrSize, float FontSize, float *Offset, bool Hidden, int Corners, const char *pEmptyText)
 {
 	int Inside = UI()->MouseInside(pRect);
 	bool ReturnValue = false;
@@ -239,6 +238,29 @@ int CMenus::DoEditBox(void *pID, const CUIRect *pRect, char *pStr, unsigned StrS
 		int Len = str_length(pStr);
 		if(Len == 0)
 			s_AtIndex = 0;
+
+		if(Input()->KeyIsPressed(KEY_LCTRL) && Input()->KeyPress(KEY_V))
+		{
+			const char *Text = Input()->GetClipboardText();
+			if(Text)
+			{
+				int Offset = str_length(pStr);
+				int CharsLeft = StrSize - Offset - 1;
+				for(int i = 0; i < str_length(Text) && i < CharsLeft; i++)
+				{
+					if(Text[i] == '\n')
+						pStr[i + Offset] = ' ';
+					else
+						pStr[i + Offset] = Text[i];
+				}
+				s_AtIndex = str_length(pStr);
+			}
+		}
+
+		if(Input()->KeyIsPressed(KEY_LCTRL) && Input()->KeyPress(KEY_C))
+		{
+			Input()->SetClipboardText(pStr);
+		}
 
 		if(Inside && UI()->MouseButton(0))
 		{
@@ -326,15 +348,46 @@ int CMenus::DoEditBox(void *pID, const CUIRect *pRect, char *pStr, unsigned StrS
 	const char *pDisplayStr = pStr;
 	char aStars[128];
 
+	if(pDisplayStr[0] == '\0')
+	{
+		pDisplayStr = pEmptyText;
+		TextRender()->TextColor(1, 1, 1, 0.75f);
+	}
+
 	if(Hidden)
 	{
-		unsigned s = str_length(pStr);
+		unsigned s = str_length(pDisplayStr);
 		if(s >= sizeof(aStars))
 			s = sizeof(aStars)-1;
 		for(unsigned int i = 0; i < s; ++i)
 			aStars[i] = '*';
 		aStars[s] = 0;
 		pDisplayStr = aStars;
+	}
+
+	char aInputing[32] = {0};
+	if(UI()->HotItem() == pID && Input()->GetIMEState())
+	{
+		str_format(aInputing, sizeof(aInputing), pStr);
+		const char *Text = Input()->GetIMECandidate();
+		if (str_length(Text))
+		{
+		int NewTextLen = str_length(Text);
+		int CharsLeft = StrSize - str_length(aInputing) - 1;
+		int FillCharLen = min(NewTextLen, CharsLeft);
+		//Push Char Backward
+		for(int i = str_length(aInputing); i >= s_AtIndex ; i--)
+			aInputing[i+FillCharLen] = aInputing[i];
+		for(int i = 0; i < FillCharLen; i++)
+		{
+			if(Text[i] == '\n')
+				aInputing[s_AtIndex + i] = ' ';
+			else
+				aInputing[s_AtIndex + i] = Text[i];
+		}
+		//s_AtIndex = s_AtIndex+FillCharLen;	
+		pDisplayStr = aInputing;
+		}
 	}
 
 	// check if the text has to be moved
@@ -366,9 +419,20 @@ int CMenus::DoEditBox(void *pID, const CUIRect *pRect, char *pStr, unsigned StrS
 
 	UI()->DoLabel(&Textbox, pDisplayStr, FontSize, -1);
 
+	TextRender()->TextColor(1, 1, 1, 1);
+
 	// render the cursor
 	if(UI()->LastActiveItem() == pID && !JustGotActive)
 	{
+		if (str_length(aInputing))
+		{
+			float w = TextRender()->TextWidth(0, FontSize, pDisplayStr, s_AtIndex + Input()->GetEditingCursor());
+			Textbox = *pRect;
+			Textbox.VSplitLeft(2.0f, 0, &Textbox);
+			Textbox.x += (w-*Offset-TextRender()->TextWidth(0, FontSize, "|", -1)/2);
+
+			UI()->DoLabel(&Textbox, "|", FontSize, -1);
+		}
 		float w = TextRender()->TextWidth(0, FontSize, pDisplayStr, s_AtIndex);
 		Textbox = *pRect;
 		Textbox.VSplitLeft(2.0f, 0, &Textbox);
@@ -402,6 +466,9 @@ float CMenus::DoScrollbarV(const void *pID, const CUIRect *pRect, float Current)
 	{
 		if(!UI()->MouseButton(0))
 			UI()->SetActiveItem(0);
+
+		if(Input()->KeyIsPressed(KEY_LSHIFT) || Input()->KeyIsPressed(KEY_RSHIFT))
+			m_MouseSlow = true;
 
 		float Min = pRect->y;
 		float Max = pRect->h-Handle.h;
@@ -458,6 +525,9 @@ float CMenus::DoScrollbarH(const void *pID, const CUIRect *pRect, float Current)
 	{
 		if(!UI()->MouseButton(0))
 			UI()->SetActiveItem(0);
+
+		if(Input()->KeyIsPressed(KEY_LSHIFT) || Input()->KeyIsPressed(KEY_RSHIFT))
+			m_MouseSlow = true;
 
 		float Min = pRect->x;
 		float Max = pRect->w-Handle.w;
@@ -592,7 +662,8 @@ int CMenus::RenderMenubar(CUIRect r)
 		static int s_InternetButton=0;
 		if(DoButton_MenuTab(&s_InternetButton, Localize("Internet"), m_ActivePage==PAGE_INTERNET, &Button, CUI::CORNER_TL))
 		{
-			ServerBrowser()->Refresh(IServerBrowser::TYPE_INTERNET);
+			if(ServerBrowser()->GetCurrentType() != IServerBrowser::TYPE_INTERNET)
+				ServerBrowser()->Refresh(IServerBrowser::TYPE_INTERNET);
 			NewPage = PAGE_INTERNET;
 			m_DoubleClickIndex = -1;
 		}
@@ -602,7 +673,8 @@ int CMenus::RenderMenubar(CUIRect r)
 		static int s_LanButton=0;
 		if(DoButton_MenuTab(&s_LanButton, Localize("LAN"), m_ActivePage==PAGE_LAN, &Button, 0))
 		{
-			ServerBrowser()->Refresh(IServerBrowser::TYPE_LAN);
+			if(ServerBrowser()->GetCurrentType() != IServerBrowser::TYPE_LAN)
+				ServerBrowser()->Refresh(IServerBrowser::TYPE_LAN);
 			NewPage = PAGE_LAN;
 			m_DoubleClickIndex = -1;
 		}
@@ -612,7 +684,8 @@ int CMenus::RenderMenubar(CUIRect r)
 		static int s_FavoritesButton=0;
 		if(DoButton_MenuTab(&s_FavoritesButton, Localize("Favorites"), m_ActivePage==PAGE_FAVORITES, &Button, 0))
 		{
-			ServerBrowser()->Refresh(IServerBrowser::TYPE_FAVORITES);
+			if(ServerBrowser()->GetCurrentType() != IServerBrowser::TYPE_FAVORITES)
+				ServerBrowser()->Refresh(IServerBrowser::TYPE_FAVORITES);
 			NewPage = PAGE_FAVORITES;
 			m_DoubleClickIndex = -1;
 		}
@@ -622,7 +695,8 @@ int CMenus::RenderMenubar(CUIRect r)
 		static int s_DDNetButton=0;
 		if(DoButton_MenuTab(&s_DDNetButton, Localize("DDNet"), m_ActivePage==PAGE_DDNET, &Button, CUI::CORNER_TR))
 		{
-			ServerBrowser()->Refresh(IServerBrowser::TYPE_DDNET);
+			if(ServerBrowser()->GetCurrentType() != IServerBrowser::TYPE_DDNET)
+				ServerBrowser()->Refresh(IServerBrowser::TYPE_DDNET);
 			NewPage = PAGE_DDNET;
 			m_DoubleClickIndex = -1;
 		}
@@ -655,10 +729,22 @@ int CMenus::RenderMenubar(CUIRect r)
 		if(DoButton_MenuTab(&s_ServerInfoButton, Localize("Server info"), m_ActivePage==PAGE_SERVER_INFO, &Button, 0))
 			NewPage = PAGE_SERVER_INFO;
 
-		Box.VSplitLeft(100.0f, &Button, &Box);
-		static int s_GhostButton=0;
-		if(DoButton_MenuTab(&s_GhostButton, "Network", m_ActivePage==PAGE_DDRace, &Button, 0))
-			NewPage = PAGE_DDRace;
+		Box.VSplitLeft(90.0f, &Button, &Box);
+		static int s_NetworkButton=0;
+		if(DoButton_MenuTab(&s_NetworkButton, Localize("Browser"), m_ActivePage==PAGE_NETWORK, &Button, 0))
+			NewPage = PAGE_NETWORK;
+
+		{
+			CServerInfo Info;
+			Client()->GetServerInfo(&Info);
+			static int s_GhostButton=0;
+			if(IsRace(&Info) || IsDDNet(&Info))
+			{
+				Box.VSplitLeft(70.0f, &Button, &Box);
+				if(DoButton_MenuTab(&s_GhostButton, Localize("Ghost"), m_ActivePage==PAGE_GHOST, &Button, 0))
+					NewPage = PAGE_GHOST;
+			}
+		}
 
 		Box.VSplitLeft(100.0f, &Button, &Box);
 		Box.VSplitLeft(4.0f, 0, &Box);
@@ -872,11 +958,17 @@ int CMenus::Render()
 	CUIRect Screen = *UI()->Screen();
 	Graphics()->MapScreen(Screen.x, Screen.y, Screen.w, Screen.h);
 
-	static bool s_First = true;
-	if(s_First)
+	m_MouseSlow = false;
+
+	static int s_Frame = 0;
+	if(s_Frame == 0)
+	{
+		s_Frame++;
+	}
+	else if(s_Frame == 1)
 	{
 		m_pClient->m_pSounds->Enqueue(CSounds::CHN_MUSIC, SOUND_MENU);
-		s_First = false;
+		s_Frame++;
 		m_DoubleClickIndex = -1;
 
 		if(g_Config.m_UiPage == PAGE_INTERNET)
@@ -943,16 +1035,16 @@ int CMenus::Render()
 				RenderPlayers(MainView);
 			else if(m_GamePage == PAGE_SERVER_INFO)
 				RenderServerInfo(MainView);
-			else if(m_GamePage == PAGE_DDRace)
-				RenderInGameDDRace(MainView);
+			else if(m_GamePage == PAGE_NETWORK)
+				RenderInGameNetwork(MainView);
+			else if(m_GamePage == PAGE_GHOST)
+				RenderGhost(MainView);
 			else if(m_GamePage == PAGE_CALLVOTE)
 				RenderServerControl(MainView);
 			else if(m_GamePage == PAGE_SETTINGS)
 				RenderSettings(MainView);
 			else if(m_GamePage == PAGE_GHOST)
 				RenderGhost(MainView);
-			else if(m_GamePage == PAGE_BROWSER)
-				RenderInGameBrowser(MainView);
 		}
 		else if(g_Config.m_UiPage == PAGE_NEWS)
 			RenderNews(MainView);
@@ -1003,29 +1095,12 @@ int CMenus::Render()
 			pTitle = Localize("Disconnected");
 			pExtraText = Client()->ErrorString();
 			pButtonText = Localize("Ok");
-			if ((str_find_nocase(Client()->ErrorString(), "full")) || (str_find_nocase(Client()->ErrorString(), "reserved")))
+			if(Client()->m_ReconnectTime > 0)
 			{
-				if (g_Config.m_ClReconnectFull)
-				{
-					if (_my_rtime == 0)
-						_my_rtime = time_get();
-					str_format(aBuf, sizeof(aBuf), Localize("\n\nReconnect in %d sec"), ((_my_rtime - time_get()) / time_freq() + g_Config.m_ClReconnectFullTimeout));
-					pTitle = Client()->ErrorString();
-					pExtraText = aBuf;
-					pButtonText = Localize("Abort");
-				}
-			}
-			else if (str_find_nocase(Client()->ErrorString(), "ban"))
-			{
-				if (g_Config.m_ClReconnectBan)
-				{
-					if (_my_rtime == 0)
-						_my_rtime = time_get();
-					str_format(aBuf, sizeof(aBuf), Localize("\n\nReconnect in %d sec"), ((_my_rtime - time_get()) / time_freq() + g_Config.m_ClReconnectBanTimeout));
-					pTitle = Client()->ErrorString();
-					pExtraText = aBuf;
-					pButtonText = Localize("Abort");
-				}
+				str_format(aBuf, sizeof(aBuf), Localize("\n\nReconnect in %d sec"), ((Client()->m_ReconnectTime - time_get()) / time_freq() + g_Config.m_ClReconnectFull));
+				pTitle = Client()->ErrorString();
+				pExtraText = aBuf;
+				pButtonText = Localize("Abort");
 			}
 			ExtraAlign = 0;
 		}
@@ -1086,14 +1161,6 @@ int CMenus::Render()
 			pButtonText = Localize("Ok");
 			ExtraAlign = -1;
 		}
-#if !defined(CONF_PLATFORM_MACOSX) && !defined(__ANDROID__)
-		else if(m_Popup == POPUP_AUTOUPDATE)
-		{
-			pTitle = Localize("Auto-Update");
-			pExtraText = Localize("An update to DDNet client is available. Do you want to update now? This will restart the client. If an update fails, make sure the client has permissions to modify files.");
-			ExtraAlign = -1;
-		}
-#endif
 
 		CUIRect Box, Part;
 		Box = Screen;
@@ -1109,7 +1176,11 @@ int CMenus::Render()
 
 		Box.HSplitTop(20.f/UI()->Scale(), &Part, &Box);
 		Box.HSplitTop(24.f/UI()->Scale(), &Part, &Box);
-		UI()->DoLabelScaled(&Part, pTitle, 24.f, 0);
+		Part.VMargin(20.f/UI()->Scale(), &Part);
+		if(TextRender()->TextWidth(0, 24.f, pTitle, -1) > Part.w)
+			UI()->DoLabelScaled(&Part, pTitle, 24.f, -1, (int)Part.w);
+		else
+			UI()->DoLabelScaled(&Part, pTitle, 24.f, 0);
 		Box.HSplitTop(20.f/UI()->Scale(), &Part, &Box);
 		Box.HSplitTop(24.f/UI()->Scale(), &Part, &Box);
 		Part.VMargin(20.f/UI()->Scale(), &Part);
@@ -1117,7 +1188,12 @@ int CMenus::Render()
 		if(ExtraAlign == -1)
 			UI()->DoLabelScaled(&Part, pExtraText, 20.f, -1, (int)Part.w);
 		else
-			UI()->DoLabelScaled(&Part, pExtraText, 20.f, 0, -1);
+		{
+			if(TextRender()->TextWidth(0, 20.f, pExtraText, -1) > Part.w)
+				UI()->DoLabelScaled(&Part, pExtraText, 20.f, -1, (int)Part.w);
+			else
+				UI()->DoLabelScaled(&Part, pExtraText, 20.f, 0, -1);
+		}
 
 		if(m_Popup == POPUP_QUIT)
 		{
@@ -1177,28 +1253,6 @@ int CMenus::Render()
 			if(DoButton_Menu(&s_ButtonTryAgain, Localize("Yes"), 0, &Yes) || m_EnterPressed)
 				Client()->Disconnect();
 		}
-#if !defined(CONF_PLATFORM_MACOSX) && !defined(__ANDROID__)
-		else if(m_Popup == POPUP_AUTOUPDATE)
-		{
-			CUIRect Yes, No;
-			Box.HSplitBottom(20.f, &Box, &Part);
-			Box.HSplitBottom(24.f, &Box, &Part);
-
-			// buttons
-			Part.VMargin(80.0f, &Part);
-			Part.VSplitMid(&No, &Yes);
-			Yes.VMargin(20.0f, &Yes);
-			No.VMargin(20.0f, &No);
-
-			static int s_ButtonAbort = 0;
-			if(DoButton_Menu(&s_ButtonAbort, Localize("No"), 0, &No) || m_EscapePressed)
-				m_Popup = POPUP_NONE;
-
-			static int s_ButtonTryAgain = 0;
-			if(DoButton_Menu(&s_ButtonTryAgain, Localize("Yes"), 0, &Yes) || m_EnterPressed)
-				m_pClient->AutoUpdate()->DoUpdates(this);
-		}
-#endif
 		else if(m_Popup == POPUP_PASSWORD)
 		{
 			CUIRect Label, TextBox, TryAgain, Abort;
@@ -1581,28 +1635,15 @@ int CMenus::Render()
 
 			static int s_Button = 0;
 			if(DoButton_Menu(&s_Button, pButtonText, 0, &Part) || m_EscapePressed || m_EnterPressed)
+			{
+				if(m_Popup == POPUP_DISCONNECTED && Client()->m_ReconnectTime > 0)
+					Client()->m_ReconnectTime = 0;
 				m_Popup = POPUP_NONE;
+			}
 		}
 
 		if(m_Popup == POPUP_NONE)
 			UI()->SetActiveItem(0);
-	}
-
-	if (m_Popup == POPUP_DISCONNECTED)
-	{
-		if (str_find_nocase(Client()->ErrorString(), "full") || str_find_nocase(Client()->ErrorString(), "reserved"))
-		{
-			if (g_Config.m_ClReconnectFull && time_get() > _my_rtime + time_freq() * g_Config.m_ClReconnectFullTimeout)
-				Client()->Connect(g_Config.m_UiServerAddress);
-		}
-		else if (str_find_nocase(Client()->ErrorString(), "ban") || str_find_nocase(Client()->ErrorString(), "kick"))
-		{
-			if (g_Config.m_ClReconnectBan && time_get() > _my_rtime + time_freq() * g_Config.m_ClReconnectBanTimeout)
-				Client()->Connect(g_Config.m_UiServerAddress);
-		}
-	}
-	else if (_my_rtime != 0) {
-		_my_rtime = 0;
 	}
 	return 0;
 }
@@ -1610,6 +1651,7 @@ int CMenus::Render()
 
 void CMenus::SetActive(bool Active)
 {
+	Input()->SetIMEState(Active);
 	m_MenuActive = Active;
 #if defined(__ANDROID__)
 	UI()->AndroidShowScreenKeys(!m_MenuActive && !m_pClient->m_pControls->m_UsingGamepad);
@@ -1655,8 +1697,16 @@ bool CMenus::OnMouseMove(float x, float y)
 	m_MousePos.y = y;
 #else
 	UI()->ConvertMouseMove(&x, &y);
-	m_MousePos.x += x;
-	m_MousePos.y += y;
+	if(m_MouseSlow)
+	{
+		m_MousePos.x += x * 0.05f;
+		m_MousePos.y += y * 0.05f;
+	}
+	else
+	{
+		m_MousePos.x += x;
+		m_MousePos.y += y;
+	}
 #endif
 	if(m_MousePos.x < 0) m_MousePos.x = 0;
 	if(m_MousePos.y < 0) m_MousePos.y = 0;
@@ -1814,9 +1864,9 @@ void CMenus::OnRender()
 	int Buttons = 0;
 	if(m_UseMouseButtons)
 	{
-		if(Input()->KeyPressed(KEY_MOUSE_1)) Buttons |= 1;
-		if(Input()->KeyPressed(KEY_MOUSE_2)) Buttons |= 2;
-		if(Input()->KeyPressed(KEY_MOUSE_3)) Buttons |= 4;
+		if(Input()->KeyIsPressed(KEY_MOUSE_1)) Buttons |= 1;
+		if(Input()->KeyIsPressed(KEY_MOUSE_2)) Buttons |= 2;
+		if(Input()->KeyIsPressed(KEY_MOUSE_3)) Buttons |= 4;
 	}
 
 #if defined(__ANDROID__)
@@ -1907,7 +1957,7 @@ void CMenus::RenderBackground()
 	// render border fade
 	Graphics()->TextureSet(gs_TextureBlob);
 	Graphics()->QuadsBegin();
-		Graphics()->SetColor(0,0,0,0.5f);
+		Graphics()->SetColor(1,1,1,1);
 		QuadItem = IGraphics::CQuadItem(-100, -100, sw+200, sh+200);
 		Graphics()->QuadsDrawTL(&QuadItem, 1);
 	Graphics()->QuadsEnd();

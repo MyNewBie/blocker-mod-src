@@ -82,8 +82,10 @@ public:
 		CMD_SWAP,
 
 		// misc
+		CMD_VSYNC,
 		CMD_SCREENSHOT,
 		CMD_VIDEOMODES,
+		CMD_RESIZE,
 
 	};
 
@@ -103,8 +105,9 @@ public:
 	{
 		//
 		PRIMTYPE_INVALID = 0,
-		PRIMTYPE_LINES,	
+		PRIMTYPE_LINES,
 		PRIMTYPE_QUADS,
+		PRIMTYPE_TRIANGLES,
 	};
 
 	enum
@@ -154,13 +157,13 @@ public:
 		int m_ClipW;
 		int m_ClipH;
 	};
-		
+
 	struct SCommand_Clear : public SCommand
 	{
 		SCommand_Clear() : SCommand(CMD_CLEAR) {}
 		SColor m_Color;
 	};
-		
+
 	struct SCommand_Signal : public SCommand
 	{
 		SCommand_Signal() : SCommand(CMD_SIGNAL) {}
@@ -195,6 +198,7 @@ public:
 		CVideoMode *m_pModes; // processor will fill this in
 		int m_MaxModes; // maximum of modes the processor can write to the m_pModes
 		int *m_pNumModes; // processor will write to this pointer
+		int m_Screen;
 	};
 
 	struct SCommand_Swap : public SCommand
@@ -202,6 +206,22 @@ public:
 		SCommand_Swap() : SCommand(CMD_SWAP) {}
 
 		int m_Finish;
+	};
+
+	struct SCommand_VSync : public SCommand
+	{
+		SCommand_VSync() : SCommand(CMD_VSYNC) {}
+
+		int m_VSync;
+		bool *m_pRetOk;
+	};
+
+	struct SCommand_Resize : public SCommand
+	{
+		SCommand_Resize() : SCommand(CMD_RESIZE) {}
+
+		int m_Width;
+		int m_Height;
 	};
 
 	struct SCommand_Texture_Create : public SCommand
@@ -243,7 +263,7 @@ public:
 		// texture information
 		int m_Slot;
 	};
-	
+
 	//
 	CCommandBuffer(unsigned CmdBufferSize, unsigned DataBufferSize)
 	: m_CmdBuffer(CmdBufferSize), m_DataBuffer(DataBufferSize)
@@ -298,19 +318,27 @@ public:
 		INITFLAG_VSYNC = 2,
 		INITFLAG_RESIZABLE = 4,
 		INITFLAG_BORDERLESS = 8,
+		INITFLAG_HIGHDPI = 16,
 	};
 
 	virtual ~IGraphicsBackend() {}
 
-	virtual int Init(const char *pName, int *Width, int *Height, int FsaaSamples, int Flags) = 0;
+	virtual int Init(const char *pName, int *Screen, int *pWidth, int *pHeight, int FsaaSamples, int Flags, int *pDesktopWidth, int *pDesktopHeight) = 0;
 	virtual int Shutdown() = 0;
 
 	virtual int MemoryUsage() const = 0;
 
+	virtual int GetNumScreens() const = 0;
+
 	virtual void Minimize() = 0;
 	virtual void Maximize() = 0;
+	virtual bool Fullscreen(bool State) = 0;
+	virtual void SetWindowBordered(bool State) = 0;
+	virtual bool SetWindowScreen(int Index) = 0;
+	virtual int GetWindowScreen() = 0;
 	virtual int WindowActive() = 0;
 	virtual int WindowOpen() = 0;
+	virtual void SetWindowGrab(bool Grab) = 0;
 	virtual void NotifyWindow() = 0;
 
 	virtual void RunBuffer(CCommandBuffer *pBuffer) = 0;
@@ -326,7 +354,7 @@ class CGraphics_Threaded : public IEngineGraphics
 
 		MAX_VERTICES = 32*1024,
 		MAX_TEXTURES = 1024*4,
-		
+
 		DRAWING_QUADS=1,
 		DRAWING_LINES=2
 	};
@@ -363,7 +391,7 @@ class CGraphics_Threaded : public IEngineGraphics
 
 	void FlushVertices();
 	void AddVertices(int Count);
-	void Rotate4(const CCommandBuffer::SPoint &rCenter, CCommandBuffer::SVertex *pPoints);
+	void Rotate(const CCommandBuffer::SPoint &rCenter, CCommandBuffer::SVertex *pPoints, int NumPoints);
 
 	void KickCommandBuffer();
 
@@ -422,12 +450,19 @@ public:
 	virtual void QuadsDrawFreeform(const CFreeformItem *pArray, int Num);
 	virtual void QuadsText(float x, float y, float Size, const char *pText);
 
+	virtual int GetNumScreens() const;
 	virtual void Minimize();
 	virtual void Maximize();
+	virtual bool Fullscreen(bool State);
+	virtual void SetWindowBordered(bool State);
+	virtual bool SetWindowScreen(int Index);
+	virtual void Resize(int w, int h);
+	virtual int GetWindowScreen();
 
 	virtual int WindowActive();
 	virtual int WindowOpen();
 
+	virtual void SetWindowGrab(bool Grab);
 	virtual void NotifyWindow();
 
 	virtual int Init();
@@ -436,8 +471,12 @@ public:
 	virtual void TakeScreenshot(const char *pFilename);
 	virtual void TakeCustomScreenshot(const char *pFilename);
 	virtual void Swap();
+	virtual bool SetVSync(bool State);
 
-	virtual int GetVideoModes(CVideoMode *pModes, int MaxModes);
+	virtual int GetVideoModes(CVideoMode *pModes, int MaxModes, int Screen);
+
+	virtual int GetDesktopScreenWidth() { return m_DesktopScreenWidth; }
+	virtual int GetDesktopScreenHeight() { return m_DesktopScreenHeight; }
 
 	// syncronization
 	virtual void InsertSignal(semaphore *pSemaphore);

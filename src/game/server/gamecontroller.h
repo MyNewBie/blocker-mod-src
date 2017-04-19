@@ -13,6 +13,8 @@ typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 #else
 #include <stdint.h>
+#include <base/tl/array.h>
+
 #endif
 
 /*
@@ -23,8 +25,8 @@ typedef unsigned __int64 uint64_t;
 class IGameController
 {
 	friend class CSaveTeam; // need acces to GameServer() and Server()
-	
-	vec2 m_aaSpawnPoints[3][64];
+
+	vec2 m_aaSpawnPoints[3][128];
 	int m_aNumSpawnPoints[3];
 
 	class CGameContext *m_pGameServer;
@@ -71,6 +73,7 @@ protected:
 	int m_GameFlags;
 	int m_UnbalancedTick;
 	bool m_ForceBalanced;
+
 
 public:
 	const char *m_pGameType;

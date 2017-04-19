@@ -61,7 +61,7 @@ public:
 		m_aName[0] = 0;
 		m_Bottom = 0;
 		m_Top = 0;
-		m_Synchronized = true;
+		m_Synchronized = false;
 	}
 
 	void Resort()
@@ -212,7 +212,7 @@ public:
 	{
 		return m_lLayers.size() == 0; // stupid function, since its bad for Fillselection: TODO add a function for Fillselection that returns whether a specific tile is used in the given layer
 	}
-	
+
 	/*bool IsUsedInThisLayer(int Layer, int Index) // <--------- this is what i meant but cause i dont know which Indexes belongs to which layers i cant finish yet
 	{
 		switch Layer
@@ -234,7 +234,7 @@ public:
 			}
 			case LAYERTYPE_SWITCH:
 			{
-				
+
 			}
 			case LAYERTYPE_TUNE:
 			{
@@ -307,7 +307,7 @@ class CEditorSound
 {
 public:
 	CEditor *m_pEditor;
-	
+
 	CEditorSound(CEditor *pEditor)
 	{
 		m_pEditor = pEditor;
@@ -375,6 +375,12 @@ public:
 		}
 	};
 	CMapInfo m_MapInfo;
+
+	struct CSetting
+	{
+		char m_aCommand[64];
+	};
+	array<CSetting> m_lSettings;
 
 	class CLayerGame *m_pGameLayer;
 	CLayerGroup *m_pGameGroup;
@@ -481,6 +487,7 @@ enum
 	PROPTYPE_BOOL,
 	PROPTYPE_INT_STEP,
 	PROPTYPE_INT_SCROLL,
+	PROPTYPE_ANGLE_SCROLL,
 	PROPTYPE_COLOR,
 	PROPTYPE_IMAGE,
 	PROPTYPE_ENVELOPE,
@@ -500,12 +507,15 @@ public:
 	CLayerTiles(int w, int h);
 	~CLayerTiles();
 
+	virtual CTile GetTile(int x, int y);
+	virtual void SetTile(int x, int y, CTile tile);
+
 	virtual void Resize(int NewW, int NewH);
 	virtual void Shift(int Direction);
 
 	void MakePalette();
 	virtual void Render();
-	
+
 	int ConvertX(float x) const;
 	int ConvertY(float y) const;
 	void Convert(CUIRect Rect, RECTi *pOut);
@@ -582,6 +592,9 @@ class CLayerGame : public CLayerTiles
 public:
 	CLayerGame(int w, int h);
 	~CLayerGame();
+
+	virtual CTile GetTile(int x, int y);
+	virtual void SetTile(int x, int y, CTile tile);
 
 	virtual int RenderProperties(CUIRect *pToolbox);
 };
@@ -677,10 +690,14 @@ public:
 		m_ShowEnvelopeEditor = 0;
 		m_ShowUndo = 0;
 		m_UndoScrollValue = 0.0f;
+		m_ShowServerSettingsEditor = false;
 
 		m_ShowEnvelopePreview = 0;
 		m_SelectedQuadEnvelope = -1;
 		m_SelectedEnvelopePoint = -1;
+
+		m_CommandBox = 0.0f;
+		m_aSettingsCommand[0] = 0;
 
 		ms_CheckerTexture = 0;
 		ms_BackgroundTexture = 0;
@@ -703,6 +720,9 @@ public:
 		m_SpeedupForce = 50;
 		m_SpeedupMaxSpeed = 0;
 		m_SpeedupAngle = 0;
+		m_LargeLayerWasWarned = false;
+		m_PreventUnusedTilesWasWarned = false;
+		m_AllowPlaceUnusedTiles = false;
 	}
 
 	virtual void Init();
@@ -733,7 +753,8 @@ public:
 	void Reset(bool CreateDefault=true);
 	int Save(const char *pFilename);
 	int Load(const char *pFilename, int StorageType);
-	int Append(const char *pFilename, int StorageType);
+	int Append(const char *pFilename, int StorageType); 
+	void LoadCurrentMap();
 	void Render();
 
 	CQuad *GetSelectedQuad();
@@ -760,13 +781,19 @@ public:
 	{
 		POPEVENT_EXIT=0,
 		POPEVENT_LOAD,
+		POPEVENT_LOADCURRENT,
 		POPEVENT_NEW,
 		POPEVENT_SAVE,
+		POPEVENT_LARGELAYER,
+		POPEVENT_PREVENTUNUSEDTILES
 	};
 
 	int m_PopupEventType;
 	int m_PopupEventActivated;
 	int m_PopupEventWasActivated;
+	bool m_LargeLayerWasWarned;
+	bool m_PreventUnusedTilesWasWarned;
+	bool m_AllowPlaceUnusedTiles;
 
 	enum
 	{
@@ -785,6 +812,7 @@ public:
 	char m_aFileDialogFileName[MAX_PATH_LENGTH];
 	char m_aFileDialogCurrentFolder[MAX_PATH_LENGTH];
 	char m_aFileDialogCurrentLink[MAX_PATH_LENGTH];
+	char m_aFileDialogSearchText[64];
 	char *m_pFileDialogPath;
 	bool m_aFileDialogActivate;
 	int m_FileDialogFileType;
@@ -806,7 +834,7 @@ public:
 
 		bool operator<(const CFilelistItem &Other) { return !str_comp(m_aFilename, "..") ? true : !str_comp(Other.m_aFilename, "..") ? false :
 														m_IsDir && !Other.m_IsDir ? true : !m_IsDir && Other.m_IsDir ? false :
-														str_comp_filenames(m_aFilename, Other.m_aFilename) < 0; }
+														str_comp_nocase(m_aFilename, Other.m_aFilename) < 0; }
 	};
 	sorted_array<CFilelistItem> m_FileList;
 	int m_FilesStartAt;
@@ -841,6 +869,7 @@ public:
 
 	int m_ShowEnvelopeEditor;
 	int m_ShowEnvelopePreview; //Values: 0-Off|1-Selected Envelope|2-All
+	bool m_ShowServerSettingsEditor;
 	bool m_ShowPicker;
 
 	int m_SelectedLayer;
@@ -870,9 +899,13 @@ public:
 
 	static void EnvelopeEval(float TimeOffset, int Env, float *pChannels, void *pUser);
 
+	float m_CommandBox;
+	char m_aSettingsCommand[64];
+
 	void DoMapBorder();
 	int DoButton_Editor_Common(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip);
 	int DoButton_Editor(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip);
+	int DoButton_Env(const void *pID, const char *pText, int Checked, const CUIRect *pRect, const char *pToolTip, vec3 Color);
 
 	int DoButton_Tab(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip);
 	int DoButton_Ex(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip, int Corners, float FontSize=10.0f);
@@ -884,6 +917,8 @@ public:
 	int DoButton_Menu(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip);
 	int DoButton_MenuItem(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags=0, const char *pToolTip=0);
 
+	int DoButton_ColorPicker(const void *pID, const CUIRect *pRect, vec4 *pColor, const char *pToolTip=0);
+
 	int DoEditBox(void *pID, const CUIRect *pRect, char *pStr, unsigned StrSize, float FontSize, float *Offset, bool Hidden=false, int Corners=CUI::CORNER_ALL);
 
 	void RenderBackground(CUIRect View, int Texture, float Size, float Brightness);
@@ -893,7 +928,7 @@ public:
 	void UiInvokePopupMenu(void *pID, int Flags, float X, float Y, float W, float H, int (*pfnFunc)(CEditor *pEditor, CUIRect Rect), void *pExtra=0);
 	void UiDoPopupMenu();
 
-	int UiDoValueSelector(void *pID, CUIRect *pRect, const char *pLabel, int Current, int Min, int Max, int Step, float Scale, const char *pToolTip);
+	int UiDoValueSelector(void *pID, CUIRect *pRect, const char *pLabel, int Current, int Min, int Max, int Step, float Scale, const char *pToolTip, bool isDegree=false, bool isHex=false, int corners=CUI::CORNER_ALL, vec4* color=0);
 
 	static int PopupGroup(CEditor *pEditor, CUIRect View);
 	static int PopupLayer(CEditor *pEditor, CUIRect View);
@@ -910,10 +945,12 @@ public:
 	static int PopupSelectConfigAutoMap(CEditor *pEditor, CUIRect View);
 	static int PopupSound(CEditor *pEditor, CUIRect View);
 	static int PopupSource(CEditor *pEditor, CUIRect View);
+	static int PopupColorPicker(CEditor *pEditor, CUIRect View);
 
 	static void CallbackOpenMap(const char *pFileName, int StorageType, void *pUser);
 	static void CallbackAppendMap(const char *pFileName, int StorageType, void *pUser);
 	static void CallbackSaveMap(const char *pFileName, int StorageType, void *pUser);
+	static void CallbackSaveCopyMap(const char *pFileName, int StorageType, void *pUser);
 
 	void PopupSelectImageInvoke(int Current, float x, float y);
 	int PopupSelectImageResult();
@@ -925,7 +962,7 @@ public:
 	int PopupSelectConfigAutoMapResult();
 
 	void PopupSelectSoundInvoke(int Current, float x, float y);
-	int PopupSelectSoundResult(); 
+	int PopupSelectSoundResult();
 
 	vec4 ButtonColorMul(const void *pID);
 
@@ -953,6 +990,7 @@ public:
 	void RenderStatusbar(CUIRect View);
 	void RenderEnvelopeEditor(CUIRect View);
 	void RenderUndoList(CUIRect View);
+	void RenderServerSettingsEditor(CUIRect View);
 
 	void RenderMenubar(CUIRect Menubar);
 	void RenderFileDialog();
@@ -978,6 +1016,10 @@ public:
 	int GetLineDistance();
 	void ZoomMouseTarget(float ZoomFactor);
 
+	static vec3 ms_PickerColor;
+	static int ms_SVPicker;
+	static int ms_HuePicker;
+
 	// DDRace
 
 	static int ms_FrontTexture;
@@ -990,7 +1032,7 @@ public:
 	static int PopupSwitch(CEditor *pEditor, CUIRect View);
 	static int PopupTune(CEditor *pEditor, CUIRect View);
 	unsigned char m_TeleNumber;
-	
+
 	unsigned char m_TuningNum;
 
 	unsigned char m_SpeedupForce;
@@ -1052,6 +1094,7 @@ public:
 
 	virtual void Resize(int NewW, int NewH);
 	virtual void Shift(int Direction);
+	virtual void SetTile(int x, int y, CTile tile);
 	virtual void BrushDraw(CLayer *pBrush, float wx, float wy);
 };
 

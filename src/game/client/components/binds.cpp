@@ -7,7 +7,7 @@
 bool CBinds::CBindsSpecial::OnInput(IInput::CEvent Event)
 {
 	// don't handle invalid events and keys that arn't set to anything
-	if(Event.m_Key >= KEY_F1 && Event.m_Key <= KEY_F15 && m_pBinds->m_aaKeyBindings[Event.m_Key][0] != 0)
+	if(((Event.m_Key >= KEY_F1 && Event.m_Key <= KEY_F12) || (Event.m_Key >= KEY_F13 && Event.m_Key <= KEY_F24)) && m_pBinds->m_aaKeyBindings[Event.m_Key][0] != 0)
 	{
 		int Stroke = 0;
 		if(Event.m_Flags&IInput::FLAG_PRESS)
@@ -47,10 +47,10 @@ bool CBinds::OnInput(IInput::CEvent e)
 	if(e.m_Key <= 0 || e.m_Key >= KEY_LAST || m_aaKeyBindings[e.m_Key][0] == 0)
 		return false;
 
-	int Stroke = 0;
 	if(e.m_Flags&IInput::FLAG_PRESS)
-		Stroke = 1;
-	Console()->ExecuteLineStroked(Stroke, m_aaKeyBindings[e.m_Key]);
+		Console()->ExecuteLineStroked(1, m_aaKeyBindings[e.m_Key]);
+	if(e.m_Flags&IInput::FLAG_RELEASE)
+		Console()->ExecuteLineStroked(0, m_aaKeyBindings[e.m_Key]);
 	return true;
 }
 
@@ -89,7 +89,7 @@ void CBinds::SetDefaults()
 	Bind(KEY_F1, "toggle_local_console");
 	Bind(KEY_F2, "toggle_remote_console");
 	Bind(KEY_TAB, "+scoreboard");
-	Bind('u', "+show_chat");
+	Bind(KEY_BACKQUOTE, "+statboard");
 	Bind(KEY_F10, "screenshot");
 
 	Bind('a', "+left");
@@ -111,6 +111,7 @@ void CBinds::SetDefaults()
 	Bind(KEY_F5, "spectate_previous");
 	Bind(KEY_F6, "spectate_next");
 #else
+	Bind(KEY_RETURN, "+show_chat; chat all");
 	Bind(KEY_RIGHT, "spectate_next");
 	Bind(KEY_LEFT, "spectate_previous");
 	Bind(KEY_RSHIFT, "+spectate");
@@ -126,13 +127,17 @@ void CBinds::SetDefaults()
 	Bind(KEY_MOUSE_WHEEL_UP, "+prevweapon");
 	Bind(KEY_MOUSE_WHEEL_DOWN, "+nextweapon");
 
-	Bind('t', "chat all");
-	Bind('y', "chat team");
+	Bind('t', "+show_chat; chat all");
+	Bind('y', "+show_chat; chat team");
+	Bind('z', "+show_chat; chat team"); // For German keyboards
+	Bind('u', "+show_chat");
+	Bind('i', "+show_chat; chat all /c ");
 
 	Bind(KEY_F3, "vote yes");
 	Bind(KEY_F4, "vote no");
 
 	Bind('k', "kill");
+	Bind('q', "say /pause");
 	Bind('p', "say /pause");
 
 	// DDRace
@@ -148,8 +153,9 @@ void CBinds::OnConsoleInit()
 	if(pConfig)
 		pConfig->RegisterCallback(ConfigSaveCallback, this);
 
-	Console()->Register("bind", "sr", CFGFLAG_CLIENT, ConBind, this, "Bind key to execute the command");
-	Console()->Register("unbind", "s", CFGFLAG_CLIENT, ConUnbind, this, "Unbind key");
+	Console()->Register("bind", "s[key] r[command]", CFGFLAG_CLIENT, ConBind, this, "Bind key to execute the command");
+	Console()->Register("bind_print", "s[key]", CFGFLAG_CLIENT, ConBindPrint, this, "Print command executed by this keybinding");
+	Console()->Register("unbind", "s[key]", CFGFLAG_CLIENT, ConUnbind, this, "Unbind key");
 	Console()->Register("unbindall", "", CFGFLAG_CLIENT, ConUnbindAll, this, "Unbind all keys");
 	Console()->Register("dump_binds", "", CFGFLAG_CLIENT, ConDumpBinds, this, "Dump binds");
 
@@ -172,6 +178,35 @@ void CBinds::ConBind(IConsole::IResult *pResult, void *pUserData)
 	}
 
 	pBinds->Bind(id, pResult->GetString(1));
+}
+
+void CBinds::ConBindPrint(IConsole::IResult *pResult, void *pUserData)
+{
+	CBinds *pBinds = (CBinds *)pUserData;
+	const char *pKeyName = pResult->GetString(0);
+	int id = pBinds->GetKeyID(pKeyName);
+
+	if (!id)
+	{
+		char aBuf[256];
+		str_format(aBuf, sizeof(aBuf), "key %s not found", pKeyName);
+		pBinds->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "binds", aBuf);
+	}
+	else 
+	{
+		char aBuf[256];
+
+		if (pBinds->m_aaKeyBindings[id][0] == '\0')
+		{
+			str_format(aBuf, sizeof(aBuf), "%s (%d) is not bound", pKeyName, id);
+		}
+		else 
+		{
+			str_format(aBuf, sizeof(aBuf), "%s (%d) = %s", pKeyName, id, pBinds->m_aaKeyBindings[id]);
+		}
+		
+		pBinds->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "binds", aBuf);
+	}
 }
 
 
@@ -282,8 +317,6 @@ void CBinds::SetDDRaceBinds(bool FreeOnly)
 		Bind('c', "say /rank");
 		Bind('v', "say /info");
 		Bind('b', "say /top5");
-		Bind('p', "say /points");
-		Bind('z', "emote 12");
 		Bind('x', "emote 14");
 		Bind('h', "emote 2");
 		Bind('m', "emote 5");
@@ -293,13 +326,15 @@ void CBinds::SetDDRaceBinds(bool FreeOnly)
 		Bind(KEY_PAGEDOWN, "toggle cl_show_quads 0 1");
 		Bind(KEY_PAGEUP, "toggle cl_overlay_entities 0 100");
 #endif
-		Bind(KEY_KP0, "say /emote normal 999999");
-		Bind(KEY_KP1, "say /emote happy 999999");
-		Bind(KEY_KP2, "say /emote angry 999999");
-		Bind(KEY_KP3, "say /emote pain 999999");
-		Bind(KEY_KP4, "say /emote surprise 999999");
-		Bind(KEY_KP5, "say /emote blink 999999");
+		Bind(KEY_KP_0, "say /emote normal 999999");
+		Bind(KEY_KP_1, "say /emote happy 999999");
+		Bind(KEY_KP_2, "say /emote angry 999999");
+		Bind(KEY_KP_3, "say /emote pain 999999");
+		Bind(KEY_KP_4, "say /emote surprise 999999");
+		Bind(KEY_KP_5, "say /emote blink 999999");
 		Bind(KEY_MOUSE_3, "+spectate");
+		Bind(KEY_MINUS, "spectate_previous");
+		Bind(KEY_EQUALS, "spectate_next");
 	}
 	else
 	{
@@ -329,10 +364,6 @@ void CBinds::SetDDRaceBinds(bool FreeOnly)
 			Bind('v', "say /info");
 		if(!Get('b')[0])
 			Bind('b', "say /top5");
-		if(!Get('p')[0])
-			Bind('p', "say /points");
-		if(!Get('z')[0])
-			Bind('z', "emote 12");
 		if(!Get('x')[0])
 			Bind('x', "emote 14");
 		if(!Get(KEY_KP_PLUS)[0])
@@ -344,21 +375,21 @@ void CBinds::SetDDRaceBinds(bool FreeOnly)
 		if(!Get('x')[0])
 			Bind('x', "toggle cl_dummy 0 1");
 		if(!Get(KEY_PAGEDOWN)[0])
-			Bind(KEY_PAGEDOWN, "cl_show_entities 0");
+			Bind(KEY_PAGEDOWN, "toggle cl_show_quads 0 1");
 		if(!Get(KEY_PAGEUP)[0])
-			Bind(KEY_PAGEUP, "cl_show_entities 1");
-		if(!Get(KEY_KP0)[0])
-			Bind(KEY_KP0, "say /emote normal 999999");
-		if(!Get(KEY_KP1)[0])
-			Bind(KEY_KP1, "say /emote happy 999999");
-		if(!Get(KEY_KP2)[0])
-			Bind(KEY_KP2, "say /emote angry 999999");
-		if(!Get(KEY_KP3)[0])
-			Bind(KEY_KP3, "say /emote pain 999999");
-		if(!Get(KEY_KP4)[0])
-			Bind(KEY_KP4, "say /emote surprise 999999");
-		if(!Get(KEY_KP5)[0])
-			Bind(KEY_KP5, "say /emote blink 999999");
+			Bind(KEY_PAGEUP, "toggle cl_overlay_entities 0 100");
+		if(!Get(KEY_KP_0)[0])
+			Bind(KEY_KP_0, "say /emote normal 999999");
+		if(!Get(KEY_KP_1)[0])
+			Bind(KEY_KP_1, "say /emote happy 999999");
+		if(!Get(KEY_KP_2)[0])
+			Bind(KEY_KP_2, "say /emote angry 999999");
+		if(!Get(KEY_KP_3)[0])
+			Bind(KEY_KP_3, "say /emote pain 999999");
+		if(!Get(KEY_KP_4)[0])
+			Bind(KEY_KP_4, "say /emote surprise 999999");
+		if(!Get(KEY_KP_5)[0])
+			Bind(KEY_KP_5, "say /emote blink 999999");
 		if(!Get(KEY_MOUSE_3)[0])
 			Bind(KEY_MOUSE_3, "+spectate");
 		if(!Get(KEY_MINUS)[0])

@@ -35,14 +35,14 @@ public:
 	CTuningParams()
 	{
 		const float TicksPerSecond = 50.0f;
-		#define MACRO_TUNING_PARAM(Name,ScriptName,Value) m_##Name.Set((int)(Value*100.0f));
+		#define MACRO_TUNING_PARAM(Name,ScriptName,Value,Description) m_##Name.Set((int)(Value*100.0f));
 		#include "tuning.h"
 		#undef MACRO_TUNING_PARAM
 	}
 
 	static const char *m_apNames[];
 
-	#define MACRO_TUNING_PARAM(Name,ScriptName,Value) CTuneParam m_##Name;
+	#define MACRO_TUNING_PARAM(Name,ScriptName,Value,Description) CTuneParam m_##Name;
 	#include "tuning.h"
 	#undef MACRO_TUNING_PARAM
 
@@ -197,11 +197,14 @@ public:
 	int m_HookTick;
 	int m_HookState;
 	int m_HookedPlayer;
+	int m_LastHookedPlayer;
+	int m_LastHookedTick;
 	int m_ActiveWeapon;
 
 	bool m_NewHook;
-	vec2 m_NewHookPos;
-	vec2 m_NewHookDir;
+
+	bool m_PassiveMode;
+	bool m_RevokeHook;
 
 	int m_Jumped;
 	int m_JumpedTotal;
@@ -235,6 +238,9 @@ public:
 
 	void LimitForce(vec2 *Force);
 	void ApplyForce(vec2 Force);
+		
+	//LMB
+	int m_LMBHookCount;
 
 private:
 

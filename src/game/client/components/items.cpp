@@ -44,10 +44,29 @@ void CItems::RenderProjectile(const CNetObj_Projectile *pCurrent, int ItemID)
 		Speed = m_pClient->m_Tuning[g_Config.m_ClDummy].m_GunSpeed;
 	}
 
+	//
+	bool LocalPlayerInGame = false;
+
+	if(m_pClient->m_Snap.m_pLocalInfo)
+		LocalPlayerInGame = m_pClient->m_aClients[m_pClient->m_Snap.m_pLocalInfo->m_ClientID].m_Team != -1;
+
+	//
 	static float s_LastGameTickTime = Client()->GameTickTime();
 	if(m_pClient->m_Snap.m_pGameInfoObj && !(m_pClient->m_Snap.m_pGameInfoObj->m_GameStateFlags&GAMESTATEFLAG_PAUSED))
 		s_LastGameTickTime = Client()->GameTickTime();
-	float Ct = (Client()->PrevGameTick()-pCurrent->m_StartTick)/(float)SERVER_TICK_SPEED + s_LastGameTickTime;
+
+	int PrevTick = Client()->PrevGameTick();
+
+	if (m_pClient->AntiPingGrenade() && LocalPlayerInGame && !(Client()->State() == IClient::STATE_DEMOPLAYBACK))
+	{
+		// calc predicted game tick
+		static int Offset = 0;
+		Offset = (int)(0.8f * (float)Offset + 0.2f * (float)(Client()->PredGameTick() - Client()->GameTick()));
+
+		PrevTick += Offset;
+	}
+
+	float Ct = (PrevTick-pCurrent->m_StartTick)/(float)SERVER_TICK_SPEED + s_LastGameTickTime;
 	if(Ct < 0)
 		return; // projectile havn't been shot yet
 
@@ -56,8 +75,7 @@ void CItems::RenderProjectile(const CNetObj_Projectile *pCurrent, int ItemID)
 
 	CServerInfo Info;
 	Client()->GetServerInfo(&Info);
-	bool IsDDNet = str_find_nocase(Info.m_aGameType, "ddracenetw") || str_find_nocase(Info.m_aGameType, "ddnet");
-	ExtractInfo(pCurrent, &StartPos, &StartVel, IsDDNet);
+	ExtractInfo(pCurrent, &StartPos, &StartVel, IsDDNet(&Info));
 
 	vec2 Pos = CalcPos(StartPos, StartVel, Curvature, Speed, Ct);
 	vec2 PrevPos = CalcPos(StartPos, StartVel, Curvature, Speed, Ct-0.001f);
@@ -105,31 +123,7 @@ void CItems::RenderProjectile(const CNetObj_Projectile *pCurrent, int ItemID)
 	}
 
 	IGraphics::CQuadItem QuadItem(Pos.x, Pos.y, 32, 32);
-
-	bool LocalPlayerInGame = false;
-
-	if(m_pClient->m_Snap.m_pLocalInfo)
-		LocalPlayerInGame = m_pClient->m_aClients[m_pClient->m_Snap.m_pLocalInfo->m_ClientID].m_Team != -1;
-
-	if (g_Config.m_ClAntiPingGrenade && LocalPlayerInGame && !(Client()->State() == IClient::STATE_DEMOPLAYBACK))
-	{
-		// Draw shadows of grenades
-		static int Offset = 0;
-		Offset = (int)(0.8f * (float)Offset + 0.2f * (float)(Client()->PredGameTick() - Client()->GameTick()));
-
-		int PredictedTick = Client()->PrevGameTick() + Offset;
-		float PredictedCt = (PredictedTick - pCurrent->m_StartTick)/(float)SERVER_TICK_SPEED + Client()->GameTickTime();
-
-		int shadow_type = pCurrent->m_Type;
-		RenderTools()->SelectSprite(g_pData->m_Weapons.m_aId[clamp(shadow_type, 0, NUM_WEAPONS-1)].m_pSpriteProj);
-
-		vec2 PredictedPos = CalcPos(StartPos, StartVel, Curvature, Speed, PredictedCt);
-
-		IGraphics::CQuadItem QuadItem(PredictedPos.x, PredictedPos.y, 32, 32);
-		Graphics()->QuadsDraw(&QuadItem, 1);
-	}
-	else
-		Graphics()->QuadsDraw(&QuadItem, 1);
+	Graphics()->QuadsDraw(&QuadItem, 1);
 
 	Graphics()->QuadsSetRotation(0);
 	Graphics()->QuadsEnd();
@@ -181,7 +175,7 @@ void CItems::RenderPickup(const CNetObj_Pickup *pPrev, const CNetObj_Pickup *pCu
 	{
 		if(m_pClient->m_Snap.m_pGameInfoObj && !(m_pClient->m_Snap.m_pGameInfoObj->m_GameStateFlags&GAMESTATEFLAG_PAUSED))
 			s_Time += Client()->LocalTime()-s_LastLocalTime;
- 	}
+	}
 	Pos.x += cosf(s_Time*2.0f+Offset)*2.5f;
 	Pos.y += sinf(s_Time*2.0f+Offset)*2.5f;
 	s_LastLocalTime = Client()->LocalTime();
@@ -235,7 +229,7 @@ void CItems::RenderLaser(const struct CNetObj_Laser *pCurrent)
 	vec2 From = vec2(pCurrent->m_FromX, pCurrent->m_FromY);
 	vec2 Dir = normalize(Pos-From);
 
-	float Ticks = Client()->GameTick() + Client()->IntraGameTick() - pCurrent->m_StartTick;
+	float Ticks = Client()->GameTick() - pCurrent->m_StartTick + Client()->IntraGameTick();
 	float Ms = (Ticks/50.0f) * 1000.0f;
 	float a = Ms / m_pClient->m_Tuning[g_Config.m_ClDummy].m_LaserBounceDelay;
 	a = clamp(a, 0.0f, 1.0f);

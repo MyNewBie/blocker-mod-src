@@ -6,6 +6,14 @@
 #include <game/client/component.h>
 #include <game/client/lineinput.h>
 
+enum
+{
+	CONSOLE_CLOSED,
+	CONSOLE_OPENING,
+	CONSOLE_OPEN,
+	CONSOLE_CLOSING,
+};
+
 class CGameConsole : public CComponent
 {
 	class CInstance
@@ -14,6 +22,7 @@ class CGameConsole : public CComponent
 		struct CBacklogEntry
 		{
 			float m_YOffset;
+			bool m_Highlighted;
 			char m_aText[1];
 		};
 		TStaticRingBuffer<CBacklogEntry, 64*1024, CRingBufferBase::FLAG_RECYCLE> m_Backlog;
@@ -48,7 +57,7 @@ class CGameConsole : public CComponent
 		void ExecuteLine(const char *pLine);
 
 		void OnInput(IInput::CEvent Event);
-		void PrintLine(const char *pLine);
+		void PrintLine(const char *pLine, bool Highlighted = false);
 
 		const char *GetString() const { return m_Input.GetString(); }
 		static void PossibleCommandsCompleteCallback(const char *pStr, void *pUser);
@@ -72,7 +81,7 @@ class CGameConsole : public CComponent
 	void Dump(int Type);
 
 	static void PossibleCommandsRenderCallback(const char *pStr, void *pUser);
-	static void ClientConsolePrintCallback(const char *pStr, void *pUserData);
+	static void ClientConsolePrintCallback(const char *pStr, void *pUserData, bool Highlighted);
 	static void ConToggleLocalConsole(IConsole::IResult *pResult, void *pUserData);
 	static void ConToggleRemoteConsole(IConsole::IResult *pResult, void *pUserData);
 	static void ConClearLocalConsole(IConsole::IResult *pResult, void *pUserData);
@@ -98,5 +107,7 @@ public:
 	virtual void OnRender();
 	virtual void OnMessage(int MsgType, void *pRawMsg);
 	virtual bool OnInput(IInput::CEvent Events);
+
+	bool IsClosed() { return m_ConsoleState == CONSOLE_CLOSED; }
 };
 #endif

@@ -135,7 +135,7 @@ void SendNews(NETADDR *pAddr)
 	g_NetOp.Send(&p);
 }
 
-// Packet: VERSIONSRV_DDNETLIST + char[4] Token + int16 comp_length + int16 plain_length + char[comp_length] 
+// Packet: VERSIONSRV_DDNETLIST + char[4] Token + int16 comp_length + int16 plain_length + char[comp_length]
 void SendServerList(NETADDR *pAddr, const char *Token)
 {
 	CNetChunk p;
@@ -196,9 +196,7 @@ int main(int argc, char **argv) // ignore_convention
 
 				char aAddrStr[NETADDR_MAXSTRSIZE];
 				net_addr_str(&Packet.m_Address, aAddrStr, sizeof(aAddrStr), false);
-				char aBuf[128];
-				str_format(aBuf, sizeof(aBuf), "version request by %s", aAddrStr);
-				dbg_msg("versionsrv", aBuf);
+				dbg_msg("versionsrv", "version request by %s", aAddrStr);
 			}
 
 			if(Packet.m_DataSize == sizeof(VERSIONSRV_GETNEWS) &&

@@ -20,7 +20,7 @@ void CBroadcast::OnReset()
 
 void CBroadcast::OnRender()
 {
-	if(m_pClient->m_pScoreboard->Active() || m_pClient->m_pMotd->IsActive())
+	if(m_pClient->m_pScoreboard->Active() || m_pClient->m_pMotd->IsActive() || !g_Config.m_ClShowBroadcasts)
 		return;
 
 	Graphics()->MapScreen(0, 0, 300*Graphics()->ScreenAspect(), 300);
@@ -56,7 +56,7 @@ void CBroadcast::OnMessage(int MsgType, void *pRawMsg)
 				{
 					aBuf[ii] = '\0';
 					ii = 0;
-					m_pClient->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "broadcast", aBuf);
+					m_pClient->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "broadcast", aBuf, true);
 				}
 				else
 				{
@@ -65,7 +65,7 @@ void CBroadcast::OnMessage(int MsgType, void *pRawMsg)
 				}
 			}
 			aBuf[ii] = '\0';
-			m_pClient->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "broadcast", aBuf);
+			m_pClient->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "broadcast", aBuf, true);
 		}
 	}
 }

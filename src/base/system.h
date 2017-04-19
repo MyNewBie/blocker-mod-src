@@ -9,6 +9,8 @@
 #define BASE_SYSTEM_H
 
 #include "detect.h"
+#include "stddef.h"
+#include <time.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -165,7 +167,7 @@ void mem_zero(void *block, unsigned size);
 	Returns:
 		<0 - Block a is lesser then block b
 		0 - Block a is equal to block b
-		>0 - Block a is greater then block b
+		>0 - Block a is greater than block b
 */
 int mem_comp(const void *a, const void *b, int size);
 
@@ -182,6 +184,7 @@ enum {
 	IOFLAG_READ = 1,
 	IOFLAG_WRITE = 2,
 	IOFLAG_RANDOM = 4,
+	IOFLAG_APPEND = 8,
 
 	IOSEEK_START = 0,
 	IOSEEK_CUR = 1,
@@ -196,7 +199,7 @@ typedef struct IOINTERNAL *IOHANDLE;
 
 	Parameters:
 		filename - File to open.
-		flags - A set of flags. IOFLAG_READ, IOFLAG_WRITE, IOFLAG_RANDOM.
+		flags - A set of flags. IOFLAG_READ, IOFLAG_WRITE, IOFLAG_RANDOM, IOFLAG_APPEND.
 
 	Returns:
 		Returns a handle to the file on success and 0 on failure.
@@ -352,7 +355,7 @@ IOHANDLE io_stderr();
 void thread_sleep(int milliseconds);
 
 /*
-	Function: thread_create
+	Function: thread_init
 		Creates a new thread.
 
 	Parameters:
@@ -360,7 +363,7 @@ void thread_sleep(int milliseconds);
 		user - Pointer to pass to the thread.
 
 */
-void *thread_create(void (*threadfunc)(void *), void *user);
+void *thread_init(void (*threadfunc)(void *), void *user);
 
 /*
 	Function: thread_wait
@@ -403,9 +406,9 @@ typedef void* LOCK;
 LOCK lock_create();
 void lock_destroy(LOCK lock);
 
-int lock_try(LOCK lock);
+int lock_trylock(LOCK lock);
 void lock_wait(LOCK lock);
-void lock_release(LOCK lock);
+void lock_unlock(LOCK lock);
 
 
 /* Group: Semaphores */
@@ -474,6 +477,7 @@ typedef struct
 	int type;
 	int ipv4sock;
 	int ipv6sock;
+	int web_ipv4sock;
 } NETSOCKET;
 
 enum
@@ -484,7 +488,8 @@ enum
 	NETTYPE_IPV4 = 1,
 	NETTYPE_IPV6 = 2,
 	NETTYPE_LINK_BROADCAST = 4,
-	NETTYPE_ALL = NETTYPE_IPV4|NETTYPE_IPV6
+	NETTYPE_WEBSOCKET_IPV4 = 8,
+	NETTYPE_ALL = NETTYPE_IPV4|NETTYPE_IPV6|NETTYPE_WEBSOCKET_IPV4
 };
 
 typedef struct
@@ -783,6 +788,22 @@ int str_length(const char *str);
 int str_format(char *buffer, int buffer_size, const char *format, ...);
 
 /*
+	Function: str_trim_words
+		Trims specific number of words at the start of a string.
+
+	Parameters:
+		str - String to trim the words from.
+		words - Count of words to trim.
+
+	Returns:
+		Trimmed string
+
+	Remarks:
+		- The strings are treated as zero-termineted strings.
+*/
+char *str_trim_words(char *str, int words);
+
+/*
 	Function: str_sanitize_strong
 		Replaces all characters below 32 and above 127 with whitespace.
 
@@ -1007,6 +1028,7 @@ void str_hex(char *dst, int dst_size, const void *data, int data_size);
 		- Guarantees that buffer string will contain zero-termination.
 */
 void str_timestamp(char *buffer, int buffer_size);
+void str_timestamp_ex(time_t time, char *buffer, int buffer_size, const char *format);
 
 /* Group: Filesystem */
 
@@ -1024,7 +1046,9 @@ void str_timestamp(char *buffer, int buffer_size);
 		Always returns 0.
 */
 typedef int (*FS_LISTDIR_CALLBACK)(const char *name, int is_dir, int dir_type, void *user);
+typedef int (*FS_LISTDIR_INFO_CALLBACK)(const char *name, time_t date, int is_dir, int dir_type, void *user);
 int fs_listdir(const char *dir, FS_LISTDIR_CALLBACK cb, int type, void *user);
+int fs_listdir_info(const char *dir, FS_LISTDIR_INFO_CALLBACK cb, int type, void *user);
 
 /*
 	Function: fs_makedir
@@ -1041,6 +1065,18 @@ int fs_listdir(const char *dir, FS_LISTDIR_CALLBACK cb, int type, void *user);
 		in a failure if b or a does not exist.
 */
 int fs_makedir(const char *path);
+
+/*
+	Function: fs_makedir_rec_for
+		Recursively create directories for a file
+
+	Parameters:
+		path - File for which to create directories
+
+	Returns:
+		Returns 0 on success. Negative value on failure.
+*/
+int fs_makedir_rec_for(const char *path);
 
 /*
 	Function: fs_storage_path
@@ -1064,6 +1100,12 @@ int fs_storage_path(const char *appname, char *path, int max);
 		Returns 1 on success, 0 on failure.
 */
 int fs_is_dir(const char *path);
+
+/*
+	Function: fs_getmtime
+		Gets the modification time of a file
+*/
+time_t fs_getmtime(const char *path);
 
 /*
 	Function: fs_chdir
@@ -1207,6 +1249,7 @@ typedef struct
 void net_stats(NETSTATS *stats);
 
 int str_toint(const char *str);
+int str_toint_base(const char *str, int base);
 float str_tofloat(const char *str);
 int str_isspace(char c);
 char str_uppercase(char c);
@@ -1222,9 +1265,23 @@ unsigned str_quickhash(const char *str);
 */
 void gui_messagebox(const char *title, const char *message);
 
-int str_utf8_comp_names(const char *a, const char *b);
+/*
+	Function: str_utf8_comp_confusable
+		Compares two strings for visual appearance.
+
+	Parameters:
+		a - String to compare.
+		b - String to compare.
+
+	Returns:
+		0 if the strings are confusable.
+		!=0 otherwise.
+*/
+int str_utf8_comp_confusable(const char *a, const char *b);
 
 int str_utf8_isspace(int code);
+
+int str_utf8_isstart(char c);
 
 const char *str_utf8_skip_whitespaces(const char *str);
 
@@ -1262,16 +1319,17 @@ int str_utf8_forward(const char *str, int cursor);
 
 /*
 	Function: str_utf8_decode
-		Decodes an utf8 character
+		Decodes a utf8 codepoint
 
 	Parameters:
-		ptr - pointer to an utf8 string. this pointer will be moved forward
+		ptr - Pointer to a utf8 string. This pointer will be moved forward.
 
 	Returns:
-		Unicode value for the character. -1 for invalid characters and 0 for end of string.
+		The Unicode codepoint. -1 for invalid input and 0 for end of string.
 
 	Remarks:
 		- This function will also move the pointer forward.
+		- You may call this function again after an error occured.
 */
 int str_utf8_decode(const char **ptr);
 
@@ -1280,7 +1338,7 @@ int str_utf8_decode(const char **ptr);
 		Encode an utf8 character
 
 	Parameters:
-		ptr - Pointer to a buffer that should recive the data. Should be able to hold at least 4 bytes.
+		ptr - Pointer to a buffer that should receive the data. Should be able to hold at least 4 bytes.
 
 	Returns:
 		Number of bytes put into the buffer.
@@ -1307,6 +1365,83 @@ int str_utf8_encode(char *ptr, int chr);
 int str_utf8_check(const char *str);
 
 int pid();
+
+/*
+	Function: shell_execute
+		Executes a given file.
+*/
+void shell_execute(const char *file);
+
+/*
+	Function: os_compare_version
+		Compares the OS version to a given major and minor.
+
+	Parameters:
+		major - Major version to compare to.
+		minor - Minor version to compare to.
+
+	Returns:
+		1 - OS version higher.
+		0 - OS version same.
+		-1 - OS version lower.
+*/
+int os_compare_version(int major, int minor);
+
+/*
+	Function: generate_password
+		Generates a null-terminated password of length `2 *
+		random_length`.
+
+
+	Parameters:
+		buffer - Pointer to the start of the output buffer.
+		length - Length of the buffer.
+		random - Pointer to a randomly-initialized array of shorts.
+		random_length - Length of the short array.
+*/
+void generate_password(char *buffer, unsigned length, unsigned short *random, unsigned random_length);
+
+/*
+	Function: secure_random_init
+		Initializes the secure random module.
+		You *MUST* check the return value of this function.
+
+	Returns:
+		0 - Initialization succeeded.
+		1 - Initialization failed.
+*/
+int secure_random_init();
+
+/*
+	Function: secure_random_password
+		Fills the buffer with the specified amount of random password
+		characters.
+
+		The desired password length must be greater or equal to 6, even
+		and smaller or equal to 128.
+
+	Parameters:
+		buffer - Pointer to the start of the buffer.
+		length - Length of the buffer.
+		pw_length - Length of the desired password.
+*/
+void secure_random_password(char *buffer, unsigned length, unsigned pw_length);
+
+/*
+	Function: secure_random_fill
+		Fills the buffer with the specified amount of random bytes.
+
+	Parameters:
+		buffer - Pointer to the start of the buffer.
+		length - Length of the buffer.
+*/
+void secure_random_fill(void *bytes, unsigned length);
+
+/*
+	Function: secure_rand
+		Returns random int (replacement for rand()).
+*/
+int secure_rand();
 
 #ifdef __cplusplus
 }

@@ -70,6 +70,9 @@ class CChat : public CComponent
 	static void ConSayTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConChat(IConsole::IResult *pResult, void *pUserData);
 	static void ConShowChat(IConsole::IResult *pResult, void *pUserData);
+	static void ConEcho(IConsole::IResult *pResult, void *pUserData);
+
+	bool LineShouldHighlight(const char *pLine, const char *pName);
 
 public:
 	CChat();
@@ -81,6 +84,8 @@ public:
 	void EnableMode(int Team);
 
 	void Say(int Team, const char *pLine);
+
+	void SayChat(const char *pLine);
 
 	virtual void OnReset();
 	virtual void OnConsoleInit();

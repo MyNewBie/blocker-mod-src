@@ -63,17 +63,8 @@ CControls::CControls()
 
 void CControls::OnReset()
 {
-	m_LastData[g_Config.m_ClDummy].m_Direction = 0;
-	//m_LastData.m_Hook = 0;
-	// simulate releasing the fire button
-	if((m_LastData[g_Config.m_ClDummy].m_Fire&1) != 0)
-		m_LastData[g_Config.m_ClDummy].m_Fire++;
-	m_LastData[g_Config.m_ClDummy].m_Fire &= INPUT_STATE_MASK;
-	m_LastData[g_Config.m_ClDummy].m_Jump = 0;
-	m_InputData[g_Config.m_ClDummy] = m_LastData[g_Config.m_ClDummy];
-
-	m_InputDirectionLeft[g_Config.m_ClDummy] = 0;
-	m_InputDirectionRight[g_Config.m_ClDummy] = 0;
+	ResetInput(0);
+	ResetInput(1);
 
 	m_JoystickFirePressed = false;
 	m_JoystickRunPressed = false;
@@ -83,22 +74,19 @@ void CControls::OnReset()
 	m_OldMouseX = m_OldMouseY = 0.0f;
 }
 
-void CControls::ResetDummyInput()
+void CControls::ResetInput(int dummy)
 {
-	m_LastData[!g_Config.m_ClDummy].m_Direction = 0;
-	if(m_LastData[!g_Config.m_ClDummy].m_Fire & 1)
-		m_LastData[!g_Config.m_ClDummy].m_Fire++;
-	m_LastData[!g_Config.m_ClDummy].m_Hook = 0;
-	m_LastData[!g_Config.m_ClDummy].m_Jump = 0;
+	m_LastData[dummy].m_Direction = 0;
+	//m_LastData.m_Hook = 0;
+	// simulate releasing the fire button
+	if((m_LastData[dummy].m_Fire&1) != 0)
+		m_LastData[dummy].m_Fire++;
+	m_LastData[dummy].m_Fire &= INPUT_STATE_MASK;
+	m_LastData[dummy].m_Jump = 0;
+	m_InputData[dummy] = m_LastData[dummy];
 
-	m_InputData[!g_Config.m_ClDummy].m_Direction = 0;
-	if(m_InputData[!g_Config.m_ClDummy].m_Fire & 1)
-		m_InputData[!g_Config.m_ClDummy].m_Fire++;
-	m_InputData[!g_Config.m_ClDummy].m_Hook = 0;
-	m_InputData[!g_Config.m_ClDummy].m_Jump = 0;
-
-	m_InputDirectionLeft[!g_Config.m_ClDummy] = 0;
-	m_InputDirectionRight[!g_Config.m_ClDummy] = 0;
+	m_InputDirectionLeft[dummy] = 0;
+	m_InputDirectionRight[dummy] = 0;
 }
 
 void CControls::OnRelease()
@@ -108,11 +96,11 @@ void CControls::OnRelease()
 
 void CControls::OnPlayerDeath()
 {
-  if (g_Config.m_ClResetWantedWeaponOnDeath)
-    m_LastData[g_Config.m_ClDummy].m_WantedWeapon = m_InputData[g_Config.m_ClDummy].m_WantedWeapon = 0;
-  for( int i = 0; i < NUM_WEAPONS; i++ )
-    m_AmmoCount[i] = 0;
-  m_JoystickTapTime = 0; // Do not launch hook on first tap
+	if (g_Config.m_ClResetWantedWeaponOnDeath)
+		m_LastData[g_Config.m_ClDummy].m_WantedWeapon = m_InputData[g_Config.m_ClDummy].m_WantedWeapon = 0;
+	for( int i = 0; i < NUM_WEAPONS; i++ )
+		m_AmmoCount[i] = 0;
+	m_JoystickTapTime = 0; // Do not launch hook on first tap
 }
 
 struct CInputState
@@ -128,10 +116,8 @@ static void ConKeyInputState(IConsole::IResult *pResult, void *pUserData)
 
 	CServerInfo Info;
 	pState->m_pControls->GameClient()->Client()->GetServerInfo(&Info);
-	bool IsGameTypeRace = str_find_nocase(Info.m_aGameType, "race") || str_find_nocase(Info.m_aGameType, "fastcap");
-	bool IsGameTypeDDRace = str_find_nocase(Info.m_aGameType, "ddrace") || str_find_nocase(Info.m_aGameType, "mkrace");
 
-	if ((IsGameTypeRace || IsGameTypeDDRace) && pState->m_pControls->GameClient()->m_Snap.m_SpecInfo.m_Active)
+	if ((IsRace(&Info) || IsDDRace(&Info)) && pState->m_pControls->GameClient()->m_Snap.m_SpecInfo.m_Active)
 		return;
 
 	if (g_Config.m_ClDummy)
@@ -146,10 +132,8 @@ static void ConKeyInputCounter(IConsole::IResult *pResult, void *pUserData)
 
 	CServerInfo Info;
 	pState->m_pControls->GameClient()->Client()->GetServerInfo(&Info);
-	bool IsGameTypeRace = str_find_nocase(Info.m_aGameType, "race") || str_find_nocase(Info.m_aGameType, "fastcap");
-	bool IsGameTypeDDRace = str_find_nocase(Info.m_aGameType, "ddrace") || str_find_nocase(Info.m_aGameType, "mkrace");
 
-	if ((IsGameTypeRace || IsGameTypeDDRace) && pState->m_pControls->GameClient()->m_Snap.m_SpecInfo.m_Active)
+	if ((IsRace(&Info) || IsDDRace(&Info)) && pState->m_pControls->GameClient()->m_Snap.m_SpecInfo.m_Active)
 		return;
 
 	int *v;
@@ -252,7 +236,7 @@ int CControls::SnapInput(int *pData)
 	// we freeze the input if chat or menu is activated
 	if(!(m_InputData[g_Config.m_ClDummy].m_PlayerFlags&PLAYERFLAG_PLAYING))
 	{
-		OnReset();
+		ResetInput(g_Config.m_ClDummy);
 
 		mem_copy(pData, &m_InputData[g_Config.m_ClDummy], sizeof(m_InputData[0]));
 
@@ -276,6 +260,27 @@ int CControls::SnapInput(int *pData)
 			m_InputData[g_Config.m_ClDummy].m_Direction = -1;
 		if(!m_InputDirectionLeft[g_Config.m_ClDummy] && m_InputDirectionRight[g_Config.m_ClDummy])
 			m_InputData[g_Config.m_ClDummy].m_Direction = 1;
+
+		// dummy copy moves
+		if(g_Config.m_ClDummyCopyMoves)
+		{
+			CNetObj_PlayerInput *DummyInput = &Client()->m_DummyInput;
+			DummyInput->m_Direction = m_InputData[g_Config.m_ClDummy].m_Direction;
+			DummyInput->m_Hook = m_InputData[g_Config.m_ClDummy].m_Hook;
+			DummyInput->m_Jump = m_InputData[g_Config.m_ClDummy].m_Jump;
+			DummyInput->m_PlayerFlags = m_InputData[g_Config.m_ClDummy].m_PlayerFlags;
+			DummyInput->m_TargetX = m_InputData[g_Config.m_ClDummy].m_TargetX;
+			DummyInput->m_TargetY = m_InputData[g_Config.m_ClDummy].m_TargetY;
+			DummyInput->m_WantedWeapon = m_InputData[g_Config.m_ClDummy].m_WantedWeapon;
+
+
+
+			DummyInput->m_Fire += m_InputData[g_Config.m_ClDummy].m_Fire - m_LastData[g_Config.m_ClDummy].m_Fire;
+			DummyInput->m_NextWeapon += m_InputData[g_Config.m_ClDummy].m_NextWeapon - m_LastData[g_Config.m_ClDummy].m_NextWeapon;
+			DummyInput->m_PrevWeapon += m_InputData[g_Config.m_ClDummy].m_PrevWeapon - m_LastData[g_Config.m_ClDummy].m_PrevWeapon;
+
+			m_InputData[!g_Config.m_ClDummy] = *DummyInput;
+		}
 
 		// stress testing
 		if(g_Config.m_DbgStress)
@@ -373,10 +378,6 @@ void CControls::OnRender()
 			m_InputDirectionRight[g_Config.m_ClDummy] = 0;
 		}
 
-		//dbg_msg("dbg", "RunPressed %d m_JoystickSwipeJumpClear %lld m_JoystickSwipeJumpY %d RunY %d cond %d",
-		//		RunPressed, m_JoystickSwipeJumpClear, (int)m_JoystickSwipeJumpY, RunY,
-		//		(int)((!m_JoystickSwipeJumpY && RunY > SWIPE_JUMP_THRESHOLD) || (m_JoystickSwipeJumpY && RunY < -SWIPE_JUMP_THRESHOLD)));
-
 		if( HookPressed )
 		{
 			m_MousePos[g_Config.m_ClDummy] = vec2(HookX / 30, HookY / 30);
@@ -438,10 +439,8 @@ void CControls::OnRender()
 
 	CServerInfo Info;
 	GameClient()->Client()->GetServerInfo(&Info);
-	bool IsGameTypeRace = str_find_nocase(Info.m_aGameType, "race") || str_find_nocase(Info.m_aGameType, "fastcap");
-	bool IsGameTypeDDRace = str_find_nocase(Info.m_aGameType, "ddrace") || str_find_nocase(Info.m_aGameType, "mkrace");
 
-	if( g_Config.m_ClAutoswitchWeaponsOutOfAmmo && !IsGameTypeRace && !IsGameTypeDDRace && m_pClient->m_Snap.m_pLocalCharacter )
+	if( g_Config.m_ClAutoswitchWeaponsOutOfAmmo && !IsRace(&Info) && !IsDDRace(&Info) && m_pClient->m_Snap.m_pLocalCharacter )
 	{
 		// Keep track of ammo count, we know weapon ammo only when we switch to that weapon, this is tracked on server and protocol does not track that
 		m_AmmoCount[m_pClient->m_Snap.m_pLocalCharacter->m_Weapon%NUM_WEAPONS] = m_pClient->m_Snap.m_pLocalCharacter->m_AmmoCount;
@@ -485,7 +484,7 @@ bool CControls::OnMouseMove(float x, float y)
 	{
 		m_OldMouseX = x;
 		m_OldMouseY = y;
-		m_MousePos[g_Config.m_ClDummy] = vec2((x - g_Config.m_GfxScreenWidth/2), (y - g_Config.m_GfxScreenHeight/2));
+		m_MousePos[g_Config.m_ClDummy] = vec2((x - Graphics()->Width()/2), (y - Graphics()->Height()/2));
 		ClampMousePos();
 	}
 #else
@@ -498,7 +497,7 @@ bool CControls::OnMouseMove(float x, float y)
 
 void CControls::ClampMousePos()
 {
-	if(m_pClient->m_Snap.m_SpecInfo.m_Active && !m_pClient->m_Snap.m_SpecInfo.m_UsePosition)
+	if(m_pClient->m_Snap.m_SpecInfo.m_Active && m_pClient->m_Snap.m_SpecInfo.m_SpectatorID < 0)
 	{
 		m_MousePos[g_Config.m_ClDummy].x = clamp(m_MousePos[g_Config.m_ClDummy].x, 200.0f, Collision()->GetWidth()*32-200.0f);
 		m_MousePos[g_Config.m_ClDummy].y = clamp(m_MousePos[g_Config.m_ClDummy].y, 200.0f, Collision()->GetHeight()*32-200.0f);
@@ -506,8 +505,10 @@ void CControls::ClampMousePos()
 	else
 	{
 		float CameraMaxDistance = 200.0f;
-		float FollowFactor = g_Config.m_ClMouseFollowfactor/100.0f;
-		float MouseMax = min(CameraMaxDistance/FollowFactor + g_Config.m_ClMouseDeadzone, (float)g_Config.m_ClMouseMaxDistance);
+		float FollowFactor = (g_Config.m_ClDyncam ? g_Config.m_ClDyncamFollowFactor : g_Config.m_ClMouseFollowfactor) / 100.0f;
+		float DeadZone = g_Config.m_ClDyncam ? g_Config.m_ClDyncamDeadzone : g_Config.m_ClMouseDeadzone;
+		float MaxDistance = g_Config.m_ClDyncam ? g_Config.m_ClDyncamMaxDistance : g_Config.m_ClMouseMaxDistance;
+		float MouseMax = min(CameraMaxDistance/FollowFactor + DeadZone, MaxDistance);
 
 		if(length(m_MousePos[g_Config.m_ClDummy]) > MouseMax)
 			m_MousePos[g_Config.m_ClDummy] = normalize(m_MousePos[g_Config.m_ClDummy])*MouseMax;

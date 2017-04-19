@@ -6,7 +6,7 @@
 #include <engine/server/server.h>
 const char *CTuningParams::m_apNames[] =
 {
-	#define MACRO_TUNING_PARAM(Name,ScriptName,Value) #ScriptName,
+	#define MACRO_TUNING_PARAM(Name,ScriptName,Value,Description) #ScriptName,
 	#include "tuning.h"
 	#undef MACRO_TUNING_PARAM
 };
@@ -94,6 +94,7 @@ void CCharacterCore::Reset()
 	m_HookDir = vec2(0,0);
 	m_HookTick = 0;
 	m_HookState = HOOK_IDLE;
+	m_LastHookedPlayer = -1;
 	m_HookedPlayer = -1;
 	m_Jumped = 0;
 	m_JumpedTotal = 0;
@@ -105,13 +106,19 @@ void CCharacterCore::Reset()
 
 void CCharacterCore::Tick(bool UseInput, bool IsClient)
 {
+	if (m_LastHookedTick != -1) { m_LastHookedTick = m_LastHookedTick + 1; }
+
+	if (m_LastHookedTick > SERVER_TICK_SPEED * 10) {
+		m_LastHookedPlayer = -1;
+		m_LastHookedTick = -1;
+	}
+
 	float PhysSize = 28.0f;
-	int MapIndex = Collision()->GetPureMapIndex(m_Pos);;
+	int MapIndex = Collision()->GetPureMapIndex(m_Pos);
 	int MapIndexL = Collision()->GetPureMapIndex(vec2(m_Pos.x + (28/2)+4,m_Pos.y));
 	int MapIndexR = Collision()->GetPureMapIndex(vec2(m_Pos.x - (28/2)-4,m_Pos.y));
 	int MapIndexT = Collision()->GetPureMapIndex(vec2(m_Pos.x,m_Pos.y + (28/2)+4));
 	int MapIndexB = Collision()->GetPureMapIndex(vec2(m_Pos.x,m_Pos.y - (28/2)-4));
-	//dbg_msg("","N%d L%d R%d B%d T%d",MapIndex,MapIndexL,MapIndexR,MapIndexB,MapIndexT);
 	m_TileIndex = Collision()->GetTileIndex(MapIndex);
 	m_TileFlags = Collision()->GetTileFlags(MapIndex);
 	m_TileIndexL = Collision()->GetTileIndex(MapIndexL);
@@ -203,7 +210,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 			m_Jumped &= ~1;
 
 		// handle hook
-		if(m_Input.m_Hook)
+		if(m_Input.m_Hook && !m_RevokeHook)
 		{
 			if(m_HookState == HOOK_IDLE)
 			{
@@ -211,7 +218,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 				m_HookPos = m_Pos+TargetDirection*PhysSize*1.5f;
 				m_HookDir = TargetDirection;
 				m_HookedPlayer = -1;
-				m_HookTick = 0;
+				m_HookTick = SERVER_TICK_SPEED * (1.25f - m_pWorld->m_Tuning[g_Config.m_ClDummy].m_HookDuration);
 				m_TriggeredEvents |= COREEVENT_HOOK_LAUNCH;
 			}
 		}
@@ -232,8 +239,8 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 		m_Vel.x *= Friction;
 
 	// handle jumping
-	// 1 bit = to keep track if a jump has been made on this input
-	// 2 bit = to keep track if a air-jump has been made
+	// 1 bit = to keep track if a jump has been made on this input (player is holding space bar)
+	// 2 bit = to keep track if a air-jump has been made (tee gets dark feet)
 	if(Grounded)
 	{
 		m_Jumped &= ~2;
@@ -273,15 +280,15 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 		bool GoingToRetract = false;
 		bool GoingThroughTele = false;
 		int teleNr = 0;
-		int Hit = m_pCollision->IntersectLineTeleHook(m_HookPos, NewPos, &NewPos, 0, &teleNr, true);
+		int Hit = m_pCollision->IntersectLineTeleHook(m_HookPos, NewPos, &NewPos, 0, &teleNr);
 
 		//m_NewHook = false;
 
 		if(Hit)
 		{
-			if(Hit&CCollision::COLFLAG_NOHOOK)
+			if(Hit == TILE_NOHOOK)
 				GoingToRetract = true;
-			else if (Hit&CCollision::COLFLAG_TELE)
+			else if (Hit == TILE_TELEINHOOK)
 				GoingThroughTele = true;
 			else
 				GoingToHitGround = true;
@@ -307,6 +314,8 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 						m_HookState = HOOK_GRABBED;
 						m_HookedPlayer = i;
 						Distance = distance(m_HookPos, pCharCore->m_Pos);
+						pCharCore->m_LastHookedPlayer = m_Id;
+						pCharCore->m_LastHookedTick = 0;
 					}
 				}
 			}
@@ -333,7 +342,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 
 				m_NewHook = true;
 				int Num = (*m_pTeleOuts)[teleNr-1].size();
-				m_HookPos = (*m_pTeleOuts)[teleNr-1][(!Num)?Num:rand() % Num]+TargetDirection*PhysSize*1.5f;
+				m_HookPos = (*m_pTeleOuts)[teleNr-1][(Num==1)?0:rand() % Num]+TargetDirection*PhysSize*1.5f;
 				m_HookDir = TargetDirection;
 				m_HookTeleBase = m_HookPos;
 			}
@@ -349,7 +358,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 		if(m_HookedPlayer != -1)
 		{
 			CCharacterCore *pCharCore = m_pWorld->m_apCharacters[m_HookedPlayer];
-			if(pCharCore)
+			if(pCharCore && (IsClient || m_pTeams->CanKeepHook(m_Id, pCharCore->m_Id)))
 				m_HookPos = pCharCore->m_Pos;
 			else
 			{
@@ -387,8 +396,21 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 				m_Vel = NewVel; // no problem. apply
 
 		}
+				
+		if(m_HookedPlayer == -1)
+		{
+			if(m_HookPos.y > m_Pos.y)
+				m_LMBHookCount += 4;
+		}
+		else
+			m_LMBHookCount-=3;
+		
+		if(m_LMBHookCount < 0)
+			m_LMBHookCount = 0;
+		if(m_LMBHookCount > 650)		//some buffer
+			m_LMBHookCount = 600;
 
-		// release hook (max hook time is 1.25
+		// release hook (max default hook time is 1.25 s)
 		m_HookTick++;
 		if(m_HookedPlayer != -1 && (m_HookTick > SERVER_TICK_SPEED+SERVER_TICK_SPEED/5 || !m_pWorld->m_apCharacters[m_HookedPlayer]))
 		{
@@ -396,6 +418,12 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 			m_HookState = HOOK_RETRACTED;
 			m_HookPos = m_Pos;
 		}
+	}
+		else
+		m_LMBHookCount--;
+
+	if (m_LastHookedPlayer != -1 && !m_pWorld->m_apCharacters[m_LastHookedPlayer]) {
+		m_LastHookedPlayer = -1;
 	}
 
 	if(m_pWorld)
@@ -471,7 +499,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 		{
 			m_NewHook = false;
 		}
-		
+
 		int Index = MapIndex;
 		if(g_Config.m_ClPredictDDRace && IsClient && m_pCollision->IsSpeedup(Index))
 		{
@@ -486,7 +514,6 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 			else
 			{
 				if(MaxSpeed > 0 && MaxSpeed < 5) MaxSpeed = 5;
-				//dbg_msg("speedup tile start","Direction %f %f, Force %d, Max Speed %d", (Direction).x,(Direction).y, Force, MaxSpeed);
 				if(MaxSpeed > 0)
 				{
 					if(Direction.x > 0.0000001f)
@@ -517,10 +544,9 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 
 					DiffAngle = SpeederAngle - TeeAngle;
 					SpeedLeft = MaxSpeed / 5.0f - cos(DiffAngle) * TeeSpeed;
-					//dbg_msg("speedup tile debug","MaxSpeed %i, TeeSpeed %f, SpeedLeft %f, SpeederAngle %f, TeeAngle %f", MaxSpeed, TeeSpeed, SpeedLeft, SpeederAngle, TeeAngle);
-					if(abs(SpeedLeft) > Force && SpeedLeft > 0.0000001f)
+					if(abs((int)SpeedLeft) > Force && SpeedLeft > 0.0000001f)
 						TempVel += Direction * Force;
-					else if(abs(SpeedLeft) > Force)
+					else if(abs((int)SpeedLeft) > Force)
 						TempVel += Direction * -Force;
 					else
 						TempVel += Direction * SpeedLeft;
@@ -540,14 +566,14 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 
 
 				m_Vel = TempVel;
-				//dbg_msg("speedup tile end","(Direction*Force) %f %f   m_Vel%f %f",(Direction*Force).x,(Direction*Force).y,m_Vel.x,m_Vel.y);
-				//dbg_msg("speedup tile end","Direction %f %f, Force %d, Max Speed %d", (Direction).x,(Direction).y, Force, MaxSpeed);
 			}
 		}
 
-		if(IsClient && UseInput && (m_Input.m_Fire&1) && m_ActiveWeapon == WEAPON_GUN) {
+		// jetpack and ninjajetpack prediction
+		if(IsClient && UseInput && (m_Input.m_Fire&1) && (m_ActiveWeapon == WEAPON_GUN || m_ActiveWeapon == WEAPON_NINJA)) {
 			m_Vel += TargetDirection * -1.0f * (m_pWorld->m_Tuning[g_Config.m_ClDummy].m_JetpackStrength / 100.0f / 6.11f);
 		}
+
 		if(g_Config.m_ClPredictDDRace && IsClient)
 		{
 			if(((m_TileIndex == TILE_STOP && m_TileFlags == ROTATION_270) || (m_TileIndexL == TILE_STOP && m_TileFlagsL == ROTATION_270) || (m_TileIndexL == TILE_STOPS && (m_TileFlagsL == ROTATION_90 || m_TileFlagsL ==ROTATION_270)) || (m_TileIndexL == TILE_STOPA) || (m_TileFIndex == TILE_STOP && m_TileFFlags == ROTATION_270) || (m_TileFIndexL == TILE_STOP && m_TileFFlagsL == ROTATION_270) || (m_TileFIndexL == TILE_STOPS && (m_TileFFlagsL == ROTATION_90 || m_TileFFlagsL == ROTATION_270)) || (m_TileFIndexL == TILE_STOPA) || (m_TileSIndex == TILE_STOP && m_TileSFlags == ROTATION_270) || (m_TileSIndexL == TILE_STOP && m_TileSFlagsL == ROTATION_270) || (m_TileSIndexL == TILE_STOPS && (m_TileSFlagsL == ROTATION_90 || m_TileSFlagsL == ROTATION_270)) || (m_TileSIndexL == TILE_STOPA)) && m_Vel.x > 0)

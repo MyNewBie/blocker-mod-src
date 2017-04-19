@@ -31,14 +31,6 @@
 
 #include "console.h"
 
-enum
-{
-	CONSOLE_CLOSED,
-	CONSOLE_OPENING,
-	CONSOLE_OPEN,
-	CONSOLE_CLOSING,
-};
-
 CGameConsole::CInstance::CInstance(int Type)
 {
 	m_pHistoryEntry = 0x0;
@@ -99,6 +91,40 @@ void CGameConsole::CInstance::PossibleCommandsCompleteCallback(const char *pStr,
 void CGameConsole::CInstance::OnInput(IInput::CEvent Event)
 {
 	bool Handled = false;
+
+	if(m_pGameConsole->Input()->KeyIsPressed(KEY_LCTRL) && m_pGameConsole->Input()->KeyPress(KEY_V))
+	{
+		const char *Text = m_pGameConsole->Input()->GetClipboardText();
+		if(Text)
+		{
+			char Line[256];
+			int i, Begin = 0;
+			for(i = 0; i < str_length(Text); i++)
+			{
+				if(Text[i] == '\n')
+				{
+					if(i == Begin)
+					{
+						Begin++;
+						continue;
+					}
+					int max = min(i - Begin + 1, (int)sizeof(Line));
+					str_copy(Line, Text + Begin, max);
+					Begin = i+1;
+					ExecuteLine(Line);
+				}
+			}
+			int max = min(i - Begin + 1, (int)sizeof(Line));
+			str_copy(Line, Text + Begin, max);
+			Begin = i+1;
+			m_Input.Add(Line);
+		}
+	}
+
+	if(m_pGameConsole->Input()->KeyIsPressed(KEY_LCTRL) && m_pGameConsole->Input()->KeyPress(KEY_C))
+	{
+		m_pGameConsole->Input()->SetClipboardText(m_Input.GetString());
+	}
 
 	if(Event.m_Flags&IInput::FLAG_PRESS)
 	{
@@ -185,19 +211,20 @@ void CGameConsole::CInstance::OnInput(IInput::CEvent Event)
 	}
 	if(Event.m_Flags&IInput::FLAG_RELEASE && Event.m_Key == KEY_LSHIFT)
 	{
-	m_ReverseTAB = false;
-	Handled = true;
+		m_ReverseTAB = false;
+		Handled = true;
 	}
 
 	if(!Handled)
 		m_Input.ProcessInput(Event);
 
-	if(Event.m_Flags&IInput::FLAG_PRESS)
+	if(Event.m_Flags & (IInput::FLAG_PRESS|IInput::FLAG_TEXT))
 	{
 		if((Event.m_Key != KEY_TAB) && (Event.m_Key != KEY_LSHIFT))
 		{
 			m_CompletionChosen = -1;
 			str_copy(m_aCompletionBuffer, m_Input.GetString(), sizeof(m_aCompletionBuffer));
+			m_CompletionRenderOffset = 0.0f;
 		}
 
 		// find the current command
@@ -224,7 +251,7 @@ void CGameConsole::CInstance::OnInput(IInput::CEvent Event)
 	}
 }
 
-void CGameConsole::CInstance::PrintLine(const char *pLine)
+void CGameConsole::CInstance::PrintLine(const char *pLine, bool Highlighted)
 {
 	int Len = str_length(pLine);
 
@@ -233,6 +260,7 @@ void CGameConsole::CInstance::PrintLine(const char *pLine)
 
 	CBacklogEntry *pEntry = m_Backlog.Allocate(sizeof(CBacklogEntry)+Len);
 	pEntry->m_YOffset = -1.0f;
+	pEntry->m_Highlighted = Highlighted;
 	mem_copy(pEntry->m_aText, pLine, Len);
 	pEntry->m_aText[Len] = 0;
 }
@@ -451,33 +479,46 @@ void CGameConsole::OnRender()
 
 		x = Cursor.m_X;
 
+
+		//console text editing
+		bool Editing = false;
+		int EditingCursor = Input()->GetEditingCursor();
+		if (Input()->GetIMEState())
+		{
+			if(str_length(Input()->GetIMECandidate()))
+			{
+				pConsole->m_Input.Editing(Input()->GetIMECandidate(), EditingCursor);
+				Editing = true;
+			}
+		}
+
 		//hide rcon password
 		char aInputString[512];
-		str_copy(aInputString, pConsole->m_Input.GetString(), sizeof(aInputString));
+		str_copy(aInputString, pConsole->m_Input.GetString(Editing), sizeof(aInputString));
 		if(m_ConsoleType == CONSOLETYPE_REMOTE && Client()->State() == IClient::STATE_ONLINE && !Client()->RconAuthed())
 		{
-			for(int i = 0; i < pConsole->m_Input.GetLength(); ++i)
+			for(int i = 0; i < pConsole->m_Input.GetLength(Editing); ++i)
 				aInputString[i] = '*';
 		}
 
 		// render console input (wrap line)
 		TextRender()->SetCursor(&Cursor, x, y, FontSize, 0);
 		Cursor.m_LineWidth = Screen.w - 10.0f - x;
-		TextRender()->TextEx(&Cursor, aInputString, pConsole->m_Input.GetCursorOffset());
-		TextRender()->TextEx(&Cursor, aInputString+pConsole->m_Input.GetCursorOffset(), -1);
+		TextRender()->TextEx(&Cursor, aInputString, pConsole->m_Input.GetCursorOffset(Editing));
+		TextRender()->TextEx(&Cursor, aInputString+pConsole->m_Input.GetCursorOffset(Editing), -1);
 		int Lines = Cursor.m_LineCount;
-		
+
 		y -= (Lines - 1) * FontSize;
 		TextRender()->SetCursor(&Cursor, x, y, FontSize, TEXTFLAG_RENDER);
 		Cursor.m_LineWidth = Screen.w - 10.0f - x;
-		
-		TextRender()->TextEx(&Cursor, aInputString, pConsole->m_Input.GetCursorOffset());
+
+		TextRender()->TextEx(&Cursor, aInputString, pConsole->m_Input.GetCursorOffset(Editing));
 		static float MarkerOffset = TextRender()->TextWidth(0, FontSize, "|", -1)/3;
 		CTextCursor Marker = Cursor;
 		Marker.m_X -= MarkerOffset;
 		Marker.m_LineWidth = -1;
 		TextRender()->TextEx(&Marker, "|", -1);
-		TextRender()->TextEx(&Cursor, aInputString+pConsole->m_Input.GetCursorOffset(), -1);
+		TextRender()->TextEx(&Cursor, aInputString+pConsole->m_Input.GetCursorOffset(Editing), -1);
 
 		// render possible commands
 		if(m_ConsoleType == CONSOLETYPE_LOCAL || Client()->RconAuthed())
@@ -496,22 +537,29 @@ void CGameConsole::OnRender()
 						str_format(aBuf, sizeof(aBuf), "Help: %s ", pConsole->m_aCommandHelp);
 						TextRender()->TextEx(&Info.m_Cursor, aBuf, -1);
 						TextRender()->TextColor(0.75f, 0.75f, 0.75f, 1);
-						str_format(aBuf, sizeof(aBuf), "Syntax: %s %s", pConsole->m_aCommandName, pConsole->m_aCommandParams);
+						str_format(aBuf, sizeof(aBuf), "Usage: %s %s", pConsole->m_aCommandName, pConsole->m_aCommandParams);
 						TextRender()->TextEx(&Info.m_Cursor, aBuf, -1);
 					}
 				}
 			}
 		}
-		TextRender()->TextColor(1,1,1,1);
+
+		vec3 rgb = HslToRgb(vec3(g_Config.m_ClMessageHighlightHue / 255.0f, g_Config.m_ClMessageHighlightSat / 255.0f, g_Config.m_ClMessageHighlightLht / 255.0f));
 
 		//	render log (actual page, wrap lines)
 		CInstance::CBacklogEntry *pEntry = pConsole->m_Backlog.Last();
 		float OffsetY = 0.0f;
 		float LineOffset = 1.0f;
+
 		for(int Page = 0; Page <= pConsole->m_BacklogActPage; ++Page, OffsetY = 0.0f)
 		{
 			while(pEntry)
 			{
+				if(pEntry->m_Highlighted)
+					TextRender()->TextColor(rgb.r, rgb.g, rgb.b, 1);
+				else
+					TextRender()->TextColor(1,1,1,1);
+
 				// get y offset (calculate it if we haven't yet)
 				if(pEntry->m_YOffset < 0.0f)
 				{
@@ -534,6 +582,9 @@ void CGameConsole::OnRender()
 					TextRender()->TextEx(&Cursor, pEntry->m_aText, -1);
 				}
 				pEntry = pConsole->m_Backlog.Prev(pEntry);
+
+				// reset color
+				TextRender()->TextColor(1,1,1,1);
 			}
 
 			//	actual backlog page number is too high, render last available page (current checked one, render top down)
@@ -555,6 +606,7 @@ void CGameConsole::OnRender()
 
 		// render page
 		char aBuf[128];
+		TextRender()->TextColor(1,1,1,1);
 		str_format(aBuf, sizeof(aBuf), Localize("-Page %d-"), pConsole->m_BacklogActPage+1);
 		TextRender()->Text(0, 10.0f, 0.0f, FontSize, aBuf, -1);
 
@@ -571,9 +623,10 @@ void CGameConsole::OnMessage(int MsgType, void *pRawMsg)
 
 bool CGameConsole::OnInput(IInput::CEvent Event)
 {
-	if(m_ConsoleState == CONSOLE_CLOSED)
+	// accept input when opening, but not at first frame to discard the input that caused the console to open
+	if(m_ConsoleState != CONSOLE_OPEN && (m_ConsoleState != CONSOLE_OPENING || m_StateChangeEnd == TimeNow()+m_StateChangeDuration))
 		return false;
-	if(Event.m_Key >= KEY_F1 && Event.m_Key <= KEY_F15)
+	if((Event.m_Key >= KEY_F1 && Event.m_Key <= KEY_F12) || (Event.m_Key >= KEY_F13 && Event.m_Key <= KEY_F24))
 		return false;
 
 	if(Event.m_Key == KEY_ESCAPE && (Event.m_Flags&IInput::FLAG_PRESS))
@@ -611,6 +664,8 @@ void CGameConsole::Toggle(int Type)
 			m_ConsoleState = CONSOLE_OPENING;
 			/*// reset controls
 			m_pClient->m_pControls->OnReset();*/
+
+			Input()->SetIMEState(true);
 		}
 		else
 		{
@@ -618,6 +673,8 @@ void CGameConsole::Toggle(int Type)
 			m_pClient->m_pMenus->UseMouseButtons(true);
 			m_pClient->OnRelease();
 			m_ConsoleState = CONSOLE_CLOSING;
+
+			Input()->SetIMEState(false);
 		}
 	}
 
@@ -674,9 +731,9 @@ void CGameConsole::ConDumpRemoteConsole(IConsole::IResult *pResult, void *pUserD
 	((CGameConsole *)pUserData)->Dump(CONSOLETYPE_REMOTE);
 }
 
-void CGameConsole::ClientConsolePrintCallback(const char *pStr, void *pUserData)
+void CGameConsole::ClientConsolePrintCallback(const char *pStr, void *pUserData, bool Highlighted)
 {
-	((CGameConsole *)pUserData)->m_LocalConsole.PrintLine(pStr);
+	((CGameConsole *)pUserData)->m_LocalConsole.PrintLine(pStr, Highlighted);
 }
 
 void CGameConsole::ConchainConsoleOutputLevelUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)

@@ -5,8 +5,10 @@
 #include "kernel.h"
 
 #include "message.h"
+#include <engine/friends.h>
 #include <engine/shared/config.h>
 #include <versionsrv/versionsrv.h>
+#include <game/generated/protocol.h>
 
 enum
 {
@@ -39,6 +41,11 @@ protected:
 public:
 	int m_LocalIDs[2];
 	char m_aNews[NEWS_SIZE];
+	int64 m_ReconnectTime;
+
+	CNetObj_PlayerInput m_DummyInput;
+
+	bool m_DummySendConnInfo;
 
 	class CSnapItem
 	{
@@ -91,7 +98,9 @@ public:
 	virtual void DummyDisconnect(const char *pReason) = 0;
 	virtual void DummyConnect() = 0;
 	virtual bool DummyConnected() = 0;
+	virtual bool DummyConnecting() = 0;
 
+	virtual void Restart() = 0;
 	virtual void Quit() = 0;
 	virtual const char *DemoPlayer_Play(const char *pFilename, int StorageType) = 0;
 	virtual void DemoRecorder_Start(const char *pFilename, bool WithTimestamp, int Recorder) = 0;
@@ -99,7 +108,14 @@ public:
 	virtual void DemoRecorder_Stop(int Recorder) = 0;
 	virtual class IDemoRecorder *DemoRecorder(int Recorder) = 0;
 	virtual void AutoScreenshot_Start() = 0;
+	virtual void AutoStatScreenshot_Start() = 0;
 	virtual void ServerBrowserUpdate() = 0;
+
+	// gfx
+	virtual void SwitchWindowScreen(int Index) = 0;
+	virtual void ToggleFullscreen() = 0;
+	virtual void ToggleWindowBordered() = 0;
+	virtual void ToggleWindowVSync() = 0;
 
 	// networking
 	virtual void EnterGame() = 0;
@@ -121,6 +137,10 @@ public:
 
 	// server info
 	virtual void GetServerInfo(class CServerInfo *pServerInfo) = 0;
+
+	virtual void CheckVersionUpdate() = 0;
+
+	virtual int GetPredictionTime() = 0;
 
 	// snapshot interface
 
@@ -163,15 +183,21 @@ public:
 
 	virtual const char* GetCurrentMap() = 0;
 	virtual int GetCurrentMapCrc() = 0;
+	virtual const char* GetCurrentMapPath() = 0;
 	virtual const char* RaceRecordStart(const char *pFilename) = 0;
 	virtual void RaceRecordStop() = 0;
 	virtual bool RaceRecordIsRecording() = 0;
 
 	virtual void DemoSliceBegin() = 0;
 	virtual void DemoSliceEnd() = 0;
-	virtual void DemoSlice(const char *pDstPath) = 0;
+	virtual void DemoSlice(const char *pDstPath, bool RemoveChat) = 0;
 
 	virtual void RequestDDNetSrvList() = 0;
+	virtual bool EditorHasUnsavedData() = 0;
+
+	virtual void GenerateTimeoutSeed() = 0;
+
+	virtual IFriends* Foes() = 0;
 };
 
 class IGameClient : public IInterface
@@ -187,6 +213,7 @@ public:
 	virtual void OnEnterGame() = 0;
 	virtual void OnShutdown() = 0;
 	virtual void OnRender() = 0;
+	virtual void OnUpdate() = 0;
 	virtual void OnStateChange(int NewState, int OldState) = 0;
 	virtual void OnConnected() = 0;
 	virtual void OnMessage(int MsgID, CUnpacker *pUnpacker, bool IsDummy = 0) = 0;
@@ -196,6 +223,7 @@ public:
 	virtual int OnSnapInput(int *pData) = 0;
 	virtual void SendDummyInfo(bool Start) = 0;
 	virtual void ResetDummyInput() = 0;
+	virtual const CNetObj_PlayerInput &getPlayerInput(int dummy) = 0;
 
 	virtual const char *GetItemName(int Type) = 0;
 	virtual const char *Version() = 0;

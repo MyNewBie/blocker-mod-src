@@ -26,6 +26,25 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_Team = GameServer()->m_pController->ClampTeam(Team);
 	m_pCharacter = 0;
 	m_NumInputs = 0;
+	m_KillMe = 0;
+	m_EpicCircle = false;
+	m_aSkins[0] = "bluekitty";
+	m_aSkins[1] = "bluestripe";
+    m_aSkins[2] = "brownbear";
+    m_aSkins[3] = "cammo";
+    m_aSkins[4] = "cammostripes";
+    m_aSkins[5] = "coala";
+    m_aSkins[6] = "default";
+    m_aSkins[7] = "limekitty";
+    m_aSkins[8] = "pinky";
+    m_aSkins[9] = "redbopp";
+    m_aSkins[10] = "redstripe";
+    m_aSkins[11] = "saddo";
+	m_aSkins[12] = "toptri";
+	m_aSkins[13] = "twinbop";
+	m_aSkins[14] = "twintri";
+	m_aSkins[15] = "warpaint";
+
 	Reset();
 }
 
@@ -37,15 +56,24 @@ CPlayer::~CPlayer()
 
 void CPlayer::Reset()
 {
-	m_RespawnTick = Server()->Tick();
+	m_RandIndex = rand() % 16;
+	 m_pSkin = m_aSkins[m_RandIndex].c_str();
 	m_DieTick = Server()->Tick();
-	m_ScoreStartTick = Server()->Tick();
+	m_JoinTick = Server()->Tick();
 	if (m_pCharacter)
 		delete m_pCharacter;
 	m_pCharacter = 0;
+	m_KillMe = 0;
 	m_SpectatorID = SPEC_FREEVIEW;
 	m_LastActionTick = Server()->Tick();
 	m_TeamChangeTick = Server()->Tick();
+	m_WeakHookSpawn = false;
+
+	// city - label everything vali so its easier to find pls
+	m_pAccount = new CAccount(this);
+	m_pAccount->SetStorage(GameServer()->Storage());
+	if (m_AccData.m_UserID)
+		m_pAccount->Apply();
 
 	int* idMap = Server()->GetIdMap(m_ClientID);
 	for (int i = 1;i < VANILLA_MAX_CLIENTS;i++)
@@ -123,6 +151,24 @@ void CPlayer::Reset()
 #if defined(CONF_SQL)
 	m_LastSQLQuery = 0;
 #endif
+
+	int64 Now = Server()->Tick();
+	int64 TickSpeed = Server()->TickSpeed();
+	// If the player joins within ten seconds of the server becoming
+	// non-empty, allow them to vote immediately. This allows players to
+	// vote after map changes or when they join an empty server.
+	//
+	// Otherwise, block voting for 60 seconds after joining.
+	if(Now > GameServer()->m_NonEmptySince + 10 * TickSpeed)
+		m_FirstVoteTick = Now + g_Config.m_SvJoinVoteDelay * TickSpeed;
+	else
+	{
+		m_FirstVoteTick = Now;
+    }
+	
+	m_InLMB = LMB_NONREGISTERED;
+	
+	m_SavedStats.Reset();
 }
 
 void CPlayer::Tick()
@@ -132,6 +178,13 @@ void CPlayer::Tick()
 #endif
 	if(!Server()->ClientIngame(m_ClientID))
 		return;
+
+	if(m_KillMe != 0)
+	{
+		KillCharacter(m_KillMe);
+		m_KillMe = 0;
+		return;
+	}
 
 	if (m_ChatScore > 0)
 		m_ChatScore--;
@@ -172,10 +225,7 @@ void CPlayer::Tick()
 
 	if(!GameServer()->m_World.m_Paused)
 	{
-		if(!m_pCharacter && m_Team == TEAM_SPECTATORS && m_SpectatorID == SPEC_FREEVIEW)
-			m_ViewPos -= vec2(clamp(m_ViewPos.x-m_LatestActivity.m_TargetX, -500.0f, 500.0f), clamp(m_ViewPos.y-m_LatestActivity.m_TargetY, -400.0f, 400.0f));
-
-		if(!m_pCharacter && m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick())
+		if(!m_pCharacter && (m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick() || m_InLMB == LMB_PARTICIPATE))
 			m_Spawning = true;
 
 		if(m_pCharacter)
@@ -206,14 +256,13 @@ void CPlayer::Tick()
 				m_pCharacter = 0;
 			}
 		}
-		else if(m_Spawning && m_RespawnTick <= Server()->Tick())
+		else if(m_Spawning && !m_WeakHookSpawn)
 			TryRespawn();
 	}
 	else
 	{
-		++m_RespawnTick;
 		++m_DieTick;
-		++m_ScoreStartTick;
+		++m_JoinTick;
 		++m_LastActionTick;
 		++m_TeamChangeTick;
 	}
@@ -226,6 +275,8 @@ void CPlayer::Tick()
 	{
 		GameServer()->SendTuningParams(m_ClientID, m_TuneZone);
 	}
+
+	HandleQuest();
 }
 
 void CPlayer::PostTick()
@@ -245,6 +296,18 @@ void CPlayer::PostTick()
 		m_ViewPos = GameServer()->m_apPlayers[m_SpectatorID]->GetCharacter()->m_Pos;
 }
 
+void CPlayer::PostPostTick()
+{
+	#ifdef CONF_DEBUG
+		if(!g_Config.m_DbgDummies || m_ClientID < MAX_CLIENTS-g_Config.m_DbgDummies)
+	#endif
+		if(!Server()->ClientIngame(m_ClientID))
+			return;
+
+	if(!GameServer()->m_World.m_Paused && !m_pCharacter && m_Spawning && m_WeakHookSpawn)
+		TryRespawn();
+}
+
 void CPlayer::Snap(int SnappingClient)
 {
 #ifdef CONF_DEBUG
@@ -254,16 +317,26 @@ void CPlayer::Snap(int SnappingClient)
 		return;
 
 	int id = m_ClientID;
-	if (SnappingClient > -1 && !Server()->Translate(id, SnappingClient)) return;
+		if (SnappingClient > -1 && !Server()->Translate(id, SnappingClient))
+		return;
 
 	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, id, sizeof(CNetObj_ClientInfo)));
 
 	if(!pClientInfo)
 		return;
 
-	StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
-	StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
-	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
+	if(g_Config.m_SvAnonymousBlock)
+	{
+		StrToInts(&pClientInfo->m_Name0, 4, " ");
+		StrToInts(&pClientInfo->m_Clan0, 3, " ");
+		pClientInfo->m_Country = -1;
+	} else
+	{
+		StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
+		StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
+		pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
+	}
+	
 	if (m_StolenSkin && SnappingClient != m_ClientID && g_Config.m_SvSkinStealAction == 1)
 	{
 		StrToInts(&pClientInfo->m_Skin0, 6, "pinky");
@@ -272,10 +345,24 @@ void CPlayer::Snap(int SnappingClient)
 		pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
 	} else
 	{
-		StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
-		pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
-		pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
-		pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
+		if(g_Config.m_SvAnonymousBlock)
+		{
+			if (Server()->Tick() >= m_LastTriggerTick + Server()->TickSpeed()*2) {
+				m_LastTriggerTick = Server()->Tick();
+				m_RandIndex = rand() % 16;
+				m_pSkin = m_aSkins[m_RandIndex].c_str();	
+			}
+			StrToInts(&pClientInfo->m_Skin0, 6, m_pSkin);
+			pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
+			pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
+			pClientInfo->m_UseCustomColor = 0;
+		} else
+		{
+			StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
+			pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
+			pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
+			pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
+		}
 	}
 
 	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, id, sizeof(CNetObj_PlayerInfo)));
@@ -286,9 +373,9 @@ void CPlayer::Snap(int SnappingClient)
 	pPlayerInfo->m_Local = 0;
 	pPlayerInfo->m_ClientID = id;
 	pPlayerInfo->m_Score = abs(m_Score) * -1;
-	pPlayerInfo->m_Team = (m_Paused != PAUSED_SPEC || m_ClientID != SnappingClient) && m_Paused < PAUSED_PAUSED ? m_Team : TEAM_SPECTATORS;
+	pPlayerInfo->m_Team = (m_ClientVersion < VERSION_DDNET_OLD || m_Paused != PAUSED_SPEC || m_ClientID != SnappingClient) && m_Paused < PAUSED_PAUSED ? m_Team : TEAM_SPECTATORS;
 
-	if(m_ClientID == SnappingClient)
+	if(m_ClientID == SnappingClient && (m_Paused != PAUSED_SPEC || m_ClientVersion >= VERSION_DDNET_OLD))
 		pPlayerInfo->m_Local = 1;
 
 	if(m_ClientID == SnappingClient && (m_Team == TEAM_SPECTATORS || m_Paused))
@@ -307,32 +394,63 @@ void CPlayer::Snap(int SnappingClient)
 		pPlayerInfo->m_Score = -9999;
 	else
 		pPlayerInfo->m_Score = abs(m_Score) * -1;
+	
+	if(g_Config.m_SvAnonymousBlock)
+		pPlayerInfo->m_Score = -9999;
 }
 
-void CPlayer::FakeSnap(int SnappingClient)
+void CPlayer::FakeSnap()
 {
 	// This is problematic when it's sent before we know whether it's a non-64-player-client
 	// Then we can't spectate players at the start
-	IServer::CClientInfo info;
-	Server()->GetClientInfo(SnappingClient, &info);
-	CGameContext *GameContext = (CGameContext *) GameServer();
-	if (SnappingClient > -1 && GameContext->m_apPlayers[SnappingClient] && GameContext->m_apPlayers[SnappingClient]->m_ClientVersion >= VERSION_DDNET_OLD)
+
+	if(m_ClientVersion >= VERSION_DDNET_OLD)
 		return;
 
-	int id = VANILLA_MAX_CLIENTS - 1;
+	int FakeID = VANILLA_MAX_CLIENTS - 1;
 
-	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, id, sizeof(CNetObj_ClientInfo)));
+	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, FakeID, sizeof(CNetObj_ClientInfo)));
 
 	if(!pClientInfo)
 		return;
 
 	StrToInts(&pClientInfo->m_Name0, 4, " ");
-	StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
-	StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
+	StrToInts(&pClientInfo->m_Clan0, 3, " ");
+	StrToInts(&pClientInfo->m_Skin0, 6, m_pSkin);
+
+	if(m_Paused != PAUSED_SPEC)
+		return;
+
+	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, FakeID, sizeof(CNetObj_PlayerInfo)));
+	if(!pPlayerInfo)
+		return;
+
+	pPlayerInfo->m_Latency = m_Latency.m_Min;
+	pPlayerInfo->m_Local = 1;
+	pPlayerInfo->m_ClientID = FakeID;
+	pPlayerInfo->m_Score = -9999;
+	pPlayerInfo->m_Team = TEAM_SPECTATORS;
+
+	CNetObj_SpectatorInfo *pSpectatorInfo = static_cast<CNetObj_SpectatorInfo *>(Server()->SnapNewItem(NETOBJTYPE_SPECTATORINFO, FakeID, sizeof(CNetObj_SpectatorInfo)));
+	if(!pSpectatorInfo)
+		return;
+
+	pSpectatorInfo->m_SpectatorID = m_SpectatorID;
+	pSpectatorInfo->m_X = m_ViewPos.x;
+	pSpectatorInfo->m_Y = m_ViewPos.y;
 }
 
 void CPlayer::OnDisconnect(const char *pReason)
 {
+	if (m_AccData.m_UserID)
+	{
+		m_pAccount->SetStorage(GameServer()->Storage());
+		m_pAccount->Apply(); // Save important Shit b4 leaving
+	}
+	// City
+	if (m_AccData.m_UserID)
+		m_pAccount->Reset();
+
 	KillCharacter();
 
 	if(Server()->ClientIngame(m_ClientID))
@@ -366,13 +484,10 @@ void CPlayer::OnPredictedInput(CNetObj_PlayerInput *NewInput)
 		m_pCharacter->OnPredictedInput(NewInput);
 
 	// Magic number when we can hope that client has successfully identified itself
-	if(m_NumInputs == 10)
+	if(m_NumInputs == 20)
 	{
 		if(g_Config.m_SvClientSuggestion[0] != '\0' && m_ClientVersion <= VERSION_DDNET_OLD)
 			GameServer()->SendBroadcast(g_Config.m_SvClientSuggestion, m_ClientID);
-
-		//if(g_Config.m_SvClientSuggestionOld[0] != '\0' && m_ClientVersion < CLIENT_VERSIONNR)
-		//	GameServer()->SendBroadcast(g_Config.m_SvClientSuggestionOld, m_ClientID);
 	}
 }
 
@@ -384,15 +499,16 @@ void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 
 	if(NewInput->m_PlayerFlags&PLAYERFLAG_CHATTING)
 	{
-	// skip the input if chat is active
+		// skip the input if chat is active
 		if(m_PlayerFlags&PLAYERFLAG_CHATTING)
-		return;
+			return;
 
 		// reset input
 		if(m_pCharacter)
 			m_pCharacter->ResetInput();
 
-		m_PlayerFlags = NewInput->m_PlayerFlags;
+		if(!g_Config.m_SvAnonymousBlock)
+			m_PlayerFlags = NewInput->m_PlayerFlags;
 		return;
 	}
 
@@ -414,8 +530,8 @@ void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 
 	// check for activity
 	if(NewInput->m_Direction || m_LatestActivity.m_TargetX != NewInput->m_TargetX ||
-		m_LatestActivity.m_TargetY != NewInput->m_TargetY || NewInput->m_Jump ||
-		NewInput->m_Fire&1 || NewInput->m_Hook)
+	   m_LatestActivity.m_TargetY != NewInput->m_TargetY || NewInput->m_Jump ||
+	   NewInput->m_Fire&1 || NewInput->m_Hook)
 	{
 		m_LatestActivity.m_TargetX = NewInput->m_TargetX;
 		m_LatestActivity.m_TargetY = NewInput->m_TargetY;
@@ -430,13 +546,15 @@ CCharacter *CPlayer::GetCharacter()
 	return 0;
 }
 
+void CPlayer::ThreadKillCharacter(int Weapon)
+{
+	m_KillMe = Weapon;
+}
+
 void CPlayer::KillCharacter(int Weapon)
 {
 	if(m_pCharacter)
 	{
-		if (m_RespawnTick > Server()->Tick())
-			return;
-
 		m_pCharacter->Die(m_ClientID, Weapon);
 
 		delete m_pCharacter;
@@ -444,10 +562,13 @@ void CPlayer::KillCharacter(int Weapon)
 	}
 }
 
-void CPlayer::Respawn()
+void CPlayer::Respawn(bool WeakHook)
 {
 	if(m_Team != TEAM_SPECTATORS)
+	{
+		m_WeakHookSpawn = WeakHook;
 		m_Spawning = true;
+	}
 }
 
 CCharacter* CPlayer::ForceSpawn(vec2 Pos)
@@ -485,8 +606,6 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg)
 	m_LastSetTeam = Server()->Tick();
 	m_LastActionTick = Server()->Tick();
 	m_SpectatorID = SPEC_FREEVIEW;
-	// we got to wait 0.5 secs before respawning
-	m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
 	str_format(aBuf, sizeof(aBuf), "team_join player='%d:%s' m_Team=%d", m_ClientID, Server()->ClientName(m_ClientID), m_Team);
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
@@ -507,15 +626,47 @@ void CPlayer::TryRespawn()
 {
 	vec2 SpawnPos;
 
-	if(!GameServer()->m_pController->CanSpawn(m_Team, &SpawnPos))
+	int Team = m_Team;
+
+	if(m_InLMB == LMB_PARTICIPATE)	//LMB=1 means registered
+		Team += 2;
+	if(!GameServer()->m_pController->CanSpawn(Team, &SpawnPos))	//we cant spawn being in LMB!
 		return;
 
 	CGameControllerDDRace* Controller = (CGameControllerDDRace*)GameServer()->m_pController;
 
+	m_WeakHookSpawn = false;
 	m_Spawning = false;
 	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World);
+
+	if(!m_InLMB && (m_SavedStats.m_SavedSpawn.x || m_SavedStats.m_SavedSpawn.y))
+		SpawnPos = m_SavedStats.m_SavedSpawn;
+
 	m_pCharacter->Spawn(this, SpawnPos);
 	GameServer()->CreatePlayerSpawn(SpawnPos, m_pCharacter->Teams()->TeamMask(m_pCharacter->Team(), -1, m_ClientID));
+
+	if(!m_InLMB)
+	{
+		if(m_SavedStats.m_SavedShotgun)
+			m_pCharacter->GiveWeapon(WEAPON_SHOTGUN);
+
+		if(m_SavedStats.m_SavedGrenade)
+			m_pCharacter->GiveWeapon(WEAPON_GRENADE);
+
+		if(m_SavedStats.m_SavedLaser)
+			m_pCharacter->GiveWeapon(WEAPON_RIFLE);
+
+		m_pCharacter->m_EndlessHook = m_SavedStats.m_SavedEHook;
+
+		if(m_SavedStats.m_SavedStartTick)
+		{
+			m_pCharacter->Teams()->OnCharacterStart(GetCID());
+			m_pCharacter->m_StartTime = m_SavedStats.m_SavedStartTick;
+		}
+
+		m_SavedStats.Reset();
+	}
+
 
 	if(g_Config.m_SvTeam == 3)
 	{
@@ -529,6 +680,9 @@ void CPlayer::TryRespawn()
 
 		Controller->m_Teams.SetForceCharacterTeam(GetCID(), NewTeam);
 	}
+
+	if(m_InLMB == LMB_PARTICIPATE)
+		m_pCharacter->Freeze(g_Config.m_SvLMBSpawnFreezeTime);
 }
 
 bool CPlayer::AfkTimer(int NewTargetX, int NewTargetY)
@@ -564,10 +718,10 @@ bool CPlayer::AfkTimer(int NewTargetX, int NewTargetY)
 			if(m_Sent1stAfkWarning == 0 && m_LastPlaytime < time_get()-time_freq()*(int)(g_Config.m_SvMaxAfkTime*0.5))
 			{
 				sprintf(
-					m_pAfkMsg,
-					"You have been afk for %d seconds now. Please note that you get kicked after not playing for %d seconds.",
-					(int)(g_Config.m_SvMaxAfkTime*0.5),
-					g_Config.m_SvMaxAfkTime
+						m_pAfkMsg,
+						"You have been afk for %d seconds now. Please note that you get kicked after not playing for %d seconds.",
+						(int)(g_Config.m_SvMaxAfkTime*0.5),
+						g_Config.m_SvMaxAfkTime
 				);
 				m_pGameServer->SendChatTarget(m_ClientID, m_pAfkMsg);
 				m_Sent1stAfkWarning = 1;
@@ -575,10 +729,10 @@ bool CPlayer::AfkTimer(int NewTargetX, int NewTargetY)
 			else if(m_Sent2ndAfkWarning == 0 && m_LastPlaytime < time_get()-time_freq()*(int)(g_Config.m_SvMaxAfkTime*0.9))
 			{
 				sprintf(
-					m_pAfkMsg,
-					"You have been afk for %d seconds now. Please note that you get kicked after not playing for %d seconds.",
-					(int)(g_Config.m_SvMaxAfkTime*0.9),
-					g_Config.m_SvMaxAfkTime
+						m_pAfkMsg,
+						"You have been afk for %d seconds now. Please note that you get kicked after not playing for %d seconds.",
+						(int)(g_Config.m_SvMaxAfkTime*0.9),
+						g_Config.m_SvMaxAfkTime
 				);
 				m_pGameServer->SendChatTarget(m_ClientID, m_pAfkMsg);
 				m_Sent2ndAfkWarning = 1;
@@ -668,13 +822,230 @@ void CPlayer::FindDuplicateSkins()
 		{
 			if (GameServer()->m_apPlayers[i]->m_StolenSkin) continue;
 			if ((GameServer()->m_apPlayers[i]->m_TeeInfos.m_UseCustomColor == m_TeeInfos.m_UseCustomColor) &&
-			(GameServer()->m_apPlayers[i]->m_TeeInfos.m_ColorFeet == m_TeeInfos.m_ColorFeet) &&
-			(GameServer()->m_apPlayers[i]->m_TeeInfos.m_ColorBody == m_TeeInfos.m_ColorBody) &&
-			!str_comp(GameServer()->m_apPlayers[i]->m_TeeInfos.m_SkinName, m_TeeInfos.m_SkinName))
+				(GameServer()->m_apPlayers[i]->m_TeeInfos.m_ColorFeet == m_TeeInfos.m_ColorFeet) &&
+				(GameServer()->m_apPlayers[i]->m_TeeInfos.m_ColorBody == m_TeeInfos.m_ColorBody) &&
+				!str_comp(GameServer()->m_apPlayers[i]->m_TeeInfos.m_SkinName, m_TeeInfos.m_SkinName))
 			{
 				m_StolenSkin = 1;
 				return;
 			}
 		}
 	}
+}
+
+void CPlayer::QuestReset()
+{
+	m_QuestData.Reset();
+}
+
+void CPlayer::HandleQuest()
+{
+	if(!GetCharacter() || !GetCharacter()->IsAlive())
+		return;
+
+	if (m_QuestData.m_QuestPart == QUEST_NONE || m_QuestData.m_QuestPart == QUEST_FINISHED || GetCharacter()->Team() != 0)
+		return;
+
+	const int OwnID = GetCharacter()->Core()->m_Id;
+
+	if(m_QuestData.m_QuestPart != QUEST_PART_RACE)
+	{
+		if(!Server()->ClientIngame(m_QuestData.m_VictimID))
+		{
+			GameServer()->SendChatTarget(OwnID, "[QUEST] Your victim has left the game, selecting a new one");
+			m_QuestData.m_QuestPart--;
+			QuestSetNextPart();
+
+			return;
+		}
+	}
+
+	// update special quest parts
+	switch(m_QuestData.m_QuestPart)
+	{
+		case QUEST_PART_RACE:
+		{
+			if(GetCharacter()->m_DDRaceState == DDRACE_STARTED)
+			{
+				if(m_QuestData.m_RaceStartTick == 0)
+				{
+					// he just started the race
+					if(g_Config.m_SvQuestRaceTime)
+					{
+						char aBuf[128];
+						str_format(aBuf, sizeof(aBuf), "[QUEST] Now hurry! You got %i minute%s to finish the race!", g_Config.m_SvQuestRaceTime, g_Config.m_SvQuestRaceTime == 1 ? "" : "s");
+						GameServer()->SendBroadcast(aBuf, OwnID);
+						GameServer()->SendChatTarget(OwnID, aBuf);
+					}
+					m_QuestData.m_RaceStartTick = Server()->Tick();
+				}
+				else if(g_Config.m_SvQuestRaceTime && Server()->Tick() > m_QuestData.m_RaceStartTick + g_Config.m_SvQuestRaceTime*60 * Server()->TickSpeed())
+				{
+					char aBuf[128];
+					str_format(aBuf, sizeof(aBuf), "[QUEST] Quest failed, you couldn't complete the race in under %i minute%s", g_Config.m_SvQuestRaceTime, g_Config.m_SvQuestRaceTime == 1 ? "" : "s");
+					GameServer()->SendChatTarget(OwnID, aBuf);
+					QuestReset();
+				}
+			}
+			else if(GetCharacter()->m_DDRaceState == DDRACE_FINISHED && m_QuestData.m_RaceStartTick)
+				QuestSetNextPart();
+			else
+			{
+				if(m_QuestData.m_RaceStartTick != 0)
+				{
+					char aBuf[128];
+					str_format(aBuf, sizeof(aBuf), "[QUEST] Quest failed, you aborted the race");
+					GameServer()->SendBroadcast(aBuf, OwnID);
+					GameServer()->SendChatTarget(OwnID, aBuf);
+					QuestReset();
+				}
+			}
+		} break;
+		case QUEST_PART_HOOK:
+		{
+			if(GetCharacter()->m_Core.m_HookedPlayer == m_QuestData.m_VictimID)
+				QuestSetNextPart();
+		} break;
+		case QUEST_PART_BLOCK:
+		{
+			CCharacter *pVictim = GameServer()->GetPlayerChar(m_QuestData.m_VictimID);
+			if (pVictim && pVictim->IsAlive() && pVictim->Core()->m_LastHookedPlayer == OwnID && pVictim->m_FirstFreezeTick != 0)
+				QuestSetNextPart();
+		} break;
+	}
+}
+
+void CPlayer::QuestTellObjective()
+{
+	const int OwnID = GetCharacter()->m_Core.m_Id;
+
+	if(m_QuestData.m_QuestPart == QUEST_NONE)
+	{
+		GameServer()->SendChatTarget(OwnID, "You don't have a quest at the moment. Type /beginquest to start one!");
+		return;
+	}
+
+	char aMessage[128];
+	const char *pVictimName = Server()->ClientName(m_QuestData.m_VictimID);
+	switch(m_QuestData.m_QuestPart)
+	{
+		case QUEST_PART_RACE:
+		{
+			if(g_Config.m_SvQuestRaceTime)
+				str_format(aMessage, sizeof(aMessage), "Kill yourself and go complete the race in less than %i minute%s!", g_Config.m_SvQuestRaceTime, g_Config.m_SvQuestRaceTime == 1 ? "" : "s");
+			else
+				str_format(aMessage, sizeof(aMessage), "Kill yourself and go Complete the race!");
+		} break;
+		case QUEST_PART_BLOCK:
+			str_format(aMessage, sizeof(aMessage), "You must block %s!", pVictimName);
+			break;
+		case QUEST_PART_HOOK:
+			str_format(aMessage, sizeof(aMessage), "You must hook %s!", pVictimName);
+			break;
+		case QUEST_PART_HAMMER:
+			str_format(aMessage, sizeof(aMessage), "You must hammer %s!", pVictimName);
+			break;
+		case QUEST_PART_LASER:
+			str_format(aMessage, sizeof(aMessage), "You must shoot %s with laser/rifle!", pVictimName);
+			break;
+		case QUEST_PART_SHOTGUN:
+			str_format(aMessage, sizeof(aMessage), "You must shoot %s with shotgun!", pVictimName);
+			break;
+		default: // shouldn't happen... and if it does because someone made a dumb mistake, this is a nice easter egg :D
+			str_format(aMessage, sizeof(aMessage), "You must tell an admin that there's an error in the program!");
+	}
+
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), "[QUEST %i/%i] %s", m_QuestData.m_QuestPart, NUM_QUESTS, aMessage);
+
+	GameServer()->SendBroadcast(aBuf, OwnID);
+	GameServer()->SendChatTarget(OwnID, aBuf);
+
+}
+
+void CPlayer::QuestSetNextPart()
+{
+	if(!GetCharacter())
+	{
+		dbg_msg("ERROR", "--------------------------------------------------");
+		dbg_msg("ERROR", "%s:%i", __FILE__, __LINE__);
+		dbg_msg("ERROR", "  CPlayer::QuestSetNextPart called");
+		dbg_msg("ERROR", "  but GetCharacter() == NULL ?!");
+		dbg_msg("ERROR", "--------------------------------------------------");
+	}
+
+	const int OwnID = GetCharacter()->m_Core.m_Id;
+
+	// advance to the next quest part
+	m_QuestData.m_QuestPart++;
+
+
+	if(m_QuestData.m_QuestPart >= QUEST_FINISHED) // handle finished quest
+	{
+		GameServer()->SendChatTarget(OwnID, "Congratulations, you received +1 Pages for completing the quest!");
+		m_QuestData.m_Pages++;
+		QuestReset();
+
+		return;
+	}
+
+	if(m_QuestData.m_QuestPart == QUEST_PART_RACE) // prepare [the player for] the next quest part
+	{
+		m_QuestData.m_RaceStartTick = 0;
+	}
+	else
+	{
+		// count players
+		int PlayerCount = 0;
+		for (int i = 0; i < MAX_CLIENTS; i++)
+		{
+			CCharacter *pChr = GameServer()->GetPlayerChar(i);
+			if ((pChr && pChr->IsAlive()) &&
+					!(!GameServer()->GetPlayerChar(i) ||
+					  !GameServer()->GetPlayerChar(i)->IsAlive() ||
+					  GameServer()->GetPlayerChar(i)->Team() != 0 ||
+					  GameServer()->GetPlayerChar(i)->GetPlayer()->m_Afk))
+				PlayerCount++;
+		}
+
+		if(PlayerCount <= 9)
+		{
+			GameServer()->SendChatTarget(OwnID,"Sorry, you can't start quests when less than 10 players are playing on the server.");
+			QuestReset();
+		}
+		else
+		{
+			// find out a new victim
+			do
+			{
+				m_QuestData.m_VictimID = rand() % PlayerCount;
+			} while (m_QuestData.m_VictimID == OwnID ||
+					 !GameServer()->GetPlayerChar(m_QuestData.m_VictimID) ||
+					 !GameServer()->GetPlayerChar(m_QuestData.m_VictimID)->IsAlive() ||
+					 GameServer()->GetPlayerChar(m_QuestData.m_VictimID)->Team() != 0 ||
+					 GameServer()->GetPlayerChar(m_QuestData.m_VictimID)->GetPlayer()->m_Afk
+					);
+
+			// tell him what to do next
+		}
+	}
+
+	QuestTellObjective();
+}
+
+
+
+void CPlayer::SaveStats()
+{
+	if(!GetCharacter()) // It already checks for alive
+		return;
+
+	m_SavedStats.m_SavedSpawn = GetCharacter()->Core()->m_Pos;
+	m_SavedStats.m_SavedShotgun = GetCharacter()->GetWeaponGot(WEAPON_SHOTGUN);
+	m_SavedStats.m_SavedGrenade = GetCharacter()->GetWeaponGot(WEAPON_GRENADE);
+	m_SavedStats.m_SavedLaser = GetCharacter()->GetWeaponGot(WEAPON_RIFLE);
+	m_SavedStats.m_SavedEHook = GetCharacter()->m_EndlessHook;
+
+	if(GetCharacter()->m_DDRaceState == DDRACE_STARTED)
+		m_SavedStats.m_SavedStartTick = GetCharacter()->m_StartTime;
 }

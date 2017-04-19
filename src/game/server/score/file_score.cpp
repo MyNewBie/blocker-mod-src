@@ -38,7 +38,7 @@ CFileScore::~CFileScore()
 	// clear list
 	m_Top.clear();
 
-	lock_release(gs_ScoreLock);
+	lock_unlock(gs_ScoreLock);
 }
 
 std::string SaveFile()
@@ -56,12 +56,12 @@ std::string SaveFile()
 
 void CFileScore::MapInfo(int ClientID, const char* MapName)
 {
-  // TODO: implement
+	// TODO: implement
 }
 
 void CFileScore::MapVote(int ClientID, const char* MapName)
 {
-  // TODO: implement
+	// TODO: implement
 }
 
 void CFileScore::SaveScoreThread(void *pUser)
@@ -90,15 +90,13 @@ void CFileScore::SaveScoreThread(void *pUser)
 		}
 	}
 	f.close();
-	lock_release(gs_ScoreLock);
+	lock_unlock(gs_ScoreLock);
 }
 
 void CFileScore::Save()
 {
-	void *pSaveThread = thread_create(SaveScoreThread, this);
-#if defined(CONF_FAMILY_UNIX)
-	pthread_detach((pthread_t)pSaveThread);
-#endif
+	void *pSaveThread = thread_init(SaveScoreThread, this);
+	thread_detach(pSaveThread);
 }
 
 void CFileScore::Init()
@@ -139,7 +137,7 @@ void CFileScore::Init()
 		}
 	}
 	f.close();
-	lock_release(gs_ScoreLock);
+	lock_unlock(gs_ScoreLock);
 
 	// save the current best score
 	if (m_Top.size())
@@ -200,8 +198,13 @@ void CFileScore::UpdatePlayer(int ID, float Score,
 	else
 		m_Top.add(*new CPlayerScore(pName, Score, aCpTime));
 
-	lock_release(gs_ScoreLock);
+	lock_unlock(gs_ScoreLock);
 	Save();
+}
+
+void CFileScore::CheckBirthday(int ClientID)
+{
+	// TODO: implement
 }
 
 void CFileScore::LoadScore(int ClientID)
@@ -210,7 +213,7 @@ void CFileScore::LoadScore(int ClientID)
 	if (pPlayer)
 	{
 		lock_wait(gs_ScoreLock);
-		lock_release(gs_ScoreLock);
+		lock_unlock(gs_ScoreLock);
 		Save();
 	}
 
@@ -221,7 +224,7 @@ void CFileScore::LoadScore(int ClientID)
 
 void CFileScore::SaveTeamScore(int* ClientIDs, unsigned int Size, float Time)
 {
-  dbg_msg("FileScore", "SaveTeamScore not implemented for FileScore");
+	dbg_msg("filescore", "saveteamscore not implemented for filescore");
 }
 
 void CFileScore::SaveScore(int ClientID, float Time,
@@ -335,7 +338,7 @@ void CFileScore::RandomUnfinishedMap(int ClientID, int stars)
 	GameServer()->SendChatTarget(ClientID, aBuf);
 }
 
-void CFileScore::SaveTeam(int Team, const char* Code, int ClientID)
+void CFileScore::SaveTeam(int Team, const char* Code, int ClientID, const char* Server)
 {
 	char aBuf[512];
 	str_format(aBuf, sizeof(aBuf), "Save-function not supported in file based servers");
@@ -347,4 +350,9 @@ void CFileScore::LoadTeam(const char* Code, int ClientID)
 	char aBuf[512];
 	str_format(aBuf, sizeof(aBuf), "Save-function not supported in file based servers");
 	GameServer()->SendChatTarget(ClientID, aBuf);
+}
+
+void CFileScore::OnShutdown()
+{
+	;
 }

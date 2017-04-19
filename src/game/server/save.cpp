@@ -184,10 +184,8 @@ int CSaveTee::LoadString(char* String)
 		return 0;
 	else
 	{
-		dbg_msg("Load", "failed to load Tee-string");
-		char aBuf[32];
-		str_format(aBuf, sizeof(aBuf), "loaded %d vars", Num);
-		dbg_msg("Load", aBuf);
+		dbg_msg("load", "failed to load tee-string");
+		dbg_msg("load", "loaded %d vars", Num);
 		return Num+1; // never 0 here
 	}
 }
@@ -212,7 +210,7 @@ int CSaveTeam::save(int Team)
 	if(g_Config.m_SvTeam == 3 || (Team > 0 && Team < MAX_CLIENTS))
 	{
 		CGameTeams* Teams = &(((CGameControllerDDRace*)m_pController)->m_Teams);
-	
+
 		m_MembersCount = Teams->Count(Team);
 		if(m_MembersCount <= 0)
 		{
@@ -220,6 +218,12 @@ int CSaveTeam::save(int Team)
 		}
 
 		m_TeamState = Teams->GetTeamState(Team);
+
+		if(m_TeamState != CGameTeams::TEAMSTATE_STARTED)
+		{
+			return 4;
+		}
+
 		m_NumSwitchers = m_pController->GameServer()->Collision()->m_NumSwitchers;
 		m_TeamLocked = Teams->TeamLocked(Team);
 
@@ -229,7 +233,7 @@ int CSaveTeam::save(int Team)
 		{
 			if(Teams->m_Core.Team(i) == Team)
 			{
-				if(m_pController->GameServer()->m_apPlayers[i]->GetCharacter())
+				if(m_pController->GameServer()->m_apPlayers[i] && m_pController->GameServer()->m_apPlayers[i]->GetCharacter())
 					SavedTees[j].save(m_pController->GameServer()->m_apPlayers[i]->GetCharacter());
 				else
 					return 3;
@@ -259,48 +263,47 @@ int CSaveTeam::save(int Team)
 
 int CSaveTeam::load(int Team)
 {
-	if(Team > 0 && Team < MAX_CLIENTS)
+	if(Team <= 0 || Team >= MAX_CLIENTS)
+		return 1;
+
+	CGameTeams* Teams = &(((CGameControllerDDRace*)m_pController)->m_Teams);
+
+	Teams->ChangeTeamState(Team, m_TeamState);
+	Teams->SetTeamLock(Team, m_TeamLocked);
+
+	CCharacter* pchr;
+
+	for (int i = 0; i<m_MembersCount; i++)
 	{
-		CGameTeams* Teams = &(((CGameControllerDDRace*)m_pController)->m_Teams);
-
-		Teams->ChangeTeamState(Team, m_TeamState);
-		Teams->SetTeamLock(Team, m_TeamLocked);
-
-		CCharacter* pchr;
-
-		for (int i = 0; i<m_MembersCount; i++)
+		int ID = MatchPlayer(SavedTees[i].GetName());
+		if(ID == -1) // first check if team can be loaded / do not load half teams
 		{
-			int ID = MatchPlayer(SavedTees[i].GetName());
-			if(ID == -1) // first check if team can be loaded / do not load half teams
-			{
-				return i+10; // +10 to let space for other return-values
-			}
-			else if (m_pController->GameServer()->m_apPlayers[ID]->GetCharacter() && m_pController->GameServer()->m_apPlayers[ID]->GetCharacter()->m_DDRaceState)
-			{
-				return i+100; // +100 to let space for other return-values
-			}
+			return i+10; // +10 to let space for other return-values
 		}
-
-		for (int i = 0; i<m_MembersCount; i++)
+		else if (m_pController->GameServer()->m_apPlayers[ID] && m_pController->GameServer()->m_apPlayers[ID]->GetCharacter() && m_pController->GameServer()->m_apPlayers[ID]->GetCharacter()->m_DDRaceState)
 		{
-			pchr = MatchCharacter(SavedTees[i].GetName(), i);
-			if(pchr)
-			{
-				SavedTees[i].load(pchr, Team);
-			}
+			return i+100; // +100 to let space for other return-values
 		}
-
-		if(m_pController->GameServer()->Collision()->m_NumSwitchers)
-			for(int i=1; i < m_pController->GameServer()->Collision()->m_NumSwitchers+1; i++)
-			{
-				m_pController->GameServer()->Collision()->m_pSwitchers[i].m_Status[Team] = m_Switchers[i].m_Status;
-				if(m_Switchers[i].m_EndTime)
-					m_pController->GameServer()->Collision()->m_pSwitchers[i].m_EndTick[Team] = m_pController->Server()->Tick() - m_Switchers[i].m_EndTime;
-				m_pController->GameServer()->Collision()->m_pSwitchers[i].m_Type[Team] = m_Switchers[i].m_Type;
-			}
-		return 0;
 	}
-	return 1;
+
+	for (int i = 0; i<m_MembersCount; i++)
+	{
+		pchr = MatchCharacter(SavedTees[i].GetName(), i);
+		if(pchr)
+		{
+			SavedTees[i].load(pchr, Team);
+		}
+	}
+
+	if(m_pController->GameServer()->Collision()->m_NumSwitchers)
+		for(int i=1; i < m_pController->GameServer()->Collision()->m_NumSwitchers+1; i++)
+		{
+			m_pController->GameServer()->Collision()->m_pSwitchers[i].m_Status[Team] = m_Switchers[i].m_Status;
+			if(m_Switchers[i].m_EndTime)
+				m_pController->GameServer()->Collision()->m_pSwitchers[i].m_EndTick[Team] = m_pController->Server()->Tick() - m_Switchers[i].m_EndTime;
+			m_pController->GameServer()->Collision()->m_pSwitchers[i].m_Type[Team] = m_Switchers[i].m_Type;
+		}
+	return 0;
 }
 
 int CSaveTeam::MatchPlayer(char name[16])
@@ -318,7 +321,7 @@ int CSaveTeam::MatchPlayer(char name[16])
 CCharacter* CSaveTeam::MatchCharacter(char name[16], int SaveID)
 {
 	int ID = MatchPlayer(name);
-	if(ID >= 0)
+	if(ID >= 0 && m_pController->GameServer()->m_apPlayers[ID])
 	{
 		if(m_pController->GameServer()->m_apPlayers[ID]->GetCharacter())
 			return m_pController->GameServer()->m_apPlayers[ID]->GetCharacter();
@@ -380,7 +383,7 @@ int CSaveTeam::LoadString(const char* String)
 
 	if(StrSize <= 0)
 	{
-		dbg_msg("Load", "Savegame: wrong format (couldn't load TeamStats)");
+		dbg_msg("load", "savegame: wrong format (couldn't load teamstats)");
 		return 1;
 	}
 
@@ -390,15 +393,13 @@ int CSaveTeam::LoadString(const char* String)
 		int Num = sscanf(TeamStats, "%d\t%d\t%d\t%d", &m_TeamState, &m_MembersCount, &m_NumSwitchers, &m_TeamLocked);
 		if(Num != 4)
 		{
-			dbg_msg("Load", "failed to load Teamstats");
-			char aBuf[32];
-			str_format(aBuf, sizeof(aBuf), "loaded %d vars", Num);
-			dbg_msg("Load", aBuf);
+			dbg_msg("load", "failed to load teamstats");
+			dbg_msg("load", "loaded %d vars", Num);
 		}
 	}
 	else
 	{
-		dbg_msg("Load", "Savegame: wrong format (couldn't load TeamStats, too big)");
+		dbg_msg("load", "savegame: wrong format (couldn't load teamstats, too big)");
 		return 1;
 	}
 
@@ -426,7 +427,7 @@ int CSaveTeam::LoadString(const char* String)
 
 		if(StrSize <= 0)
 		{
-			dbg_msg("Load", "Savegame: wrong format (couldn't load Tee)");
+			dbg_msg("load", "savegame: wrong format (couldn't load tee)");
 			return 1;
 		}
 
@@ -436,16 +437,14 @@ int CSaveTeam::LoadString(const char* String)
 			int Num = SavedTees[n].LoadString(SaveTee);
 			if(Num)
 			{
-				dbg_msg("Load", "failed to load Tee");
-				char aBuf[32];
-				str_format(aBuf, sizeof(aBuf), "loaded %d vars", Num-1);
-				dbg_msg("Load", aBuf);
+				dbg_msg("load", "failed to load tee");
+				dbg_msg("load", "loaded %d vars", Num-1);
 				return 1;
 			}
 		}
 		else
 		{
-			dbg_msg("Load", "Savegame: wrong format (couldn't load Tee, too big)");
+			dbg_msg("load", "savegame: wrong format (couldn't load tee, too big)");
 			return 1;
 		}
 	}
@@ -474,7 +473,7 @@ int CSaveTeam::LoadString(const char* String)
 
 			if(StrSize <= 0)
 			{
-				dbg_msg("Load", "Savegame: wrong format (couldn't load Switcher)");
+				dbg_msg("load", "savegame: wrong format (couldn't load switcher)");
 				return 1;
 			}
 
@@ -484,15 +483,13 @@ int CSaveTeam::LoadString(const char* String)
 				int Num = sscanf(Switcher, "%d\t%d\t%d", &(m_Switchers[n].m_Status), &(m_Switchers[n].m_EndTime), &(m_Switchers[n].m_Type));
 				if(Num != 3)
 				{
-					dbg_msg("Load", "failed to load Switcher");
-					char aBuf[32];
-					str_format(aBuf, sizeof(aBuf), "loaded %d vars", Num-1);
-					dbg_msg("Load", aBuf);
+					dbg_msg("load", "failed to load switcher");
+					dbg_msg("load", "loaded %d vars", Num-1);
 				}
 			}
 			else
 			{
-				dbg_msg("Load", "Savegame: wrong format (couldn't load Switcher, too big)");
+				dbg_msg("load", "savegame: wrong format (couldn't load switcher, too big)");
 				return 1;
 			}
 		}

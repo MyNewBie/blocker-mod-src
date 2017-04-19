@@ -13,6 +13,7 @@ CFriends::CFriends()
 {
 	mem_zero(m_aFriends, sizeof(m_aFriends));
 	m_NumFriends = 0;
+	m_Foes = false;
 }
 
 void CFriends::ConAddFriend(IConsole::IResult *pResult, void *pUserData)
@@ -27,8 +28,16 @@ void CFriends::ConRemoveFriend(IConsole::IResult *pResult, void *pUserData)
 	pSelf->RemoveFriend(pResult->GetString(0), pResult->GetString(1));
 }
 
-void CFriends::Init()
+void CFriends::ConFriends(IConsole::IResult *pResult, void *pUserData)
 {
+	CFriends *pSelf = (CFriends *)pUserData;
+	pSelf->Friends();
+}
+
+void CFriends::Init(bool Foes)
+{
+	m_Foes = Foes;
+
 	IConfig *pConfig = Kernel()->RequestInterface<IConfig>();
 	if(pConfig)
 		pConfig->RegisterCallback(ConfigSaveCallback, this);
@@ -36,8 +45,18 @@ void CFriends::Init()
 	IConsole *pConsole = Kernel()->RequestInterface<IConsole>();
 	if(pConsole)
 	{
-		pConsole->Register("add_friend", "ss", CFGFLAG_CLIENT, ConAddFriend, this, "Add a friend");
-		pConsole->Register("remove_friend", "ss", CFGFLAG_CLIENT, ConRemoveFriend, this, "Remove a friend");
+		if(Foes)
+		{
+			pConsole->Register("add_foe", "s[name] ?s[clan]", CFGFLAG_CLIENT, ConAddFriend, this, "Add a foe");
+			pConsole->Register("remove_foe", "s[name] ?s[clan]", CFGFLAG_CLIENT, ConRemoveFriend, this, "Remove a foe");
+			pConsole->Register("foes", "", CFGFLAG_CLIENT, ConFriends, this, "List foes");
+		}
+		else
+		{
+			pConsole->Register("add_friend", "s[name] ?s[clan]", CFGFLAG_CLIENT, ConAddFriend, this, "Add a friend");
+			pConsole->Register("remove_friend", "s[name] ?s[clan]", CFGFLAG_CLIENT, ConRemoveFriend, this, "Remove a friend");
+			pConsole->Register("friends", "", CFGFLAG_CLIENT, ConFriends, this, "List friends");
+		}
 	}
 }
 
@@ -53,7 +72,7 @@ int CFriends::GetFriendState(const char *pName, const char *pClan) const
 	unsigned ClanHash = str_quickhash(pClan);
 	for(int i = 0; i < m_NumFriends; ++i)
 	{
-		if(m_aFriends[i].m_ClanHash == ClanHash)
+		if((g_Config.m_ClFriendsIgnoreClan && m_aFriends[i].m_aName[0]) || m_aFriends[i].m_ClanHash == ClanHash)
 		{
 			if(m_aFriends[i].m_aName[0] == 0)
 				Result = FRIEND_CLAN;
@@ -73,7 +92,7 @@ bool CFriends::IsFriend(const char *pName, const char *pClan, bool PlayersOnly) 
 	unsigned ClanHash = str_quickhash(pClan);
 	for(int i = 0; i < m_NumFriends; ++i)
 	{
-		if(m_aFriends[i].m_ClanHash == ClanHash &&
+		if(((g_Config.m_ClFriendsIgnoreClan && m_aFriends[i].m_aName[0]) || m_aFriends[i].m_ClanHash == ClanHash) &&
 			((!PlayersOnly && m_aFriends[i].m_aName[0] == 0) || m_aFriends[i].m_NameHash == NameHash))
 			return true;
 	}
@@ -90,7 +109,7 @@ void CFriends::AddFriend(const char *pName, const char *pClan)
 	unsigned ClanHash = str_quickhash(pClan);
 	for(int i = 0; i < m_NumFriends; ++i)
 	{
-		if(m_aFriends[i].m_NameHash == NameHash && m_aFriends[i].m_ClanHash == ClanHash)
+		if(m_aFriends[i].m_NameHash == NameHash && ((g_Config.m_ClFriendsIgnoreClan && m_aFriends[i].m_aName[0]) || m_aFriends[i].m_ClanHash == ClanHash))
 			return;
 	}
 
@@ -107,7 +126,7 @@ void CFriends::RemoveFriend(const char *pName, const char *pClan)
 	unsigned ClanHash = str_quickhash(pClan);
 	for(int i = 0; i < m_NumFriends; ++i)
 	{
-		if(m_aFriends[i].m_NameHash == NameHash && m_aFriends[i].m_ClanHash == ClanHash)
+		if(m_aFriends[i].m_NameHash == NameHash && ((g_Config.m_ClFriendsIgnoreClan && m_aFriends[i].m_aName[0]) || m_aFriends[i].m_ClanHash == ClanHash))
 		{
 			RemoveFriend(i);
 			return;
@@ -122,7 +141,20 @@ void CFriends::RemoveFriend(int Index)
 		mem_move(&m_aFriends[Index], &m_aFriends[Index+1], sizeof(CFriendInfo)*(m_NumFriends-(Index+1)));
 		--m_NumFriends;
 	}
-	return;
+}
+
+void CFriends::Friends()
+{
+	char aBuf[128];
+	IConsole *pConsole = Kernel()->RequestInterface<IConsole>();
+	if(pConsole)
+	{
+		for(int i = 0; i < m_NumFriends; ++i)
+		{
+			str_format(aBuf, sizeof(aBuf), "Name: %s, Clan: %s", m_aFriends[i].m_aName, m_aFriends[i].m_aClan);
+			pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, m_Foes?"foes":"friends", aBuf, true);
+		}
+	}
 }
 
 void CFriends::ConfigSaveCallback(IConfig *pConfig, void *pUserData)
@@ -132,7 +164,7 @@ void CFriends::ConfigSaveCallback(IConfig *pConfig, void *pUserData)
 	const char *pEnd = aBuf+sizeof(aBuf)-4;
 	for(int i = 0; i < pSelf->m_NumFriends; ++i)
 	{
-		str_copy(aBuf, "add_friend ", sizeof(aBuf));
+		str_copy(aBuf, pSelf->m_Foes ? "add_foe " : "add_friend ", sizeof(aBuf));
 
 		const char *pSrc = pSelf->m_aFriends[i].m_aName;
 		char *pDst = aBuf+str_length(aBuf);

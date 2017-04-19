@@ -8,17 +8,19 @@
 class CFriends : public IFriends
 {
 	CFriendInfo m_aFriends[MAX_FRIENDS];
+	int m_Foes;
 	int m_NumFriends;
 
 	static void ConAddFriend(IConsole::IResult *pResult, void *pUserData);
 	static void ConRemoveFriend(IConsole::IResult *pResult, void *pUserData);
+	static void ConFriends(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConfigSaveCallback(IConfig *pConfig, void *pUserData);
 
 public:
 	CFriends();
 
-	void Init();
+	void Init(bool Foes = false);
 
 	int NumFriends() const { return m_NumFriends; }
 	const CFriendInfo *GetFriend(int Index) const;
@@ -28,6 +30,7 @@ public:
 	void AddFriend(const char *pName, const char *pClan);
 	void RemoveFriend(const char *pName, const char *pClan);
 	void RemoveFriend(int Index);
+	void Friends();
 };
 
 #endif
