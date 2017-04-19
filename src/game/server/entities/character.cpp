@@ -3037,7 +3037,7 @@ void CCharacter::HandleBlocking(bool die)
 				GameServer()->SendChatTarget(pECore->m_Core.m_Id, "[AntiFarm]: You cant block your own dummy!");
 				return;
 			}
-			if (Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
+			if (m_FirstFreezeTick != 0 && Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
 			{
 				GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
 				m_LastBlockedTick = -1;
