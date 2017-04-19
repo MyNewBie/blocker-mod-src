@@ -51,12 +51,16 @@ public:
 		if (ClientID == -1)
 		{
 			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
 				if(ClientIngame(i))
 				{
 					mem_copy(&tmp, pMsg, sizeof(T));
 					result = SendPackMsgTranslate(&tmp, Flags, i);
 				}
-		} else {
+			}
+		}
+		else
+		{
 			mem_copy(&tmp, pMsg, sizeof(T));
 			result = SendPackMsgTranslate(&tmp, Flags, ClientID);
 		}
@@ -79,9 +83,11 @@ public:
 		if (pMsg->m_ClientID >= 0 && !Translate(&(pMsg->m_ClientID), ClientID))
 		{
 			static char aBuf[1024];
+			CClientInfo Info;
+			GetClientInfo(ClientID, &Info);
 			str_format(aBuf, sizeof(aBuf), "%s: %s", ClientName(pMsg->m_ClientID), pMsg->m_pMessage);
 			pMsg->m_pMessage = aBuf;
-			pMsg->m_ClientID = VANILLA_MAX_CLIENTS - 1;
+			pMsg->m_ClientID = Info.m_ClientVersion < VERSION_DDNET_OLD ? VANILLA_MAX_CLIENTS-1 : DDNET_MAX_CLIENTS-1;
 		}
 		return SendPackMsgOne(pMsg, Flags, ClientID);
 	}

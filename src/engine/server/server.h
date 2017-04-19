@@ -172,7 +172,7 @@ public:
 	};
 
 	CClient m_aClients[MAX_CLIENTS];
-	int m_aIdMap[DDNET_MAX_CLIENTS * VANILLA_MAX_CLIENTS];
+	int m_aIdMap[MAX_CLIENTS * VANILLA_MAX_CLIENTS];
 	int m_aIdMap64[MAX_CLIENTS * DDNET_MAX_CLIENTS];
 
 	CSnapshotDelta m_SnapshotDelta;

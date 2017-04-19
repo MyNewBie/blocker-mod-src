@@ -265,15 +265,13 @@ void CGameWorld::UpdatePlayerMaps64()
 				continue;
 			}
 			// copypasted chunk from character.cpp Snap() follows
-			CCharacter* SnapChar = GameServer()->GetPlayerChar(i);
-			if(SnapChar && !SnapChar->m_Super &&
-				!GameServer()->m_apPlayers[i]->m_Paused && GameServer()->m_apPlayers[i]->GetTeam() != -1 &&
+			CCharacter *pSnapChar = GameServer()->GetPlayerChar(i);
+			if(pSnapChar && !pSnapChar->m_Super &&
+				!GameServer()->m_apPlayers[i]->m_Paused && GameServer()->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS &&
 				!ch->CanCollide(i) &&
-				(!GameServer()->m_apPlayers[i] ||
-					GameServer()->m_apPlayers[i]->m_ClientVersion == VERSION_VANILLA ||
-					(GameServer()->m_apPlayers[i]->m_ClientVersion >= VERSION_DDRACE &&
-					!GameServer()->m_apPlayers[i]->m_ShowOthers
-					)
+				(
+					!GameServer()->m_apPlayers[i] || !GameServer()->m_apPlayers[i]->m_Is256 ||
+					(GameServer()->m_apPlayers[i]->m_ClientVersion >= VERSION_DDRACE /* XXX <- not sure about this */ && !GameServer()->m_apPlayers[i]->m_ShowOthers)
 				)
 			)
 				dist[j].first = 1e8;

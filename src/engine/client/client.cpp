@@ -1410,7 +1410,7 @@ void CClient::ProcessConnlessPacket(CNetChunk *pPacket)
 		CServerInfo Info = {0};
 
 		CServerBrowser::CServerEntry *pEntry = m_ServerBrowser.Find(pPacket->m_Address);
-		// Don't add info if we already got info64
+		// Don't add info if we already got info64 or info256
 		if(pEntry && pEntry->m_Info.m_MaxClients > VANILLA_MAX_CLIENTS)
 			return;
 

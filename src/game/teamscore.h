@@ -6,7 +6,7 @@
 
 enum
 {
-	TEAM_FLOCK = 0, TEAM_SUPER = MAX_CLIENTS, VANILLA_TEAM_SUPER = VANILLA_MAX_CLIENTS
+	TEAM_FLOCK = 0, TEAM_SUPER = MAX_CLIENTS, DDNET_TEAM_SUPER = DDNET_MAX_CLIENTS, VANILLA_TEAM_SUPER = VANILLA_MAX_CLIENTS
 };
 
 class CTeamsCore
@@ -14,9 +14,25 @@ class CTeamsCore
 	int m_Team[MAX_CLIENTS];
 	bool m_IsSolo[MAX_CLIENTS];
 public:
-	bool m_IsDDRace16;
+	enum
+	{
+		PTYPE_VANILLA=0,
+		PTYPE_64,
+		PTYPE_256
+	};
+	int m_PType;
 
 	CTeamsCore(void);
+
+	inline int TeamSuper() const
+	{
+		if(m_PType == PTYPE_VANILLA)
+			return VANILLA_TEAM_SUPER;
+		else if(m_PType == PTYPE_64)
+			return DDNET_TEAM_SUPER;
+		else
+			return TEAM_SUPER;
+	}
 
 	bool SameTeam(int ClientID1, int ClientID2);
 
@@ -36,7 +52,7 @@ public:
 	{
 		return m_IsSolo[ClientID];
 	}
-	;
+
 };
 
 #endif

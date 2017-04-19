@@ -474,11 +474,17 @@ void CGameContext::SendVoteSet(int ClientID)
 
 void CGameContext::SendVoteStatus(int ClientID, int Total, int Yes, int No)
 {
-	if (Total > VANILLA_MAX_CLIENTS && m_apPlayers[ClientID] && m_apPlayers[ClientID]->m_ClientVersion <= VERSION_DDRACE)
+	if (Total > VANILLA_MAX_CLIENTS && m_apPlayers[ClientID] && m_apPlayers[ClientID]->m_ClientVersion < VERSION_DDNET_OLD)
 	{
 		Yes = float(Yes) * VANILLA_MAX_CLIENTS / float(Total);
 		No = float(No) * VANILLA_MAX_CLIENTS / float(Total);
 		Total = VANILLA_MAX_CLIENTS;
+	}
+	else if (Total > DDNET_MAX_CLIENTS && m_apPlayers[ClientID] && !m_apPlayers[ClientID]->m_Is256)
+	{
+		Yes = float(Yes) * DDNET_MAX_CLIENTS / float(Total);
+		No = float(No) * DDNET_MAX_CLIENTS / float(Total);
+		Total = DDNET_MAX_CLIENTS;
 	}
 
 	CNetMsg_Sv_VoteStatus Msg = {0};
@@ -1508,7 +1514,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 								break;
 							}
 						}
-						if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
+						if (id < 0 || id > MAX_CLIENTS || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
 							return;
 
 						m_apPlayers[id]->KillCharacter(WEAPON_WORLD);
@@ -3443,7 +3449,7 @@ void CGameContext::OnSnap(int ClientID)
 
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(m_apPlayers[i])
+		if(m_apPlayers[i] && !IsClientDummy(ClientID))
 			m_apPlayers[i]->Snap(ClientID);
 	}
 

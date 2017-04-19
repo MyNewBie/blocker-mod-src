@@ -63,7 +63,7 @@ void CPickup::Tick()
 					break;
 
 				case POWERUP_ARMOR:
-					if(pChr->Team() == TEAM_SUPER) continue;
+					if(pChr->Team() == /*pChr->Teams()->m_Core.TeamSuper()*/TEAM_SUPER) continue;
 					for(int i = WEAPON_SHOTGUN; i < NUM_WEAPONS; i++)
 					{
 						if(pChr->GetWeaponGot(i))

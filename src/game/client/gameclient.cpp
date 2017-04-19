@@ -791,7 +791,11 @@ void CGameClient::OnMessage(int MsgId, CUnpacker *pUnpacker, bool IsDummy)
 		}
 
 		if (i <= 16)
-			m_Teams.m_IsDDRace16 = true;
+			m_Teams.m_PType = CTeamsCore::PTYPE_VANILLA;
+		else if (i <= 64)
+			m_Teams.m_PType = CTeamsCore::PTYPE_64;
+		else
+			m_Teams.m_PType = CTeamsCore::PTYPE_256;
 	}
 	else if(MsgId == NETMSGTYPE_SV_PLAYERTIME)
 	{
