@@ -1601,7 +1601,13 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "beginquest", 10) == 0)
 				{
-					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive() || m_PlayerCount < g_Config.m_SvQuestCount)
+					if (m_PlayerCount < g_Config.m_SvQuestCount)
+					{
+						char aBuf[128];
+						str_format(aBuf, sizeof(aBuf), "There need to be at least %i players on the server to start a quest", g_Config.m_SvQuestCount);
+						SendChatTarget(ClientID, aBuf);
+						return;
+					}
 
 					if (pPlayer->m_QuestData.QuestActive())
 					{
@@ -2261,7 +2267,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if(g_Config.m_SvSpamprotection && pPlayer->m_LastEmote && pPlayer->m_LastEmote+Server()->TickSpeed()*g_Config.m_SvEmoticonDelay > Server()->Tick())
 				return;
-			
+
 			CCharacter *pOwner = GetPlayerChar(pPlayer->GetCID());
 
 			if(pOwner && pOwner->GetPlayer()->m_Blackhole)
@@ -2972,7 +2978,7 @@ void CGameContext::ConDetectedPlayers(IConsole::IResult *pResult, void *pUserDat
  {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	char aBuf[128];
-	
+
 		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", "Detected players:");
 	for (int i = 0; i < MAX_CLIENTS; i++)
 		 {
