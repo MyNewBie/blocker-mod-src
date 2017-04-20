@@ -1338,7 +1338,17 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						if (!str_comp_nocase(aAddrStr, aAddrStr2) == 0)
 							continue;
 						else if (str_comp_nocase(aAddrStr, aAddrStr2) == 0)
+						{
+							if (m_apPlayers[i]->m_AccData.m_UserID)
+							{
+								pPlayer->m_pAccount->SetStorage(Storage());
+								m_apPlayers[i]->m_AccData.m_Slot--;
+								m_apPlayers[i]->m_pAccount->Apply();
+								m_apPlayers[i]->m_pAccount->Reset();
+							}
+
 							Server()->Kick(i, "Requested Drop");
+						}
 					}
 				}
 				else if (!strncmp(pMsg->m_pMessage, "/register", 9))
