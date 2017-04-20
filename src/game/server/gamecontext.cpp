@@ -1302,6 +1302,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 					}
 					pPlayer->m_pAccount->SetStorage(Storage());
+					pPlayer->m_AccData.m_Slot--;
 					pPlayer->m_pAccount->Apply();
 					pPlayer->m_pAccount->Reset();
 

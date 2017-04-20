@@ -258,6 +258,7 @@ public:
 		char m_aPassword[32];
 		char m_aRconPassword[32];
 		char m_aIp[NETADDR_MAXSTRSIZE];
+		int m_Slot;
 		int m_Weaponkits;
 		int m_UserID;
 		int m_Vip;
