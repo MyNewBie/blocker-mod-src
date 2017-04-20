@@ -1813,7 +1813,7 @@ void CCharacter::HandleTiles(int Index)
 			{
 				char aGaining[256];
 				m_pPlayer->m_Koh.m_ZoneXp++;
-				str_format(aGaining, sizeof(aGaining), "King of the hill -- ZONE %i\n%s in control - %d/3 points [%i%%]", z, Server()->ClientName(m_Core.m_Id), m_pPlayer->m_Koh.m_ZonePoints, round_to_int(((float)m_pPlayer->m_Koh.m_ZoneXp/800.0f)*100.0f));
+				str_format(aGaining, sizeof(aGaining), "King of the hill -- ZONE %i\n%s in control - %d/5 points [%i%%]", z, Server()->ClientName(m_Core.m_Id), m_pPlayer->m_Koh.m_ZonePoints, round_to_int(((float)m_pPlayer->m_Koh.m_ZoneXp/800.0f)*100.0f));
 				GameServer()->SendBroadcast(aGaining, -1);
 			}
 			if (m_pPlayer->m_Koh.m_ZoneXp == 800)
@@ -1821,7 +1821,7 @@ void CCharacter::HandleTiles(int Index)
 				m_pPlayer->m_Koh.m_ZonePoints++;
 				m_pPlayer->m_Koh.m_ZoneXp = 0;
 			}
-			if (m_pPlayer->m_Koh.m_ZonePoints >= 3)
+			if (m_pPlayer->m_Koh.m_ZonePoints >= 5)
 			{
 				char aWinner[256];
 				if (!m_pPlayer->m_AccData.m_UserID)
