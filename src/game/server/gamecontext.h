@@ -263,6 +263,18 @@ public:
 	std::vector<CKOH> m_KOH;
 
 
+	struct CCodes
+	{
+		enum
+		{
+			MAX_BANNED_CODES = 256
+		};
+
+		int m_BanCodeCount;
+		char *CodeBan[MAX_BANNED_CODES];
+	};
+	std::vector<CCodes> m_CODE;
+
 private:
 
 	bool m_VoteWillPass;

@@ -1424,6 +1424,30 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(pPlayer->GetCID(), pPlayer->m_Bots.m_Grenadebot ? "Grenadebot enabled!" : "Grenadebot disabled!");
 
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getTOcode ", 10) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->m_Authed)) // Tired of using status
+				{
+					char Name[256];
+					str_copy(Name, pMsg->m_pMessage + 7, 256);
+					int id = -1;
+					for (int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if (!GetPlayerChar(i))
+							continue;
+						if (str_comp_nocase(Name, Server()->ClientName(i)) != 0)
+							continue;
+						if (str_comp_nocase(Name, Server()->ClientName(i)) == 0)
+						{
+							id = i;
+							break;
+						}
+					}
+					if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
+						return;
+
+					char aBuf[246];
+					str_format(aBuf, sizeof(aBuf), "[Code] [%s]: %s", Server()->ClientName(id), m_apPlayers[id]->m_TimeoutCode);
+					SendChatTarget(ClientID, aBuf);
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getip ", 6) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->m_Authed)) // Tired of using status
 				{
 					char Name[256];
