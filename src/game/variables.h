@@ -184,6 +184,8 @@ MACRO_CONFIG_INT(SvBlackHolescount, sv_blackholes_count, 3, 1, 10, CFGFLAG_SERVE
 MACRO_CONFIG_INT(SvBlackHoleKills, sv_blackhole_kills, 1, 0, 1, CFGFLAG_SERVER, "black hole can kill?")
 MACRO_CONFIG_INT(SvKOHCircleRadius, sv_koh_circle_radius, 400, 0, 0x7FFFFFFF, CFGFLAG_SERVER, "Radius for king of the hill zone")
 MACRO_CONFIG_INT(SvKOHCircleType, sv_koh_circle_type, 0, 0, 5, CFGFLAG_SERVER, "Type of entity the circle will use")
+MACRO_CONFIG_INT(SvKOHCaptureXpLimit, sv_koh_capture_xp_limit, 700, 100, 10000, CFGFLAG_SERVER, "Required number of zone xp to get a point")
+MACRO_CONFIG_INT(SvKOHRequiredPoints, sv_koh_required_points, 3, 1, 10, CFGFLAG_SERVER, "Required number of points to win the koh")
 MACRO_CONFIG_INT(SvRescue, sv_rescue, 0, 0, 1, CFGFLAG_SERVER, "Allow /rescue command so players can teleport themselves out of freeze")
 MACRO_CONFIG_INT(SvRescueDelay, sv_rescue_delay, 5, 0, 1000, CFGFLAG_SERVER, "Number of seconds inbetween two rescues")
 MACRO_CONFIG_INT(SvLMBRegDuration, sv_lmb_reg_duration, 5, 1, 60, CFGFLAG_SERVER, "Specify the duration where LMB registration is possible")
