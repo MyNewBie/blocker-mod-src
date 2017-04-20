@@ -1318,6 +1318,29 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					return;
 				}
+				/*
+					Incase a player player wants to kick his dummy he cant disconnect
+					or his old character that Timed out
+				*/
+				else if (!strncmp(pMsg->m_pMessage, "/dropconnections", 16))
+				{
+					char aAddrStr[NETADDR_MAXSTRSIZE] = { 0 };
+					Server()->GetClientAddr(ClientID, aAddrStr, sizeof(aAddrStr));
+
+					for (int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if (!GetPlayerChar(i) || i == ClientID)
+							continue;
+
+						char aAddrStr2[NETADDR_MAXSTRSIZE] = { 0 };
+						Server()->GetClientAddr(i, aAddrStr2, sizeof(aAddrStr2));
+
+						if (!str_comp_nocase(aAddrStr, aAddrStr2) == 0)
+							continue;
+						else if (str_comp_nocase(aAddrStr, aAddrStr2) == 0)
+							Server()->Kick(i, "Requested Drop");
+					}
+				}
 				else if (!strncmp(pMsg->m_pMessage, "/register", 9))
 				{
 					char aUsername[512];
