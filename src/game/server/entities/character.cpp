@@ -2667,48 +2667,6 @@ void CCharacter::HandlePassiveMode()
 	}
 	else if (m_Core.m_RevokeHook)
 		m_Core.m_RevokeHook = false;
-
-	// ok so Make sure Non Passive players cant wayblock passive players
-	if (!GetPlayer()->GetCharacter()->m_PassiveMode)
-	{
-		CCharacter *pMain = GetPlayer()->GetCharacter();
-		vec2 Shit;
-		const int Angle = round(atan2(pMain->m_LatestInput.m_TargetX, pMain->m_LatestInput.m_TargetY) * 256); // compress
-		const vec2 Direction = vec2(sin(Angle / 256.f), cos(Angle / 256.f)); // decompress
-		vec2 initPos = pMain->m_Pos + Direction * 28.0f * 1.5f;
-		vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength + 20.0f);
-		CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, 0, Shit, pMain);
-
-		if (pTarget && pTarget->m_FirstFreezeTick != 0) // being able to help they player if they are stuck
-		{
-			if (pTarget->m_FirstFreezeTick + Server()->TickSpeed() * 3)
-				return;
-		}
-
-		if (pTarget && pMain->Core()->m_HookState != HOOK_GRABBED)
-		{
-			bool IsPassive = pTarget->m_PassiveMode;
-			bool IsMember = (pTarget->GetPlayer()->m_AccData.m_Vip || pTarget->GetPlayer()->Temporary.m_PassiveMode);
-			if (IsPassive)
-			{
-				char Reason[64];
-				str_format(Reason, 64, IsMember ? "You cannot wayblock a member!" : "Wayblocking isn't permitted at the time being");
-				if (!m_AntiSpam)
-				{
-					if (pMain->m_LatestInput.m_Hook)
-						GameServer()->SendChatTarget(GetPlayer()->GetCID(), Reason);
-					m_AntiSpam = true;
-				}
-				pMain->Core()->m_RevokeHook = true;
-			}
-			else if (pMain->Core()->m_RevokeHook)
-				pMain->Core()->m_RevokeHook = false;
-		}
-		else if (pMain && GameServer()->GetPlayerChar(pMain->Core()->m_HookedPlayer) && GameServer()->GetPlayerChar(pMain->Core()->m_HookedPlayer)->m_PassiveMode)
-			pMain->Core()->m_RevokeHook = true;
-		else if (pMain && pMain->Core()->m_RevokeHook)
-			pMain->Core()->m_RevokeHook = false;
-	}
 }
 
 void CCharacter::HandleBots()
