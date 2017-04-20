@@ -1322,6 +1322,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 					}
 					pPlayer->m_pAccount->SetStorage(Storage());
+					pPlayer->m_AccData.m_Slot--;
 					pPlayer->m_pAccount->Apply();
 					pPlayer->m_pAccount->Reset();
 
@@ -1336,6 +1337,39 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					}
 
 					return;
+				}
+				/*
+					Incase a player player wants to kick his dummy he cant disconnect
+					or his old character that Timed out
+				*/
+				else if (!strncmp(pMsg->m_pMessage, "/dropconnections", 16))
+				{
+					char aAddrStr[NETADDR_MAXSTRSIZE] = { 0 };
+					Server()->GetClientAddr(ClientID, aAddrStr, sizeof(aAddrStr));
+
+					for (int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if (!GetPlayerChar(i) || i == ClientID)
+							continue;
+
+						char aAddrStr2[NETADDR_MAXSTRSIZE] = { 0 };
+						Server()->GetClientAddr(i, aAddrStr2, sizeof(aAddrStr2));
+
+						if (!str_comp_nocase(aAddrStr, aAddrStr2) == 0)
+							continue;
+						else if (str_comp_nocase(aAddrStr, aAddrStr2) == 0)
+						{
+							if (m_apPlayers[i]->m_AccData.m_UserID)
+							{
+								pPlayer->m_pAccount->SetStorage(Storage());
+								m_apPlayers[i]->m_AccData.m_Slot--;
+								m_apPlayers[i]->m_pAccount->Apply();
+								m_apPlayers[i]->m_pAccount->Reset();
+							}
+
+							Server()->Kick(i, "Requested Drop");
+						}
+					}
 				}
 				else if (!strncmp(pMsg->m_pMessage, "/register", 9))
 				{
@@ -1360,7 +1394,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_pAccount->NewPassword(aNewPassword);
 					return;
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "weapons", 7) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->Temporary.m_Weaponcalls > 0))
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "weapons", 7) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->m_AccData.m_Weaponkits > 0))
 				{
 					if (!GetPlayerChar(ClientID) || !GetPlayerChar(ClientID)->IsAlive())
 						return; // Tested and found a crashbug -- heres the fix 
@@ -1369,11 +1403,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(ClientID, "You cannot use weapons while in LMB");
 						return;
 					}
-					if (pPlayer->Temporary.m_Weaponcalls > 0)
+					if (pPlayer->m_AccData.m_Weaponkits > 0)
 					{
-						pPlayer->Temporary.m_Weaponcalls--;
+						pPlayer->m_AccData.m_Weaponkits--;
 						char aRemaining[64];
-						str_format(aRemaining, sizeof(aRemaining), "%d usage%s remaining", pPlayer->Temporary.m_Weaponcalls, pPlayer->Temporary.m_Weaponcalls == 1 ? "" : "s");
+						str_format(aRemaining, sizeof(aRemaining), "Remaining kits: %d", pPlayer->m_AccData.m_Weaponkits);
 						SendChatTarget(ClientID, aRemaining);
 					}
 					GetPlayerChar(ClientID)->GiveAllWeapons();
@@ -1409,6 +1443,30 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_Bots.m_Grenadebot ^= true;
 					SendChatTarget(pPlayer->GetCID(), pPlayer->m_Bots.m_Grenadebot ? "Grenadebot enabled!" : "Grenadebot disabled!");
 
+				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getTOcode ", 10) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->m_Authed)) // Tired of using status
+				{
+					char Name[256];
+					str_copy(Name, pMsg->m_pMessage + 7, 256);
+					int id = -1;
+					for (int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if (!GetPlayerChar(i))
+							continue;
+						if (str_comp_nocase(Name, Server()->ClientName(i)) != 0)
+							continue;
+						if (str_comp_nocase(Name, Server()->ClientName(i)) == 0)
+						{
+							id = i;
+							break;
+						}
+					}
+					if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
+						return;
+
+					char aBuf[246];
+					str_format(aBuf, sizeof(aBuf), "[Code] [%s]: %s", Server()->ClientName(id), m_apPlayers[id]->m_TimeoutCode);
+					SendChatTarget(ClientID, aBuf);
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getip ", 6) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->m_Authed)) // Tired of using status
 				{
@@ -1522,7 +1580,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						char aBuf[128];
 						str_format(aBuf, sizeof(aBuf), "%s used a Deathnote to kill you!", Server()->ClientName(ClientID));
 						SendChatTarget(id, aBuf);
-						str_format(aBuf, sizeof(aBuf), "Successfully killed %s", Server()->ClientName(id));
+						str_format(aBuf, sizeof(aBuf), "Successfully killed %s, Pages: ", Server()->ClientName(id), pPlayer->m_QuestData.m_Pages);
 						SendChatTarget(ClientID, aBuf);
 						pPlayer->m_QuestData.m_Pages--;
 					}
@@ -1564,7 +1622,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "beginquest", 10) == 0)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive() || m_PlayerCount < g_Config.m_SvQuestCount)
+					{
+						if (m_PlayerCount < g_Config.m_SvQuestCount)
+							SendChatTarget(ClientID, "There are not enough players for the quest engine to run");
 						return;
+					}
 
 					if (pPlayer->m_QuestData.QuestActive())
 					{
@@ -2926,7 +2988,7 @@ void CGameContext::ConOpenLMB(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConOpenKOH(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	pSelf->m_KOHActive = true;
+	pSelf->m_KOHActive ^= 1; // Toggle
 	for(unsigned i = 0; i < pSelf->m_KOH.size(); i++)
 		pSelf->m_KOH[i].m_NumContestants = 0;
 }

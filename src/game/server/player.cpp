@@ -462,11 +462,10 @@ void CPlayer::OnDisconnect(const char *pReason)
 	if (m_AccData.m_UserID)
 	{
 		m_pAccount->SetStorage(GameServer()->Storage());
+		m_AccData.m_Slot--;
 		m_pAccount->Apply(); // Save important Shit b4 leaving
-	}
-	// City
-	if (m_AccData.m_UserID)
 		m_pAccount->Reset();
+	}
 
 	KillCharacter();
 
@@ -989,6 +988,7 @@ void CPlayer::QuestSetNextPart()
 		dbg_msg("ERROR", "  CPlayer::QuestSetNextPart called");
 		dbg_msg("ERROR", "  but GetCharacter() == NULL ?!");
 		dbg_msg("ERROR", "--------------------------------------------------");
+		return;
 	}
 
 	const int OwnID = GetCharacter()->m_Core.m_Id;
@@ -1025,9 +1025,11 @@ void CPlayer::QuestSetNextPart()
 				PlayerCount++;
 		}
 
-		if(PlayerCount <= 9)
+		if(PlayerCount <= g_Config.m_SvQuestCount) // TODO: REMOVE
 		{
-			GameServer()->SendChatTarget(OwnID,"Sorry, you can't start quests when less than 10 players are playing on the server.");
+			char aMsg[120];
+			str_format(aMsg, 120, "Sorry, you can't start quests when less than %d players are playing on the server.", g_Config.m_SvQuestCount);
+			GameServer()->SendChatTarget(OwnID, aMsg);
 			QuestReset();
 		}
 		else

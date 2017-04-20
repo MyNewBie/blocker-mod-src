@@ -115,6 +115,9 @@ MACRO_CONFIG_INT(SvQuestCount, sv_player_quest_count, 8, 3, MAX_CLIENTS, CFGFLAG
 MACRO_CONFIG_INT(SvLvlCount, sv_player_lvlsystem_count, 8, 3, MAX_CLIENTS, CFGFLAG_SERVER, "amount of players needed for the lvl system to enable")
 MACRO_CONFIG_INT(SvAntiFarmDuration, sv_antifarm_block_dur, 15, 5, 500, CFGFLAG_SERVER, "how long a player has to been living in seconds to get blocked for points")
 
+// account
+MACRO_CONFIG_INT(SvAccountSlots, sv_account_slots, 3, 1, 64, CFGFLAG_SERVER, "How many players can be conected to the same account between other servers")
+
 // dummy
 MACRO_CONFIG_STR(ClDummyName, dummy_name, 16, "brainless tee", CFGFLAG_SAVE|CFGFLAG_CLIENT, "Name of the Dummy")
 MACRO_CONFIG_STR(ClDummyClan, dummy_clan, 12, "", CFGFLAG_SAVE|CFGFLAG_CLIENT, "Clan of the Dummy")
@@ -180,6 +183,9 @@ MACRO_CONFIG_INT(SvBlackHoleExpiretime, sv_blackhole_expire_time, 20, 5, 1000, C
 MACRO_CONFIG_INT(SvBlackHolescount, sv_blackholes_count, 3, 1, 10, CFGFLAG_SERVER, "amount of blackholes that can be set by one player")
 MACRO_CONFIG_INT(SvBlackHoleKills, sv_blackhole_kills, 1, 0, 1, CFGFLAG_SERVER, "black hole can kill?")
 MACRO_CONFIG_INT(SvKOHCircleRadius, sv_koh_circle_radius, 400, 0, 0x7FFFFFFF, CFGFLAG_SERVER, "Radius for king of the hill zone")
+MACRO_CONFIG_INT(SvKOHCircleType, sv_koh_circle_type, 0, 0, 5, CFGFLAG_SERVER, "Type of entity the circle will use")
+MACRO_CONFIG_INT(SvKOHCaptureXpLimit, sv_koh_capture_xp_limit, 700, 100, 10000, CFGFLAG_SERVER, "Required number of zone xp to get a point")
+MACRO_CONFIG_INT(SvKOHRequiredPoints, sv_koh_required_points, 3, 1, 10, CFGFLAG_SERVER, "Required number of points to win the koh")
 MACRO_CONFIG_INT(SvRescue, sv_rescue, 0, 0, 1, CFGFLAG_SERVER, "Allow /rescue command so players can teleport themselves out of freeze")
 MACRO_CONFIG_INT(SvRescueDelay, sv_rescue_delay, 5, 0, 1000, CFGFLAG_SERVER, "Number of seconds inbetween two rescues")
 MACRO_CONFIG_INT(SvLMBRegDuration, sv_lmb_reg_duration, 5, 1, 60, CFGFLAG_SERVER, "Specify the duration where LMB registration is possible")

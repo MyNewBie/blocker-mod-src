@@ -392,7 +392,7 @@ void CCharacter::FireWeapon()
 	if (FullAuto && (m_LatestInput.m_Fire & 1) && m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
 		WillFire = true;
 
-	if (!WillFire && !m_HammerUpBot)
+	if (!WillFire && !m_Fire)
 	{
 		if (m_Pullhammer)
 			m_PullingID = -1;
@@ -1311,7 +1311,7 @@ void CCharacter::Snap(int SnappingClient)
 					pFirstParticle->m_VelX = 4;
 					pFirstParticle->m_VelY = 4;
 					pFirstParticle->m_StartTick = Server()->Tick() - 4;
-					pFirstParticle->m_Type = 0;
+					pFirstParticle->m_Type = g_Config.m_SvKOHCircleType;
 				}
 			}
 		}
@@ -1813,15 +1813,18 @@ void CCharacter::HandleTiles(int Index)
 			{
 				char aGaining[256];
 				m_pPlayer->m_Koh.m_ZoneXp++;
-				str_format(aGaining, sizeof(aGaining), "King of the hill -- ZONE %i\n%s in control - %d/5 points [%i%%]", z, Server()->ClientName(m_Core.m_Id), m_pPlayer->m_Koh.m_ZonePoints, round_to_int(((float)m_pPlayer->m_Koh.m_ZoneXp/800.0f)*100.0f));
+				str_format(aGaining, sizeof(aGaining), "King of the hill -- ZONE %i\n%s in control - %d/%d points [%i%%]", z,
+						   Server()->ClientName(m_Core.m_Id),
+						   m_pPlayer->m_Koh.m_ZonePoints, g_Config.m_SvKOHRequiredPoints,
+						   round_to_int(((float)m_pPlayer->m_Koh.m_ZoneXp/(float)g_Config.m_SvKOHCaptureXpLimit)*100.0f));
 				GameServer()->SendBroadcast(aGaining, -1);
 			}
-			if (m_pPlayer->m_Koh.m_ZoneXp == 800)
+			if (m_pPlayer->m_Koh.m_ZoneXp >= g_Config.m_SvKOHCaptureXpLimit)
 			{
 				m_pPlayer->m_Koh.m_ZonePoints++;
 				m_pPlayer->m_Koh.m_ZoneXp = 0;
 			}
-			if (m_pPlayer->m_Koh.m_ZonePoints >= 5)
+			if (m_pPlayer->m_Koh.m_ZonePoints >= g_Config.m_SvKOHRequiredPoints)
 			{
 				char aWinner[256];
 				if (!m_pPlayer->m_AccData.m_UserID)
@@ -2667,48 +2670,6 @@ void CCharacter::HandlePassiveMode()
 	}
 	else if (m_Core.m_RevokeHook)
 		m_Core.m_RevokeHook = false;
-
-	// ok so Make sure Non Passive players cant wayblock passive players
-	if (!GetPlayer()->GetCharacter()->m_PassiveMode)
-	{
-		CCharacter *pMain = GetPlayer()->GetCharacter();
-		vec2 Shit;
-		const int Angle = round(atan2(pMain->m_LatestInput.m_TargetX, pMain->m_LatestInput.m_TargetY) * 256); // compress
-		const vec2 Direction = vec2(sin(Angle / 256.f), cos(Angle / 256.f)); // decompress
-		vec2 initPos = pMain->m_Pos + Direction * 28.0f * 1.5f;
-		vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength + 20.0f);
-		CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, 0, Shit, pMain);
-
-		if (pTarget && pTarget->m_FirstFreezeTick != 0) // being able to help they player if they are stuck
-		{
-			if (pTarget->m_FirstFreezeTick + Server()->TickSpeed() * 3)
-				return;
-		}
-
-		if (pTarget && pMain->Core()->m_HookState != HOOK_GRABBED)
-		{
-			bool IsPassive = pTarget->m_PassiveMode;
-			bool IsMember = (pTarget->GetPlayer()->m_AccData.m_Vip || pTarget->GetPlayer()->Temporary.m_PassiveMode);
-			if (IsPassive)
-			{
-				char Reason[64];
-				str_format(Reason, 64, IsMember ? "You cannot wayblock a member!" : "Wayblocking isn't permitted at the time being");
-				if (!m_AntiSpam)
-				{
-					if (pMain->m_LatestInput.m_Hook)
-						GameServer()->SendChatTarget(GetPlayer()->GetCID(), Reason);
-					m_AntiSpam = true;
-				}
-				pMain->Core()->m_RevokeHook = true;
-			}
-			else if (pMain->Core()->m_RevokeHook)
-				pMain->Core()->m_RevokeHook = false;
-		}
-		else if (pMain && GameServer()->GetPlayerChar(pMain->Core()->m_HookedPlayer) && GameServer()->GetPlayerChar(pMain->Core()->m_HookedPlayer)->m_PassiveMode)
-			pMain->Core()->m_RevokeHook = true;
-		else if (pMain && pMain->Core()->m_RevokeHook)
-			pMain->Core()->m_RevokeHook = false;
-	}
 }
 
 void CCharacter::HandleBots()
@@ -2729,6 +2690,9 @@ void CCharacter::HandleBots()
 		bool isFreeze;
 		if (pTarget && pTarget->IsAlive())
 			isFreeze = pTarget->m_FreezeTime > 0 ? true : false;
+
+		m_Fire = false;
+
 		if (pTarget && pTarget->IsAlive() && !isFreeze)
 		{
 			if (distance(m_Pos, pTarget->m_Pos) < 65)
@@ -2737,39 +2701,99 @@ void CCharacter::HandleBots()
 				{
 					m_LatestInput.m_TargetX = pTarget->m_Pos.x - m_Pos.x;
 					m_LatestInput.m_TargetY = pTarget->m_Pos.y - m_Pos.y;
-					m_HammerUpBot = true;
+					m_Fire = true;
 				}
 			}
-			else if (m_HammerUpBot)
-				m_HammerUpBot = false;
 		}
-		else if (m_HammerUpBot)
-			m_HammerUpBot = false;
 	}
-	else if(this && IsAlive() && m_HammerUpBot)
-		m_HammerUpBot = false;
 
 	/*if (this && IsAlive() && m_pPlayer->m_Bots.m_Grenadebot && m_Core.m_ActiveWeapon == WEAPON_GRENADE)
 	{
 		CCharacter *pMe = m_pPlayer->GetCharacter();
-
+		CCharacter *pEe = GameWorld()->ClosestCharacter(pMe->m_Pos + MousePos(), 130.f, pMe);
+		CCharacterCore* apTarget[MAX_CLIENTS];
+		vec2 AimPoint;
 		if (!pMe)
 			return;
 
-		int Team = m_pPlayer->GetTeam();
 		vec2 Pos = pMe->m_Pos;
 
-		CCharacterCore* apTarget[MAX_CLIENTS];
-		int Count = 0;
-
-		for (int c = 0; c < MAX_CLIENTS; c++)
+		if (pEe && pEe->IsAlive())
 		{
-			if (c == m_pPlayer->GetCID())
-				continue;
-			if (GameServer()->m_apPlayers[c] && GameServer()->m_apPlayers[c]->GetCharacter() && (GameServer()->m_apPlayers[c]->GetTeam() != Team || !GameServer()->m_pController->IsTeamplay()))
-				apTarget[Count++] = GameServer()->m_apPlayers[c]->GetCharacter()->GetCore();
+			int c = pEe->GetPlayer()->GetCID();
+			int GoodDir = -1;
+
+			vec2 aProjectilePos[BOT_HOOK_DIRS];
+
+			const int NbLoops = 10;
+
+			vec2 aTargetPos[MAX_CLIENTS];
+			vec2 aTargetVel[MAX_CLIENTS];
+
+			float Curvature = 0, Speed = 0, Time = 0;
+			Curvature = GameServer()->Tuning()->m_ShotgunCurvature;
+			Speed = GameServer()->Tuning()->m_ShotgunSpeed;
+			Time = GameServer()->Tuning()->m_ShotgunLifetime;
+
+			int DTick = (int)(Time * GameServer()->Server()->TickSpeed() / NbLoops);
+
+			aTargetPos[c] = apTarget[c]->m_Pos;
+			aTargetVel[c] = apTarget[c]->m_Vel*DTick;
+
+			for (int i = 0; i < BOT_HOOK_DIRS; i++) {
+				vec2 dir = direction(2 * i*pi / BOT_HOOK_DIRS);
+				aProjectilePos[i] = Pos + dir*28.*0.75;
+			}
+
+			int aIsDead[BOT_HOOK_DIRS] = { 0 };
+
+			for (int k = 0; k < NbLoops && GoodDir == -1; k++) {
+				for (int i = 0; i < BOT_HOOK_DIRS; i++) {
+					if (aIsDead[i])
+						continue;
+					vec2 dir = direction(2 * i*pi / BOT_HOOK_DIRS);
+					vec2 NextPos = CalcPos(Pos + dir*28.*0.75, dir, Curvature, Speed, (k + 1) * Time / NbLoops);
+					// vec2 NextPos = aProjectilePos[i];
+					// NextPos.x += dir.x*DTime;
+					// NextPos.y += dir.y*DTime + Curvature*(DTime*DTime)*(2*k+1);
+					aIsDead[i] = GameServer()->Collision()->FastIntersectLine(aProjectilePos[i], NextPos, &NextPos, 0);
+					for (int c = 0; c < 64; c++)
+					{
+						vec2 InterPos = closest_point_on_line(aProjectilePos[i], NextPos, aTargetPos[c]);
+						if (distance(aTargetPos[c], InterPos)< 28) {
+							GoodDir = i;
+							break;
+						}
+					}
+					aProjectilePos[i] = NextPos;
+				}
+				for (int c = 0; c < 64; c++)
+				{
+					//Collision()->MoveBox(&aTargetPos[c], &aTargetVel[c], vec2(28.f,28.f), 0);
+					GameServer()->Collision()->FastIntersectLine(aTargetPos[c], aTargetPos[c] + aTargetVel[c], 0, &aTargetPos[c]);
+					aTargetVel[c].y += GameServer()->Tuning()->m_Gravity*DTick*DTick;
+				}
+				if (GoodDir != -1)
+				{
+					AimPoint = direction(2 * GoodDir*pi / BOT_HOOK_DIRS) * 50;
+					break;
+				}
+			}
 		}
-	}*/ // Finish later vali needs help
+		if (m_Core.m_ActiveWeapon == WEAPON_GRENADE)
+		{
+			if (m_LatestInput.m_Fire)
+			{
+				m_LatestInput.m_TargetX = AimPoint.x;
+				m_LatestInput.m_TargetY = AimPoint.y;
+			}
+		}
+
+		// Accuracy
+		float Angle = angle(AimPoint) + (random_int() % 64 - 32)*pi / 1024.0f;
+		AimPoint = direction(Angle)*length(AimPoint);
+	} 
+
 	/*if (GetPlayer()->m_Bots.m_AutoHook)
 	{
 		CCharacter *pMain = GetPlayer()->GetCharacter();
@@ -2974,7 +2998,7 @@ void CCharacter::HandleBlocking(bool die)
 				GameServer()->SendChatTarget(pECore->m_Core.m_Id, "[AntiFarm]: You cant block your own dummy!");
 				return;
 			}
-			if (Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
+			if (m_FirstFreezeTick != 0 && Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
 			{
 				GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
 				m_LastBlockedTick = -1;
@@ -3040,9 +3064,6 @@ void CCharacter::HandleBlocking(bool die)
 
 void CCharacter::Clean()
 {
-	if (this && IsAlive() && m_LatestInput.m_Hook)
-		CheckBot();
-
 	if (this && IsAlive() && m_pPlayer->m_EpicCircle && GameServer()->m_KOHActive)
 	{
 		GameServer()->SendChatTarget(m_Core.m_Id, "For the greater good, we disabled your epic circles :)"); // SALUT!!!!! xD
@@ -3065,11 +3086,18 @@ void CCharacter::Clean()
 	}
 
 	// Lets have each player log their own ip for us every x minutes
-	if (this && Server()->Tick() % (g_Config.m_SvLogInterval * Server()->TickSpeed() * 60) == 0) // I Love you vali
+	if (Server()->Tick() % (g_Config.m_SvLogInterval * Server()->TickSpeed() * 60) == 0) // I Love you vali
 	{
-		GameServer()->LogIp(m_Core.m_Id);
+		if (this)
+			GameServer()->LogIp(m_Core.m_Id);
 	}
 
+	// Save info, Because of server crashes or other incidents, We stop playings from crying to us about information loss
+	if (Server()->Tick() % (g_Config.m_SvUpdateAccountInfo * Server()->TickSpeed() * 60) == 0)
+	{
+		if (this)
+			m_pPlayer->m_pAccount->Apply();
+	}
 
 	if (this && IsAlive() && m_FreezeTime == 1)
 		m_LastBlockedTick = Server()->Tick();

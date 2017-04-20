@@ -137,7 +137,8 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 		&m_pPlayer->m_QuestData.m_Pages,
 		&m_pPlayer->m_Level.m_Level,
 		&m_pPlayer->m_Level.m_Exp,
-		m_pPlayer->m_AccData.m_aIp
+		m_pPlayer->m_AccData.m_aIp,
+		&m_pPlayer->m_AccData.m_Weaponkits
 	); // Done
 
 	fclose(Accfile);
@@ -158,9 +159,22 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 
 	if (pOwner)
 	{
+		m_pPlayer->m_AccData.m_Slot++;
 		m_pPlayer->m_DeathNote = true;
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "You have reveived a Deathnote.");
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Write /Deathnoteinfo for more information");
+		Apply();
+	}
+
+	if (pOwner->GetPlayer()->m_AccData.m_Slot > 1)
+	{
+		dbg_msg("account", "Account login failed ('%s' - already in use (extern))", pUsername);
+		//GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account already in use"); Please use this when im calm :)
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "YEA BITCH, YOU THOUGHT YOU CAN KEEP DOING THIS BUG, FUCK YOU CUNT, SLISHTEE HERE"); // Needs to be swapped with above
+		m_pPlayer->m_pAccount->SetStorage(Storage());
+		m_pPlayer->m_AccData.m_Slot--;
+		m_pPlayer->m_pAccount->Apply();
+		m_pPlayer->m_pAccount->Reset();
 	}
 }
 
@@ -227,7 +241,8 @@ void CAccount::Register(const char *pUsername, const char *pPassword)
 		m_pPlayer->m_QuestData.m_Pages,
 		m_pPlayer->m_Level.m_Level,
 		m_pPlayer->m_Level.m_Exp,
-		m_pPlayer->m_AccData.m_aIp
+		m_pPlayer->m_AccData.m_aIp,
+		m_pPlayer->m_AccData.m_Weaponkits
 	);
 
 	io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
@@ -274,7 +289,8 @@ void CAccount::Apply()
 		m_pPlayer->m_QuestData.m_Pages,
 		m_pPlayer->m_Level.m_Level,
 		m_pPlayer->m_Level.m_Exp,
-		m_pPlayer->m_AccData.m_aIp);
+		m_pPlayer->m_AccData.m_aIp,
+		m_pPlayer->m_AccData.m_Weaponkits);
 
 	io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
 	io_close(Accfile);

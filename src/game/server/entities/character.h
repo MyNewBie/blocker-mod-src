@@ -235,7 +235,7 @@ public:
 	bool m_FreezeHammer;
 	bool m_PassiveMode;
 	bool m_ThreeSecondRule;
-	bool m_HammerUpBot;
+	bool m_Fire;
 	bool m_Pullhammer;
 	bool m_XXL;
 	bool m_Bloody;
