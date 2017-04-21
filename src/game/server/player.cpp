@@ -888,7 +888,7 @@ void CPlayer::HandleQuest()
 			}
 			else if(GetCharacter()->m_DDRaceState == DDRACE_FINISHED && m_QuestData.m_RaceStartTick)
 				QuestSetNextPart();
-			else
+			/*else
 			{
 				if(m_QuestData.m_RaceStartTick != 0)
 				{
@@ -898,7 +898,7 @@ void CPlayer::HandleQuest()
 					GameServer()->SendChatTarget(OwnID, aBuf);
 					QuestReset();
 				}
-			}
+			}*/
 		} break;
 		case QUEST_PART_HOOK:
 		{

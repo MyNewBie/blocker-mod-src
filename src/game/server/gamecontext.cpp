@@ -1601,13 +1601,13 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "beginquest", 10) == 0)
 				{
-					/*if (m_PlayerCount < g_Config.m_SvQuestCount) For Testing
+					if (m_PlayerCount < g_Config.m_SvQuestCount)
 					{
 						char aBuf[128];
 						str_format(aBuf, sizeof(aBuf), "There need to be at least %i players on the server to start a quest", g_Config.m_SvQuestCount);
 						SendChatTarget(ClientID, aBuf);
 						return;
-					}*/
+					}
 
 					if (pPlayer->m_QuestData.QuestActive())
 					{
