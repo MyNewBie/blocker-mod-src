@@ -97,6 +97,11 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	Server()->StartRecord(m_pPlayer->GetCID());
 	
+	if (GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART_RACE)
+	{
+		GetPlayer()->m_QuestData.m_RaceStartTick = 0;
+	}
+
 	m_FreezeTimer = 0;
 	for (int i = 0; i < m_AnimIDNum; i++)//snap ids
 	     m_apAnimIDs[i] = Server()->SnapNewID();

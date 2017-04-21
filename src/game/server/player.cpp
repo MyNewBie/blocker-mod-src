@@ -934,6 +934,9 @@ void CPlayer::QuestTellObjective()
 				str_format(aMessage, sizeof(aMessage), "Kill yourself and go complete the race in less than %i minute%s!", g_Config.m_SvQuestRaceTime, g_Config.m_SvQuestRaceTime == 1 ? "" : "s");
 			else
 				str_format(aMessage, sizeof(aMessage), "Kill yourself and go Complete the race!");
+
+			if (m_QuestData.m_RaceStartTick == 0) // Revaliuate
+				m_QuestData.m_RaceStartTick++;
 		} break;
 		case QUEST_PART_BLOCK:
 			str_format(aMessage, sizeof(aMessage), "You must block %s!", pVictimName);
@@ -964,7 +967,7 @@ void CPlayer::QuestTellObjective()
 
 void CPlayer::QuestSetNextPart()
 {
-	if(!GetCharacter())
+	if (!GetCharacter())
 	{
 		dbg_msg("ERROR", "--------------------------------------------------");
 		dbg_msg("ERROR", "%s:%i", __FILE__, __LINE__);
@@ -980,20 +983,18 @@ void CPlayer::QuestSetNextPart()
 	m_QuestData.m_QuestPart++;
 
 
-	if(m_QuestData.m_QuestPart >= QUEST_FINISHED) // handle finished quest
+	if (m_QuestData.m_QuestPart >= QUEST_FINISHED) // handle finished quest
 	{
 		GameServer()->SendChatTarget(OwnID, "Congratulations, you received +1 Pages for completing the quest!");
 		m_QuestData.m_Pages++;
 		QuestReset();
 
+		KillCharacter(); // Looks professional with a death at completion :)
 		return;
 	}
 
-	if(m_QuestData.m_QuestPart == QUEST_PART_RACE) // prepare [the player for] the next quest part
-	{
-		m_QuestData.m_RaceStartTick = 0;
-	}
-	else
+	// Thats dumb asf Henritees -.- Did you even try there?
+	if (m_QuestData.m_QuestPart != QUEST_PART_RACE)
 	{
 		// count players
 		int PlayerCount = 0;
@@ -1001,35 +1002,24 @@ void CPlayer::QuestSetNextPart()
 		{
 			CCharacter *pChr = GameServer()->GetPlayerChar(i);
 			if ((pChr && pChr->IsAlive()) &&
-					!(!GameServer()->GetPlayerChar(i) ||
-					  !GameServer()->GetPlayerChar(i)->IsAlive() ||
-					  GameServer()->GetPlayerChar(i)->Team() != 0 ||
-					  GameServer()->GetPlayerChar(i)->GetPlayer()->m_Afk))
+				!(!GameServer()->GetPlayerChar(i) ||
+					!GameServer()->GetPlayerChar(i)->IsAlive() ||
+					GameServer()->GetPlayerChar(i)->Team() != 0 ||
+					GameServer()->GetPlayerChar(i)->GetPlayer()->m_Afk))
 				PlayerCount++;
 		}
-
-		if(PlayerCount <= g_Config.m_SvQuestCount) // TODO: REMOVE
+		// find out a new victim
+		do
 		{
-			char aMsg[120];
-			str_format(aMsg, 120, "Sorry, you can't start quests when less than %d players are playing on the server.", g_Config.m_SvQuestCount);
-			GameServer()->SendChatTarget(OwnID, aMsg);
-			QuestReset();
-		}
-		else
-		{
-			// find out a new victim
-			do
-			{
-				m_QuestData.m_VictimID = rand() % PlayerCount;
-			} while (m_QuestData.m_VictimID == OwnID ||
-					 !GameServer()->GetPlayerChar(m_QuestData.m_VictimID) ||
-					 !GameServer()->GetPlayerChar(m_QuestData.m_VictimID)->IsAlive() ||
-					 GameServer()->GetPlayerChar(m_QuestData.m_VictimID)->Team() != 0 ||
-					 GameServer()->GetPlayerChar(m_QuestData.m_VictimID)->GetPlayer()->m_Afk
-					);
+			m_QuestData.m_VictimID = rand() % PlayerCount;
+		} while (m_QuestData.m_VictimID == OwnID ||
+			!GameServer()->GetPlayerChar(m_QuestData.m_VictimID) ||
+			!GameServer()->GetPlayerChar(m_QuestData.m_VictimID)->IsAlive() ||
+			GameServer()->GetPlayerChar(m_QuestData.m_VictimID)->Team() != 0 ||
+			GameServer()->GetPlayerChar(m_QuestData.m_VictimID)->GetPlayer()->m_Afk
+			);
 
-			// tell him what to do next
-		}
+		// tell him what to do next
 	}
 
 	QuestTellObjective();
