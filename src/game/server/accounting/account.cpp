@@ -183,8 +183,7 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 		if(pOwner->GetPlayer()->m_AccData.m_Slot > 1)
 		{
 			dbg_msg("account", "Account login failed ('%s' - already in use (extern))", pUsername);
-			//GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account already in use"); Please use this when im calm :)
-			GameServer()->SendChatTarget(m_pPlayer->GetCID(), "YEA BITCH, YOU THOUGHT YOU CAN KEEP DOING THIS BUG, FUCK YOU CUNT, SLISHTEE HERE WIT DA FIX BITCH!"); // Needs to be swapped with above
+			GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account already in use.");
 			m_pPlayer->m_pAccount->SetStorage(Storage());
 			m_pPlayer->m_AccData.m_Slot--;
 			m_pPlayer->m_pAccount->Apply();
