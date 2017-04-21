@@ -128,17 +128,19 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 
 	Accfile = fopen(aFullPath, "r");
 
-	fscanf(Accfile, "%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%s\n%i",
-		m_pPlayer->m_AccData.m_aUsername, // Done
-		m_pPlayer->m_AccData.m_aPassword, // Done
-		m_pPlayer->m_AccData.m_aRconPassword,
-		&m_pPlayer->m_AccData.m_UserID,
-		&m_pPlayer->m_AccData.m_Vip,
-		&m_pPlayer->m_QuestData.m_Pages,
-		&m_pPlayer->m_Level.m_Level,
-		&m_pPlayer->m_Level.m_Exp,
-		m_pPlayer->m_AccData.m_aIp,
-		&m_pPlayer->m_AccData.m_Weaponkits
+	// Always change the numbers when adding please. Makes it easy 
+	fscanf(Accfile, "%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%s\n%d\n%d", // 11
+		m_pPlayer->m_AccData.m_aUsername, // Done 1
+		m_pPlayer->m_AccData.m_aPassword, // Done 2
+		m_pPlayer->m_AccData.m_aRconPassword, // 3
+		&m_pPlayer->m_AccData.m_UserID, // 4
+		&m_pPlayer->m_AccData.m_Vip, // 5
+		&m_pPlayer->m_QuestData.m_Pages, // 6
+		&m_pPlayer->m_Level.m_Level, // 7
+		&m_pPlayer->m_Level.m_Exp, // 8
+		m_pPlayer->m_AccData.m_aIp, // 9
+		&m_pPlayer->m_AccData.m_Weaponkits, // 10
+		&m_pPlayer->m_AccData.m_Slot // 11
 	); // Done
 
 	fclose(Accfile);
@@ -232,17 +234,19 @@ void CAccount::Register(const char *pUsername, const char *pPassword)
 		return;
 	}
 
-	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%s",
-		pUsername,
-		pPassword,
-		"0",
-		NextID(),
-		m_pPlayer->m_AccData.m_Vip,
-		m_pPlayer->m_QuestData.m_Pages,
-		m_pPlayer->m_Level.m_Level,
-		m_pPlayer->m_Level.m_Exp,
-		m_pPlayer->m_AccData.m_aIp,
-		m_pPlayer->m_AccData.m_Weaponkits
+	// Always change the numbers when adding please. Makes it easy 
+	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%s\n%d\n%d", // 11
+		pUsername, // 1
+		pPassword, // 2
+		"0", // 3
+		NextID(), // 4
+		m_pPlayer->m_AccData.m_Vip, // 5
+		m_pPlayer->m_QuestData.m_Pages, // 6
+		m_pPlayer->m_Level.m_Level, // 7 
+		m_pPlayer->m_Level.m_Exp, // 8
+		m_pPlayer->m_AccData.m_aIp, // 9
+		m_pPlayer->m_AccData.m_Weaponkits, // 10
+		m_pPlayer->m_AccData.m_Slot // 11
 	);
 
 	io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
@@ -280,17 +284,19 @@ void CAccount::Apply()
 		return;
 	}
 
-	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%s",
-		m_pPlayer->m_AccData.m_aUsername,
-		m_pPlayer->m_AccData.m_aPassword,
-		m_pPlayer->m_AccData.m_aRconPassword,
-		m_pPlayer->m_AccData.m_UserID,
-		m_pPlayer->m_AccData.m_Vip,
-		m_pPlayer->m_QuestData.m_Pages,
-		m_pPlayer->m_Level.m_Level,
-		m_pPlayer->m_Level.m_Exp,
-		m_pPlayer->m_AccData.m_aIp,
-		m_pPlayer->m_AccData.m_Weaponkits);
+	// Always change the numbers when adding please. Makes it easy 
+	str_format(aBuf, sizeof(aBuf), "%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%s\n%d\n%d", // 11
+		m_pPlayer->m_AccData.m_aUsername, // 1
+		m_pPlayer->m_AccData.m_aPassword, // 2
+		m_pPlayer->m_AccData.m_aRconPassword, // 3
+		m_pPlayer->m_AccData.m_UserID, // 4
+		m_pPlayer->m_AccData.m_Vip, // 5
+		m_pPlayer->m_QuestData.m_Pages, // 6
+		m_pPlayer->m_Level.m_Level, // 7
+		m_pPlayer->m_Level.m_Exp, // 8
+		m_pPlayer->m_AccData.m_aIp, // 9
+		m_pPlayer->m_AccData.m_Weaponkits, // 10
+		m_pPlayer->m_AccData.m_Slot); // 11
 
 	io_write(Accfile, aBuf, (unsigned int)str_length(aBuf));
 	io_close(Accfile);
