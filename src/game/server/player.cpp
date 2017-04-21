@@ -933,7 +933,7 @@ void CPlayer::QuestTellObjective()
 			if(g_Config.m_SvQuestRaceTime)
 				str_format(aMessage, sizeof(aMessage), "Kill yourself and go complete the race in less than %i minute%s!", g_Config.m_SvQuestRaceTime, g_Config.m_SvQuestRaceTime == 1 ? "" : "s");
 			else
-				str_format(aMessage, sizeof(aMessage), "Kill yourself and go Complete the race!");
+				str_format(aMessage, sizeof(aMessage), "Complete the race!");
 
 			if (m_QuestData.m_RaceStartTick == 0) // Revaliuate
 				m_QuestData.m_RaceStartTick++;
