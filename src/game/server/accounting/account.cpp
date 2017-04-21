@@ -41,6 +41,19 @@ CAccount::CAccount(CPlayer *pPlayer)
 #endif
 */
 
+/*
+	-----PLEASE READ------ 
+	Keep in mind with slots they only get set to 0 on player disconnections
+	So please remember when updating server do not force close it, please use the shutdown cmd
+	So we can insure that all logged in users slots get set to 0,
+	If we just force close the server nothing gets saved and their slots remain as 1
+	And they cannot get back into their accounts and we will have many scrubs in our Dms requesting
+	access back into their accounts :), Please keep this in Mind :)
+
+	Or if you like work :) Like Captain teemo who hardly does shit for the Mod, you can give yourself work
+	and force shut and have fun checking every users slot, and setting it to 0 manually <3 Great work team!
+*/
+
 void CAccount::Login(const char *pUsername, const char *pPassword)
 {
 	char aBuf[128];
