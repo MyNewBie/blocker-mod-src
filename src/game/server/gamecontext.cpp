@@ -1672,6 +1672,15 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(LogMsg, 123, "%s gave %s temporary access to passive mode for %ds", Server()->ClientName(ClientID), Server()->ClientName(id), str_toint(Time));
 					Log(LogMsg, "SlishteeTempPassiveMode.logs");
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "vipinfo", 7) == 0 || str_comp_nocase_num(pMsg->m_pMessage + 1, "vip info", 8) == 0)
+				{
+					SendChatTarget(ClientID, "===== VIP FEATURES =====");
+					SendChatTarget(ClientID, "- VIP-Room (epic circle, rainbow, endless, weapons, bloody)");
+					SendChatTarget(ClientID, "- PassiveMode (Anti-wayblock)");
+					SendChatTarget(ClientID, "- Able to use /weapons at any time (Non-Active-Tournaments)");
+					SendChatTarget(ClientID, "- Able to use /rainbow (Epiletic)");
+					SendChatTarget(ClientID, "====================");
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
 				{
 					char pWhisperMsg[256];
