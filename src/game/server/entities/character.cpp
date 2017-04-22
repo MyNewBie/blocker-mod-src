@@ -986,8 +986,8 @@ void CCharacter::Die(int Killer, int Weapon)
 
 	HandleBlocking(true);
 
-	if (GetPlayer()->GetCharacter() && GameServer()->GetPlayerChar(GetPlayer()->GetCharacter()->Core()->m_LastHookedPlayer))
-		GetPlayer()->m_Killedby = GetPlayer()->GetCharacter()->Core()->m_LastHookedPlayer;
+	if (GetPlayer()->GetCharacter() && GameServer()->GetPlayerChar(GetPlayer()->GetCharacter()->Core()->m_LastHookedBy))
+		GetPlayer()->m_Killedby = GetPlayer()->GetCharacter()->Core()->m_LastHookedBy;
 
 	if (Server()->IsRecording(m_pPlayer->GetCID()))
 		Server()->StopRecord(m_pPlayer->GetCID());
@@ -2652,14 +2652,8 @@ void CCharacter::HandlePassiveMode()
 		m_Core.m_PassiveMode = true;
 
 		CCharacter *pMain = GetPlayer()->GetCharacter();
-		vec2 Shit;
-		const int Angle = round(atan2(pMain->m_LatestInput.m_TargetX, pMain->m_LatestInput.m_TargetY) * 256); // compress
-		const vec2 Direction = vec2(sin(Angle / 256.f), cos(Angle / 256.f)); // decompress
-		vec2 initPos = pMain->m_Pos + Direction * 28.0f * 1.5f;
-		vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength + 20.0f);
-		CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, 24.0f, Shit, pMain);
 
-		if (pMain && pTarget)
+		if (pMain && pMain->AimHitCharacter())
 		{
 			pMain->Core()->m_RevokeHook = true;
 		}
@@ -2986,7 +2980,7 @@ void CCharacter::HandleBlocking(bool die)
 
 	if (die)
 	{
-		CCharacter *pECore = GameServer()->GetPlayerChar(m_Core.m_LastHookedPlayer);
+		CCharacter *pECore = GameServer()->GetPlayerChar(m_Core.m_LastHookedBy);
 		if (this && IsAlive() && pECore && pECore->IsAlive() && Team() == 0 && pECore->Team() == 0)
 		{
 			if (m_pPlayer->m_Afk) // cannot get points of blocking an afk player
@@ -3020,7 +3014,7 @@ void CCharacter::HandleBlocking(bool die)
 	}
 	else
 	{
-		CCharacter *pECore = GameServer()->GetPlayerChar(m_Core.m_LastHookedPlayer);
+		CCharacter *pECore = GameServer()->GetPlayerChar(m_Core.m_LastHookedBy);
 		if (this && IsAlive() && pECore && pECore->IsAlive() && Team() == 0 && pECore->Team() == 0)
 			if (m_FirstFreezeTick != 0)
 			{
@@ -3069,6 +3063,16 @@ void CCharacter::HandleBlocking(bool die)
 
 void CCharacter::Clean()
 {
+	// ======== BOT MITIGATION ==========
+	if (g_Config.m_SvBotMitigation > 0)
+	{
+		if (g_Config.m_SvBotMitigation == 1)
+			GameServer()->SendTuningParams(m_Core.m_Id, 0);
+		else if (g_Config.m_SvBotMitigation == 2 && GetPlayer()->m_IsBot)
+			GameServer()->SendTuningParams(m_Core.m_Id, 0);
+	}
+	// ======== BOT MITIGATION ==========
+
 	if (this && IsAlive() && m_pPlayer->m_EpicCircle && GameServer()->m_KOHActive)
 	{
 		GameServer()->SendChatTarget(m_Core.m_Id, "For the greater good, we disabled your epic circles :)"); // SALUT!!!!! xD
@@ -3161,4 +3165,20 @@ void CCharacter::CheckBot()
 			}
 		}
 	}
+}
+
+bool CCharacter::AimHitCharacter()
+{
+	CCharacter *pMain = GetPlayer()->GetCharacter();
+	vec2 Shit;
+	const int Angle = round(atan2(pMain->m_LatestInput.m_TargetX, pMain->m_LatestInput.m_TargetY) * 256); // compress
+	const vec2 Direction = vec2(sin(Angle / 256.f), cos(Angle / 256.f)); // decompress
+	vec2 initPos = pMain->m_Pos + Direction * 28.0f * 1.5f;
+	vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength + 20.0f);
+	CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, .0f, Shit, pMain);
+
+	if (pTarget)
+		return true;
+
+	return false;
 }

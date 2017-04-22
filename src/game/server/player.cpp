@@ -908,7 +908,7 @@ void CPlayer::HandleQuest()
 		case QUEST_PART_BLOCK:
 		{
 			CCharacter *pVictim = GameServer()->GetPlayerChar(m_QuestData.m_VictimID);
-			if (pVictim && pVictim->IsAlive() && pVictim->Core()->m_LastHookedPlayer == OwnID && pVictim->m_FirstFreezeTick != 0)
+			if (pVictim && pVictim->IsAlive() && pVictim->Core()->m_LastHookedBy == OwnID && pVictim->m_FirstFreezeTick != 0)
 				QuestSetNextPart();
 		} break;
 	}

@@ -78,6 +78,7 @@ public:
 	void Die(int Killer, int Weapon);
 	bool TakeDamage(vec2 Force, int Dmg, int From, int Weapon);
 
+	bool AimHitCharacter();
 	bool Spawn(class CPlayer *pPlayer, vec2 Pos);
 	bool Remove();
 
@@ -308,6 +309,7 @@ public:
 	int64 m_LastPenalty;
 	bool m_LastRefillJumps;
 	bool m_LastBonus;
+
 
 	// Setters/Getters because i don't want to modify vanilla vars access modifiers
 	int GetLastWeapon() { return m_LastWeapon; };

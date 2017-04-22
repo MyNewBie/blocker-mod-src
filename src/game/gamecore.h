@@ -200,7 +200,8 @@ public:
 	int m_HookTick;
 	int m_HookState;
 	int m_HookedPlayer;
-	int m_LastHookedPlayer;
+	int m_HookedBy;
+	int m_LastHookedBy;
 	int m_LastHookedTick;
 	int m_ActiveWeapon;
 

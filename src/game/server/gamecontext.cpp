@@ -522,22 +522,22 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 {
 	if (ClientID == -1)
 	{
-			for(int i = 0; i < MAX_CLIENTS; ++i)
+		for (int i = 0; i < MAX_CLIENTS; ++i)
+		{
+			if (m_apPlayers[i])
 			{
-				if (m_apPlayers[i])
+				if (m_apPlayers[i]->GetCharacter())
 				{
-					if(m_apPlayers[i]->GetCharacter())
-					{
-						if (m_apPlayers[i]->GetCharacter()->m_TuneZone == Zone)
-							SendTuningParams(i, Zone);
-					}
-					else if (m_apPlayers[i]->m_TuneZone == Zone)
-					{
+					if (m_apPlayers[i]->GetCharacter()->m_TuneZone == Zone)
 						SendTuningParams(i, Zone);
-					}
+				}
+				else if (m_apPlayers[i]->m_TuneZone == Zone)
+				{
+					SendTuningParams(i, Zone);
 				}
 			}
-			return;
+		}
+		return;
 	}
 
 	CheckPureTuning();
@@ -549,7 +549,7 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 	else
 		pParams = (int *)&(m_TuningList[Zone]);
 
-	unsigned int last = sizeof(m_Tuning)/sizeof(int);
+	unsigned int last = sizeof(m_Tuning) / sizeof(int);
 	if (m_apPlayers[ClientID] && m_apPlayers[ClientID]->m_ClientVersion < VERSION_DDNET_EXTRATUNES)
 		last = 33;
 	else if (m_apPlayers[ClientID] && m_apPlayers[ClientID]->m_ClientVersion < VERSION_DDNET_HOOKDURATION_TUNE)
@@ -557,46 +557,81 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 	else if (m_apPlayers[ClientID] && m_apPlayers[ClientID]->m_ClientVersion < VERSION_DDNET_FIREDELAY_TUNE)
 		last = 38;
 
-	for(unsigned i = 0; i < last; i++)
+	for (unsigned i = 0; i < last; i++)
+	{
+		if (m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetCharacter())
 		{
-			if (m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetCharacter())
+			int HookState = m_apPlayers[ClientID]->GetCharacter()->GetCore().m_HookState;
+			CCharacter * pChr = m_apPlayers[ClientID]->GetCharacter();
+			if ((i == 31) // collision
+				&& (m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_SOLO
+					|| m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_NOCOLL))
 			{
-				if((i==31) // collision
+				Msg.AddInt(0);
+			}
+			else if ((i == 32) // hooking
 				&& (m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_SOLO
-				 || m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_NOCOLL))
-				{
-					Msg.AddInt(0);
-				}
-				else if((i==32) // hooking
-				&& (m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_SOLO
-				 || m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_NOHOOK))
-				{
-					Msg.AddInt(0);
-				}
-				else if((i==3) // ground jump impulse
+					|| m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_NOHOOK))
+			{
+				Msg.AddInt(0);
+			}
+			else if ((i == 3) // ground jump impulse
 				&& m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_NOJUMP)
-				{
-					Msg.AddInt(0);
-				}
-				else if((i==33) // jetpack
+			{
+				Msg.AddInt(0);
+			}
+			else if ((i == 33) // jetpack
 				&& !(m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_JETPACK))
-				{
-					Msg.AddInt(0);
-				}
-				else if((i==36) // hammer hit
+			{
+				Msg.AddInt(0);
+			}
+			else if ((i == 36) // hammer hit
 				&& m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_NOHAMMER)
+			{
+				Msg.AddInt(0);
+			}
+			else if (g_Config.m_SvBotMitigation > 0 && i == 8)
+			{
+				if (g_Config.m_SvBotMitigation == 1)
 				{
-					Msg.AddInt(0);
+					if (HookState != HOOK_FLYING && HookState != HOOK_GRABBED) // Destroy Hookbots & A bit tough
+					{
+						if (!pChr->AimHitCharacter() && pChr->Core()->m_Hook && pChr->Core()->m_HookedBy == -1) // Allow him to use bot under certain circumstances
+							Msg.AddInt(0);
+						else
+							Msg.AddInt(pParams[i]);
+					}
+					else
+						Msg.AddInt(pParams[i]);
 				}
-				else
+				else if (g_Config.m_SvBotMitigation == 2 && m_apPlayers[ClientID]->m_IsBot)
 				{
-					Msg.AddInt(pParams[i]);
+					if (HookState != HOOK_FLYING && HookState != HOOK_GRABBED) // Destroy Hookbots & A bit tough
+					{
+						if (!pChr->AimHitCharacter() && pChr->Core()->m_Hook && pChr->Core()->m_HookedBy == -1) // Allow him to use bot under certain circumstances
+							Msg.AddInt(0);
+						else
+							Msg.AddInt(pParams[i]);
+					}
+					else
+						Msg.AddInt(pParams[i]);
 				}
 			}
+			else if (i == 26 && g_Config.m_SvBotMitigation > 0) // Destroy the Laserbots
+			{
+				Msg.AddInt(0); // Break all those laserbots
+			}
 			else
-				Msg.AddInt(pParams[i]); // if everything is normal just send true tunings
+			{
+				Msg.AddInt(pParams[i]);
+			}
 		}
-		Server()->SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
+		else
+		{
+			Msg.AddInt(pParams[i]); // if everything is normal just send true tunings
+		}
+	}
+	Server()->SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
 }
 /*
 void CGameContext::SwapTeams()
@@ -1532,6 +1567,36 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 					}
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "togglebotmark ", 14) == 0 && m_apPlayers[ClientID]->m_Authed)
+				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+
+					char aName[256];
+					str_copy(aName, pMsg->m_pMessage + 11, sizeof(aName));
+					int id = -1;
+					for (int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if (!GetPlayerChar(i))
+							continue;
+						if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
+							continue;
+						if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
+						{
+							id = i;
+							break;
+						}
+					}
+					if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
+						return;
+
+					char aBuf[128];
+					str_format(aBuf, sizeof(aBuf), "%s has listed you as a botter!", Server()->ClientName(ClientID));
+					SendChatTarget(id, aBuf);
+					str_format(aBuf, sizeof(aBuf), "Successfully put %s in bot", Server()->ClientName(id));
+					SendChatTarget(ClientID, aBuf);
+					m_apPlayers[id]->m_IsBot ^= 1;
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnoteinfo", 13) == 0)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
@@ -1690,6 +1755,15 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- PassiveMode (Anti-wayblock)");
 					SendChatTarget(ClientID, "- Able to use /weapons at any time (Non-Active-Tournaments)");
 					SendChatTarget(ClientID, "- Able to use /rainbow (Epiletic)");
+					SendChatTarget(ClientID, "====================");
+				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Slishteescmd", 12) == 0 && m_apPlayers[ClientID]->m_Authed)
+				{
+					SendChatTarget(ClientID, "===== Slishtee <3 =====");
+					SendChatTarget(ClientID, "- Givepage (id, amount, reason)");
+					SendChatTarget(ClientID, "- Givetempassive (id, time, reason)");
+					SendChatTarget(ClientID, "- Vip (id, reason)");
+					SendChatTarget(ClientID, "- Togglebotmark (name)");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)

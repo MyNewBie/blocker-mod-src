@@ -94,8 +94,9 @@ void CCharacterCore::Reset()
 	m_HookDir = vec2(0,0);
 	m_HookTick = 0;
 	m_HookState = HOOK_IDLE;
-	m_LastHookedPlayer = -1;
+	m_LastHookedBy = -1;
 	m_HookedPlayer = -1;
+	m_HookedBy = -1;
 	m_Jumped = 0;
 	m_JumpedTotal = 0;
 	m_Jumps = 2;
@@ -109,7 +110,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 	if (m_LastHookedTick != -1) { m_LastHookedTick = m_LastHookedTick + 1; }
 
 	if (m_LastHookedTick > SERVER_TICK_SPEED * 10) {
-		m_LastHookedPlayer = -1;
+		m_LastHookedBy = -1;
 		m_LastHookedTick = -1;
 	}
 
@@ -218,6 +219,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 				m_HookPos = m_Pos+TargetDirection*PhysSize*1.5f;
 				m_HookDir = TargetDirection;
 				m_HookedPlayer = -1;
+				m_HookedBy = -1;
 				m_HookTick = SERVER_TICK_SPEED * (1.25f - m_pWorld->m_Tuning[g_Config.m_ClDummy].m_HookDuration);
 				m_TriggeredEvents |= COREEVENT_HOOK_LAUNCH;
 			}
@@ -225,6 +227,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 		else
 		{
 			m_HookedPlayer = -1;
+			m_HookedBy = -1;
 			m_HookState = HOOK_IDLE;
 			m_HookPos = m_Pos;
 		}
@@ -251,6 +254,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 	if(m_HookState == HOOK_IDLE)
 	{
 		m_HookedPlayer = -1;
+		m_HookedBy = -1;
 		m_HookState = HOOK_IDLE;
 		m_HookPos = m_Pos;
 	}
@@ -314,8 +318,9 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 						m_HookState = HOOK_GRABBED;
 						m_HookedPlayer = i;
 						Distance = distance(m_HookPos, pCharCore->m_Pos);
-						pCharCore->m_LastHookedPlayer = m_Id;
+						pCharCore->m_LastHookedBy = m_Id;
 						pCharCore->m_LastHookedTick = 0;
+						pCharCore->m_HookedBy = m_Id;
 					}
 				}
 			}
@@ -339,6 +344,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 			{
 				m_TriggeredEvents = 0;
 				m_HookedPlayer = -1;
+				m_HookedBy = -1;
 
 				m_NewHook = true;
 				int Num = (*m_pTeleOuts)[teleNr-1].size();
@@ -364,6 +370,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 			{
 				// release hook
 				m_HookedPlayer = -1;
+				m_HookedBy = -1;
 				m_HookState = HOOK_RETRACTED;
 				m_HookPos = m_Pos;
 			}
@@ -415,6 +422,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 		if(m_HookedPlayer != -1 && (m_HookTick > SERVER_TICK_SPEED+SERVER_TICK_SPEED/5 || !m_pWorld->m_apCharacters[m_HookedPlayer]))
 		{
 			m_HookedPlayer = -1;
+			m_HookedBy = -1;
 			m_HookState = HOOK_RETRACTED;
 			m_HookPos = m_Pos;
 		}
@@ -422,8 +430,8 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 		else
 		m_LMBHookCount--;
 
-	if (m_LastHookedPlayer != -1 && !m_pWorld->m_apCharacters[m_LastHookedPlayer]) {
-		m_LastHookedPlayer = -1;
+	if (m_LastHookedBy != -1 && !m_pWorld->m_apCharacters[m_LastHookedBy]) {
+		m_LastHookedBy = -1;
 	}
 
 	if(m_pWorld)

@@ -118,6 +118,9 @@ MACRO_CONFIG_INT(SvQuestCount, sv_player_quest_count, 8, 3, 64, CFGFLAG_SERVER, 
 MACRO_CONFIG_INT(SvLvlCount, sv_player_lvlsystem_count, 8, 3, 64, CFGFLAG_SERVER, "amount of players needed for the lvl system to enable")
 MACRO_CONFIG_INT(SvAntiFarmDuration, sv_antifarm_block_dur, 15, 5, 500, CFGFLAG_SERVER, "how long a player has to been living in seconds to get blocked for points")
 
+// bot mitigation
+MACRO_CONFIG_INT(SvBotMitigation, sv_bot_mitigation, 1, 0, 2, CFGFLAG_SERVER, "enable or disable bot mitigation - 1/All - 2/Bot listed")
+
 // account
 MACRO_CONFIG_INT(SvAccountSlots, sv_account_slots, 3, 1, 64, CFGFLAG_SERVER, "How many players can be conected to the same account between other servers")
 
