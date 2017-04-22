@@ -101,6 +101,7 @@ public:
 	int m_SendVoteIndex;
 
 	int64 m_LastDeathnote;
+	int64 m_LastLoginAttempt;
 
 	// Botdetection
 	bool m_BotDetected;

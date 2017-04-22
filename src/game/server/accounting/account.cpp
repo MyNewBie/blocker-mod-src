@@ -56,6 +56,15 @@ CAccount::CAccount(CPlayer *pPlayer)
 
 void CAccount::Login(const char *pUsername, const char *pPassword)
 {
+	if (m_pPlayer->m_LastLoginAttempt + 3 * GameServer()->Server()->TickSpeed() > GameServer()->Server()->Tick())
+	{
+		char aBuf[256];
+		str_format(aBuf, sizeof(aBuf), "You have to wait %d seconds until you attempt to login again", (m_pPlayer->m_LastLoginAttempt + 3 * GameServer()->Server()->TickSpeed() - GameServer()->Server()->Tick()) / GameServer()->Server()->TickSpeed());
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
+		return;
+	}
+
+	m_pPlayer->m_LastLoginAttempt = GameServer()->Server()->Tick();
 	char aBuf[128];
 	if (m_pPlayer->m_AccData.m_UserID)
 	{
