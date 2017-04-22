@@ -109,6 +109,9 @@ MACRO_CONFIG_INT(GfxNoclip, gfx_noclip, 0, 0, 1, CFGFLAG_CLIENT|CFGFLAG_SAVE, "D
 // Bot detetion configs
 MACRO_CONFIG_INT(SvLogDetects, sv_log_detects, 1, 0, 1, CFGFLAG_SERVER, "Write detected players into: detected_players.txt")
 
+// limitations
+MACRO_CONFIG_INT(SvDeathNoteCoolDown, sv_deathnote_cooldown, 180, 180, 1800, CFGFLAG_SERVER, "time in seconds the player must wait before using the deathnote cmd again")
+
 // blocking
 MACRO_CONFIG_INT(SvBlockTime, sv_block_time, 3, 3, 10, CFGFLAG_SERVER, "time freezed for a player to be marked blocked")
 MACRO_CONFIG_INT(SvQuestCount, sv_player_quest_count, 8, 3, 64, CFGFLAG_SERVER, "amount of playrs needed to begin quests")

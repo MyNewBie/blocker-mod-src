@@ -1478,6 +1478,16 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
+
+					if (pPlayer->m_LastDeathnote + g_Config.m_SvDeathNoteCoolDown * Server()->TickSpeed() > Server()->Tick())
+					{
+						char aBuf[256];
+						str_format(aBuf, sizeof(aBuf), "You have to wait %d seconds until you can write down more players in your deathnote", (pPlayer->m_LastDeathnote + g_Config.m_SvDeathNoteCoolDown * Server()->TickSpeed() - Server()->Tick()) / Server()->TickSpeed());
+						SendChatTarget(ClientID, aBuf);
+						return;
+					}
+
+					pPlayer->m_LastDeathnote = Server()->Tick();
 					if (m_KOHActive || m_LMB.State() == m_LMB.STATE_RUNNING || m_LMB.State() == m_LMB.STATE_REGISTRATION)
 					{
 						SendChatTarget(ClientID, "You cannot use deathnotes right now");
@@ -1508,9 +1518,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						char aBuf[128];
 						str_format(aBuf, sizeof(aBuf), "%s used a Deathnote to kill you!", Server()->ClientName(ClientID));
 						SendChatTarget(id, aBuf);
-						str_format(aBuf, sizeof(aBuf), "Successfully killed %s, Pages: ", Server()->ClientName(id), pPlayer->m_QuestData.m_Pages);
+						str_format(aBuf, sizeof(aBuf), "Successfully killed %s, Pages: %d", Server()->ClientName(id), pPlayer->m_QuestData.m_Pages);
 						SendChatTarget(ClientID, aBuf);
 						pPlayer->m_QuestData.m_Pages--;
+						pPlayer->m_LastDeathnote = Server()->Tick();
 					}
 					else
 					{
