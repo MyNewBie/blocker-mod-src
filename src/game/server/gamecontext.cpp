@@ -1522,7 +1522,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 					}
 
-					pPlayer->m_LastDeathnote = Server()->Tick();
 					if (m_KOHActive || m_LMB.State() == m_LMB.STATE_RUNNING || m_LMB.State() == m_LMB.STATE_REGISTRATION)
 					{
 						SendChatTarget(ClientID, "You cannot use deathnotes right now");
@@ -1572,28 +1571,16 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
 
-					char aName[256];
-					str_copy(aName, pMsg->m_pMessage + 11, sizeof(aName));
-					int id = -1;
-					for (int i = 0; i < MAX_CLIENTS; i++)
-					{
-						if (!GetPlayerChar(i))
-							continue;
-						if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
-							continue;
-						if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
-						{
-							id = i;
-							break;
-						}
-					}
+					char ID[256];
+					str_copy(ID, pMsg->m_pMessage + 11, sizeof(ID));
+					int id = str_toint(ID);
 					if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
 						return;
 
 					char aBuf[128];
 					str_format(aBuf, sizeof(aBuf), "%s has listed you as a botter!", Server()->ClientName(ClientID));
 					SendChatTarget(id, aBuf);
-					str_format(aBuf, sizeof(aBuf), "Successfully put %s in bot", Server()->ClientName(id));
+					str_format(aBuf, sizeof(aBuf), "Successfully put %s in bot list", Server()->ClientName(id));
 					SendChatTarget(ClientID, aBuf);
 					m_apPlayers[id]->m_IsBot ^= 1;
 				}
@@ -1726,6 +1713,21 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					Log(LogMsg, "SlishteeVipLogs.logs");
 
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "botmitigation", 13) == 0 && Server()->IsAuthed(ClientID))
+				{
+					char LogMsg[230];
+					char OurMsg[230];
+					g_Config.m_SvBotMitigation++;
+
+					if (g_Config.m_SvBotMitigation > 2) // reset
+						g_Config.m_SvBotMitigation = 0;
+					//g_Config.m_Map
+					str_format(OurMsg, 230, "[BotMitigation]: Set to %d", g_Config.m_SvBotMitigation);
+					str_format(LogMsg, sizeof(LogMsg), "%s set botmitigation to %d - Server(Map): \"%s\"", Server()->ClientName(ClientID), g_Config.m_SvBotMitigation, g_Config.m_SvMap);
+					SendChatTarget(ClientID, OurMsg);
+					Log(LogMsg, "SlishteeBotMitigationLogs.logs");
+
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Givetempassive ", 15) == 0 && m_apPlayers[ClientID]->m_Authed)
 				{
 					char ID[256];
@@ -1764,6 +1766,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Givetempassive (id, time, reason)");
 					SendChatTarget(ClientID, "- Vip (id, reason)");
 					SendChatTarget(ClientID, "- Togglebotmark (name)");
+					SendChatTarget(ClientID, "- Botmitigation");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
