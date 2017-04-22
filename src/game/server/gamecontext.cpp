@@ -1459,7 +1459,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(pPlayer->GetCID(), pPlayer->m_Bots.m_Grenadebot ? "Grenadebot enabled!" : "Grenadebot disabled!");
 
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getTOcode ", 10) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->m_Authed)) // Tired of using status
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getTOcode ", 10) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->m_Authed))
 				{
 					char Name[256];
 					str_copy(Name, pMsg->m_pMessage + 7, 256);
@@ -1767,6 +1767,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Vip (id, reason)");
 					SendChatTarget(ClientID, "- Togglebotmark (name)");
 					SendChatTarget(ClientID, "- Botmitigation");
+					SendChatTarget(ClientID, "- GetTOcode (id)");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
