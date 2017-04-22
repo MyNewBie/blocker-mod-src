@@ -1474,58 +1474,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(aBuf, sizeof(aBuf), "[IP] [%s]: %s", Server()->ClientName(id), aAddrStr);
 					SendChatTarget(ClientID, aBuf);
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "givepage ", 9) == 0 && Server()->IsAuthed(ClientID))
-				{
-					char aId[32];
-					char aAmount[32];
-					char aReason[32];
-					str_copy(aId, pMsg->m_pMessage + 10, 32);
-					str_copy(aAmount, pMsg->m_pMessage + 12, 32);
-					str_copy(aReason, pMsg->m_pMessage + 14, 32);
-					int id = str_toint(aId);
-
-					if (!m_apPlayers[id]->GetCharacter())
-						return;
-
-					char LogMsg[230];
-					char Info[100];
-					m_apPlayers[id]->m_QuestData.m_Pages += str_toint(aAmount);
-					
-					str_format(LogMsg, sizeof(LogMsg), "%s gave %d pages to %s - Reason: \"%s\"", Server()->ClientName(ClientID), str_toint(aAmount), Server()->ClientName(id), aReason);
-					str_format(Info, 100, "You have received %d pages from %s", str_toint(aAmount), Server()->ClientName(ClientID));
-					SendChatTarget(id, Info);
-					Log(LogMsg, "SlishteePagesLogs.txt");
-
-				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "vip ", 4) == 0 && Server()->IsAuthed(ClientID))
-				{
-					char aId[32];
-					char aReason[32];
-					str_copy(aId, pMsg->m_pMessage + 5, 32);
-					str_copy(aReason, pMsg->m_pMessage + 7, 32);
-					int id = str_toint(aId);
-
-					if (!m_apPlayers[id]->GetCharacter())
-						return;
-
-					char LogMsg[230];
-					m_apPlayers[id]->m_AccData.m_Vip ^= 1;
-
-					bool IsVip = m_apPlayers[id]->m_AccData.m_Vip;
-					if (IsVip)
-					{
-						SendChatTarget(id, "You are now vip!");
-						str_format(LogMsg, sizeof(LogMsg), "%s gave vip to %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
-					}
-					else
-					{
-						SendChatTarget(id, "You are no longer vip!");
-						str_format(LogMsg, sizeof(LogMsg), "%s removed vip from %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
-					}
-
-					Log(LogMsg, "SlishteeVipLogs.txt");
-					
-				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnote ", 10) == 0)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
@@ -1650,32 +1598,79 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_Rainbowepiletic ^= 1;
 					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Rainbow activated" : "Rainbow deactivated");
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "givepage ", 9) == 0 && Server()->IsAuthed(ClientID))
+				{
+					char aId[32];
+					char aAmount[32];
+					char aReason[32];
+					str_copy(aId, pMsg->m_pMessage + 10, 32);
+					str_copy(aAmount, pMsg->m_pMessage + 12, 32);
+					str_copy(aReason, pMsg->m_pMessage + 14, 32);
+					int id = str_toint(aId);
+
+					if (!m_apPlayers[id]->GetCharacter())
+						return;
+
+					char LogMsg[230];
+					char Info[100];
+					m_apPlayers[id]->m_QuestData.m_Pages += str_toint(aAmount);
+
+					str_format(LogMsg, sizeof(LogMsg), "%s gave %d pages to %s - Reason: \"%s\"", Server()->ClientName(ClientID), str_toint(aAmount), Server()->ClientName(id), aReason);
+					str_format(Info, 100, "You have received %d pages from %s", str_toint(aAmount), Server()->ClientName(ClientID));
+					SendChatTarget(id, Info);
+					Log(LogMsg, "SlishteePagesLogs.logs");
+
+				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "vip ", 4) == 0 && Server()->IsAuthed(ClientID))
+				{
+					char aId[32];
+					char aReason[32];
+					str_copy(aId, pMsg->m_pMessage + 5, 32);
+					str_copy(aReason, pMsg->m_pMessage + 7, 32);
+					int id = str_toint(aId);
+
+					if (!m_apPlayers[id]->GetCharacter())
+						return;
+
+					char LogMsg[230];
+					m_apPlayers[id]->m_AccData.m_Vip ^= 1;
+
+					bool IsVip = m_apPlayers[id]->m_AccData.m_Vip;
+					if (IsVip)
+					{
+						SendChatTarget(id, "You are now vip!");
+						str_format(LogMsg, sizeof(LogMsg), "%s gave vip to %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
+					}
+					else
+					{
+						SendChatTarget(id, "You are no longer vip!");
+						str_format(LogMsg, sizeof(LogMsg), "%s removed vip from %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
+					}
+
+					Log(LogMsg, "SlishteeVipLogs.logs");
+
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Givetempassive ", 15) == 0 && m_apPlayers[ClientID]->m_Authed)
 				{
-					char Name[256];
-					str_copy(Name, pMsg->m_pMessage + 16, 256);
+					char ID[256];
+					str_copy(ID, pMsg->m_pMessage + 16, 256);
 					char Time[256];
 					str_copy(Time, pMsg->m_pMessage + 18, 256);
-					int id = -1;
-					for (int i = 0; i < MAX_CLIENTS; i++)
-					{
-						if (!GetPlayerChar(i))
-							continue;
-						if (str_comp_nocase(Name, Server()->ClientName(i)) != 0)
-							continue;
-						if (str_comp_nocase(Name, Server()->ClientName(i)) == 0)
-						{
-							id = i;
-							break;
-						}
-					}
-					if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
+
+					int id = str_toint(ID);
+
+					if (!m_apPlayers[id]->GetCharacter())
 						return;
+
 					SendChatTarget(ClientID, "Temporary passive mode set!");
 					SendChatTarget(id, "Temporary passive mode has been set!");
 					m_apPlayers[id]->Temporary.m_PassiveModeTime = Server()->Tick();
 					m_apPlayers[id]->Temporary.m_PassiveTimeLength = str_toint(Time);
 					m_apPlayers[id]->Temporary.m_PassiveMode = true;
+
+					char LogMsg[123];
+					str_format(LogMsg, 123, "%s gave %s temporary access to passive mode for %ds", Server()->ClientName(ClientID), Server()->ClientName(id), str_toint(Time));
+					Log(LogMsg, "SlishteeTempPassiveMode.logs");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
 				{
