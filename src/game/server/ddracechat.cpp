@@ -7,6 +7,9 @@
 #include <game/server/gamemodes/DDRace.h>
 #include <game/version.h>
 #include <game/generated/nethash.cpp>
+
+#include <fstream>
+#include <iostream>
 #if defined(CONF_SQL)
 #include <game/server/score/sql_score.h>
 #endif
@@ -559,6 +562,18 @@ void CGameContext::ConTimeout(IConsole::IResult *pResult, void *pUserData)
 
 	((CServer *)pSelf->Server())->m_NetServer.SetTimeoutProtected(pResult->m_ClientID);
 	str_copy(pPlayer->m_TimeoutCode, pResult->GetString(0), sizeof(pPlayer->m_TimeoutCode));
+
+	// Check if he is in the kicklist
+	char aTimeoutCode[64];
+	std::ifstream theFile("Kicklist.txt");
+
+	while (theFile >> aTimeoutCode)
+	{
+		if (str_comp(aTimeoutCode, pPlayer->m_TimeoutCode) == 0)
+		{
+			pSelf->Server()->Kick(pPlayer->GetCID(), "");
+		}
+	}
 }
 
 void CGameContext::ConSave(IConsole::IResult *pResult, void *pUserData)

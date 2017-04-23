@@ -22,6 +22,8 @@
 #include "gamemodes/ctf.h"
 #include "gamemodes/mod.h"*/
 
+#include <fstream>
+#include <iostream>
 #include <stdio.h>
 #include <string.h>
 #include <engine/server/server.h>
@@ -1607,6 +1609,43 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(aBuf, sizeof(aBuf), m_apPlayers[id]->m_IsBot ? "Successfully put %s in bot list" : "Successfully removed %s from bot list", Server()->ClientName(id));
 					SendChatTarget(ClientID, aBuf);
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Autokick ", 9) == 0 && m_apPlayers[ClientID]->m_Authed)
+				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+
+					char aName[256];
+					str_copy(aName, pMsg->m_pMessage + 10, sizeof(aName)); // forgot to change these -.- Copy&Pasting my own code to much
+					int id = -1;
+					for (int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if (!GetPlayerChar(i))
+							continue;
+						if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
+							continue;
+						if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
+						{
+							id = i;
+							break;
+						}
+					}
+					if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
+						return;
+
+					char aTimeoutCode[64];
+					char aMsg[200];
+					str_copy(aTimeoutCode, m_apPlayers[id]->m_TimeoutCode, 64);
+					str_format(aMsg, 200, "Autokicking set on %s", Server()->ClientName(id));
+					SendChatTarget(ClientID, aMsg);
+
+					// Drop his info to kick list
+					char aInfo[200];
+					str_format(aInfo, 200, "%s %s", aTimeoutCode, aName);
+					Log(aInfo, "Kicklist.txt");
+
+					// Now Kick his ass
+					Server()->Kick(id, "");
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "troll ", 6) == 0 && m_apPlayers[ClientID]->m_Authed)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
@@ -1852,6 +1891,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- DisableColl");
 					SendChatTarget(ClientID, "- Makedrunk (name)");
 					SendChatTarget(ClientID, "- Troll (name)");
+					SendChatTarget(ClientID, "- Autokick (name)");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
