@@ -3066,16 +3066,32 @@ void CCharacter::Clean()
 	if (this)
 	{
 		if (m_pPlayer->m_Drunk)
+		{
 			GameServer()->SendTuningParams(m_Core.m_Id, 0);
+			if(!m_pPlayer->m_WasDrunk)
+			m_pPlayer->m_WasDrunk = true;
+		}
+		else if (m_pPlayer->m_WasDrunk) // Fix their tune
+		{
+			GameServer()->SendTuningParams(m_Core.m_Id, 0);
+			m_pPlayer->m_WasDrunk = false;
+		}
 	}
 	// ======== BOT MITIGATION ==========
-	if (this && g_Config.m_SvBotMitigation > 0)
+	if (g_Config.m_SvBotMitigation > 0)
 	{
-		if (g_Config.m_SvBotMitigation == 1)
+		GameServer()->m_BotProtWasOn = true;
+		if (g_Config.m_SvBotMitigation == 1 && this)
 			GameServer()->SendTuningParams(m_Core.m_Id, 0);
-		else if (g_Config.m_SvBotMitigation == 2 && GetPlayer()->m_IsBot)
+		else if (g_Config.m_SvBotMitigation == 2 && this && GetPlayer()->m_IsBot)
 			GameServer()->SendTuningParams(m_Core.m_Id, 0);
 	}
+	else if(GameServer()->m_BotProtWasOn)
+	{ 
+		GameServer()->SendTuningParams(m_Core.m_Id, 0); // Fix tunes
+		GameServer()->m_BotProtWasOn = false;
+	}
+
 	// ======== BOT MITIGATION ==========
 
 	if (this && IsAlive() && m_pPlayer->m_EpicCircle && GameServer()->m_KOHActive)

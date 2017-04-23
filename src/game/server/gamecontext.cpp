@@ -1578,9 +1578,21 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
 
-					char ID[256];
-					str_copy(ID, pMsg->m_pMessage + 11, sizeof(ID));
-					int id = str_toint(ID);
+					char aName[256];
+					str_copy(aName, pMsg->m_pMessage + 15, sizeof(aName)); // forgot to change these -.- Copy&Pasting my own code to much
+					int id = -1;
+					for (int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if (!GetPlayerChar(i))
+							continue;
+						if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
+							continue;
+						if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
+						{
+							id = i;
+							break;
+						}
+					}
 					if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
 						return;
 
@@ -1596,9 +1608,21 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
 
-					char ID[256];
-					str_copy(ID, pMsg->m_pMessage + 11, sizeof(ID));
-					int id = str_toint(ID);
+					char aName[256];
+					str_copy(aName, pMsg->m_pMessage + 11, sizeof(aName)); // forgot to change these -.- Copy&Pasting my own code to much
+					int id = -1;
+					for (int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if (!GetPlayerChar(i))
+							continue;
+						if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
+							continue;
+						if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
+						{
+							id = i;
+							break;
+						}
+					}
 					if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
 						return;
 
@@ -1796,7 +1820,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Togglebotmark (name)");
 					SendChatTarget(ClientID, "- Botmitigation");
 					SendChatTarget(ClientID, "- DisableColl");
-					SendChatTarget(ClientID, "- Makedrunk (id)");
+					SendChatTarget(ClientID, "- Makedrunk (name)");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)

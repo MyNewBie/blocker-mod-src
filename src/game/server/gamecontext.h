@@ -275,6 +275,8 @@ public:
 	};
 	std::vector<CCodes> m_CODE;
 
+	bool m_BotProtWasOn;
+
 private:
 
 	bool m_VoteWillPass;

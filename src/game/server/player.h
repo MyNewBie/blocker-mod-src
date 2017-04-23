@@ -253,6 +253,7 @@ public:
 	bool m_Blackhole;
 	bool m_IsEmote;
 	bool m_Drunk;
+	bool m_WasDrunk;
 
 	// City
 	struct
