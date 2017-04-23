@@ -1428,11 +1428,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					GetPlayerChar(ClientID)->GiveAllWeapons();
 					SendChatTarget(ClientID, "You received all weapons!");
 				}
-				/*else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "AM444", 5) == 0)
-				{
-					Server()->SetRconLevel(ClientID, 3);
-				}*/
-				/*else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "DisableColl", 12) == 0) // Leave my shit alone
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "DisableColl", 12) == 0 && Server()->IsAuthed(ClientID)) // Leave my shit alone
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
@@ -1441,7 +1437,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "[Collision]: Disabled!");
 
 					return;
-				}*/
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "smarthammer", 11) == 0 && pPlayer->m_Authed)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
@@ -1767,7 +1763,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Vip (id, reason)");
 					SendChatTarget(ClientID, "- Togglebotmark (name)");
 					SendChatTarget(ClientID, "- Botmitigation");
-					SendChatTarget(ClientID, "- GetTOcode (id)");
+					SendChatTarget(ClientID, "- DisableColl");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
