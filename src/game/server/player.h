@@ -252,6 +252,7 @@ public:
 	int m_Killedby;
 	bool m_Blackhole;
 	bool m_IsEmote;
+	bool m_Drunk;
 
 	// City
 	struct

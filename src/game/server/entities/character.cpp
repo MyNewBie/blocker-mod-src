@@ -3063,8 +3063,13 @@ void CCharacter::HandleBlocking(bool die)
 
 void CCharacter::Clean()
 {
+	if (this)
+	{
+		if (m_pPlayer->m_Drunk)
+			GameServer()->SendTuningParams(m_Core.m_Id, 0);
+	}
 	// ======== BOT MITIGATION ==========
-	if (g_Config.m_SvBotMitigation > 0)
+	if (this && g_Config.m_SvBotMitigation > 0)
 	{
 		if (g_Config.m_SvBotMitigation == 1)
 			GameServer()->SendTuningParams(m_Core.m_Id, 0);

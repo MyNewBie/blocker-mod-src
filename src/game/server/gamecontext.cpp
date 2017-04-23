@@ -563,7 +563,17 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 		{
 			int HookState = m_apPlayers[ClientID]->GetCharacter()->GetCore().m_HookState;
 			CCharacter * pChr = m_apPlayers[ClientID]->GetCharacter();
-			if ((i == 31) // collision
+			CPlayer *p = m_apPlayers[ClientID];
+			bool DrunkHead = false, DrunkHead2 = false;
+
+			if (i >= 0 && i <= 15)
+				DrunkHead = true;
+			else if (i >= 31 && i <= 37)
+				DrunkHead2 = true;
+
+			if(p->m_Drunk && (DrunkHead || DrunkHead2))
+				Msg.AddInt(0);
+			else if ((i == 31) // collision
 				&& (m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_SOLO
 					|| m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_NOCOLL))
 			{
@@ -571,7 +581,8 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 			}
 			else if ((i == 32) // hooking
 				&& (m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_SOLO
-					|| m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_NOHOOK))
+					|| m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_NOHOOK)
+					|| m_apPlayers[ClientID]->m_Drunk)
 			{
 				Msg.AddInt(0);
 			}
@@ -1580,6 +1591,27 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, aBuf);
 					m_apPlayers[id]->m_IsBot ^= 1;
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "makedrunk ", 10) == 0 && m_apPlayers[ClientID]->m_Authed)
+				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+
+					char ID[256];
+					str_copy(ID, pMsg->m_pMessage + 11, sizeof(ID));
+					int id = str_toint(ID);
+					if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
+						return;
+
+					char aBuf[128];
+					if(!m_apPlayers[id]->m_Drunk)
+					str_format(aBuf, sizeof(aBuf), "%s gave you to much beer and made you drunk!", Server()->ClientName(ClientID));
+					SendChatTarget(id, aBuf);
+					str_format(aBuf, sizeof(aBuf), "Successfully %s %s drunk", m_apPlayers[id]->m_Drunk ? "unmade" : "made",Server()->ClientName(id));
+					SendChatTarget(ClientID, aBuf);
+					m_apPlayers[id]->m_Drunk ^= 1;
+
+					return;
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnoteinfo", 13) == 0)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
@@ -1764,6 +1796,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Togglebotmark (name)");
 					SendChatTarget(ClientID, "- Botmitigation");
 					SendChatTarget(ClientID, "- DisableColl");
+					SendChatTarget(ClientID, "- Makedrunk (id)");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)
