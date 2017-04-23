@@ -603,9 +603,9 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 			{
 				Msg.AddInt(0);
 			}
-			else if (g_Config.m_SvBotMitigation > 0 && i == 8 && !pChr->AimHitCharacter())
+			else if (m_BotMitigation > 0 && i == 8 && !pChr->AimHitCharacter())
 			{
-				if (g_Config.m_SvBotMitigation == 1)
+				if (m_BotMitigation == 1)
 				{
 					if (HookState != HOOK_FLYING && HookState != HOOK_GRABBED) // Destroy Hookbots & A bit tough
 					{
@@ -617,7 +617,7 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 					else
 						Msg.AddInt(pParams[i]);
 				}
-				else if (g_Config.m_SvBotMitigation == 2 && m_apPlayers[ClientID]->m_IsBot)
+				else if (m_BotMitigation == 2 && m_apPlayers[ClientID]->m_IsBot)
 				{
 					if (HookState != HOOK_FLYING && HookState != HOOK_GRABBED) // Destroy Hookbots & A bit tough
 					{
@@ -632,7 +632,7 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 				else
 					Msg.AddInt(pParams[i]);
 			}
-			else if (i == 26 && g_Config.m_SvBotMitigation > 0) // Destroy the Laserbots
+			else if (i == 26 && m_BotMitigation > 0) // Destroy the Laserbots
 			{
 				Msg.AddInt(0); // Break all those laserbots
 			}
@@ -1601,11 +1601,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 
 					char aBuf[128];
-					str_format(aBuf, sizeof(aBuf), "%s has listed you as a botter!", Server()->ClientName(ClientID));
-					SendChatTarget(id, aBuf);
-					str_format(aBuf, sizeof(aBuf), "Successfully put %s in bot list", Server()->ClientName(id));
-					SendChatTarget(ClientID, aBuf);
 					m_apPlayers[id]->m_IsBot ^= 1;
+					str_format(aBuf, sizeof(aBuf), m_apPlayers[id]->m_IsBot ? "%s has listed you as a botter!" : "%s has (un)listed you as a botter!", Server()->ClientName(ClientID));
+					SendChatTarget(id, aBuf);
+					str_format(aBuf, sizeof(aBuf), m_apPlayers[id]->m_IsBot ? "Successfully put %s in bot list" : "Successfully removed %s from bot list", Server()->ClientName(id));
+					SendChatTarget(ClientID, aBuf);
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "troll ", 6) == 0 && m_apPlayers[ClientID]->m_Authed)
 				{
@@ -1798,13 +1798,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				{
 					char LogMsg[230];
 					char OurMsg[230];
-					g_Config.m_SvBotMitigation++;
+					m_BotMitigation++;
+					SendTuningParams(0, 0);
 
-					if (g_Config.m_SvBotMitigation > 2) // reset
-						g_Config.m_SvBotMitigation = 0;
+					if (m_BotMitigation > 2) // reset
+						m_BotMitigation = 0;
 					//g_Config.m_Map
-					str_format(OurMsg, 230, "[BotMitigation]: Set to %d", g_Config.m_SvBotMitigation);
-					str_format(LogMsg, sizeof(LogMsg), "%s set botmitigation to %d - Server(Map): \"%s\"", Server()->ClientName(ClientID), g_Config.m_SvBotMitigation, g_Config.m_SvMap);
+					str_format(OurMsg, 230, "[BotMitigation]: Set to %d", m_BotMitigation);
+					str_format(LogMsg, sizeof(LogMsg), "%s set botmitigation to %d - Server(Map): \"%s\"", Server()->ClientName(ClientID), m_BotMitigation, g_Config.m_SvMap);
 					SendChatTarget(ClientID, OurMsg);
 					Log(LogMsg, "SlishteeBotMitigationLogs.logs");
 

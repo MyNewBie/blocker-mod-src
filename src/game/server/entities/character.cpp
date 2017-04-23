@@ -3089,10 +3089,10 @@ void CCharacter::Clean()
 		}
 	}
 	// ======== BOT MITIGATION ==========
-	if (g_Config.m_SvBotMitigation > 0)
+	if (GameServer()->m_BotMitigation > 0)
 	{
 		GameServer()->m_BotProtWasOn = true;
-		if (g_Config.m_SvBotMitigation == 1 && this)
+		if (GameServer()->m_BotMitigation == 1 && this)
 		{
 			GameServer()->SendTuningParams(m_Core.m_Id, 0);
 			// Clean sweep
@@ -3105,7 +3105,7 @@ void CCharacter::Clean()
 					GameServer()->GetPlayerChar(i)->GetPlayer()->m_IsBot = false;
 			}
 		}
-		else if (g_Config.m_SvBotMitigation == 2 && this && GetPlayer()->m_IsBot)
+		else if (GameServer()->m_BotMitigation == 2 && this && GetPlayer()->m_IsBot)
 			GameServer()->SendTuningParams(m_Core.m_Id, 0);
 	}
 	else if(GameServer()->m_BotProtWasOn)

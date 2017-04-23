@@ -276,6 +276,7 @@ public:
 	std::vector<CCodes> m_CODE;
 
 	bool m_BotProtWasOn;
+	int m_BotMitigation;
 
 private:
 
