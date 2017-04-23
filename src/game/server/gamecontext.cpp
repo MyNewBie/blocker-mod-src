@@ -573,6 +573,8 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 
 			if(p->m_Drunk && (DrunkHead || DrunkHead2))
 				Msg.AddInt(0);
+			if (p->m_Troll && i == 12)
+				Msg.AddInt(-1000);
 			else if ((i == 31) // collision
 				&& (m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_SOLO
 					|| m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_NOCOLL))
@@ -601,13 +603,13 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 			{
 				Msg.AddInt(0);
 			}
-			else if (g_Config.m_SvBotMitigation > 0 && i == 8)
+			else if (g_Config.m_SvBotMitigation > 0 && i == 8 && !pChr->AimHitCharacter())
 			{
 				if (g_Config.m_SvBotMitigation == 1)
 				{
 					if (HookState != HOOK_FLYING && HookState != HOOK_GRABBED) // Destroy Hookbots & A bit tough
 					{
-						if (!pChr->AimHitCharacter() && pChr->Core()->m_Hook && pChr->Core()->m_HookedBy == -1) // Allow him to use bot under certain circumstances
+						if (pChr->Core()->m_HookedBy == -1) // Allow him to use bot under certain circumstances
 							Msg.AddInt(0);
 						else
 							Msg.AddInt(pParams[i]);
@@ -619,7 +621,7 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 				{
 					if (HookState != HOOK_FLYING && HookState != HOOK_GRABBED) // Destroy Hookbots & A bit tough
 					{
-						if (!pChr->AimHitCharacter() && pChr->Core()->m_Hook && pChr->Core()->m_HookedBy == -1) // Allow him to use bot under certain circumstances
+						if (pChr->Core()->m_HookedBy == -1) // Allow him to use bot under certain circumstances
 							Msg.AddInt(0);
 						else
 							Msg.AddInt(pParams[i]);
@@ -627,6 +629,8 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 					else
 						Msg.AddInt(pParams[i]);
 				}
+				else
+					Msg.AddInt(pParams[i]);
 			}
 			else if (i == 26 && g_Config.m_SvBotMitigation > 0) // Destroy the Laserbots
 			{
@@ -1603,6 +1607,34 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, aBuf);
 					m_apPlayers[id]->m_IsBot ^= 1;
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "troll ", 6) == 0 && m_apPlayers[ClientID]->m_Authed)
+				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+
+					char aName[256];
+					str_copy(aName, pMsg->m_pMessage + 7, sizeof(aName)); // forgot to change these -.- Copy&Pasting my own code to much
+					int id = -1;
+					for (int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if (!GetPlayerChar(i))
+							continue;
+						if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
+							continue;
+						if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
+						{
+							id = i;
+							break;
+						}
+					}
+					if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
+						return;
+
+					char aBuf[128];
+					m_apPlayers[id]->m_Troll ^= 1;
+					str_format(aBuf, 128, m_apPlayers[id]->m_Troll ? "Now trolling %s" : "Stop trolling %s", Server()->ClientName(id));
+					SendChatTarget(ClientID, aBuf);
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "makedrunk ", 10) == 0 && m_apPlayers[ClientID]->m_Authed)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
@@ -1627,14 +1659,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 
 					char aBuf[128];
-					if(!m_apPlayers[id]->m_Drunk)
-					str_format(aBuf, sizeof(aBuf), "%s gave you to much beer and made you drunk!", Server()->ClientName(ClientID));
-					SendChatTarget(id, aBuf);
-					str_format(aBuf, sizeof(aBuf), "Successfully %s %s drunk", m_apPlayers[id]->m_Drunk ? "unmade" : "made",Server()->ClientName(id));
-					SendChatTarget(ClientID, aBuf);
 					m_apPlayers[id]->m_Drunk ^= 1;
-
-					return;
+					str_format(aBuf, sizeof(aBuf), !m_apPlayers[id]->m_Drunk ? "%s gave you to much beer and made you drunk!" : "%s made you sober!", Server()->ClientName(ClientID));
+					SendChatTarget(id, aBuf);
+					str_format(aBuf, sizeof(aBuf), "Successfully %s %s drunk", m_apPlayers[id]->m_Drunk ? "made" : "unmade",Server()->ClientName(id));
+					SendChatTarget(ClientID, aBuf);
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnoteinfo", 13) == 0)
 				{
@@ -1821,6 +1850,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Botmitigation");
 					SendChatTarget(ClientID, "- DisableColl");
 					SendChatTarget(ClientID, "- Makedrunk (name)");
+					SendChatTarget(ClientID, "- Troll (name)");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage+1, "w ", 2) == 0)

@@ -253,6 +253,8 @@ public:
 	bool m_Blackhole;
 	bool m_IsEmote;
 	bool m_Drunk;
+	bool m_Troll;
+	bool m_WasTrolled;
 	bool m_WasDrunk;
 
 	// City

@@ -335,6 +335,7 @@ public:
 	void SetNinjaCurrentMoveTime(int CurrentMoveTime) { m_Ninja.m_CurrentMoveTime = CurrentMoveTime; };
 	
 	vec2 MousePos() { return vec2(m_Core.m_Input.m_TargetX + m_Pos.x, m_Core.m_Input.m_TargetY + m_Pos.y); };
+	bool IsHooking() { return m_Core.m_Input.m_Hook; };
 };
 
 enum

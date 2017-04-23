@@ -3076,13 +3076,35 @@ void CCharacter::Clean()
 			GameServer()->SendTuningParams(m_Core.m_Id, 0);
 			m_pPlayer->m_WasDrunk = false;
 		}
+		if (m_pPlayer->m_Troll)
+		{
+			GameServer()->SendTuningParams(m_Core.m_Id, 0);
+			if (!m_pPlayer->m_WasTrolled)
+				m_pPlayer->m_WasTrolled = true;
+		}
+		else if (m_pPlayer->m_WasTrolled) // Fix their tune
+		{
+			GameServer()->SendTuningParams(m_Core.m_Id, 0);
+			m_pPlayer->m_WasTrolled = false;
+		}
 	}
 	// ======== BOT MITIGATION ==========
 	if (g_Config.m_SvBotMitigation > 0)
 	{
 		GameServer()->m_BotProtWasOn = true;
 		if (g_Config.m_SvBotMitigation == 1 && this)
+		{
 			GameServer()->SendTuningParams(m_Core.m_Id, 0);
+			// Clean sweep
+			for (int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if (!GameServer()->GetPlayerChar(i))
+					continue;
+
+				if (GameServer()->GetPlayerChar(i)->GetPlayer()->m_IsBot)
+					GameServer()->GetPlayerChar(i)->GetPlayer()->m_IsBot = false;
+			}
+		}
 		else if (g_Config.m_SvBotMitigation == 2 && this && GetPlayer()->m_IsBot)
 			GameServer()->SendTuningParams(m_Core.m_Id, 0);
 	}
