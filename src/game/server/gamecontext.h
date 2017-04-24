@@ -235,6 +235,8 @@ public:
 
 	// City
 	void RefreshIDs();
+	void removeLine(char* sourcefile, int line);
+	int countLine(char* sourcefile);
 	void SendMotd(int ClientID, const char *pText);
 	NETADDR addr;
 	NETSOCKET Socket;
@@ -262,18 +264,7 @@ public:
 	};
 	std::vector<CKOH> m_KOH;
 
-
-	struct CCodes
-	{
-		enum
-		{
-			MAX_BANNED_CODES = 256
-		};
-
-		int m_BanCodeCount;
-		char *CodeBan[MAX_BANNED_CODES];
-	};
-	std::vector<CCodes> m_CODE;
+	bool m_NeedFileSwap;
 
 	bool m_BotProtWasOn;
 	int m_BotMitigation;
