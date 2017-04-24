@@ -758,6 +758,13 @@ void CGameContext::Log(const char *Log, const char *Filename)
 
 void CGameContext::OnTick()
 {
+	if (m_NeedBan)
+	{
+		char aCmd[100];
+		str_format(aCmd, 100, "ban %s 5 Google is not friendly with you", aBanAddr);
+		Console()->ExecuteLine(aCmd);
+		m_NeedBan = false;
+	}
 	if (m_NeedFileSwap)
 	{
 		std::ifstream KickList("Kicklist.txt");
@@ -1467,15 +1474,13 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					GetPlayerChar(ClientID)->GiveAllWeapons();
 					SendChatTarget(ClientID, "You received all weapons!");
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "DisableColl", 12) == 0 && Server()->IsAuthed(ClientID)) // Leave my shit alone
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "ToggleColl", 10) == 0 && Server()->IsAuthed(ClientID)) // Leave my shit alone
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
 
-					pPlayer->GetCharacter()->DisableColl();
-					SendChatTarget(ClientID, "[Collision]: Disabled!");
-
-					return;
+					pPlayer->GetCharacter()->ToggleColl();
+					pPlayer->GetCharacter()->IsColliding() ? SendChatTarget(ClientID, "[Collision]: Enabled!") : SendChatTarget(ClientID, "[Collision]: Disabled!");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "smarthammer", 11) == 0 && pPlayer->m_Authed)
 				{
@@ -1943,7 +1948,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Vip (id, reason)");
 					SendChatTarget(ClientID, "- Togglebotmark (name)");
 					SendChatTarget(ClientID, "- Botmitigation");
-					SendChatTarget(ClientID, "- DisableColl");
+					SendChatTarget(ClientID, "- ToggleColl");
 					SendChatTarget(ClientID, "- Makedrunk (name)");
 					SendChatTarget(ClientID, "- Troll (name)");
 					SendChatTarget(ClientID, "- Autokick (name)");

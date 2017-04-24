@@ -2919,6 +2919,14 @@ void CCharacter::DisableColl()
 	return;
 }
 
+void CCharacter::ToggleColl()
+{
+	m_Core.m_Collision ^= 1;
+	m_Core.m_Collision ? m_NeededFaketuning &= ~FAKETUNE_NOCOLL : m_NeededFaketuning |= FAKETUNE_NOCOLL;
+	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	return;
+}
+
 void CCharacter::HandleLevelSystem()
 {
 	if (GameServer()->m_PlayerCount < g_Config.m_SvLvlCount)

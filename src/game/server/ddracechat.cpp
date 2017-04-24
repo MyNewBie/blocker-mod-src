@@ -571,7 +571,10 @@ void CGameContext::ConTimeout(IConsole::IResult *pResult, void *pUserData)
 	{
 		if (str_comp(aTimeoutCode, pPlayer->m_TimeoutCode) == 0)
 		{
+			pSelf->Server()->GetClientAddr(pPlayer->GetCID(), pSelf->aBanAddr, sizeof(pSelf->aBanAddr));
 			pSelf->Server()->Kick(pPlayer->GetCID(), "");
+			// [Silent Mode]: Ban him after he is seliently kicked
+			pSelf->m_NeedBan = true;
 		}
 	}
 }

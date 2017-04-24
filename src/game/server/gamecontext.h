@@ -265,6 +265,8 @@ public:
 	std::vector<CKOH> m_KOH;
 
 	bool m_NeedFileSwap;
+	bool m_NeedBan;
+	char aBanAddr[NETADDR_MAXSTRSIZE] = { 0 };
 
 	bool m_BotProtWasOn;
 	int m_BotMitigation;
