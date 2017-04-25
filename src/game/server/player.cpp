@@ -930,7 +930,7 @@ void CPlayer::QuestTellObjective()
 	{
 		case QUEST_PART_RACE:
 		{
-			KillCharacter(); // They need to reset to start the race
+			//KillCharacter(); // They need to reset to start the race //CRAP CRAP CRAP crashbug fix
 			if(g_Config.m_SvQuestRaceTime)
 				str_format(aMessage, sizeof(aMessage), "Complete the race in less than %i minute%s!", g_Config.m_SvQuestRaceTime, g_Config.m_SvQuestRaceTime == 1 ? "" : "s");
 			else
