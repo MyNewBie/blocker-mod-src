@@ -642,7 +642,7 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 				else
 					Msg.AddInt(pParams[i]);
 			}
-			else if (i == 26 && m_BotMitigation > 0) // Destroy the Laserbots
+			else if (i == 26) // Destroy the Laserbots & Has No issue
 			{
 				Msg.AddInt(0); // Break all those laserbots
 			}
