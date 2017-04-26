@@ -3088,50 +3088,40 @@ void CCharacter::HandleBlocking(bool die)
 
 void CCharacter::Clean()
 {
-	if (this)
+	if (!this)
+		return;
+
+
+	if (m_pPlayer->m_Drunk)
 	{
-		if (m_pPlayer->m_Drunk)
-		{
-			GameServer()->SendTuningParams(m_Core.m_Id, 0);
-			if (!m_pPlayer->m_WasDrunk)
-				m_pPlayer->m_WasDrunk = true;
-		}
-		else if (m_pPlayer->m_WasDrunk) // Fix their tune
-		{
-			GameServer()->SendTuningParams(m_Core.m_Id, 0);
-			m_pPlayer->m_WasDrunk = false;
-		}
-		if (m_pPlayer->m_Troll)
-		{
-			GameServer()->SendTuningParams(m_Core.m_Id, 0);
-			if (!m_pPlayer->m_WasTrolled)
-				m_pPlayer->m_WasTrolled = true;
-		}
-		else if (m_pPlayer->m_WasTrolled) // Fix their tune
-		{
-			GameServer()->SendTuningParams(m_Core.m_Id, 0);
-			m_pPlayer->m_WasTrolled = false;
-		}
+		GameServer()->SendTuningParams(m_Core.m_Id, 0);
+		if (!m_pPlayer->m_WasDrunk)
+			m_pPlayer->m_WasDrunk = true;
+	}
+	else if (m_pPlayer->m_WasDrunk) // Fix their tune
+	{
+		GameServer()->SendTuningParams(m_Core.m_Id, 0);
+		m_pPlayer->m_WasDrunk = false;
+	}
+	if (m_pPlayer->m_Troll)
+	{
+		GameServer()->SendTuningParams(m_Core.m_Id, 0);
+		if (!m_pPlayer->m_WasTrolled)
+			m_pPlayer->m_WasTrolled = true;
+	}
+	else if (m_pPlayer->m_WasTrolled) // Fix their tune
+	{
+		GameServer()->SendTuningParams(m_Core.m_Id, 0);
+		m_pPlayer->m_WasTrolled = false;
 	}
 	// ======== BOT MITIGATION ==========
 	if (GameServer()->m_BotMitigation > 0)
 	{
 		GameServer()->m_BotProtWasOn = true;
-		if (GameServer()->m_BotMitigation == 1 && this)
-		{
-			GameServer()->SendTuningParams(m_Core.m_Id, 0);
-			// Clean sweep
-			for (int i = 0; i < MAX_CLIENTS; i++)
-			{
-				if (!GameServer()->GetPlayerChar(i))
-					continue;
-
-				if (GameServer()->GetPlayerChar(i)->GetPlayer()->m_IsBot)
-					GameServer()->GetPlayerChar(i)->GetPlayer()->m_IsBot = false;
-			}
-		}
-		else if (GameServer()->m_BotMitigation == 2 && this && GetPlayer()->m_IsBot)
-			GameServer()->SendTuningParams(m_Core.m_Id, 0);
+		if (m_pPlayer->m_IsBot)
+			m_pPlayer->m_IsBot = false;
+		// What i had here before was very stupid lol
+		GameServer()->SendTuningParams(m_Core.m_Id, 0);
 	}
 	else if (GameServer()->m_BotProtWasOn)
 	{
@@ -3141,7 +3131,7 @@ void CCharacter::Clean()
 
 	// ======== BOT MITIGATION ==========
 
-	if (this && IsAlive() && m_pPlayer->m_EpicCircle && GameServer()->m_KOHActive)
+	if (m_pPlayer->m_EpicCircle && GameServer()->m_KOHActive)
 	{
 		GameServer()->SendChatTarget(m_Core.m_Id, "For the greater good, we disabled your epic circles :)"); // SALUT!!!!! xD
 		m_pPlayer->m_EpicCircle = false;
@@ -3164,24 +3154,18 @@ void CCharacter::Clean()
 
 	// Lets have each player log their own ip for us every x minutes
 	if (Server()->Tick() % (g_Config.m_SvLogInterval * Server()->TickSpeed() * 60) == 0) // I Love you vali
-	{
-		if (this)
 			GameServer()->LogIp(m_Core.m_Id);
-	}
 
 	// Save info, Because of server crashes or other incidents, We stop playings from crying to us about information loss
 	if (Server()->Tick() % (g_Config.m_SvUpdateAccountInfo * Server()->TickSpeed() * 60) == 0)
-	{
-		if (this)
-			m_pPlayer->m_pAccount->Apply();
-	}
+		m_pPlayer->m_pAccount->Apply();
 
-	if (this && IsAlive() && m_FreezeTime == 1)
+	if (m_FreezeTime == 1)
 		m_LastBlockedTick = Server()->Tick();
 	// handle info spam
-	if (this && IsAlive() && (Server()->Tick() % 50) && m_pPlayer->m_IsEmote)
+	if ((Server()->Tick() % 50) && m_pPlayer->m_IsEmote)
 		m_pPlayer->m_IsEmote = false;
-	if (this && IsAlive() && (Server()->Tick() % 80) == 0 && (WasInBloody || WasInCircles || WasInHH || WasInRainbow || WasInSteam || WasInXXL))
+	if ((Server()->Tick() % 80) == 0 && (WasInBloody || WasInCircles || WasInHH || WasInRainbow || WasInSteam || WasInXXL))
 	{
 		WasInBloody = false;
 		WasInCircles = false;
@@ -3190,11 +3174,11 @@ void CCharacter::Clean()
 		WasInSteam = false;
 		WasInXXL = false;
 	}
-	if (this && IsAlive() && (Server()->Tick() % 150) == 0 && m_TilePauser) // Ugly asf TODO: FIX
+	if ((Server()->Tick() % 150) == 0 && m_TilePauser) // Ugly asf TODO: FIX
 		m_TilePauser = false;
-	if (this && IsAlive() && (Server()->Tick() % 150) == 0 && m_AntiSpam) // Ugly asf TODO: FIX
+	if ((Server()->Tick() % 150) == 0 && m_AntiSpam) // Ugly asf TODO: FIX
 		m_AntiSpam = false;
-	if (this && IsAlive() && (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed))
+	if (IsAlive() && (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed))
 		HandlePassiveMode();
 }
 

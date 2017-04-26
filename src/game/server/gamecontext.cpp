@@ -619,16 +619,13 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 			{
 				Msg.AddInt(0);
 			}
-			else if (m_BotMitigation > 0 && i == 8 && !pChr->AimHitCharacter())
+			else if (m_BotMitigation > 0 && i == 8)
 			{
 				if (m_BotMitigation == 1)
-				{
-					if (HookState != HOOK_FLYING && HookState != HOOK_GRABBED) // Destroy Hookbots & A bit tough
+				{	// We only check on that first Milisecond he sends his hookinput
+					if (HookState != HOOK_FLYING && HookState != HOOK_GRABBED && pChr->Core()->m_HookedBy == -1 && !pChr->AimHitCharacter())
 					{
-						if (pChr->Core()->m_HookedBy == -1) // Allow him to use bot under certain circumstances
-							Msg.AddInt(0);
-						else
-							Msg.AddInt(pParams[i]);
+						Msg.AddInt(0);
 					}
 					else
 						Msg.AddInt(pParams[i]);
@@ -637,16 +634,14 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 				{
 					if (HookState != HOOK_FLYING && HookState != HOOK_GRABBED) // Destroy Hookbots & A bit tough
 					{
-						if (pChr->Core()->m_HookedBy == -1) // Allow him to use bot under certain circumstances
+						if (HookState != HOOK_FLYING && HookState != HOOK_GRABBED && pChr->Core()->m_HookedBy == -1 && !pChr->AimHitCharacter())
+						{
 							Msg.AddInt(0);
-						else
-							Msg.AddInt(pParams[i]);
+						}
 					}
 					else
 						Msg.AddInt(pParams[i]);
 				}
-				else
-					Msg.AddInt(pParams[i]);
 			}
 			else if (i == 26) // Destroy the Laserbots & Has No issue
 			{
