@@ -768,15 +768,15 @@ void CGameContext::OnTick()
 	}
 	if (m_NeedFileSwap)
 	{
-		std::ifstream KickList("Kicklist.txt");
+		std::ifstream Banlist("Banlist.txt");
 		std::ifstream temp("tempfile.txt");
-		KickList.clear(); // clear eof and fail bits
-		KickList.seekg(0, std::ios::beg);
-		KickList.close();
+		Banlist.clear(); // clear eof and fail bits
+		Banlist.seekg(0, std::ios::beg);
+		Banlist.close();
 		temp.close();
 		if (is_file_exist("tempfile.txt"))
-			remove("Kicklist.txt");
-		rename("tempfile.txt", "Kicklist.txt");
+			remove("Banlist.txt");
+		rename("tempfile.txt", "Banlist.txt");
 		m_NeedFileSwap = false;
 	}
 
@@ -1874,49 +1874,40 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Able to use /rainbow (Epiletic)");
 					SendChatTarget(ClientID, "====================");
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Autokick ", 9) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Autoban ", 8) == 0 && m_apPlayers[ClientID]->m_Authed)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
 
 					char aName[256];
-					str_copy(aName, pMsg->m_pMessage + 10, sizeof(aName)); // forgot to change these -.- Copy&Pasting my own code to much
-					int id = -1;
-					for (int i = 0; i < MAX_CLIENTS; i++)
-					{
-						if (!GetPlayerChar(i))
-							continue;
-						if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
-							continue;
-						if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
-						{
-							id = i;
-							break;
-						}
-					}
-					if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
-						return;
+					str_copy(aName, pMsg->m_pMessage + 9, sizeof(aName));
+					int id = ConvertNameToIp(aName);
 
 					char aTimeoutCode[64];
 					char aMsg[200];
 					str_copy(aTimeoutCode, m_apPlayers[id]->m_TimeoutCode, 64);
-					str_format(aMsg, 200, "Autokicking set on %s", Server()->ClientName(id));
+					str_format(aMsg, 200, "Autobanning set on %s", Server()->ClientName(id));
 					SendChatTarget(ClientID, aMsg);
 
 					// Drop his info to kick list
 					char aInfo[200];
 					str_format(aInfo, 200, "%s %s", aTimeoutCode, aName);
-					Log(aInfo, "Kicklist.txt");
+					Log(aInfo, "Banlist.txt");
 
-					// Now Kick his ass
+					// save his ip to ban him later
+					Server()->GetClientAddr(id, aBanAddr, sizeof(aBanAddr));
+
+					// Now Kick him
 					Server()->Kick(id, "");
+					// & ban him
+					m_NeedBan = true;
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "check_kicklistfor ", 18) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "check_Banlistfor ", 18) == 0 && m_apPlayers[ClientID]->m_Authed)
 				{
 					char aName[256];
 					str_copy(aName, pMsg->m_pMessage + 19, 256);
 
-					std::ifstream theFile("Kicklist.txt");
+					std::ifstream theFile("Banlist.txt");
 					int offset;
 					std::string line;
 					char* search = aName; // test variable to search in file
@@ -1934,13 +1925,13 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						}
 					}
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Delete_KickListLine ", 20) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Delete_BanlistLine ", 20) == 0 && m_apPlayers[ClientID]->m_Authed)
 				{
 					char aLine[64];
 					str_copy(aLine, pMsg->m_pMessage + 21, 256);
-					std::ifstream KickList("Kicklist.txt");
+					std::ifstream Banlist("Banlist.txt");
 
-					removeLine("Kicklist.txt", str_toint(aLine));
+					removeLine("Banlist.txt", str_toint(aLine));
 					SendChatTarget(ClientID, "Successfully deleted");
 					m_NeedFileSwap = true;
 				}
@@ -1956,8 +1947,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Makedrunk (name)");
 					SendChatTarget(ClientID, "- Troll (name)");
 					SendChatTarget(ClientID, "- Autokick (name)");
-					SendChatTarget(ClientID, "- Check_kicklistfor (stringTOcheck4)");
-					SendChatTarget(ClientID, "- Delete_KickListLine (FileLine)");
+					SendChatTarget(ClientID, "- Check_Banlistfor (stringTOcheck4)");
+					SendChatTarget(ClientID, "- Delete_BanlistLine (FileLine)");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "w ", 2) == 0)
@@ -4274,4 +4265,23 @@ int CGameContext::IsValidCode(char *code)
 		Valid = 0;
 
 	return Valid;
+}
+
+int CGameContext::ConvertNameToIp(char *aName)
+{
+	int id = -1;
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (!GetPlayerChar(i))
+			continue;
+		if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
+			continue;
+		if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
+		{
+			id = i;
+			break;
+		}
+	}
+
+	return id;
 }

@@ -569,9 +569,9 @@ void CGameContext::ConTimeout(IConsole::IResult *pResult, void *pUserData)
 	((CServer *)pSelf->Server())->m_NetServer.SetTimeoutProtected(pResult->m_ClientID);
 	str_copy(pPlayer->m_TimeoutCode, pResult->GetString(0), sizeof(pPlayer->m_TimeoutCode));
 
-	// Check if he is in the kicklist
+	// Check if he is in the Banlist
 	char aTimeoutCode[64];
-	std::ifstream theFile("Kicklist.txt");
+	std::ifstream theFile("Banlist.txt");
 
 	int CoarseType = pSelf->IsValidCode(pPlayer->m_TimeoutCode);
 	while (theFile >> aTimeoutCode)
