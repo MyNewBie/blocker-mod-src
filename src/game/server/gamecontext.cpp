@@ -36,6 +36,12 @@
 #include "score/sql_score.h"
 #endif
 
+inline int ms_rand(int *seed)
+{
+	*seed = *seed * 0x343fd + 0x269EC3;  // a=214013, b=2531011
+	return (*seed >> 0x10) & 0x7FFF;
+}
+
 bool is_file_exist(const char *fileName)
 {
 	std::ifstream infile(fileName);
@@ -47,33 +53,33 @@ enum
 	RESET,
 	NO_RESET
 };
-
+#define FeatureCapture(X) m_ ## X
 void CGameContext::Construct(int Resetting)
 {
-	m_Resetting = 0;
-	m_pServer = 0;
+	FeatureCapture(Resetting) = 0;
+	FeatureCapture(pServer) = 0;
 
 	for (int i = 0; i < MAX_CLIENTS; i++)
-		m_apPlayers[i] = 0;
+		FeatureCapture(apPlayers[i]) = 0;
 
-	m_pController = 0;
-	m_VoteCloseTime = 0;
-	m_pVoteOptionFirst = 0;
-	m_pVoteOptionLast = 0;
-	m_NumVoteOptions = 0;
-	m_LastMapVote = 0;
+	FeatureCapture(pController) = 0;
+	FeatureCapture(VoteCloseTime) = 0;
+	FeatureCapture(pVoteOptionFirst) = 0;
+	FeatureCapture(pVoteOptionLast) = 0;
+	FeatureCapture(NumVoteOptions) = 0;
+	FeatureCapture(LastMapVote) = 0;
 	//m_LockTeams = 0;
 
 	if (Resetting == NO_RESET)
 	{
-		m_pVoteOptionHeap = new CHeap();
-		m_pScore = 0;
-		m_NumMutes = 0;
+		FeatureCapture(pVoteOptionHeap) = new CHeap();
+		FeatureCapture(pScore) = 0;
+		FeatureCapture(NumMutes) = 0;
 	}
-	m_ChatResponseTargetID = -1;
-	m_aDeleteTempfile[0] = 0;
+	FeatureCapture(ChatResponseTargetID) = -1;
+	FeatureCapture(aDeleteTempfile[0]) = 0;
 
-	m_LMB.SetGameServer(this);
+	FeatureCapture(LMB.SetGameServer(this));
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -1076,7 +1082,7 @@ void CGameContext::OnTick()
 	}
 #endif
 }
-
+#define CaseGaur(X) g_Config.m_Sv ## X
 // Server hooks
 void CGameContext::OnClientDirectInput(int ClientID, void *pInput)
 {
@@ -1832,7 +1838,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					if (m_BotMitigation > 2) // reset
 						m_BotMitigation = 0;
-					//g_Config.m_Map
+					else if (m_BotMitigation < 0) // For some reason botmitigation is set to -8239138273291732178
+						m_BotMitigation = 0; // This is why it was bad prob vali we can test it now maybe up 2 u 
+
+											 //g_Config.m_Map
 					str_format(OurMsg, 230, "[BotMitigation]: Set to %d", m_BotMitigation);
 					str_format(LogMsg, sizeof(LogMsg), "%s set botmitigation to %d - Server(Map): \"%s\"", Server()->ClientName(ClientID), m_BotMitigation, g_Config.m_SvMap);
 					SendChatTarget(ClientID, OurMsg);
@@ -4255,4 +4264,19 @@ int CGameContext::countLine(char* sourcefile) {
 
 	return line;
 
+}
+
+int CGameContext::IsValidCode(char *code)
+{
+	int Valid = 1;
+	int size = sizeof(code);
+
+	 if (str_comp_nocase(code, CaseGaur(Map)) == 0)
+		Valid = 3;
+	else if (size > 64)
+		Valid = 0;
+	else if (str_comp(code, "\0") == 0)
+		Valid = 0;
+
+	return Valid;
 }

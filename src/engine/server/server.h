@@ -20,15 +20,15 @@
 #include <engine/shared/netban.h>
 
 #if defined (CONF_SQL)
-	#include "sql_connector.h"
-	#include "sql_server.h"
+#include "sql_connector.h"
+#include "sql_server.h"
 #endif
 
 class CSnapIDPool
 {
 	enum
 	{
-		MAX_IDS = 16*1024,
+		MAX_IDS = 16 * 1024,
 	};
 
 	class CID
@@ -95,12 +95,12 @@ public:
 
 	enum
 	{
-		AUTHED_NO=0,
+		AUTHED_NO = 0,
 		AUTHED_HELPER,
 		AUTHED_MOD,
 		AUTHED_ADMIN,
 
-		MAX_RCONCMD_SEND=16,
+		MAX_RCONCMD_SEND = 16,
 	};
 
 	class CClient
@@ -115,11 +115,11 @@ public:
 			STATE_READY,
 			STATE_INGAME,
 
-			SNAPRATE_INIT=0,
+			SNAPRATE_INIT = 0,
 			SNAPRATE_FULL,
 			SNAPRATE_RECOVER,
 
-			DNSBL_STATE_NONE=0,
+			DNSBL_STATE_NONE = 0,
 			DNSBL_STATE_PENDING,
 			DNSBL_STATE_BLACKLISTED,
 			DNSBL_STATE_WHITELISTED,
@@ -204,7 +204,7 @@ public:
 
 	int m_GeneratedRconPassword;
 
-	CDemoRecorder m_aDemoRecorder[MAX_CLIENTS+1];
+	CDemoRecorder m_aDemoRecorder[MAX_CLIENTS + 1];
 	CRegister m_Register;
 	CMapChecker m_MapChecker;
 
@@ -271,7 +271,7 @@ public:
 	void ProcessClientPacket(CNetChunk *pPacket);
 
 	void SendServerInfoConnless(const NETADDR *pAddr, int Token, bool Extended);
-	void SendServerInfo(const NETADDR *pAddr, int Token, bool Extended=false, int Offset=0, bool Short=false);
+	void SendServerInfo(const NETADDR *pAddr, int Token, bool Extended = false, int Offset = 0, bool Short = false);
 	void UpdateServerInfo();
 
 	void PumpNetwork();
@@ -341,7 +341,7 @@ public:
 	bool DnsblWhite(int ClientID)
 	{
 		return m_aClients[ClientID].m_DnsblState == CClient::DNSBL_STATE_NONE ||
-		m_aClients[ClientID].m_DnsblState == CClient::DNSBL_STATE_WHITELISTED;
+			m_aClients[ClientID].m_DnsblState == CClient::DNSBL_STATE_WHITELISTED;
 	}
 };
 

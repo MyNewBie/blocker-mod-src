@@ -14,7 +14,7 @@ class CPlayer
 {
 	MACRO_ALLOC_POOL_ID()
 
-	friend class CSaveTee;
+		friend class CSaveTee;
 	friend class CAccount;
 
 public:
@@ -26,7 +26,7 @@ public:
 	void TryRespawn();
 	void Respawn(bool WeakHook = false); // with WeakHook == true the character will be spawned after all calls of Tick from other Players
 	CCharacter* ForceSpawn(vec2 Pos); // required for loading savegames
-	void SetTeam(int Team, bool DoChatMsg=true);
+	void SetTeam(int Team, bool DoChatMsg = true);
 	int GetTeam() const { return m_Team; };
 	int GetCID() const { return m_ClientID; };
 
@@ -62,7 +62,7 @@ public:
 
 	// used for spectator mode
 	int m_SpectatorID;
-	
+
 	// level system
 	struct
 	{
@@ -76,11 +76,13 @@ public:
 
 	//special
 	int m_Vacuum;
-    
+
 	bool m_RconFreeze;
 	bool m_IsReady;
 	bool m_IsRocket;
 	bool m_IsBot;
+
+	bool m_Rejected;
 
 	//
 	int m_Vote;
@@ -141,7 +143,7 @@ public:
 		int m_Min;
 		int m_Max;
 	} m_Latency;
-	
+
 	struct CKoh
 	{
 		int m_ZoneXp;
@@ -173,12 +175,12 @@ public:
 		bool m_SavedGrenade;
 		bool m_SavedLaser;
 		bool m_SavedEHook;
-		
+
 		int m_SavedStartTick;
-		
+
 		void Reset()
 		{
-			m_SavedSpawn = vec2(0,0);
+			m_SavedSpawn = vec2(0, 0);
 			m_SavedShotgun = false;
 			m_SavedGrenade = false;
 			m_SavedLaser = false;
@@ -186,9 +188,9 @@ public:
 			m_SavedStartTick = 0;
 		}
 	} m_SavedStats;
-	
+
 	void SaveStats();
-	
+
 	int m_InLMB;
 
 	struct
@@ -196,7 +198,7 @@ public:
 		bool m_SmartHammer;
 		bool m_AutoHook;
 		bool m_Grenadebot;
-		
+
 		bool m_Active;
 	} m_Bots;
 
@@ -293,12 +295,12 @@ private:
 public:
 	enum
 	{
-		PAUSED_NONE=0,
+		PAUSED_NONE = 0,
 		PAUSED_SPEC,
 		PAUSED_PAUSED,
 		PAUSED_FORCE
 	};
-	
+
 	int m_LastTriggerTick;
 	const char * m_pSkin;
 	std::string m_aSkins[16];
