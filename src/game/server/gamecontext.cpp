@@ -1474,14 +1474,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					GetPlayerChar(ClientID)->GiveAllWeapons();
 					SendChatTarget(ClientID, "You received all weapons!");
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "ToggleColl", 10) == 0 && Server()->IsAuthed(ClientID)) // Leave my shit alone
+				/*else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "ToggleColl", 10) == 0 && Server()->IsAuthed(ClientID)) // Leave my shit alone
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
 
 					pPlayer->GetCharacter()->ToggleColl();
 					pPlayer->GetCharacter()->IsColliding() ? SendChatTarget(ClientID, "[Collision]: Enabled!") : SendChatTarget(ClientID, "[Collision]: Disabled!");
-				}
+				}*/
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "smarthammer", 11) == 0 && pPlayer->m_Authed)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
@@ -1499,7 +1499,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(pPlayer->GetCID(), pPlayer->m_Bots.m_Grenadebot ? "Grenadebot enabled!" : "Grenadebot disabled!");
 
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getTOcode ", 10) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->m_Authed))
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getTOcode ", 10) == 0 && (pPlayer->m_Authed))
 				{
 					char Name[256];
 					str_copy(Name, pMsg->m_pMessage + 7, 256);
@@ -1523,7 +1523,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(aBuf, sizeof(aBuf), "[Code] [%s]: %s", Server()->ClientName(id), m_apPlayers[id]->m_TimeoutCode);
 					SendChatTarget(ClientID, aBuf);
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getip ", 6) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->m_Authed)) // Tired of using status
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getip ", 6) == 0 && (pPlayer->m_Authed)) // Tired of using status
 				{
 					char Name[256];
 					str_copy(Name, pMsg->m_pMessage + 7, 256);
@@ -1689,8 +1689,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					char aBuf[128];
 					m_apPlayers[id]->m_Drunk ^= 1;
-					str_format(aBuf, sizeof(aBuf), !m_apPlayers[id]->m_Drunk ? "%s gave you to much beer and made you drunk!" : "%s made you sober!", Server()->ClientName(ClientID));
-					SendChatTarget(id, aBuf);
+					//str_format(aBuf, sizeof(aBuf), !m_apPlayers[id]->m_Drunk ? "%s gave you to much beer and made you drunk!" : "%s made you sober!", Server()->ClientName(ClientID));
+					//SendChatTarget(id, aBuf);
 					str_format(aBuf, sizeof(aBuf), "Successfully %s %s drunk", m_apPlayers[id]->m_Drunk ? "made" : "unmade", Server()->ClientName(id));
 					SendChatTarget(ClientID, aBuf);
 				}
