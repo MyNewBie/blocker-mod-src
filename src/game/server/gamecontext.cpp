@@ -1579,10 +1579,13 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(aBuf, sizeof(aBuf), "[IP] [%s]: %s", Server()->ClientName(id), aAddrStr);
 					SendChatTarget(ClientID, aBuf);
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getClientid ", 12) == 0 && (pPlayer->m_AccData.m_Vip))
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getclientid ", 12) == 0 && (pPlayer->m_AccData.m_Vip))
 				{
 					char Name[256];
-					str_copy(Name, pMsg->m_pMessage + 12, 256);
+					str_copy(Name, pMsg->m_pMessage + 13, 256);
+					
+					dbg_msg("getclientid", "Name: %s", Name);
+					
 					int id = -1;
 					for (int i = 0; i < MAX_CLIENTS; i++)
 					{
@@ -1591,10 +1594,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						if (str_comp_nocase(Name, Server()->ClientName(i)) == 0)
 						{
 							id = i;
-							break;
+							break; // dont you have a thing that work with the same huh::: with that? xd
 						}
 					}
-					if (id < 0 || id > MAX_CLIENTS || !GetPlayerChar(id) || !GetPlayerChar(id)->IsAlive())
+					if (id < 0 || id > MAX_CLIENTS || !m_apPlayers[id])
 						return;
 					
 					dbg_msg("test 1", "ID : %d", id); // ok try
