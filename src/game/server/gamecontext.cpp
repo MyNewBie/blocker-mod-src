@@ -1550,7 +1550,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 
 					char aBuf[246];
-					str_format(aBuf, sizeof(aBuf), "[Code] [%s]: %s", Server()->ClientName(id), m_apPlayers[id]->m_TimeoutCode);
+					str_format(aBuf, sizeof(aBuf), "[Code] [%s]: %d", Server()->ClientName(id), m_apPlayers[id]->m_TimeoutCode);
 					SendChatTarget(ClientID, aBuf);
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getip ", 6) == 0 && (pPlayer->m_Authed)) // Tired of using status
@@ -1579,7 +1579,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(aBuf, sizeof(aBuf), "[IP] [%s]: %s", Server()->ClientName(id), aAddrStr);
 					SendChatTarget(ClientID, aBuf);
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getClientid ", 10) == 0)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getClientid ", 10) == 0 && (pPlayer->m_AccData.m_Vip))
 				{
 					char Name[256];
 					str_copy(Name, pMsg->m_pMessage + 7, 256);
@@ -1587,24 +1587,24 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					for (int i = 0; i < MAX_CLIENTS; i++)
 					{
 						if (!GetPlayerChar(i))
-							continue;
+						continue;
 						if (str_comp_nocase(Name, Server()->ClientName(i)) != 0)
-							continue;
+						continue;
 						if (str_comp_nocase(Name, Server()->ClientName(i)) == 0)
 						{
 							id = i;
-							break;
+						break;
 						}
 					}
-					if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive())
-						return;
+					if (id < 0 || id > 64 || !GetPlayerChar(id) || !GetPlayerChar(id)->IsAlive())
+					return;
 
 					char aclientid = { 0 };
-					
+     
 					char aBuf[246];
-					str_format(aBuf, sizeof(aBuf), "[ClientID] [%s]: %s", Server()->ClientName(id), m_apPlayers[id]->m_ClientVersion);
+					str_format(aBuf, sizeof(aBuf), "[ClientID] [%s]: %d", Server()->ClientName(id), m_apPlayers[id]->m_ClientVersion);
 					SendChatTarget(ClientID, aBuf);
-				}		
+				}
 				
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnote ", 10) == 0)
 				{
