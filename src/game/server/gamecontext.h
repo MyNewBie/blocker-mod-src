@@ -263,6 +263,14 @@ public:
 		vec2 m_Center;
 	};
 	std::vector<CKOH> m_KOH;
+	
+	struct LoveDotState // same as top
+	{
+		vec2 m_Pos;
+		int m_LifeSpan;
+		int m_SnapID;
+	};
+	array<LoveDotState> m_LoveDots;
 
 	bool m_NeedFileSwap;
 	bool m_NeedBan;

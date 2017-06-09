@@ -3233,3 +3233,17 @@ bool CCharacter::AimHitCharacter()
 
 	return false;
 }
+
+m_LovelyLifeSpan--;
+
+ if(m_pPlayer->m_Lovely)
+ {
+   if (m_LovelyLifeSpan <= 0)
+   {
+    GameServer()->CreateLoveEvent(vec2(m_Pos.x+(rand()%50-25), m_Pos.y-35));
+                
+                //GameServer()->SendEmoticon(m_pPlayer->GetCID(), EMOTICON_HEARTS);
+                SetEmote(2, Server()->Tick() + 2 * Server()->TickSpeed());
+                m_LovelyLifeSpan = Server()->TickSpeed() - (rand()%(45 - 35 + 1) + 35);
+   }
+ }
