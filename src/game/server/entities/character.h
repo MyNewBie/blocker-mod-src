@@ -120,6 +120,7 @@ private:
 	} m_aWeapons[NUM_WEAPONS];
 	
 	int LovelyLifeSpan; // random loveheart passing by
+	now? m_
 
 	int m_LastWeapon;
 	int m_QueuedWeapon;
