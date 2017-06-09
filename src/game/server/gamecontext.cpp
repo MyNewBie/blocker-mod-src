@@ -1492,7 +1492,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					
 					if (pPlayer->m_IsBallSpawned && GetPlayerChar(ClientID))
 						pPlayer->m_pBall = new CBall(&m_World, GetPlayerChar(ClientID)->m_Pos, ClientID);
-					else if (pPlayer->m_IsBallSpawned && GetPlayerChar(ClientID))
+					else if (!pPlayer->m_IsBallSpawned && GetPlayerChar(ClientID))
 						pPlayer->m_pBall->Reset();
 				}	
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "heartguns", 9) == 0 && (pPlayer->m_AccData.m_Vip)) 
