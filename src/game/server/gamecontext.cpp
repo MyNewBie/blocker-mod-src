@@ -1491,7 +1491,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, pPlayer->m_IsBallSpawned ? "Ball spawned" : "Ball removed");
 					
 					if (pPlayer->m_IsBallSpawned && GetPlayerChar(ClientID))
-						pPlayer->m_pBall = new CBall(&m_World, GetPlayerChar(ClientID)->m_Pos, m_pPlayer->GetCID());
+						pPlayer->m_pBall = new CBall(&m_World, GetPlayerChar(ClientID)->m_Pos, ClientID);
 					else if (pPlayer->m_IsBallSpawned && GetPlayerChar(ClientID))
 						pPlayer->m_pBall->Reset();
 				}	
