@@ -29,6 +29,8 @@ public:
 	void SetTeam(int Team, bool DoChatMsg=true);
 	int GetTeam() const { return m_Team; };
 	int GetCID() const { return m_ClientID; };
+	
+	bool m_Lovely;
 
 	void Tick();
 	void PostTick();
