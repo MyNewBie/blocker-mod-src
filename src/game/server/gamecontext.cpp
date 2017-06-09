@@ -1485,6 +1485,22 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_Lovely ^= true;
 					SendChatTarget(ClientID, pPlayer->m_Lovely ? "Lovely activated" : "Lovely deactivated");
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "ball", 4) == 0 && (pPlayer->m_AccData.m_Vip))
+				{
+					pPlayer->m_IsBallSpawned ^= true;
+					SendChatTarget(ClientID, pPlayer->m_IsBallSpawned ? "Ball spawned" : "Ball removed");
+					
+					if (pPlayer->m_IsBallSpawned && GetPlayerChar(ClientID))
+						pPlayer->m_pBall = new CBall(&m_World, GetPlayerChar(ClientID)->m_Pos, m_pPlayer->GetCID());
+					else if (pPlayer->m_IsBallSpawned && GetPlayerChar(ClientID))
+						pPlayer->m_pBall->Reset();
+				}	
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "heartguns", 9) == 0 && (pPlayer->m_AccData.m_Vip)) 
+				{	
+					// i use sublime text me xd
+					pPlayer->m_HeartGuns ^= true;
+					SendChatTarget(ClientID, pPlayer->m_HeartGuns ? "Heart guns activated" : "Heart guns deactivated");
+				}	
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "weapons", 7) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->m_AccData.m_Weaponkits > 0))
 				{
 					if (!GetPlayerChar(ClientID) || !GetPlayerChar(ClientID)->IsAlive())

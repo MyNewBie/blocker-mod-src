@@ -9,6 +9,8 @@
 #include "gamecontext.h"
 #include "accounting/account.h"
 
+#include "game/server/entities/special/ball.h"
+
 // player object
 class CPlayer
 {
@@ -30,8 +32,15 @@ public:
 	int GetTeam() const { return m_Team; };
 	int GetCID() const { return m_ClientID; };
 	
+	// mod
 	bool m_Lovely;
-
+	
+	CBall *m_pBall;
+	bool m_IsBallActivated;
+	
+	bool m_HeartGuns;
+	//
+	
 	void Tick();
 	void PostTick();
 

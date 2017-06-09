@@ -175,7 +175,11 @@ void CProjectile::Tick()
 		}
 		else if (m_Weapon == WEAPON_GUN)
 		{
-			GameServer()->CreateDamageInd(CurPos, -atan2(m_Direction.x, m_Direction.y), 10, (m_Owner != -1)? TeamMask : -1LL);
+			if(GameServer()->m_apPlayers[m_Owner]->m_HeartGuns)
+				GameServer()->CreateDeath(CurPos, m_Owner, (m_Owner != -1)? TeamMask : -1LL);
+			else
+				GameServer()->CreateDamageInd(CurPos, -atan2(m_Direction.x, m_Direction.y), 10, (m_Owner != -1)? TeamMask : -1LL);
+			// compile xD
 			GameServer()->m_World.DestroyEntity(this);
 		}
 		else
@@ -235,6 +239,7 @@ void CProjectile::FillInfo(CNetObj_Projectile *pProj)
 void CProjectile::Snap(int SnappingClient)
 {
 	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
+	bool HeartGuns = GameServer()->m_apPlayers[m_Owner]->m_HeartGuns;
 
 	if(NetworkClipped(SnappingClient, GetPos(Ct)))
 		return;
@@ -256,6 +261,20 @@ void CProjectile::Snap(int SnappingClient)
 	if(m_Owner != -1 && !CmaskIsSet(TeamMask, SnappingClient))
 		return;
 
+	if(GameServer()->GetPlayerChar(m_Owner) && HeartGuns) // hmh wait have to find again for the blood, i don#t remember
+	{
+		CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
+		if(pP)
+		{
+			vec2 CurPos = GetPos(Ct);
+			pP->m_X = (int)CurPos.x;
+			pP->m_Y = (int)CurPos.y;
+			pP->m_Type = POWERUP_HEALTH; // POWERUP_ARMOR
+			pP->m_Subtype = 0; 
+		}
+		return;
+	}
+	
 	CNetObj_Projectile *pProj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_ID, sizeof(CNetObj_Projectile)));
 	if(pProj)
 	{

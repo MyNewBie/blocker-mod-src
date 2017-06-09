@@ -28,6 +28,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_NumInputs = 0;
 	m_KillMe = 0;
 	m_Lovely = false;
+	m_IsBallActivated = false;
+	m_HeartGuns = false;
 	m_EpicCircle = false;
 	m_aSkins[0] = "bluekitty";
 	m_aSkins[1] = "bluestripe";

@@ -68,6 +68,10 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_Pos = Pos;
 	
 	m_LovelyLifeSpan = Server()->TickSpeed(); // hearty
+	
+	if (pPlayer->m_IsBallActivated)
+		pPlayer->m_pBall = new CBall(&GameServer()->m_World, m_Pos, m_pPlayer->GetCID());
+
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision(), &((CGameControllerDDRace*)GameServer()->m_pController)->m_Teams.m_Core, &((CGameControllerDDRace*)GameServer()->m_pController)->m_TeleOuts);
