@@ -119,8 +119,8 @@ private:
 
 	} m_aWeapons[NUM_WEAPONS];
 	
-	int LovelyLifeSpan; // random loveheart passing by
-
+	int m_LovelyLifeSpan; // random loveheart passing by
+	
 	int m_LastWeapon;
 	int m_QueuedWeapon;
 
