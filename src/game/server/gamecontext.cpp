@@ -1482,7 +1482,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				{
 					/*if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;*/
-					pPlayer->m_Lovely ^= false;
+					pPlayer->m_Lovely ^= true;
 					SendChatTarget(ClientID, pPlayer->m_Lovely ? "Lovely activated" : "Lovely deactivated");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "weapons", 7) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->m_AccData.m_Weaponkits > 0))
