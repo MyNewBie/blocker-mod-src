@@ -66,6 +66,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_apAnimIDs = new int[m_AnimIDNum];//create id-array
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
+	
+	m_LovelyLifeSpan = Server()->TickSpeed(); // hearty
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision(), &((CGameControllerDDRace*)GameServer()->m_pController)->m_Teams.m_Core, &((CGameControllerDDRace*)GameServer()->m_pController)->m_TeleOuts);

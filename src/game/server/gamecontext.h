@@ -271,6 +271,7 @@ public:
 		int m_SnapID;
 	};
 	array<LoveDotState> m_LoveDots;
+	void CreateLoveEvent(vec2 Pos);
 
 	bool m_NeedFileSwap;
 	bool m_NeedBan;
