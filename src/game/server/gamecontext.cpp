@@ -1579,31 +1579,31 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(aBuf, sizeof(aBuf), "[IP] [%s]: %s", Server()->ClientName(id), aAddrStr);
 					SendChatTarget(ClientID, aBuf);
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getClientid ", 10) == 0 && (pPlayer->m_AccData.m_Vip))
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getClientid ", 12) == 0 && (pPlayer->m_AccData.m_Vip))
 				{
 					char Name[256];
-					str_copy(Name, pMsg->m_pMessage + 7, 256);
+					str_copy(Name, pMsg->m_pMessage + 12, 256);
 					int id = -1;
 					for (int i = 0; i < MAX_CLIENTS; i++)
 					{
-						if (!GetPlayerChar(i))
-						continue;
-						if (str_comp_nocase(Name, Server()->ClientName(i)) != 0)
+						if (!GetPlayerChar(i) || str_comp_nocase(Name, Server()->ClientName(i)) != 0)
 						continue;
 						if (str_comp_nocase(Name, Server()->ClientName(i)) == 0)
 						{
 							id = i;
-						break;
+							break;
 						}
 					}
-					if (id < 0 || id > 64 || !GetPlayerChar(id) || !GetPlayerChar(id)->IsAlive())
-					return;
-
-					char aclientid = { 0 };
-     
+					if (id < 0 || id > MAX_CLIENTS || !GetPlayerChar(id) || !GetPlayerChar(id)->IsAlive())
+						return;
+					
+					dbg_msg("test 1", "ID : %d", id); // ok try
+					
 					char aBuf[246];
 					str_format(aBuf, sizeof(aBuf), "[ClientID] [%s]: %d", Server()->ClientName(id), m_apPlayers[id]->m_ClientVersion);
+					dbg_msg("test 2", "Before");
 					SendChatTarget(ClientID, aBuf);
+					dbg_msg("test 3", "Worked?");
 				}
 				
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnote ", 10) == 0)
