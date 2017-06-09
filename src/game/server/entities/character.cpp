@@ -70,7 +70,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_LovelyLifeSpan = Server()->TickSpeed(); // hearty
 	
 	if (pPlayer->m_IsBallActivated)
-		pPlayer->m_pBall = new CBall(&GameServer()->m_World, m_Pos, m_pPlayer->GetCID());
+		pPlayer->m_pBall = new CBall(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
 
 
 	m_Core.Reset();

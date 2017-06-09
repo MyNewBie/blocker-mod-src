@@ -36,7 +36,7 @@ public:
 	bool m_Lovely;
 	
 	CBall *m_pBall;
-	bool m_IsBallActivated;
+	bool m_IsBallSpawned;
 	
 	bool m_HeartGuns;
 	//
