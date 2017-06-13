@@ -3332,6 +3332,8 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	m_World.SetGameServer(this);
 	m_Events.SetGameServer(this);
 
+	mem_zero(&aBanAddr, sizeof(aBanAddr));
+
 	DeleteTempfile();
 
 	//if(!data) // only load once

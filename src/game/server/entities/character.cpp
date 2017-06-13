@@ -3223,7 +3223,7 @@ bool CCharacter::AimHitCharacter()
 {
 	CCharacter *pMain = GetPlayer()->GetCharacter();
 	vec2 Shit;
-	const int Angle = round(atan2(pMain->m_LatestInput.m_TargetX, pMain->m_LatestInput.m_TargetY) * 256); // compress
+	const int Angle = round_to_int(atan2((double)pMain->m_LatestInput.m_TargetX, (double)pMain->m_LatestInput.m_TargetY) * 256); // compress
 	const vec2 Direction = vec2(sin(Angle / 256.f), cos(Angle / 256.f)); // decompress
 	vec2 initPos = pMain->m_Pos + Direction * 28.0f * 1.5f;
 	vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength + 20.0f);

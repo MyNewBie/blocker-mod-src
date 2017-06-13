@@ -270,7 +270,7 @@ public:
 
 	// Banning
 	bool m_NeedBan;
-	char aBanAddr[NETADDR_MAXSTRSIZE] = { 0 };
+	char aBanAddr[NETADDR_MAXSTRSIZE];// = { 0 }; // no initialisations in header
 	char aReason[256];
 
 	// FileSwaps
