@@ -107,7 +107,7 @@ public:
 	int m_LastKill;
 	int m_LastCommands[4];
 	int m_LastCommandPos;
-	int m_LastWhisperTo;
+	int m_LastWhisperTo; // idk, there is nothing about it :/, maybe its the master srv? why does it work in gdb then? <.< idk xd, idk :/, hmh huh
 
 	int m_SendVoteIndex;
 

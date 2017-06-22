@@ -32,7 +32,7 @@ private:
 	vec2 m_Pos;
 	vec2 m_Pos2;
 
-	int table[4];	
+	int m_TableDirV[4];
 };
 
 #endif

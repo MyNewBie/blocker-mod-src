@@ -1,5 +1,5 @@
 /*
- *	Loic rip my name .-.
+ *	Loic
 */
 
 #include <game/generated/protocol.h>
@@ -13,16 +13,16 @@ CBall::CBall(CGameWorld *pGameWorld, vec2 Pos, int Owner)
 	m_Owner = Owner;
 	m_Pos = Pos;
 
-	m_IsRotating = false;
+	m_IsRotating = true;
 
-	m_LaserLifeSpan = Server()->TickSpeed()-10;
+	m_LaserLifeSpan = Server()->TickSpeed();
 	m_LaserDirAngle = 0;
 	m_LaserInputDir = 0;
     
-    table[0] = 5;
-    table[1] = -5;
-    table[2] = 10;
-    table[4] = -10;
+    m_TableDirV[0] = 5;
+    m_TableDirV[1] = 10;
+    m_TableDirV[2] = -5;
+    m_TableDirV[3] = -10;
 
 	for(int i = 0; i < 2 ; i ++) 
 		m_aIDs[i] = Server()->SnapNewID();
@@ -51,9 +51,8 @@ void CBall::Tick()
     if(m_LaserLifeSpan <= 0)
     {
     	m_IsRotating ^= true;
-    	//m_LaserInputDir = rand() % 20 - 10;
-    	m_LaserInputDir = table[rand()%4];
-    	m_LaserLifeSpan = m_IsRotating ? Server()->TickSpeed() + (rand() % 20 - 10) : Server()->TickSpeed() + (rand() % 120 - 60);
+    	m_LaserInputDir = m_TableDirV[rand()%4];
+    	m_LaserLifeSpan = m_IsRotating ? Server()->TickSpeed() + (rand() % 20 - 10) : Server()->TickSpeed() + 30;
     }   
 
 	

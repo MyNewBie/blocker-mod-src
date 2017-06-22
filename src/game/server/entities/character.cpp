@@ -1343,7 +1343,7 @@ void CCharacter::Snap(int SnappingClient)
 		}
 	}
 
-	if (GetPlayer()->m_EpicCircle && !GameServer()->m_KOHActive)
+	if (GetPlayer()->m_EpicCircle && !GameServer()->m_KOHActive) 
 	{
 		//calculate visible balls
 		float Panso = 1.0f;
