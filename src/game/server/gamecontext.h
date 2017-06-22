@@ -261,6 +261,15 @@ public:
 		vec2 m_Center;
 	};
 	std::vector<CKOH> m_KOH;
+	
+	struct LoveDotState // same as top
+	{
+		vec2 m_Pos;
+		int m_LifeSpan;
+		int m_SnapID;
+	};
+	array<LoveDotState> m_LoveDots;
+	void CreateLoveEvent(vec2 Pos);
 
 	// Logging : FileHandling
 	void LogIp(int ClientID);

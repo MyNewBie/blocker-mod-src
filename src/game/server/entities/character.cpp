@@ -75,6 +75,12 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_apAnimIDs = new int[m_AnimIDNum];//create id-array
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
+	
+	m_LovelyLifeSpan = Server()->TickSpeed(); // hearty
+	
+	if (pPlayer->m_IsBallSpawned)
+		pPlayer->m_pBall = new CBall(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
+
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision(), &((CGameControllerDDRace*)GameServer()->m_pController)->m_Teams.m_Core, &((CGameControllerDDRace*)GameServer()->m_pController)->m_TeleOuts);
@@ -850,6 +856,21 @@ void CCharacter::Tick()
 	HandleLevelSystem();
 	HandleBots();
 	HandleThreeSecondRule();
+	m_LovelyLifeSpan--;
+
+	if(m_pPlayer->m_Lovely)
+	{
+		if (m_LovelyLifeSpan <= 0)
+		{
+			GameServer()->CreateLoveEvent(vec2(m_Pos.x+(rand()%50-25), m_Pos.y-35));
+                
+			//GameServer()->SendEmoticon(m_pPlayer->GetCID(), EMOTICON_HEARTS); it's beautiful
+			SetEmote(2, Server()->Tick() + 2 * Server()->TickSpeed());
+			m_LovelyLifeSpan = Server()->TickSpeed() - (rand()%(45 - 35 + 1) + 35);
+		}
+	}
+ 
+									// ok like that?
 	DDRaceTick();
 
 	m_Core.m_Input = m_Input;
@@ -1336,7 +1357,7 @@ void CCharacter::Snap(int SnappingClient)
 		}
 	}
 
-	if (GetPlayer()->m_EpicCircle && !GameServer()->m_KOHActive)
+	if (GetPlayer()->m_EpicCircle && !GameServer()->m_KOHActive) 
 	{
 		//calculate visible balls
 		float Panso = 1.0f;

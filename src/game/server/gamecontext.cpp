@@ -757,8 +757,31 @@ void CGameContext::Log(const char *Log, const char *Filename)
 	io_close(File);
 }
 
+void CGameContext::CreateLoveEvent(vec2 Pos)
+{
+ CGameContext::LoveDotState State;
+ State.m_Pos = Pos;
+ State.m_LifeSpan = Server()->TickSpeed()/2;
+ State.m_SnapID = Server()->SnapNewID();
+ 
+ m_LoveDots.add(State);
+}
+
 void CGameContext::OnTick()
 {
+	int DotIter = 0;
+	while(DotIter < m_LoveDots.size())
+	{
+		m_LoveDots[DotIter].m_LifeSpan--;
+		m_LoveDots[DotIter].m_Pos.y -= 5.0f;
+		if(m_LoveDots[DotIter].m_LifeSpan <= 0)
+			{
+			Server()->SnapFreeID(m_LoveDots[DotIter].m_SnapID);
+			m_LoveDots.remove_index(DotIter);
+			}
+		else
+		DotIter++;
+	}
 	if (m_NeedBan)
 	{
 		char aCmd[100];
@@ -1456,6 +1479,29 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_pAccount->NewPassword(aNewPassword);
 					return;
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "lovely", 7) == 0 && (pPlayer->m_AccData.m_Vip)) 
+				{
+					/*if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;*/
+					pPlayer->m_Lovely ^= true;
+					SendChatTarget(ClientID, pPlayer->m_Lovely ? "Lovely activated" : "Lovely deactivated");
+				}
+				else if (str_comp(pMsg->m_pMessage + 1, "ball") == 0 && (pPlayer->m_AccData.m_Vip))
+				{
+					pPlayer->m_IsBallSpawned ^= true;
+					SendChatTarget(ClientID, pPlayer->m_IsBallSpawned ? "Ball spawned" : "Ball removed");
+					
+					if (pPlayer->m_IsBallSpawned && GetPlayerChar(ClientID))
+						pPlayer->m_pBall = new CBall(&m_World, GetPlayerChar(ClientID)->m_Pos, ClientID);
+					else if (!pPlayer->m_IsBallSpawned && GetPlayerChar(ClientID))
+						pPlayer->m_pBall->Reset();
+				}	
+				else if (str_comp(pMsg->m_pMessage + 1, "heartguns") == 0 && (pPlayer->m_AccData.m_Vip)) 
+				{	
+					// i use sublime text me xd
+					pPlayer->m_HeartGuns ^= true;
+					SendChatTarget(ClientID, pPlayer->m_HeartGuns ? "Heart guns activated" : "Heart guns deactivated");
+				}	
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "weapons", 7) == 0 && (pPlayer->m_AccData.m_Vip || pPlayer->m_AccData.m_Weaponkits > 0))
 				{
 					if (!GetPlayerChar(ClientID) || !GetPlayerChar(ClientID)->IsAlive())
@@ -1521,7 +1567,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 
 					char aBuf[246];
-					str_format(aBuf, sizeof(aBuf), "[Code] [%s]: %s", Server()->ClientName(id), m_apPlayers[id]->m_TimeoutCode);
+					str_format(aBuf, sizeof(aBuf), "[Code] [%s]: %d", Server()->ClientName(id), m_apPlayers[id]->m_TimeoutCode);
 					SendChatTarget(ClientID, aBuf);
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getip ", 6) == 0 && (pPlayer->m_Authed)) // Tired of using status
@@ -1550,6 +1596,30 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(aBuf, sizeof(aBuf), "[IP] [%s]: %s", Server()->ClientName(id), aAddrStr);
 					SendChatTarget(ClientID, aBuf);
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getclientid ", 12) == 0 && (pPlayer->m_AccData.m_Vip))
+				{
+					char Name[256];
+					str_copy(Name, pMsg->m_pMessage + 13, 256);
+					
+					int id = -1;
+					for (int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if (!GetPlayerChar(i) || str_comp_nocase(Name, Server()->ClientName(i)) != 0)
+						continue;
+						if (str_comp_nocase(Name, Server()->ClientName(i)) == 0)
+						{
+							id = i;
+							break;
+						}
+					}
+					if (id < 0 || id > MAX_CLIENTS || !m_apPlayers[id])
+						return;
+					
+					char aBuf[246];
+					str_format(aBuf, sizeof(aBuf), "[ClientID] [%s]: %d", Server()->ClientName(id), m_apPlayers[id]->m_ClientVersion);
+					SendChatTarget(ClientID, aBuf);
+				}
+				
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Deathnote ", 10) == 0)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
@@ -1772,6 +1842,13 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_Rainbowepiletic ^= 1;
 					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Rainbow activated" : "Rainbow deactivated");
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "circle", 6) == 0 && pPlayer->m_AccData.m_Vip)
+				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+					pPlayer->m_EpicCircle ^= 1;
+					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Circle deactivated" : "Circle activated"); 
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "givepage ", 9) == 0 && Server()->IsAuthed(ClientID))
 				{
 					char aId[32];
@@ -1872,6 +1949,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- PassiveMode (Anti-wayblock)");
 					SendChatTarget(ClientID, "- Able to use /weapons at any time (Non-Active-Tournaments)");
 					SendChatTarget(ClientID, "- Able to use /rainbow (Epiletic)");
+					SendChatTarget(ClientID, "- Able to use /circle");
+					SendChatTarget(ClientID, "- Able to use /lovely");
+					SendChatTarget(ClientID, "- Able to use /heartguns");
+					SendChatTarget(ClientID, "- Able to use /ball");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Autoban ", 8) == 0 && m_apPlayers[ClientID]->m_Authed)
@@ -3764,6 +3845,32 @@ void CGameContext::LoadMapSettings()
 
 void CGameContext::OnSnap(int ClientID)
 {
+	
+	for(int i=0; i < m_LoveDots.size(); i++)
+	{
+		if(ClientID >= 0)
+		{
+		vec2 CheckPos = m_LoveDots[i].m_Pos;
+		float dx = m_apPlayers[ClientID]->m_ViewPos.x-CheckPos.x;
+		float dy = m_apPlayers[ClientID]->m_ViewPos.y-CheckPos.y;
+		if(absolute(dx) > 1000.0f || absolute(dy) > 800.0f)
+		continue;
+		if(distance(m_apPlayers[ClientID]->m_ViewPos, CheckPos) > 1100.0f)
+		continue;
+		}
+  
+		CNetObj_Pickup *pObj = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_LoveDots[i].m_SnapID, sizeof(CNetObj_Pickup)));
+		if(pObj)
+		{
+		pObj->m_X = (int)m_LoveDots[i].m_Pos.x;
+		pObj->m_Y = (int)m_LoveDots[i].m_Pos.y;
+		pObj->m_Type = POWERUP_HEALTH;
+		pObj->m_Subtype = 0;
+		}
+	}
+	
+	
+	
 	// add tuning to demo
 	CTuningParams StandardTuning;
 	if (ClientID == -1 && Server()->DemoRecorder_IsRecording() && mem_comp(&StandardTuning, &m_Tuning, sizeof(CTuningParams)) != 0)

@@ -118,7 +118,9 @@ private:
 		bool m_Got;
 
 	} m_aWeapons[NUM_WEAPONS];
-
+	
+	int m_LovelyLifeSpan; // random loveheart passing by
+	
 	int m_LastWeapon;
 	int m_QueuedWeapon;
 

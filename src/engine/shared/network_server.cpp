@@ -469,7 +469,7 @@ void CNetServer::OnPreConnMsg(NETADDR &Addr, CNetPacketConstruct &Packet)
 		{
 			if (g_Config.m_Debug)
 			{
-				dbg_msg("security", "invalid preconn msg %d", Msg);
+				dbg_msg("security", "invalid preconn msg %d", Msg); // it even works in the other folder withour gdb ... its wtf, put
 			}
 		}
 	}
