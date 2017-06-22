@@ -1846,7 +1846,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
 					pPlayer->m_EpicCircle ^= 1;
-					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Circle activated" : "Circle deactivated"); 
+					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Circle deactivated" : "Circle activated"); 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "givepage ", 9) == 0 && Server()->IsAuthed(ClientID))
 				{
