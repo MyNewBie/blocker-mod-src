@@ -1598,7 +1598,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getclientid ", 12) == 0 && (pPlayer->m_AccData.m_Vip))
 				{
 					char Name[256];
-					str_copy(Name, pMsg->m_pMessage + 13, 256)
+					str_copy(Name, pMsg->m_pMessage + 13, 256);
 					
 					int id = -1;
 					for (int i = 0; i < MAX_CLIENTS; i++)
