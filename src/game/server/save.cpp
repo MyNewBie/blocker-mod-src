@@ -28,7 +28,7 @@ void CSaveTee::save(CCharacter* pchr)
 	m_TeeFinished = pchr->Teams()->TeeFinished(pchr->m_pPlayer->GetCID());
 	m_IsSolo = pchr->Teams()->m_Core.GetSolo(pchr->m_pPlayer->GetCID());
 
-	for(int i = 0; i< NUM_WEAPONS; i++)
+	for (int i = 0; i< NUM_WEAPONS; i++)
 	{
 		m_aWeapons[i].m_AmmoRegenStart = pchr->m_aWeapons[i].m_AmmoRegenStart;
 		m_aWeapons[i].m_Ammo = pchr->m_aWeapons[i].m_Ammo;
@@ -53,7 +53,7 @@ void CSaveTee::save(CCharacter* pchr)
 	m_TuneZone = pchr->m_TuneZone;
 	m_TuneZoneOld = pchr->m_TuneZoneOld;
 
-	if(pchr->m_StartTime)
+	if (pchr->m_StartTime)
 		m_Time = pchr->Server()->Tick() - pchr->m_StartTime + 60 * pchr->Server()->TickSpeed();
 
 	m_Pos = pchr->m_Pos;
@@ -61,13 +61,13 @@ void CSaveTee::save(CCharacter* pchr)
 	m_TeleCheckpoint = pchr->m_TeleCheckpoint;
 	m_LastPenalty = pchr->m_LastPenalty;
 
-	if(pchr->m_CpTick)
+	if (pchr->m_CpTick)
 		m_CpTime = pchr->Server()->Tick() - pchr->m_CpTick;
 
 	m_CpActive = pchr->m_CpActive;
 	m_CpLastBroadcast = pchr->m_CpLastBroadcast;
 
-	for(int i = 0; i < 25; i++)
+	for (int i = 0; i < 25; i++)
 		m_CpCurrent[i] = pchr->m_CpCurrent[i];
 
 	// Core
@@ -100,7 +100,7 @@ void CSaveTee::load(CCharacter* pchr, int Team)
 	pchr->Teams()->m_Core.SetSolo(pchr->m_pPlayer->GetCID(), m_IsSolo);
 	pchr->Teams()->SetFinished(pchr->m_pPlayer->GetCID(), m_TeeFinished);
 
-	for(int i = 0; i< NUM_WEAPONS; i++)
+	for (int i = 0; i< NUM_WEAPONS; i++)
 	{
 		pchr->m_aWeapons[i].m_AmmoRegenStart = m_aWeapons[i].m_AmmoRegenStart;
 		pchr->m_aWeapons[i].m_Ammo = m_aWeapons[i].m_Ammo;
@@ -125,7 +125,7 @@ void CSaveTee::load(CCharacter* pchr, int Team)
 	pchr->m_TuneZone = m_TuneZone;
 	pchr->m_TuneZoneOld = m_TuneZoneOld;
 
-	if(m_Time)
+	if (m_Time)
 		pchr->m_StartTime = pchr->Server()->Tick() - m_Time;
 
 	pchr->m_Pos = m_Pos;
@@ -133,13 +133,13 @@ void CSaveTee::load(CCharacter* pchr, int Team)
 	pchr->m_TeleCheckpoint = m_TeleCheckpoint;
 	pchr->m_LastPenalty = m_LastPenalty;
 
-	if(m_CpTime)
+	if (m_CpTime)
 		pchr->m_CpTick = pchr->Server()->Tick() - m_CpTime;
 
-	pchr->m_CpActive  = m_CpActive;
+	pchr->m_CpActive = m_CpActive;
 	pchr->m_CpLastBroadcast = m_CpLastBroadcast;
 
-	for(int i = 0; i < 25; i++)
+	for (int i = 0; i < 25; i++)
 		pchr->m_CpCurrent[i] = m_CpCurrent[i];
 
 	// Core
@@ -157,7 +157,7 @@ void CSaveTee::load(CCharacter* pchr, int Team)
 
 	pchr->m_Core.m_HookTick = m_HookTick;
 
-	if(m_HookState == HOOK_GRABBED)
+	if (m_HookState == HOOK_GRABBED)
 	{
 		pchr->m_Core.m_HookState = HOOK_FLYING;
 		pchr->m_Core.m_HookedPlayer = -1;
@@ -186,7 +186,7 @@ int CSaveTee::LoadString(char* String)
 	{
 		dbg_msg("load", "failed to load tee-string");
 		dbg_msg("load", "loaded %d vars", Num);
-		return Num+1; // never 0 here
+		return Num + 1; // never 0 here
 	}
 }
 
@@ -199,27 +199,27 @@ CSaveTeam::CSaveTeam(IGameController* Controller)
 
 CSaveTeam::~CSaveTeam()
 {
-	if(m_Switchers)
+	if (m_Switchers)
 		delete[] m_Switchers;
-	if(SavedTees)
+	if (SavedTees)
 		delete[] SavedTees;
 }
 
 int CSaveTeam::save(int Team)
 {
-	if(g_Config.m_SvTeam == 3 || (Team > 0 && Team < MAX_CLIENTS))
+	if (g_Config.m_SvTeam == 3 || (Team > 0 && Team < MAX_CLIENTS))
 	{
 		CGameTeams* Teams = &(((CGameControllerDDRace*)m_pController)->m_Teams);
 
 		m_MembersCount = Teams->Count(Team);
-		if(m_MembersCount <= 0)
+		if (m_MembersCount <= 0)
 		{
 			return 2;
 		}
 
 		m_TeamState = Teams->GetTeamState(Team);
 
-		if(m_TeamState != CGameTeams::TEAMSTATE_STARTED)
+		if (m_TeamState != CGameTeams::TEAMSTATE_STARTED)
 		{
 			return 4;
 		}
@@ -231,9 +231,9 @@ int CSaveTeam::save(int Team)
 		int j = 0;
 		for (int i = 0; i < MAX_CLIENTS; i++)
 		{
-			if(Teams->m_Core.Team(i) == Team)
+			if (Teams->m_Core.Team(i) == Team)
 			{
-				if(m_pController->GameServer()->m_apPlayers[i] && m_pController->GameServer()->m_apPlayers[i]->GetCharacter())
+				if (m_pController->GameServer()->m_apPlayers[i] && m_pController->GameServer()->m_apPlayers[i]->GetCharacter())
 					SavedTees[j].save(m_pController->GameServer()->m_apPlayers[i]->GetCharacter());
 				else
 					return 3;
@@ -241,14 +241,14 @@ int CSaveTeam::save(int Team)
 			}
 		}
 
-		if(m_pController->GameServer()->Collision()->m_NumSwitchers)
+		if (m_pController->GameServer()->Collision()->m_NumSwitchers)
 		{
-			m_Switchers = new SSimpleSwitchers[m_pController->GameServer()->Collision()->m_NumSwitchers+1];
+			m_Switchers = new SSimpleSwitchers[m_pController->GameServer()->Collision()->m_NumSwitchers + 1];
 
-			for(int i=1; i < m_pController->GameServer()->Collision()->m_NumSwitchers+1; i++)
+			for (int i = 1; i < m_pController->GameServer()->Collision()->m_NumSwitchers + 1; i++)
 			{
 				m_Switchers[i].m_Status = m_pController->GameServer()->Collision()->m_pSwitchers[i].m_Status[Team];
-				if(m_pController->GameServer()->Collision()->m_pSwitchers[i].m_EndTick[Team])
+				if (m_pController->GameServer()->Collision()->m_pSwitchers[i].m_EndTick[Team])
 					m_Switchers[i].m_EndTime = m_pController->Server()->Tick() - m_pController->GameServer()->Collision()->m_pSwitchers[i].m_EndTick[Team];
 				else
 					m_Switchers[i].m_EndTime = 0;
@@ -263,7 +263,7 @@ int CSaveTeam::save(int Team)
 
 int CSaveTeam::load(int Team)
 {
-	if(Team <= 0 || Team >= MAX_CLIENTS)
+	if (Team <= 0 || Team >= MAX_CLIENTS)
 		return 1;
 
 	CGameTeams* Teams = &(((CGameControllerDDRace*)m_pController)->m_Teams);
@@ -276,30 +276,30 @@ int CSaveTeam::load(int Team)
 	for (int i = 0; i<m_MembersCount; i++)
 	{
 		int ID = MatchPlayer(SavedTees[i].GetName());
-		if(ID == -1) // first check if team can be loaded / do not load half teams
+		if (ID == -1) // first check if team can be loaded / do not load half teams
 		{
-			return i+10; // +10 to let space for other return-values
+			return i + 10; // +10 to let space for other return-values
 		}
 		else if (m_pController->GameServer()->m_apPlayers[ID] && m_pController->GameServer()->m_apPlayers[ID]->GetCharacter() && m_pController->GameServer()->m_apPlayers[ID]->GetCharacter()->m_DDRaceState)
 		{
-			return i+100; // +100 to let space for other return-values
+			return i + 100; // +100 to let space for other return-values
 		}
 	}
 
 	for (int i = 0; i<m_MembersCount; i++)
 	{
 		pchr = MatchCharacter(SavedTees[i].GetName(), i);
-		if(pchr)
+		if (pchr)
 		{
 			SavedTees[i].load(pchr, Team);
 		}
 	}
 
-	if(m_pController->GameServer()->Collision()->m_NumSwitchers)
-		for(int i=1; i < m_pController->GameServer()->Collision()->m_NumSwitchers+1; i++)
+	if (m_pController->GameServer()->Collision()->m_NumSwitchers)
+		for (int i = 1; i < m_pController->GameServer()->Collision()->m_NumSwitchers + 1; i++)
 		{
 			m_pController->GameServer()->Collision()->m_pSwitchers[i].m_Status[Team] = m_Switchers[i].m_Status;
-			if(m_Switchers[i].m_EndTime)
+			if (m_Switchers[i].m_EndTime)
 				m_pController->GameServer()->Collision()->m_pSwitchers[i].m_EndTick[Team] = m_pController->Server()->Tick() - m_Switchers[i].m_EndTime;
 			m_pController->GameServer()->Collision()->m_pSwitchers[i].m_Type[Team] = m_Switchers[i].m_Type;
 		}
@@ -310,7 +310,7 @@ int CSaveTeam::MatchPlayer(char name[16])
 {
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(str_comp(m_pController->Server()->ClientName(i), name) == 0)
+		if (str_comp(m_pController->Server()->ClientName(i), name) == 0)
 		{
 			return i;
 		}
@@ -321,9 +321,9 @@ int CSaveTeam::MatchPlayer(char name[16])
 CCharacter* CSaveTeam::MatchCharacter(char name[16], int SaveID)
 {
 	int ID = MatchPlayer(name);
-	if(ID >= 0 && m_pController->GameServer()->m_apPlayers[ID])
+	if (ID >= 0 && m_pController->GameServer()->m_apPlayers[ID])
 	{
-		if(m_pController->GameServer()->m_apPlayers[ID]->GetCharacter())
+		if (m_pController->GameServer()->m_apPlayers[ID]->GetCharacter())
 			return m_pController->GameServer()->m_apPlayers[ID]->GetCharacter();
 		else
 			return m_pController->GameServer()->m_apPlayers[ID]->ForceSpawn(SavedTees[SaveID].GetPos());
@@ -343,8 +343,8 @@ char* CSaveTeam::GetString()
 		str_append(m_String, aBuf, sizeof(m_String));
 	}
 
-	if(m_NumSwitchers)
-		for(int i=1; i < m_NumSwitchers+1; i++)
+	if (m_NumSwitchers)
+		for (int i = 1; i < m_NumSwitchers + 1; i++)
 		{
 			char aBuf[64];
 			if (m_Switchers)
@@ -375,23 +375,23 @@ int CSaveTeam::LoadString(const char* String)
 
 	CopyPos = m_String + LastPos;
 	StrSize = Pos - LastPos + 1;
-	if(m_String[Pos] == '\n')
+	if (m_String[Pos] == '\n')
 	{
 		Pos++; // skip \n
 		LastPos = Pos;
 	}
 
-	if(StrSize <= 0)
+	if (StrSize <= 0)
 	{
 		dbg_msg("load", "savegame: wrong format (couldn't load teamstats)");
 		return 1;
 	}
 
-	if(StrSize < sizeof(TeamStats))
+	if (StrSize < sizeof(TeamStats))
 	{
 		str_copy(TeamStats, CopyPos, StrSize);
 		int Num = sscanf(TeamStats, "%d\t%d\t%d\t%d", &m_TeamState, &m_MembersCount, &m_NumSwitchers, &m_TeamLocked);
-		if(Num != 4)
+		if (Num != 4)
 		{
 			dbg_msg("load", "failed to load teamstats");
 			dbg_msg("load", "loaded %d vars", Num);
@@ -403,13 +403,13 @@ int CSaveTeam::LoadString(const char* String)
 		return 1;
 	}
 
-	if(SavedTees)
+	if (SavedTees)
 	{
-		delete [] SavedTees;
+		delete[] SavedTees;
 		SavedTees = 0;
 	}
 
-	if(m_MembersCount)
+	if (m_MembersCount)
 		SavedTees = new CSaveTee[m_MembersCount];
 
 	for (int n = 0; n < m_MembersCount; n++)
@@ -419,26 +419,26 @@ int CSaveTeam::LoadString(const char* String)
 
 		CopyPos = m_String + LastPos;
 		StrSize = Pos - LastPos + 1;
-		if(m_String[Pos] == '\n')
+		if (m_String[Pos] == '\n')
 		{
 			Pos++; // skip \n
 			LastPos = Pos;
 		}
 
-		if(StrSize <= 0)
+		if (StrSize <= 0)
 		{
 			dbg_msg("load", "savegame: wrong format (couldn't load tee)");
 			return 1;
 		}
 
-		if(StrSize < sizeof(SaveTee))
+		if (StrSize < sizeof(SaveTee))
 		{
 			str_copy(SaveTee, CopyPos, StrSize);
 			int Num = SavedTees[n].LoadString(SaveTee);
-			if(Num)
+			if (Num)
 			{
 				dbg_msg("load", "failed to load tee");
-				dbg_msg("load", "loaded %d vars", Num-1);
+				dbg_msg("load", "loaded %d vars", Num - 1);
 				return 1;
 			}
 		}
@@ -449,50 +449,50 @@ int CSaveTeam::LoadString(const char* String)
 		}
 	}
 
-	if(m_Switchers)
+	if (m_Switchers)
 	{
-		delete [] m_Switchers;
+		delete[] m_Switchers;
 		m_Switchers = 0;
 	}
 
-	if(m_NumSwitchers)
-		m_Switchers = new SSimpleSwitchers[m_NumSwitchers+1];
+	if (m_NumSwitchers)
+		m_Switchers = new SSimpleSwitchers[m_NumSwitchers + 1];
 
-	for (int n = 1; n < m_NumSwitchers+1; n++)
+	for (int n = 1; n < m_NumSwitchers + 1; n++)
+	{
+		while (m_String[Pos] != '\n' && Pos < sizeof(m_String) && m_String[Pos]) // find next \n or \0
+			Pos++;
+
+		CopyPos = m_String + LastPos;
+		StrSize = Pos - LastPos + 1;
+		if (m_String[Pos] == '\n')
 		{
-			while (m_String[Pos] != '\n' && Pos < sizeof(m_String) && m_String[Pos]) // find next \n or \0
-				Pos++;
+			Pos++; // skip \n
+			LastPos = Pos;
+		}
 
-			CopyPos = m_String + LastPos;
-			StrSize = Pos - LastPos + 1;
-			if(m_String[Pos] == '\n')
-			{
-				Pos++; // skip \n
-				LastPos = Pos;
-			}
+		if (StrSize <= 0)
+		{
+			dbg_msg("load", "savegame: wrong format (couldn't load switcher)");
+			return 1;
+		}
 
-			if(StrSize <= 0)
+		if (StrSize < sizeof(Switcher))
+		{
+			str_copy(Switcher, CopyPos, StrSize);
+			int Num = sscanf(Switcher, "%d\t%d\t%d", &(m_Switchers[n].m_Status), &(m_Switchers[n].m_EndTime), &(m_Switchers[n].m_Type));
+			if (Num != 3)
 			{
-				dbg_msg("load", "savegame: wrong format (couldn't load switcher)");
-				return 1;
-			}
-
-			if(StrSize < sizeof(Switcher))
-			{
-				str_copy(Switcher, CopyPos, StrSize);
-				int Num = sscanf(Switcher, "%d\t%d\t%d", &(m_Switchers[n].m_Status), &(m_Switchers[n].m_EndTime), &(m_Switchers[n].m_Type));
-				if(Num != 3)
-				{
-					dbg_msg("load", "failed to load switcher");
-					dbg_msg("load", "loaded %d vars", Num-1);
-				}
-			}
-			else
-			{
-				dbg_msg("load", "savegame: wrong format (couldn't load switcher, too big)");
-				return 1;
+				dbg_msg("load", "failed to load switcher");
+				dbg_msg("load", "loaded %d vars", Num - 1);
 			}
 		}
+		else
+		{
+			dbg_msg("load", "savegame: wrong format (couldn't load switcher, too big)");
+			return 1;
+		}
+	}
 
 	return 0;
 }

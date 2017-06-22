@@ -36,6 +36,12 @@
 #include "score/sql_score.h"
 #endif
 
+inline int ms_rand(int *seed)
+{
+	*seed = *seed * 0x343fd + 0x269EC3;  // a=214013, b=2531011
+	return (*seed >> 0x10) & 0x7FFF;
+}
+
 bool is_file_exist(const char *fileName)
 {
 	std::ifstream infile(fileName);
@@ -47,33 +53,33 @@ enum
 	RESET,
 	NO_RESET
 };
-
+#define FeatureCapture(X) m_ ## X
 void CGameContext::Construct(int Resetting)
 {
-	m_Resetting = 0;
-	m_pServer = 0;
+	FeatureCapture(Resetting) = 0;
+	FeatureCapture(pServer) = 0;
 
 	for (int i = 0; i < MAX_CLIENTS; i++)
-		m_apPlayers[i] = 0;
+		FeatureCapture(apPlayers[i]) = 0;
 
-	m_pController = 0;
-	m_VoteCloseTime = 0;
-	m_pVoteOptionFirst = 0;
-	m_pVoteOptionLast = 0;
-	m_NumVoteOptions = 0;
-	m_LastMapVote = 0;
+	FeatureCapture(pController) = 0;
+	FeatureCapture(VoteCloseTime) = 0;
+	FeatureCapture(pVoteOptionFirst) = 0;
+	FeatureCapture(pVoteOptionLast) = 0;
+	FeatureCapture(NumVoteOptions) = 0;
+	FeatureCapture(LastMapVote) = 0;
 	//m_LockTeams = 0;
 
 	if (Resetting == NO_RESET)
 	{
-		m_pVoteOptionHeap = new CHeap();
-		m_pScore = 0;
-		m_NumMutes = 0;
+		FeatureCapture(pVoteOptionHeap) = new CHeap();
+		FeatureCapture(pScore) = 0;
+		FeatureCapture(NumMutes) = 0;
 	}
-	m_ChatResponseTargetID = -1;
-	m_aDeleteTempfile[0] = 0;
+	FeatureCapture(ChatResponseTargetID) = -1;
+	FeatureCapture(aDeleteTempfile[0]) = 0;
 
-	m_LMB.SetGameServer(this);
+	FeatureCapture(LMB.SetGameServer(this));
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -613,16 +619,13 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 			{
 				Msg.AddInt(0);
 			}
-			else if (m_BotMitigation > 0 && i == 8 && !pChr->AimHitCharacter())
+			else if (m_BotMitigation > 0 && i == 8)
 			{
 				if (m_BotMitigation == 1)
-				{
-					if (HookState != HOOK_FLYING && HookState != HOOK_GRABBED) // Destroy Hookbots & A bit tough
+				{	// We only check on that first Milisecond he sends his hookinput
+					if (HookState != HOOK_FLYING && HookState != HOOK_GRABBED && pChr->Core()->m_HookedBy == -1 && !pChr->AimHitCharacter())
 					{
-						if (pChr->Core()->m_HookedBy == -1) // Allow him to use bot under certain circumstances
-							Msg.AddInt(0);
-						else
-							Msg.AddInt(pParams[i]);
+						Msg.AddInt(0);
 					}
 					else
 						Msg.AddInt(pParams[i]);
@@ -631,16 +634,14 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 				{
 					if (HookState != HOOK_FLYING && HookState != HOOK_GRABBED) // Destroy Hookbots & A bit tough
 					{
-						if (pChr->Core()->m_HookedBy == -1) // Allow him to use bot under certain circumstances
+						if (HookState != HOOK_FLYING && HookState != HOOK_GRABBED && pChr->Core()->m_HookedBy == -1 && !pChr->AimHitCharacter())
+						{
 							Msg.AddInt(0);
-						else
-							Msg.AddInt(pParams[i]);
+						}
 					}
 					else
 						Msg.AddInt(pParams[i]);
 				}
-				else
-					Msg.AddInt(pParams[i]);
 			}
 			else if (i == 26) // Destroy the Laserbots & Has No issue
 			{
@@ -790,15 +791,15 @@ void CGameContext::OnTick()
 	}
 	if (m_NeedFileSwap)
 	{
-		std::ifstream KickList("Kicklist.txt");
+		std::ifstream Banlist("Banlist.txt");
 		std::ifstream temp("tempfile.txt");
-		KickList.clear(); // clear eof and fail bits
-		KickList.seekg(0, std::ios::beg);
-		KickList.close();
+		Banlist.clear(); // clear eof and fail bits
+		Banlist.seekg(0, std::ios::beg);
+		Banlist.close();
 		temp.close();
 		if (is_file_exist("tempfile.txt"))
-			remove("Kicklist.txt");
-		rename("tempfile.txt", "Kicklist.txt");
+			remove("Banlist.txt");
+		rename("tempfile.txt", "Banlist.txt");
 		m_NeedFileSwap = false;
 	}
 
@@ -1099,7 +1100,7 @@ void CGameContext::OnTick()
 	}
 #endif
 }
-
+#define CaseGaur(X) g_Config.m_Sv ## X
 // Server hooks
 void CGameContext::OnClientDirectInput(int ClientID, void *pInput)
 {
@@ -1909,7 +1910,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					if (m_BotMitigation > 2) // reset
 						m_BotMitigation = 0;
-					//g_Config.m_Map
+					else if (m_BotMitigation < 0) // For some reason botmitigation is set to -8239138273291732178
+						m_BotMitigation = 0; // This is why it was bad prob vali we can test it now maybe up 2 u 
+
+											 //g_Config.m_Map
 					str_format(OurMsg, 230, "[BotMitigation]: Set to %d", m_BotMitigation);
 					str_format(LogMsg, sizeof(LogMsg), "%s set botmitigation to %d - Server(Map): \"%s\"", Server()->ClientName(ClientID), m_BotMitigation, g_Config.m_SvMap);
 					SendChatTarget(ClientID, OurMsg);
@@ -1951,49 +1955,40 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Able to use /ball");
 					SendChatTarget(ClientID, "====================");
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Autokick ", 9) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Autoban ", 8) == 0 && m_apPlayers[ClientID]->m_Authed)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
 
 					char aName[256];
-					str_copy(aName, pMsg->m_pMessage + 10, sizeof(aName)); // forgot to change these -.- Copy&Pasting my own code to much
-					int id = -1;
-					for (int i = 0; i < MAX_CLIENTS; i++)
-					{
-						if (!GetPlayerChar(i))
-							continue;
-						if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
-							continue;
-						if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
-						{
-							id = i;
-							break;
-						}
-					}
-					if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
-						return;
+					str_copy(aName, pMsg->m_pMessage + 9, sizeof(aName));
+					int id = ConvertNameToIp(aName);
 
 					char aTimeoutCode[64];
 					char aMsg[200];
 					str_copy(aTimeoutCode, m_apPlayers[id]->m_TimeoutCode, 64);
-					str_format(aMsg, 200, "Autokicking set on %s", Server()->ClientName(id));
+					str_format(aMsg, 200, "Autobanning set on %s", Server()->ClientName(id));
 					SendChatTarget(ClientID, aMsg);
 
 					// Drop his info to kick list
 					char aInfo[200];
 					str_format(aInfo, 200, "%s %s", aTimeoutCode, aName);
-					Log(aInfo, "Kicklist.txt");
+					Log(aInfo, "Banlist.txt");
 
-					// Now Kick his ass
+					// save his ip to ban him later
+					Server()->GetClientAddr(id, aBanAddr, sizeof(aBanAddr));
+
+					// Now Kick him
 					Server()->Kick(id, "");
+					// & ban him
+					m_NeedBan = true;
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "check_kicklistfor ", 18) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "check_Banlistfor ", 18) == 0 && m_apPlayers[ClientID]->m_Authed)
 				{
 					char aName[256];
 					str_copy(aName, pMsg->m_pMessage + 19, 256);
 
-					std::ifstream theFile("Kicklist.txt");
+					std::ifstream theFile("Banlist.txt");
 					int offset;
 					std::string line;
 					char* search = aName; // test variable to search in file
@@ -2011,13 +2006,13 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						}
 					}
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Delete_KickListLine ", 20) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Delete_BanlistLine ", 20) == 0 && m_apPlayers[ClientID]->m_Authed)
 				{
 					char aLine[64];
 					str_copy(aLine, pMsg->m_pMessage + 21, 256);
-					std::ifstream KickList("Kicklist.txt");
+					std::ifstream Banlist("Banlist.txt");
 
-					removeLine("Kicklist.txt", str_toint(aLine));
+					removeLine("Banlist.txt", str_toint(aLine));
 					SendChatTarget(ClientID, "Successfully deleted");
 					m_NeedFileSwap = true;
 				}
@@ -2033,8 +2028,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Makedrunk (name)");
 					SendChatTarget(ClientID, "- Troll (name)");
 					SendChatTarget(ClientID, "- Autokick (name)");
-					SendChatTarget(ClientID, "- Check_kicklistfor (stringTOcheck4)");
-					SendChatTarget(ClientID, "- Delete_KickListLine (FileLine)");
+					SendChatTarget(ClientID, "- Check_Banlistfor (stringTOcheck4)");
+					SendChatTarget(ClientID, "- Delete_BanlistLine (FileLine)");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "w ", 2) == 0)
@@ -3418,6 +3413,8 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	m_World.SetGameServer(this);
 	m_Events.SetGameServer(this);
 
+	mem_zero(&aBanAddr, sizeof(aBanAddr));
+
 	DeleteTempfile();
 
 	//if(!data) // only load once
@@ -4362,4 +4359,38 @@ int CGameContext::countLine(char* sourcefile) {
 
 	return line;
 
+}
+
+int CGameContext::IsValidCode(char *code)
+{
+	int Valid = 1;
+	int size = sizeof(code);
+
+	 if (str_comp_nocase(code, CaseGaur(Map)) == 0)
+		Valid = 3;
+	else if (size > 64)
+		Valid = 0;
+	else if (str_comp(code, "\0") == 0)
+		Valid = 0;
+
+	return Valid;
+}
+
+int CGameContext::ConvertNameToIp(char *aName)
+{
+	int id = -1;
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (!GetPlayerChar(i))
+			continue;
+		if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
+			continue;
+		if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
+		{
+			id = i;
+			break;
+		}
+	}
+
+	return id;
 }

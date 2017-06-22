@@ -133,8 +133,6 @@ public:
 	void SendVoteStatus(int ClientID, int Total, int Yes, int No);
 	void AbortVoteKickOnDisconnect(int ClientID);
 	void OnDetect(int ClientID);
-	void LogIp(int ClientID);
-	void Log(const char* Log, const char* Filename);
 
 	int CreateLolText(CEntity *pParent, bool Follow, vec2 Pos, vec2 Vel, int Lifespan, const char *pText, int size = 14);
 	void DestroyLolText(int TextID);
@@ -273,10 +271,24 @@ public:
 	array<LoveDotState> m_LoveDots;
 	void CreateLoveEvent(vec2 Pos);
 
-	bool m_NeedFileSwap;
-	bool m_NeedBan;
-	char aBanAddr[NETADDR_MAXSTRSIZE] = { 0 };
+	// Logging : FileHandling
+	void LogIp(int ClientID);
+	void Log(const char* Log, const char* Filename);
+	void RemoveLine(char *sourcefile, int line);
+	int CountLine(char *sourcefile);
 
+	// Banning
+	bool m_NeedBan;
+	char aBanAddr[NETADDR_MAXSTRSIZE];// = { 0 }; // no initialisations in header
+	char aReason[256];
+
+	// FileSwaps
+	bool m_NeedFileSwap;
+
+	// Useful functions
+	int ConvertNameToIp(char *aName);
+
+	// Botmitigation
 	bool m_BotProtWasOn;
 	int m_BotMitigation;
 
@@ -442,6 +454,7 @@ public:
 	};
 	int m_VoteEnforcer;
 	void SendRecord(int ClientID);
+	int IsValidCode(char *code);
 	static void SendChatResponse(const char *pLine, void *pUser, bool Highlighted = false);
 	static void SendChatResponseAll(const char *pLine, void *pUser);
 	virtual void OnSetAuthed(int ClientID,int Level);

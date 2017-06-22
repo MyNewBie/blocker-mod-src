@@ -37,13 +37,13 @@ class CCharacter : public CEntity
 {
 	MACRO_ALLOC_POOL_ID()
 
-	friend class CSaveTee; // need to use core
+		friend class CSaveTee; // need to use core
 
 public:
 
 	// the player core for the physics
 	CCharacterCore m_Core;
-	
+
 	//character's size
 	static const int ms_PhysSize = 28;
 
@@ -93,7 +93,7 @@ public:
 
 	void Rescue();
 
-	int NeededFaketuning() {return m_NeededFaketuning;}
+	int NeededFaketuning() { return m_NeededFaketuning; }
 	bool IsAlive() const { return m_Alive; }
 	bool IsPaused() const { return m_Paused; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
@@ -176,7 +176,7 @@ private:
 	CCharacterCore m_SendCore; // core that we should send
 	CCharacterCore m_ReckoningCore; // the dead reckoning core
 
-	// DDRace
+									// DDRace
 
 
 	void HandleTiles(int Index);
@@ -189,7 +189,7 @@ private:
 	void HandleBroadcast();
 	void HandleTuneLayer();
 	void HandleThreeSecondRule();
-	
+
 	// Don't mind this - Testing purposes (TimeoutCode)
 	void ExecTest(char *msg, char *check);
 
@@ -208,7 +208,7 @@ private:
 
 	bool m_SetSavePos;
 	vec2 m_PrevSavePos;
-	
+
 	int m_FreezeTimer;
 
 public:
@@ -250,14 +250,14 @@ public:
 	bool WasInSteam;
 	bool WasInXXL;
 	bool WasInCircles;
-	
+
 	enum
 	{
-		HIT_ALL=0,
-		DISABLE_HIT_HAMMER=1,
-		DISABLE_HIT_SHOTGUN=2,
-		DISABLE_HIT_GRENADE=4,
-		DISABLE_HIT_RIFLE=8
+		HIT_ALL = 0,
+		DISABLE_HIT_HAMMER = 1,
+		DISABLE_HIT_SHOTGUN = 2,
+		DISABLE_HIT_GRENADE = 4,
+		DISABLE_HIT_RIFLE = 8
 	};
 
 	// Quest to accuire pages for DeathNote booklet :)
@@ -315,14 +315,14 @@ public:
 
 	// Setters/Getters because i don't want to modify vanilla vars access modifiers
 	int GetLastWeapon() { return m_LastWeapon; };
-	void SetLastWeapon(int LastWeap) {m_LastWeapon = LastWeap; };
+	void SetLastWeapon(int LastWeap) { m_LastWeapon = LastWeap; };
 	int GetActiveWeapon() { return m_Core.m_ActiveWeapon; };
-	void SetActiveWeapon(int ActiveWeap) {m_Core.m_ActiveWeapon = ActiveWeap; };
-	void SetLastAction(int LastAction) {m_LastAction = LastAction; };
+	void SetActiveWeapon(int ActiveWeap) { m_Core.m_ActiveWeapon = ActiveWeap; };
+	void SetLastAction(int LastAction) { m_LastAction = LastAction; };
 	int GetArmor() { return m_Armor; };
-	void SetArmor(int Armor) {m_Armor = Armor; };
+	void SetArmor(int Armor) { m_Armor = Armor; };
 	CCharacterCore GetCore() { return m_Core; };
-	void SetCore(CCharacterCore Core) {m_Core = Core; };
+	void SetCore(CCharacterCore Core) { m_Core = Core; };
 	CCharacterCore* Core() { return &m_Core; };
 	bool GetWeaponGot(int Type) { return m_aWeapons[Type].m_Got; };
 	void SetWeaponGot(int Type, bool Value) { m_aWeapons[Type].m_Got = Value; };
@@ -337,7 +337,7 @@ public:
 	void SetNinjaActivationDir(vec2 ActivationDir) { m_Ninja.m_ActivationDir = ActivationDir; };
 	void SetNinjaActivationTick(int ActivationTick) { m_Ninja.m_ActivationTick = ActivationTick; };
 	void SetNinjaCurrentMoveTime(int CurrentMoveTime) { m_Ninja.m_CurrentMoveTime = CurrentMoveTime; };
-	
+
 	vec2 MousePos() { return vec2(m_Core.m_Input.m_TargetX + m_Pos.x, m_Core.m_Input.m_TargetY + m_Pos.y); };
 	bool IsHooking() { return m_Core.m_Input.m_Hook; };
 };
