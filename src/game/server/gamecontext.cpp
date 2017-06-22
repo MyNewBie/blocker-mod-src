@@ -1846,7 +1846,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
 					pPlayer->m_EpicCircle ^= 1;
-					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Circle activated" : "Circle deactivated");
+					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Circle activated" : "Circle deactivated"); 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "givepage ", 9) == 0 && Server()->IsAuthed(ClientID))
 				{
@@ -1946,6 +1946,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Able to use /weapons at any time (Non-Active-Tournaments)");
 					SendChatTarget(ClientID, "- Able to use /rainbow (Epiletic)");
 					SendChatTarget(ClientID, "- Able to use /circle");
+					SendChatTarget(ClientID, "- Able to use /lovely");
+					SendChatTarget(ClientID, "- Able to use /heartguns");
+					SendChatTarget(ClientID, "- Able to use /ball");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Autokick ", 9) == 0 && m_apPlayers[ClientID]->m_Authed)
