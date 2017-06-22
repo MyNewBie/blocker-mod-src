@@ -1953,6 +1953,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Able to use /lovely");
 					SendChatTarget(ClientID, "- Able to use /heartguns");
 					SendChatTarget(ClientID, "- Able to use /ball");
+					SendChatTarget(ClientID, "- Able to use /getclientid");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Autoban ", 8) == 0 && m_apPlayers[ClientID]->m_Authed)
