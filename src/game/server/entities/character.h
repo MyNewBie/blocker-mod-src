@@ -324,6 +324,7 @@ public:
 	CCharacterCore GetCore() { return m_Core; };
 	void SetCore(CCharacterCore Core) { m_Core = Core; };
 	CCharacterCore* Core() { return &m_Core; };
+	CNetObj_PlayerInput* Input() { return &m_Input; };
 	bool GetWeaponGot(int Type) { return m_aWeapons[Type].m_Got; };
 	void SetWeaponGot(int Type, bool Value) { m_aWeapons[Type].m_Got = Value; };
 	int GetWeaponAmmo(int Type) { return m_aWeapons[Type].m_Ammo; };

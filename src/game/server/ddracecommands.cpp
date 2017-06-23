@@ -637,6 +637,17 @@ void CGameContext::ConSkin(IConsole::IResult *pResult, void *pUserData)
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
 }
 
+void CGameContext::ConSendSound(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int ClientID = clamp(pResult->GetInteger(0), 0, 64), Sound = clamp(pResult->GetInteger(1), 0, 40);
+
+	if(pSelf->m_apPlayers[ClientID] && pSelf->GetPlayerChar(ClientID))
+	{
+		pSelf->CreateSound(pSelf->GetPlayerChar(ClientID)->Core()->m_Pos, Sound, -1LL);
+	}
+}
+
 void CGameContext::ConKill(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;

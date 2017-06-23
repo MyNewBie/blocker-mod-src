@@ -82,6 +82,7 @@ class CGameContext : public IGameServer
 	static void ConRestart(IConsole::IResult *pResult, void *pUserData);
 	static void ConBroadcast(IConsole::IResult *pResult, void *pUserData);
 	static void ConSay(IConsole::IResult *pResult, void *pUserData);
+	static void ConSayBy(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetTeamAll(IConsole::IResult *pResult, void *pUserData);
 	//static void ConSwapTeams(IConsole::IResult *pResult, void *pUserData);
@@ -327,6 +328,7 @@ private:
 	static void ConClan(IConsole::IResult *pResult, void *pUserData);
 	static void ConFreeze(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnFreeze(IConsole::IResult *pResult, void *pUserData);
+	static void ConSendSound(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConNinja(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnSolo(IConsole::IResult *pResult, void *pUserData);
