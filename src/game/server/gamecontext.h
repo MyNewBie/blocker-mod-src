@@ -320,6 +320,7 @@ private:
 	static void ConLovely(IConsole::IResult *pResult, void *pUserData); // Give or remove lovely
 	static void ConBall(IConsole::IResult *pResult, void *pUserData); // Give or remove ball
 	static void ConHeartGuns(IConsole::IResult *pResult, void *pUserData); // Give or remove heartguns
+	static void ConRainbowHook(IConsole::IResult *pResult, void *pUserData); // Give or remove rainbow hook
 	static void ConVip(IConsole::IResult *pResult, void *pUserData); // Give or remove vip
 	static void ConCheckVip(IConsole::IResult *pResult, void *pUserData); // check for vip
 	static void ConSmarthammer(IConsole::IResult *pResult, void *pUserData); // Give or remove smarthammer

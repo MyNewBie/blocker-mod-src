@@ -93,6 +93,8 @@ public:
 
 	void Rescue();
 
+	void ResetRainbowHook();
+
 	int NeededFaketuning() { return m_NeededFaketuning; }
 	bool IsAlive() const { return m_Alive; }
 	bool IsPaused() const { return m_Paused; }
@@ -243,6 +245,8 @@ public:
 	bool m_XXL;
 	bool m_Bloody;
 	bool m_Steamy;
+	// rainbow hook
+	int RainbowHookedID;
 	// Prevention spam for tiles
 	bool WasInRainbow;
 	bool WasInHH;

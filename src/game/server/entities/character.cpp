@@ -81,6 +81,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	if (pPlayer->m_IsBallSpawned)
 		pPlayer->m_pBall = new CBall(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
 
+	RainbowHookedID = -1;
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision(), &((CGameControllerDDRace*)GameServer()->m_pController)->m_Teams.m_Core, &((CGameControllerDDRace*)GameServer()->m_pController)->m_TeleOuts);
@@ -851,26 +852,36 @@ void CCharacter::Tick()
 		return;
 
 	Clean();
-
-	HandleGameModes();
-	HandleLevelSystem();
-	HandleBots();
-	HandleThreeSecondRule();
+	
 	m_LovelyLifeSpan--;
-
 	if(m_pPlayer->m_Lovely)
 	{
 		if (m_LovelyLifeSpan <= 0)
 		{
 			GameServer()->CreateLoveEvent(vec2(m_Pos.x+(rand()%50-25), m_Pos.y-35));
-                
-			//GameServer()->SendEmoticon(m_pPlayer->GetCID(), EMOTICON_HEARTS); it's beautiful
+
 			SetEmote(2, Server()->Tick() + 2 * Server()->TickSpeed());
 			m_LovelyLifeSpan = Server()->TickSpeed() - (rand()%(45 - 35 + 1) + 35);
 		}
 	}
- 
-									// ok like that?
+
+	if(m_Core.m_HookedPlayer != -1 && m_pPlayer->m_RainbowHook)
+	{
+		RainbowHookedID = m_Core.m_HookedPlayer;
+		if(GameServer()->m_apPlayers[RainbowHookedID])
+			GameServer()->m_apPlayers[RainbowHookedID]->m_Rainbowepiletic = true;
+	}
+	else
+	{
+		if(GameServer()->m_apPlayers[RainbowHookedID])
+			GameServer()->m_apPlayers[RainbowHookedID]->m_Rainbowepiletic = false;
+		RainbowHookedID = -1;
+	}
+
+	HandleGameModes();
+	HandleLevelSystem();
+	HandleBots();
+	HandleThreeSecondRule();
 	DDRaceTick();
 
 	m_Core.m_Input = m_Input;
@@ -1026,6 +1037,8 @@ void CCharacter::Die(int Killer, int Weapon)
 
 	if (Server()->IsRecording(m_pPlayer->GetCID()))
 		Server()->StopRecord(m_pPlayer->GetCID());
+
+	ResetRainbowHook();
 
 	int ModeSpecial = GameServer()->m_pController->OnCharacterDeath(this, GameServer()->m_apPlayers[Killer], Weapon);
 
@@ -3260,4 +3273,14 @@ bool CCharacter::AimHitCharacter()
 		return true;
 
 	return false;
+}
+
+void CCharacter::ResetRainbowHook()
+{
+	if(RainbowHookedID != -1)
+	{
+		if(GameServer()->m_apPlayers[RainbowHookedID])
+			GameServer()->m_apPlayers[RainbowHookedID]->m_Rainbowepiletic = false;
+		RainbowHookedID = -1;
+	}
 }

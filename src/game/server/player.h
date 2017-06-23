@@ -31,16 +31,7 @@ public:
 	void SetTeam(int Team, bool DoChatMsg = true);
 	int GetTeam() const { return m_Team; };
 	int GetCID() const { return m_ClientID; };
-	
-	// mod
-	bool m_Lovely;
-	
-	CBall *m_pBall;
-	bool m_IsBallSpawned;
-	
-	bool m_HeartGuns;
-	//
-	
+
 	void Tick();
 	void PostTick();
 
@@ -269,6 +260,13 @@ public:
 	bool m_Troll;
 	bool m_WasTrolled;
 	bool m_WasDrunk;
+	//mod
+	bool m_Lovely;
+	bool m_HeartGuns;
+	CBall *m_pBall;
+	bool m_IsBallSpawned;
+	bool m_RainbowHook;
+	//
 
 	// City
 	struct

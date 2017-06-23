@@ -20,6 +20,7 @@ CONSOLE_COMMAND("rainbow_pl", "v[id]", CFGFLAG_SERVER, ConRainbow, this, "give/r
 CONSOLE_COMMAND("lovely_pl", "v[id]", CFGFLAG_SERVER, ConLovely, this, "give/remove player v lovely")
 CONSOLE_COMMAND("ball_pl", "v[id]", CFGFLAG_SERVER, ConBall, this, "give/remove player v ball")
 CONSOLE_COMMAND("heartguns_pl", "v[id]", CFGFLAG_SERVER, ConHeartGuns, this, "give/remove player v heartguns")
+CONSOLE_COMMAND("rainbowhook_pl", "v[id]", CFGFLAG_SERVER, ConRainbowHook, this, "give/remove player v rainbow hook")
 CONSOLE_COMMAND("vip_pl", "v[id]", CFGFLAG_SERVER, ConVip, this, "give/remove player v vip")
 CONSOLE_COMMAND("check_vip_pl", "v[id]", CFGFLAG_SERVER, ConCheckVip, this, "check player v for vip")
 CONSOLE_COMMAND("rename_pl", "vr", CFGFLAG_SERVER|CMDFLAG_TEST, ConRename, this, "Renames i name to s")

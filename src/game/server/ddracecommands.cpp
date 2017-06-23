@@ -311,6 +311,22 @@ void CGameContext::ConHeartGuns(IConsole::IResult *pResult, void *pUserData) // 
 	}
 }
 
+void CGameContext::ConRainbowHook(IConsole::IResult *pResult, void *pUserData) // give or remove rainbow hook
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_RainbowHook ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_RainbowHook ? "%s gave you rainbow hook!" : "%s removed your rainbow hook!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
 void CGameContext::ConVip(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;

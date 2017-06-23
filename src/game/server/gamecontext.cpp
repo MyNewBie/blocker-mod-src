@@ -1835,7 +1835,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					pPlayer->QuestTellObjective();
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "rainbow", 7) == 0 && pPlayer->m_AccData.m_Vip)
+				else if (str_comp(pMsg->m_pMessage + 1, "rainbow") == 0 && pPlayer->m_AccData.m_Vip)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
@@ -1847,7 +1847,20 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
 					pPlayer->m_EpicCircle ^= 1;
-					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Circle deactivated" : "Circle activated"); 
+					SendChatTarget(ClientID, pPlayer->m_EpicCircle ? "Circle activated" : "Circle deactivated"); 
+				}
+				else if (str_comp(pMsg->m_pMessage + 1, "rainbowhook") == 0 && pPlayer->m_AccData.m_Vip)
+				{ // TODO: Improve the code of this rainbowhook (working atm.).
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+
+					pPlayer->m_RainbowHook ^= 1;
+					SendChatTarget(ClientID, pPlayer->m_RainbowHook ? "Rainbow hook activated" : "Rainbow hook deactivated"); 
+
+					if(!pPlayer->m_RainbowHook)
+					{
+						pPlayer->GetCharacter()->ResetRainbowHook();
+					}
 				}
 				else if (str_comp(pMsg->m_pMessage + 1, "tele") == 0 && Server()->IsAuthed(ClientID))
 				{
@@ -1963,6 +1976,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Able to use /lovely");
 					SendChatTarget(ClientID, "- Able to use /heartguns");
 					SendChatTarget(ClientID, "- Able to use /ball");
+					SendChatTarget(ClientID, "- Able to use /rainbowhook");
 					SendChatTarget(ClientID, "- Able to use /getclientid");
 					SendChatTarget(ClientID, "====================");
 				}
