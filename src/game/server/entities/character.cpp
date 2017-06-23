@@ -1601,6 +1601,21 @@ void CCharacter::HandleTiles(int Index)
 	int FTile2 = GameServer()->Collision()->GetFTileIndex(S2);
 	int FTile3 = GameServer()->Collision()->GetFTileIndex(S3);
 	int FTile4 = GameServer()->Collision()->GetFTileIndex(S4);
+	
+	// Fix tiles when going inside
+	if(((m_TileIndex != TILE_HEAVYHAMMER) && (m_TileFIndex != TILE_HEAVYHAMMER)) && WasInHH)
+		WasInHH = false;
+	else if(((m_TileIndex != TILE_EPICCIRCLES) && (m_TileFIndex != TILE_EPICCIRCLES)) && WasInCircles)
+		WasInCircles = false;
+	else if(((m_TileIndex != TILE_XXL) && (m_TileFIndex != TILE_XXL)) && WasInXXL)
+		WasInXXL = false;
+	else if(((m_TileIndex != TILE_BLOODY) && (m_TileFIndex != TILE_BLOODY)) && WasInBloody)
+		WasInBloody = false;
+	else if(((m_TileIndex != TILE_STEAMY) && (m_TileFIndex != TILE_STEAMY)) && WasInSteam)
+		WasInSteam = false;
+	else if(((m_TileIndex != TILE_RAINBOW) && (m_TileFIndex != TILE_RAINBOW)) && WasInRainbow)
+		WasInRainbow = false;
+
 	if (Index < 0)
 	{
 		m_LastRefillJumps = false;
@@ -3186,15 +3201,6 @@ void CCharacter::Clean()
 	// handle info spam
 	if ((Server()->Tick() % 50) && m_pPlayer->m_IsEmote)
 		m_pPlayer->m_IsEmote = false;
-	if ((Server()->Tick() % 80) == 0 && (WasInBloody || WasInCircles || WasInHH || WasInRainbow || WasInSteam || WasInXXL))
-	{
-		WasInBloody = false;
-		WasInCircles = false;
-		WasInHH = false;
-		WasInRainbow = false;
-		WasInSteam = false;
-		WasInXXL = false;
-	}
 	if ((Server()->Tick() % 150) == 0 && m_TilePauser) // Ugly asf TODO: FIX
 		m_TilePauser = false;
 	if ((Server()->Tick() % 150) == 0 && m_AntiSpam) // Ugly asf TODO: FIX

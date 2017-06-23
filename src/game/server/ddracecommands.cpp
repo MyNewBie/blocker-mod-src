@@ -256,6 +256,58 @@ void CGameContext::ConRainbow(IConsole::IResult *pResult, void *pUserData) // gi
 	}
 }
 
+void CGameContext::ConLovely(IConsole::IResult *pResult, void *pUserData) // give or remove Lovely
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_Lovely ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Lovely ? "%s gave you lovely!" : "%s removed your lovely!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConBall(IConsole::IResult *pResult, void *pUserData) // give or remove Ball
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+
+	int Victim = pResult->GetVictim();
+	CPlayer* pPlayer = pSelf->m_apPlayers[Victim];
+
+	if (pPlayer)
+	{
+		pPlayer->m_IsBallSpawned ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pPlayer->m_IsBallSpawned ? "%s gave you ball!" : "%s removed your ball!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+
+			pPlayer->m_pBall->Reset();
+	}
+}
+
+void CGameContext::ConHeartGuns(IConsole::IResult *pResult, void *pUserData) // give or remove heartguns
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_HeartGuns ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_HeartGuns ? "%s gave you heartguns!" : "%s removed your heartguns!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
 void CGameContext::ConVip(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
