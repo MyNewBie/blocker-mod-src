@@ -288,6 +288,9 @@ void CGameContext::ConBall(IConsole::IResult *pResult, void *pUserData) // give 
 		str_format(aBuf, sizeof(aBuf), pPlayer->m_IsBallSpawned ? "%s gave you ball!" : "%s removed your ball!", pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
 
+		if (pPlayer->m_IsBallSpawned && pSelf->GetPlayerChar(Victim))
+			pPlayer->m_pBall = new CBall(&pSelf->m_World, pSelf->GetPlayerChar(Victim)->m_Pos, Victim);
+		else if (!pPlayer->m_IsBallSpawned && pSelf->GetPlayerChar(Victim))
 			pPlayer->m_pBall->Reset();
 	}
 }
