@@ -1532,6 +1532,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				else if (str_comp(pMsg->m_pMessage + 1, "fixaccounts") == 0 && Server()->IsMod(pPlayer->GetCID()))
 				{
 					Server()->FixAccounts();
+					SendChatTarget(pPlayer->GetCID(), "Accounts fixed!");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "smarthammer", 11) == 0 && pPlayer->m_Authed)
 				{
@@ -2611,7 +2612,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			if (!pPlayer->m_Authed && !pPlayer->m_AccData.m_Vip && g_Config.m_SvSpamprotection && pPlayer->m_LastChangeInfo && pPlayer->m_LastChangeInfo + Server()->TickSpeed()*g_Config.m_SvInfoChangeDelay > Server()->Tick())
 				return;
 
-			if(pPlayer->m_AccData.m_Vip && pPlayer->m_LastChangeInfo && pPlayer->m_LastChangeInfo + Server()->TickSpeed()*0.1 > Server()->Tick())
+			if(!pPlayer->m_Authed && pPlayer->m_AccData.m_Vip && pPlayer->m_LastChangeInfo && pPlayer->m_LastChangeInfo + Server()->TickSpeed()*0.1 > Server()->Tick())
 				return;
 
 			CNetMsg_Cl_ChangeInfo *pMsg = (CNetMsg_Cl_ChangeInfo *)pRawMsg;
