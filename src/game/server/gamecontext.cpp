@@ -1529,6 +1529,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->GetCharacter()->ToggleColl();
 					pPlayer->GetCharacter()->IsColliding() ? SendChatTarget(ClientID, "[Collision]: Enabled!") : SendChatTarget(ClientID, "[Collision]: Disabled!");
 				}*/
+				else if (str_comp(pMsg->m_pMessage + 1, "fixaccounts") == 0 && Server()->IsMod(pPlayer->GetCID()))
 				{
 					Server()->FixAccounts();
 				}
