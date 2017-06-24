@@ -40,7 +40,7 @@ void CBall::Reset()
 void CBall::Tick()
 {
 	CCharacter* pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
-	if(!pOwnerChar)
+	if(!pOwnerChar || !pOwnerChar->IsAlive())
     {
         Reset();
         return;

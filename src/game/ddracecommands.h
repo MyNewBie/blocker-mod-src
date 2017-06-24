@@ -75,6 +75,8 @@ CONSOLE_COMMAND("mutes", "", CFGFLAG_SERVER, ConMutes, this, "");
 
 CONSOLE_COMMAND("freezehammer", "v[id]", CFGFLAG_SERVER, ConFreezeHammer, this, "Gives a player Freeze Hammer")
 CONSOLE_COMMAND("unfreezehammer", "v[id]", CFGFLAG_SERVER, ConUnFreezeHammer, this, "Removes Freeze Hammer from a player")
+
+CONSOLE_COMMAND("fixaccounts", "", CFGFLAG_SERVER, ConFixAccounts, this, "allow players to login back.");
 #undef CONSOLE_COMMAND
 
 #endif

@@ -93,7 +93,8 @@ public:
 
 	void Rescue();
 
-	void ResetRainbowHook();
+	void HandleLovely();
+	void HandleRainbowHook(bool Reset);
 
 	int NeededFaketuning() { return m_NeededFaketuning; }
 	bool IsAlive() const { return m_Alive; }

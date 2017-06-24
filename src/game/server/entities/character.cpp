@@ -854,29 +854,9 @@ void CCharacter::Tick()
 	Clean();
 	
 	m_LovelyLifeSpan--;
-	if(m_pPlayer->m_Lovely)
-	{
-		if (m_LovelyLifeSpan <= 0)
-		{
-			GameServer()->CreateLoveEvent(vec2(m_Pos.x+(rand()%50-25), m_Pos.y-35));
+	HandleLovely();
 
-			SetEmote(2, Server()->Tick() + 2 * Server()->TickSpeed());
-			m_LovelyLifeSpan = Server()->TickSpeed() - (rand()%(45 - 35 + 1) + 35);
-		}
-	}
-
-	if(m_Core.m_HookedPlayer != -1 && m_pPlayer->m_RainbowHook)
-	{
-		RainbowHookedID = m_Core.m_HookedPlayer;
-		if(GameServer()->m_apPlayers[RainbowHookedID])
-			GameServer()->m_apPlayers[RainbowHookedID]->m_Rainbowepiletic = true;
-	}
-	else
-	{
-		if(GameServer()->m_apPlayers[RainbowHookedID])
-			GameServer()->m_apPlayers[RainbowHookedID]->m_Rainbowepiletic = false;
-		RainbowHookedID = -1;
-	}
+	HandleRainbowHook(false);
 
 	HandleGameModes();
 	HandleLevelSystem();
@@ -1038,7 +1018,7 @@ void CCharacter::Die(int Killer, int Weapon)
 	if (Server()->IsRecording(m_pPlayer->GetCID()))
 		Server()->StopRecord(m_pPlayer->GetCID());
 
-	ResetRainbowHook();
+	HandleRainbowHook(true);
 
 	int ModeSpecial = GameServer()->m_pController->OnCharacterDeath(this, GameServer()->m_apPlayers[Killer], Weapon);
 
@@ -2859,7 +2839,7 @@ void CCharacter::HandleBots()
 	AimPoint = direction(Angle)*length(AimPoint);
 	}
 
-	/*if (GetPlayer()->m_Bots.m_AutoHook)
+	if (GetPlayer()->m_Bots.m_AutoHook)
 	{
 	CCharacter *pMain = GetPlayer()->GetCharacter();
 	if (pMain->GetPlayer()->m_PlayerFlags&PLAYERFLAG_AIM)
@@ -3275,12 +3255,47 @@ bool CCharacter::AimHitCharacter()
 	return false;
 }
 
-void CCharacter::ResetRainbowHook()
+void CCharacter::HandleLovely()
 {
-	if(RainbowHookedID != -1)
+	if(m_pPlayer->m_Lovely)
 	{
-		if(GameServer()->m_apPlayers[RainbowHookedID])
-			GameServer()->m_apPlayers[RainbowHookedID]->m_Rainbowepiletic = false;
-		RainbowHookedID = -1;
+		if (m_LovelyLifeSpan <= 0)
+		{
+			GameServer()->CreateLoveEvent(vec2(m_Pos.x+(rand()%50-25), m_Pos.y-35));
+
+			SetEmote(2, Server()->Tick() + 2 * Server()->TickSpeed());
+			m_LovelyLifeSpan = Server()->TickSpeed() - (rand()%(45 - 35 + 1) + 35);
+		}
 	}
+}
+
+void CCharacter::HandleRainbowHook(bool Reset)
+{
+	switch(Reset)
+	{
+		case true:
+			if(RainbowHookedID != -1)
+			{
+				if(GameServer()->m_apPlayers[RainbowHookedID])
+					GameServer()->m_apPlayers[RainbowHookedID]->m_Rainbowepiletic = false;
+				RainbowHookedID = -1;
+			}
+		break;
+
+		case false:
+			if(m_pPlayer->m_RainbowHook)
+			{
+				if(m_Core.m_HookedPlayer != -1 && GameServer()->GetPlayerChar(m_Core.m_HookedPlayer))
+				{
+					RainbowHookedID = m_Core.m_HookedPlayer;
+					GameServer()->m_apPlayers[RainbowHookedID]->m_Rainbowepiletic = true;
+				}
+				else
+				{	
+					HandleRainbowHook(true);
+				}
+			}
+		break;
+	}
+	
 }

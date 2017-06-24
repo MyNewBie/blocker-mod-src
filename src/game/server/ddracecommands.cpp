@@ -1007,3 +1007,13 @@ void CGameContext::ConUnFreeze(IConsole::IResult *pResult, void *pUserData)
 	str_format(aBuf, sizeof(aBuf), "'%s' ClientID=%d has been defrosted.", pServ->ClientName(Victim), Victim);
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
 }
+
+void CGameContext::ConFixAccounts(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	pSelf->Server()->FixAccounts();
+
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "Accounts fixed!");
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
+}

@@ -1529,6 +1529,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->GetCharacter()->ToggleColl();
 					pPlayer->GetCharacter()->IsColliding() ? SendChatTarget(ClientID, "[Collision]: Enabled!") : SendChatTarget(ClientID, "[Collision]: Disabled!");
 				}*/
+				{
+					Server()->FixAccounts();
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "smarthammer", 11) == 0 && pPlayer->m_Authed)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
@@ -1859,7 +1862,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					if(!pPlayer->m_RainbowHook)
 					{
-						pPlayer->GetCharacter()->ResetRainbowHook();
+						pPlayer->GetCharacter()->HandleRainbowHook(true);
 					}
 				}
 				else if (str_comp(pMsg->m_pMessage + 1, "tele") == 0 && Server()->IsAuthed(ClientID))
@@ -2605,6 +2608,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 		else if (MsgID == NETMSGTYPE_CL_CHANGEINFO)
 		{
 			if (!pPlayer->m_Authed && !pPlayer->m_AccData.m_Vip && g_Config.m_SvSpamprotection && pPlayer->m_LastChangeInfo && pPlayer->m_LastChangeInfo + Server()->TickSpeed()*g_Config.m_SvInfoChangeDelay > Server()->Tick())
+				return;
+
+			if(pPlayer->m_AccData.m_Vip && pPlayer->m_LastChangeInfo && pPlayer->m_LastChangeInfo + Server()->TickSpeed()*0.1 > Server()->Tick())
 				return;
 
 			CNetMsg_Cl_ChangeInfo *pMsg = (CNetMsg_Cl_ChangeInfo *)pRawMsg;
