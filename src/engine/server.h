@@ -153,10 +153,14 @@ public:
 	};
 	virtual void SetRconCID(int ClientID) = 0;
 	virtual bool IsAuthed(int ClientID) = 0;
+	virtual bool IsAdmin(int ClientID) = 0;
+	virtual bool IsMod(int ClientID) = 0;
 	virtual void Kick(int ClientID, const char *pReason) = 0;
 
 	virtual void DemoRecorder_HandleAutoStart() = 0;
 	virtual bool DemoRecorder_IsRecording() = 0;
+
+	virtual void FixAccounts() = 0;
 
 	// DDRace
 

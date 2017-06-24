@@ -81,6 +81,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	if (pPlayer->m_IsBallSpawned)
 		pPlayer->m_pBall = new CBall(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
 
+	RainbowHookedID = -1;
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision(), &((CGameControllerDDRace*)GameServer()->m_pController)->m_Teams.m_Core, &((CGameControllerDDRace*)GameServer()->m_pController)->m_TeleOuts);
@@ -851,26 +852,16 @@ void CCharacter::Tick()
 		return;
 
 	Clean();
+	
+	m_LovelyLifeSpan--;
+	HandleLovely();
+
+	HandleRainbowHook(false);
 
 	HandleGameModes();
 	HandleLevelSystem();
 	HandleBots();
 	HandleThreeSecondRule();
-	m_LovelyLifeSpan--;
-
-	if(m_pPlayer->m_Lovely)
-	{
-		if (m_LovelyLifeSpan <= 0)
-		{
-			GameServer()->CreateLoveEvent(vec2(m_Pos.x+(rand()%50-25), m_Pos.y-35));
-                
-			//GameServer()->SendEmoticon(m_pPlayer->GetCID(), EMOTICON_HEARTS); it's beautiful
-			SetEmote(2, Server()->Tick() + 2 * Server()->TickSpeed());
-			m_LovelyLifeSpan = Server()->TickSpeed() - (rand()%(45 - 35 + 1) + 35);
-		}
-	}
- 
-									// ok like that?
 	DDRaceTick();
 
 	m_Core.m_Input = m_Input;
@@ -1026,6 +1017,8 @@ void CCharacter::Die(int Killer, int Weapon)
 
 	if (Server()->IsRecording(m_pPlayer->GetCID()))
 		Server()->StopRecord(m_pPlayer->GetCID());
+
+	HandleRainbowHook(true);
 
 	int ModeSpecial = GameServer()->m_pController->OnCharacterDeath(this, GameServer()->m_apPlayers[Killer], Weapon);
 
@@ -1601,6 +1594,21 @@ void CCharacter::HandleTiles(int Index)
 	int FTile2 = GameServer()->Collision()->GetFTileIndex(S2);
 	int FTile3 = GameServer()->Collision()->GetFTileIndex(S3);
 	int FTile4 = GameServer()->Collision()->GetFTileIndex(S4);
+	
+	// Fix tiles when going inside
+	if(((m_TileIndex != TILE_HEAVYHAMMER) && (m_TileFIndex != TILE_HEAVYHAMMER)) && WasInHH)
+		WasInHH = false;
+	else if(((m_TileIndex != TILE_EPICCIRCLES) && (m_TileFIndex != TILE_EPICCIRCLES)) && WasInCircles)
+		WasInCircles = false;
+	else if(((m_TileIndex != TILE_XXL) && (m_TileFIndex != TILE_XXL)) && WasInXXL)
+		WasInXXL = false;
+	else if(((m_TileIndex != TILE_BLOODY) && (m_TileFIndex != TILE_BLOODY)) && WasInBloody)
+		WasInBloody = false;
+	else if(((m_TileIndex != TILE_STEAMY) && (m_TileFIndex != TILE_STEAMY)) && WasInSteam)
+		WasInSteam = false;
+	else if(((m_TileIndex != TILE_RAINBOW) && (m_TileFIndex != TILE_RAINBOW)) && WasInRainbow)
+		WasInRainbow = false;
+
 	if (Index < 0)
 	{
 		m_LastRefillJumps = false;
@@ -2831,7 +2839,7 @@ void CCharacter::HandleBots()
 	AimPoint = direction(Angle)*length(AimPoint);
 	}
 
-	/*if (GetPlayer()->m_Bots.m_AutoHook)
+	if (GetPlayer()->m_Bots.m_AutoHook)
 	{
 	CCharacter *pMain = GetPlayer()->GetCharacter();
 	if (pMain->GetPlayer()->m_PlayerFlags&PLAYERFLAG_AIM)
@@ -3186,15 +3194,6 @@ void CCharacter::Clean()
 	// handle info spam
 	if ((Server()->Tick() % 50) && m_pPlayer->m_IsEmote)
 		m_pPlayer->m_IsEmote = false;
-	if ((Server()->Tick() % 80) == 0 && (WasInBloody || WasInCircles || WasInHH || WasInRainbow || WasInSteam || WasInXXL))
-	{
-		WasInBloody = false;
-		WasInCircles = false;
-		WasInHH = false;
-		WasInRainbow = false;
-		WasInSteam = false;
-		WasInXXL = false;
-	}
 	if ((Server()->Tick() % 150) == 0 && m_TilePauser) // Ugly asf TODO: FIX
 		m_TilePauser = false;
 	if ((Server()->Tick() % 150) == 0 && m_AntiSpam) // Ugly asf TODO: FIX
@@ -3254,4 +3253,49 @@ bool CCharacter::AimHitCharacter()
 		return true;
 
 	return false;
+}
+
+void CCharacter::HandleLovely()
+{
+	if(m_pPlayer->m_Lovely)
+	{
+		if (m_LovelyLifeSpan <= 0)
+		{
+			GameServer()->CreateLoveEvent(vec2(m_Pos.x+(rand()%50-25), m_Pos.y-35));
+
+			SetEmote(2, Server()->Tick() + 2 * Server()->TickSpeed());
+			m_LovelyLifeSpan = Server()->TickSpeed() - (rand()%(45 - 35 + 1) + 35);
+		}
+	}
+}
+
+void CCharacter::HandleRainbowHook(bool Reset)
+{
+	switch(Reset)
+	{
+		case true:
+			if(RainbowHookedID != -1)
+			{
+				if(GameServer()->m_apPlayers[RainbowHookedID])
+					GameServer()->m_apPlayers[RainbowHookedID]->m_Rainbowepiletic = false;
+				RainbowHookedID = -1;
+			}
+		break;
+
+		case false:
+			if(m_pPlayer->m_RainbowHook)
+			{
+				if(m_Core.m_HookedPlayer != -1 && GameServer()->GetPlayerChar(m_Core.m_HookedPlayer))
+				{
+					RainbowHookedID = m_Core.m_HookedPlayer;
+					GameServer()->m_apPlayers[RainbowHookedID]->m_Rainbowepiletic = true;
+				}
+				else
+				{	
+					HandleRainbowHook(true);
+				}
+			}
+		break;
+	}
+	
 }

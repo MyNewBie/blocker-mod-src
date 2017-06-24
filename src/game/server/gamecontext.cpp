@@ -590,7 +590,7 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 			if (p->m_Drunk && (DrunkHead || DrunkHead2))
 				Msg.AddInt(0);
 			if (p->m_Troll && i == 12)
-				Msg.AddInt(-1000);
+				Msg.AddInt(-g_Config.m_SvTrollShake);
 			else if ((i == 31) // collision
 				&& (m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_SOLO
 					|| m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_NOCOLL))
@@ -1529,6 +1529,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->GetCharacter()->ToggleColl();
 					pPlayer->GetCharacter()->IsColliding() ? SendChatTarget(ClientID, "[Collision]: Enabled!") : SendChatTarget(ClientID, "[Collision]: Disabled!");
 				}*/
+				else if (str_comp(pMsg->m_pMessage + 1, "fixaccounts") == 0 && Server()->IsMod(pPlayer->GetCID()))
+				{
+					Server()->FixAccounts();
+					SendChatTarget(pPlayer->GetCID(), "Accounts fixed!");
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "smarthammer", 11) == 0 && pPlayer->m_Authed)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
@@ -1835,7 +1840,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					pPlayer->QuestTellObjective();
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "rainbow", 7) == 0 && pPlayer->m_AccData.m_Vip)
+				else if (str_comp(pMsg->m_pMessage + 1, "rainbow") == 0 && pPlayer->m_AccData.m_Vip)
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
@@ -1847,7 +1852,30 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
 					pPlayer->m_EpicCircle ^= 1;
-					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Circle deactivated" : "Circle activated"); 
+					SendChatTarget(ClientID, pPlayer->m_EpicCircle ? "Circle activated" : "Circle deactivated"); 
+				}
+				else if (str_comp(pMsg->m_pMessage + 1, "rainbowhook") == 0 && pPlayer->m_AccData.m_Vip)
+				{ // TODO: Improve the code of this rainbowhook (working atm.).
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+
+					pPlayer->m_RainbowHook ^= 1;
+					SendChatTarget(ClientID, pPlayer->m_RainbowHook ? "Rainbow hook activated" : "Rainbow hook deactivated"); 
+
+					if(!pPlayer->m_RainbowHook)
+					{
+						pPlayer->GetCharacter()->HandleRainbowHook(true);
+					}
+				}
+				else if (str_comp(pMsg->m_pMessage + 1, "tele") == 0 && Server()->IsAuthed(ClientID))
+				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+
+            		pPlayer->GetCharacter()->Core()->m_Pos = pPlayer->GetCharacter()->MousePos();
+
+            		CreateDeath(pPlayer->GetCharacter()->Core()->m_Pos, ClientID);
+            		pPlayer->m_LastChat = 0;
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "givepage ", 9) == 0 && Server()->IsAuthed(ClientID))
 				{
@@ -1953,6 +1981,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Able to use /lovely");
 					SendChatTarget(ClientID, "- Able to use /heartguns");
 					SendChatTarget(ClientID, "- Able to use /ball");
+					SendChatTarget(ClientID, "- Able to use /rainbowhook");
+					SendChatTarget(ClientID, "- Able to use /getclientid");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Autoban ", 8) == 0 && m_apPlayers[ClientID]->m_Authed)
@@ -2030,6 +2060,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Autokick (name)");
 					SendChatTarget(ClientID, "- Check_Banlistfor (stringTOcheck4)");
 					SendChatTarget(ClientID, "- Delete_BanlistLine (FileLine)");
+					SendChatTarget(ClientID, "- Tele");
 					SendChatTarget(ClientID, "====================");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "w ", 2) == 0)
@@ -2581,6 +2612,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			if (!pPlayer->m_Authed && !pPlayer->m_AccData.m_Vip && g_Config.m_SvSpamprotection && pPlayer->m_LastChangeInfo && pPlayer->m_LastChangeInfo + Server()->TickSpeed()*g_Config.m_SvInfoChangeDelay > Server()->Tick())
 				return;
 
+			if(!pPlayer->m_Authed && pPlayer->m_AccData.m_Vip && pPlayer->m_LastChangeInfo && pPlayer->m_LastChangeInfo + Server()->TickSpeed()*0.1 > Server()->Tick())
+				return;
+
 			CNetMsg_Cl_ChangeInfo *pMsg = (CNetMsg_Cl_ChangeInfo *)pRawMsg;
 			if (!str_utf8_check(pMsg->m_pName)
 				|| !str_utf8_check(pMsg->m_pClan)
@@ -2964,6 +2998,30 @@ void CGameContext::ConSay(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	pSelf->SendChat(-1, CGameContext::CHAT_ALL, pResult->GetString(0));
+}
+
+void CGameContext::ConSayBy(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int ClientID = clamp(pResult->GetInteger(0), -1, 64);
+
+	if(ClientID < 0)
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->m_apPlayers[i])
+				continue;
+
+			pSelf->SendChat(i, CGameContext::CHAT_ALL, pResult->GetString(1));
+		}
+
+		return;
+	}
+
+	if(pSelf->m_apPlayers[ClientID])
+	{
+		pSelf->SendChat(ClientID, CGameContext::CHAT_ALL, pResult->GetString(1));
+	}
 }
 
 void CGameContext::ConSetTeam(IConsole::IResult *pResult, void *pUserData)
@@ -3383,6 +3441,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("restart", "?i[seconds]", CFGFLAG_SERVER | CFGFLAG_STORE, ConRestart, this, "Restart in x seconds (0 = abort)");
 	Console()->Register("broadcast", "r[message]", CFGFLAG_SERVER, ConBroadcast, this, "Broadcast message");
 	Console()->Register("say", "r[message]", CFGFLAG_SERVER, ConSay, this, "Say in chat");
+	Console()->Register("say_by", "ir[message]", CFGFLAG_SERVER, ConSayBy, this, "Say by [ID (-1 = All)] in chat");
 	Console()->Register("set_team", "i[id] i[team-id] ?i[delay in minutes]", CFGFLAG_SERVER, ConSetTeam, this, "Set team of player to team");
 	Console()->Register("set_team_all", "i[team-id]", CFGFLAG_SERVER, ConSetTeamAll, this, "Set team of all players to team");
 	//Console()->Register("swap_teams", "", CFGFLAG_SERVER, ConSwapTeams, this, "Swap the current teams");

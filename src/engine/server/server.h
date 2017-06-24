@@ -239,6 +239,8 @@ public:
 
 	void SetRconCID(int ClientID);
 	bool IsAuthed(int ClientID);
+	bool IsAdmin(int ClientID);
+	bool IsMod(int ClientID);
 	int GetClientInfo(int ClientID, CClientInfo *pInfo);
 	void GetClientAddr(int ClientID, char *pAddrStr, int Size);
 	const char *ClientName(int ClientID);
@@ -246,6 +248,9 @@ public:
 	int ClientCountry(int ClientID);
 	bool ClientIngame(int ClientID);
 	int MaxClients() const;
+
+	// fixing accounts after crash
+	void FixAccounts();
 
 	virtual int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID);
 	int SendMsgEx(CMsgPacker *pMsg, int Flags, int ClientID, bool System);

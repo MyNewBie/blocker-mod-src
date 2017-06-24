@@ -20,8 +20,6 @@ inline int ms_rand(int *seed)
 	return (*seed >> 0x10) & 0x7FFF;
 }
 
-
-
 // Character, "physical" player's part
 #define FeatureCapture(X) m_ ## X
 MACRO_ALLOC_POOL_ID_IMPL(CPlayer, MAX_CLIENTS)

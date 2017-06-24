@@ -256,6 +256,77 @@ void CGameContext::ConRainbow(IConsole::IResult *pResult, void *pUserData) // gi
 	}
 }
 
+void CGameContext::ConLovely(IConsole::IResult *pResult, void *pUserData) // give or remove Lovely
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_Lovely ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Lovely ? "%s gave you lovely!" : "%s removed your lovely!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConBall(IConsole::IResult *pResult, void *pUserData) // give or remove Ball
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+
+	int Victim = pResult->GetVictim();
+	CPlayer* pPlayer = pSelf->m_apPlayers[Victim];
+
+	if (pPlayer)
+	{
+		pPlayer->m_IsBallSpawned ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pPlayer->m_IsBallSpawned ? "%s gave you ball!" : "%s removed your ball!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+
+		if (pPlayer->m_IsBallSpawned && pSelf->GetPlayerChar(Victim))
+			pPlayer->m_pBall = new CBall(&pSelf->m_World, pSelf->GetPlayerChar(Victim)->m_Pos, Victim);
+		else if (!pPlayer->m_IsBallSpawned && pSelf->GetPlayerChar(Victim))
+			pPlayer->m_pBall->Reset();
+	}
+}
+
+void CGameContext::ConHeartGuns(IConsole::IResult *pResult, void *pUserData) // give or remove heartguns
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_HeartGuns ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_HeartGuns ? "%s gave you heartguns!" : "%s removed your heartguns!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConRainbowHook(IConsole::IResult *pResult, void *pUserData) // give or remove rainbow hook
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_RainbowHook ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_RainbowHook ? "%s gave you rainbow hook!" : "%s removed your rainbow hook!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
 void CGameContext::ConVip(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -580,6 +651,17 @@ void CGameContext::ConSkin(IConsole::IResult *pResult, void *pUserData)
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "%s's skin changed to %s", pSelf->Server()->ClientName(Victim), Skin);
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
+}
+
+void CGameContext::ConSendSound(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int ClientID = clamp(pResult->GetInteger(0), 0, 64), Sound = clamp(pResult->GetInteger(1), 0, 40);
+
+	if(pSelf->m_apPlayers[ClientID] && pSelf->GetPlayerChar(ClientID))
+	{
+		pSelf->CreateSound(pSelf->GetPlayerChar(ClientID)->Core()->m_Pos, Sound, -1LL);
+	}
 }
 
 void CGameContext::ConKill(IConsole::IResult *pResult, void *pUserData)
@@ -923,5 +1005,15 @@ void CGameContext::ConUnFreeze(IConsole::IResult *pResult, void *pUserData)
 	pChr->GetPlayer()->m_RconFreeze = false;
 	CServer* pServ = (CServer*)pSelf->Server();
 	str_format(aBuf, sizeof(aBuf), "'%s' ClientID=%d has been defrosted.", pServ->ClientName(Victim), Victim);
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
+}
+
+void CGameContext::ConFixAccounts(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	pSelf->Server()->FixAccounts();
+
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "Accounts fixed!");
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
 }

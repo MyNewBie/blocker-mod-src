@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <base/math.h>
 #include <base/system.h>
+#include <stdlib.h>
 
 #include <engine/config.h>
 #include <engine/console.h>
@@ -493,6 +494,16 @@ void CServer::SetRconCID(int ClientID)
 bool CServer::IsAuthed(int ClientID)
 {
 	return m_aClients[ClientID].m_Authed;
+}
+
+bool CServer::IsAdmin(int ClientID)
+{
+	return m_aClients[ClientID].m_Authed == AUTHED_ADMIN;
+}
+
+bool CServer::IsMod(int ClientID)
+{
+	return m_aClients[ClientID].m_Authed >= AUTHED_MOD;
 }
 
 int CServer::GetClientInfo(int ClientID, CClientInfo *pInfo)
@@ -2496,4 +2507,12 @@ void CServer::SetRconLevel(int ClientID, int Level)
 int* CServer::GetIdMap(int ClientID)
 {
 	return (int*)(IdMap + VANILLA_MAX_CLIENTS * ClientID);
+}
+
+void CServer::FixAccounts()
+{
+	#if defined(CONF_FAMILY_UNIX)
+		system("sed -i '11s/1/0/' /root/.teeworlds/accounts/*"); // set your account folder path
+	#endif
+	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "fix_accounts", "Done.");
 }

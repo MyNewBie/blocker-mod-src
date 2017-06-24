@@ -82,6 +82,7 @@ class CGameContext : public IGameServer
 	static void ConRestart(IConsole::IResult *pResult, void *pUserData);
 	static void ConBroadcast(IConsole::IResult *pResult, void *pUserData);
 	static void ConSay(IConsole::IResult *pResult, void *pUserData);
+	static void ConSayBy(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetTeamAll(IConsole::IResult *pResult, void *pUserData);
 	//static void ConSwapTeams(IConsole::IResult *pResult, void *pUserData);
@@ -316,6 +317,10 @@ private:
 	static void ConBloody(IConsole::IResult *pResult, void *pUserData); // Give or remove bloody
 	static void ConSteamy(IConsole::IResult *pResult, void *pUserData); // Give or remove steamy
 	static void ConRainbow(IConsole::IResult *pResult, void *pUserData); // Give or remove rainbow
+	static void ConLovely(IConsole::IResult *pResult, void *pUserData); // Give or remove lovely
+	static void ConBall(IConsole::IResult *pResult, void *pUserData); // Give or remove ball
+	static void ConHeartGuns(IConsole::IResult *pResult, void *pUserData); // Give or remove heartguns
+	static void ConRainbowHook(IConsole::IResult *pResult, void *pUserData); // Give or remove rainbow hook
 	static void ConVip(IConsole::IResult *pResult, void *pUserData); // Give or remove vip
 	static void ConCheckVip(IConsole::IResult *pResult, void *pUserData); // check for vip
 	static void ConSmarthammer(IConsole::IResult *pResult, void *pUserData); // Give or remove smarthammer
@@ -324,6 +329,8 @@ private:
 	static void ConClan(IConsole::IResult *pResult, void *pUserData);
 	static void ConFreeze(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnFreeze(IConsole::IResult *pResult, void *pUserData);
+	static void ConFixAccounts(IConsole::IResult *pResult, void *pUserData);
+	static void ConSendSound(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConNinja(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnSolo(IConsole::IResult *pResult, void *pUserData);

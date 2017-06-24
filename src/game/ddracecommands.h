@@ -17,6 +17,10 @@ CONSOLE_COMMAND("smarthammer_pl", "v[id]", CFGFLAG_SERVER, ConSmarthammer, this,
 CONSOLE_COMMAND("bloody_pl", "v[id]", CFGFLAG_SERVER, ConBloody, this, "give/remove player v bloody")
 CONSOLE_COMMAND("steamy_pl", "v[id]", CFGFLAG_SERVER, ConSteamy, this, "give/remove player v steamy")
 CONSOLE_COMMAND("rainbow_pl", "v[id]", CFGFLAG_SERVER, ConRainbow, this, "give/remove player v rainbow")
+CONSOLE_COMMAND("lovely_pl", "v[id]", CFGFLAG_SERVER, ConLovely, this, "give/remove player v lovely")
+CONSOLE_COMMAND("ball_pl", "v[id]", CFGFLAG_SERVER, ConBall, this, "give/remove player v ball")
+CONSOLE_COMMAND("heartguns_pl", "v[id]", CFGFLAG_SERVER, ConHeartGuns, this, "give/remove player v heartguns")
+CONSOLE_COMMAND("rainbowhook_pl", "v[id]", CFGFLAG_SERVER, ConRainbowHook, this, "give/remove player v rainbow hook")
 CONSOLE_COMMAND("vip_pl", "v[id]", CFGFLAG_SERVER, ConVip, this, "give/remove player v vip")
 CONSOLE_COMMAND("check_vip_pl", "v[id]", CFGFLAG_SERVER, ConCheckVip, this, "check player v for vip")
 CONSOLE_COMMAND("rename_pl", "vr", CFGFLAG_SERVER|CMDFLAG_TEST, ConRename, this, "Renames i name to s")
@@ -27,6 +31,7 @@ CONSOLE_COMMAND("skin_pl", "vs", CFGFLAG_SERVER|CMDFLAG_TEST, ConSkin, this, "Ch
 CONSOLE_COMMAND("clan_pl", "vr", CFGFLAG_SERVER|CMDFLAG_TEST, ConClan, this, "Renames i name to s")
 CONSOLE_COMMAND("freeze", "v?i", CFGFLAG_SERVER|CMDFLAG_TEST, ConFreeze, this, "Freezes player v for i seconds (infinite by default)")
 CONSOLE_COMMAND("unfreeze", "v", CFGFLAG_SERVER|CMDFLAG_TEST, ConUnFreeze, this, "Unfreezes player v")
+CONSOLE_COMMAND("send_sound_pl", "ii", CFGFLAG_SERVER|CMDFLAG_TEST, ConSendSound, this, "send sound i to a player i")
 
 CONSOLE_COMMAND("totele", "i[number]", CFGFLAG_SERVER|CMDFLAG_TEST, ConToTeleporter, this, "Teleports you to teleporter v")
 CONSOLE_COMMAND("totelecp", "i[number]", CFGFLAG_SERVER|CMDFLAG_TEST, ConToCheckTeleporter, this, "Teleports you to checkpoint teleporter v")
@@ -70,6 +75,8 @@ CONSOLE_COMMAND("mutes", "", CFGFLAG_SERVER, ConMutes, this, "");
 
 CONSOLE_COMMAND("freezehammer", "v[id]", CFGFLAG_SERVER, ConFreezeHammer, this, "Gives a player Freeze Hammer")
 CONSOLE_COMMAND("unfreezehammer", "v[id]", CFGFLAG_SERVER, ConUnFreezeHammer, this, "Removes Freeze Hammer from a player")
+
+CONSOLE_COMMAND("fixaccounts", "", CFGFLAG_SERVER, ConFixAccounts, this, "allow players to login back.");
 #undef CONSOLE_COMMAND
 
 #endif

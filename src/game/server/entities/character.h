@@ -93,6 +93,9 @@ public:
 
 	void Rescue();
 
+	void HandleLovely();
+	void HandleRainbowHook(bool Reset);
+
 	int NeededFaketuning() { return m_NeededFaketuning; }
 	bool IsAlive() const { return m_Alive; }
 	bool IsPaused() const { return m_Paused; }
@@ -243,6 +246,8 @@ public:
 	bool m_XXL;
 	bool m_Bloody;
 	bool m_Steamy;
+	// rainbow hook
+	int RainbowHookedID;
 	// Prevention spam for tiles
 	bool WasInRainbow;
 	bool WasInHH;
@@ -324,6 +329,7 @@ public:
 	CCharacterCore GetCore() { return m_Core; };
 	void SetCore(CCharacterCore Core) { m_Core = Core; };
 	CCharacterCore* Core() { return &m_Core; };
+	CNetObj_PlayerInput* Input() { return &m_Input; };
 	bool GetWeaponGot(int Type) { return m_aWeapons[Type].m_Got; };
 	void SetWeaponGot(int Type, bool Value) { m_aWeapons[Type].m_Got = Value; };
 	int GetWeaponAmmo(int Type) { return m_aWeapons[Type].m_Ammo; };
