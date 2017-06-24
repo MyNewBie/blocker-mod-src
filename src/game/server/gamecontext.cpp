@@ -1867,7 +1867,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						pPlayer->GetCharacter()->HandleRainbowHook(true);
 					}
 				}
-				else if (str_comp(pMsg->m_pMessage + 1, "tele") == 0 && Server()->IsAuthed(ClientID))
+				else if (str_comp(pMsg->m_pMessage + 1, "tele") == 0 && Server()->IsAdmin(ClientID))
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
