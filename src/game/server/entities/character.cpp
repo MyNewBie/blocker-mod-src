@@ -1170,6 +1170,9 @@ void CCharacter::Snap(int SnappingClient)
 	if (NetworkClipped(SnappingClient))
 		return;
 
+	if(m_pPlayer->m_Invisible && SnappingClient != id)
+		return;
+
 	if (SnappingClient > -1)
 	{
 		CCharacter* SnapChar = GameServer()->GetPlayerChar(SnappingClient);

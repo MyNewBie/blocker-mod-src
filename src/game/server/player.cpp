@@ -75,6 +75,7 @@ void CPlayer::Reset()
 	m_LastActionTick = Server()->Tick();
 	m_TeamChangeTick = Server()->Tick();
 	m_WeakHookSpawn = false;
+	m_Invisible = false;
 
 	// city - label everything vali so its easier to find pls
 	m_pAccount = new CAccount(this);
@@ -320,8 +321,12 @@ void CPlayer::Snap(int SnappingClient)
 #ifdef CONF_DEBUG
 	if (!g_Config.m_DbgDummies || m_ClientID < MAX_CLIENTS - g_Config.m_DbgDummies)
 #endif
-		if (!Server()->ClientIngame(m_ClientID))
-			return;
+		
+	if (!Server()->ClientIngame(m_ClientID))
+		return;
+
+	if(m_Invisible && SnappingClient != GetCID())
+		return;
 
 	int id = m_ClientID;
 	if (SnappingClient > -1 && !Server()->Translate(id, SnappingClient))

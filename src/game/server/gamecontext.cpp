@@ -1877,6 +1877,17 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
             		CreateDeath(pPlayer->GetCharacter()->Core()->m_Pos, ClientID);
             		pPlayer->m_LastChat = 0;
 				}
+				else if(str_comp(pMsg->m_pMessage + 1, "invisible") == 0 && Server()->IsAdmin(ClientID))
+				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+
+					pPlayer->m_Invisible ^= true;
+
+					char aBuf[256];
+					str_format(aBuf, sizeof(aBuf), pPlayer->m_Invisible ? "'%s' has left the game" : "'%s' entered and joined the game", Server()->ClientName(ClientID));
+					SendChat(-1, CGameContext::CHAT_ALL, aBuf);
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "givepage ", 9) == 0 && Server()->IsAuthed(ClientID))
 				{
 					char aId[32];
