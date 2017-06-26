@@ -1903,8 +1903,6 @@ void CCharacter::HandleTiles(int Index)
 	if ((m_TileIndex == TILE_VIP || m_TileFIndex == TILE_VIP) && !m_pPlayer->m_AccData.m_Vip)
 	{
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not a vip!");
-		if (m_pPlayer->m_DND)
-			Server()->SetRconLevel(GetPlayer()->GetCID(), 3);
 		Die(GetPlayer()->GetCID(), WEAPON_WORLD);
 	}
 
