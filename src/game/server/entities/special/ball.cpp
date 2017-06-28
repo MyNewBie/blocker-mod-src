@@ -1,14 +1,13 @@
 /*
- *	Loic
+ *	by Rei
 */
 
 #include <game/generated/protocol.h>
 #include <game/server/gamecontext.h>
-
-#include <game/server/entities/laser.h>
+#include "ball.h"
 
 CBall::CBall(CGameWorld *pGameWorld, vec2 Pos, int Owner)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP)
+: CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Owner = Owner;
 	m_Pos = Pos;
@@ -68,6 +67,9 @@ void CBall::Tick()
 
 void CBall::Snap(int SnappingClient)
 {	
+	if(NetworkClipped(SnappingClient))
+		return;
+
 	CNetObj_Laser *pObj;
 	pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_aIDs[0], sizeof(CNetObj_Laser)));
 
@@ -86,5 +88,4 @@ void CBall::Snap(int SnappingClient)
 
 	pObj2->m_X = (int)m_Pos2.x;
 	pObj2->m_Y = (int)m_Pos2.y;
-
 }

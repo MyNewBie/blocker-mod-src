@@ -266,6 +266,7 @@ public:
 	CBall *m_pBall;
 	bool m_IsBallSpawned;
 	bool m_RainbowHook;
+	bool m_Invisible;
 	//
 
 	// City

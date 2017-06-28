@@ -327,6 +327,26 @@ void CGameContext::ConRainbowHook(IConsole::IResult *pResult, void *pUserData) /
 	}
 }
 
+void CGameContext::ConInvisible(IConsole::IResult *pResult, void *pUserData) // give or remove invisible
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_Invisible ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Invisible ? "%s gave you invisible!" : "%s removed your invisible!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+
+		char FakeMsg[256];
+		str_format(FakeMsg, sizeof(FakeMsg), pSelf->m_apPlayers[Victim]->m_Invisible ? "'%s' has left the game" : "'%s' entered and joined the game", pSelf->Server()->ClientName(Victim));
+		pSelf->SendChat(-1, CGameContext::CHAT_ALL, FakeMsg);
+	}
+}
+
 void CGameContext::ConVip(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;

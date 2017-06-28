@@ -171,7 +171,7 @@ public:
 	void CreateDeath(vec2 Pos, int Who, int64_t Mask=-1);
 	void CreateSound(vec2 Pos, int Sound, int64_t Mask=-1);
 	void CreateSoundGlobal(int Sound, int Target=-1);
-
+	void CreateLoveEvent(vec2 Pos);
 
 	enum
 	{
@@ -262,15 +262,6 @@ public:
 		vec2 m_Center;
 	};
 	std::vector<CKOH> m_KOH;
-	
-	struct LoveDotState // same as top
-	{
-		vec2 m_Pos;
-		int m_LifeSpan;
-		int m_SnapID;
-	};
-	array<LoveDotState> m_LoveDots;
-	void CreateLoveEvent(vec2 Pos);
 
 	// Logging : FileHandling
 	void LogIp(int ClientID);
@@ -321,6 +312,7 @@ private:
 	static void ConBall(IConsole::IResult *pResult, void *pUserData); // Give or remove ball
 	static void ConHeartGuns(IConsole::IResult *pResult, void *pUserData); // Give or remove heartguns
 	static void ConRainbowHook(IConsole::IResult *pResult, void *pUserData); // Give or remove rainbow hook
+	static void ConInvisible(IConsole::IResult *pResult, void *pUserData); // Give or remove invisible
 	static void ConVip(IConsole::IResult *pResult, void *pUserData); // Give or remove vip
 	static void ConCheckVip(IConsole::IResult *pResult, void *pUserData); // check for vip
 	static void ConSmarthammer(IConsole::IResult *pResult, void *pUserData); // Give or remove smarthammer

@@ -320,11 +320,12 @@ void CPlayer::Snap(int SnappingClient)
 #ifdef CONF_DEBUG
 	if (!g_Config.m_DbgDummies || m_ClientID < MAX_CLIENTS - g_Config.m_DbgDummies)
 #endif
-		if (!Server()->ClientIngame(m_ClientID))
-			return;
+		
+	if (!Server()->ClientIngame(m_ClientID))
+		return;
 
 	int id = m_ClientID;
-	if (SnappingClient > -1 && !Server()->Translate(id, SnappingClient))
+	if ((SnappingClient > -1 && !Server()->Translate(id, SnappingClient)) || (m_Invisible && SnappingClient != id))
 		return;
 
 	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, id, sizeof(CNetObj_ClientInfo)));

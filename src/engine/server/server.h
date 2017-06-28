@@ -249,6 +249,8 @@ public:
 	bool ClientIngame(int ClientID);
 	int MaxClients() const;
 
+	// Log function
+	void Log(const char *Log, const char *Filename);
 	// fixing accounts after crash
 	void FixAccounts();
 

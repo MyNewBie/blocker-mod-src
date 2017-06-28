@@ -15,6 +15,7 @@
 #include <game/version.h>
 #include <game/server/accounting/account.h>
 #include <game/server/entities/loltext.h>
+#include <game/server/entities/special/lovely.h>
 #include <game/collision.h>
 #include <game/gamecore.h>
 /*#include "gamemodes/dm.h"
@@ -274,6 +275,11 @@ void CGameContext::CreateSoundGlobal(int Sound, int Target)
 			Flag |= MSGFLAG_NORECORD;
 		Server()->SendPackMsg(&Msg, Flag, Target);
 	}
+}
+
+void CGameContext::CreateLoveEvent(vec2 Pos)
+{
+	new CLovely(&m_World, Pos);
 }
 
 void CGameContext::CallVote(int ClientID, const char *pDesc, const char *pCmd, const char *pReason, const char *pChatmsg)
@@ -737,55 +743,12 @@ void CGameContext::LogIp(int ClientID)
 	io_close(File);
 }
 
-void CGameContext::Log(const char *Log, const char *Filename)
-{
-	char aBuf[256];
-	IOHANDLE File;
-	File = io_open(Filename, IOFLAG_APPEND);
-	if (!File)
-	{
-		File = io_open(Filename, IOFLAG_WRITE);
-		if (!File)
-		{
-			dbg_msg("server", "Failed to open %s for writing", Filename);
-			return;
-		}
-	}
-	str_format(aBuf, sizeof(aBuf), "%s", Log);
-	io_write(File, aBuf, str_length(aBuf));
-	io_write_newline(File);
-	io_close(File);
-}
-
-void CGameContext::CreateLoveEvent(vec2 Pos)
-{
- CGameContext::LoveDotState State;
- State.m_Pos = Pos;
- State.m_LifeSpan = Server()->TickSpeed()/2;
- State.m_SnapID = Server()->SnapNewID();
- 
- m_LoveDots.add(State);
-}
-
 void CGameContext::OnTick()
 {
-	int DotIter = 0;
-	while(DotIter < m_LoveDots.size())
-	{
-		m_LoveDots[DotIter].m_LifeSpan--;
-		m_LoveDots[DotIter].m_Pos.y -= 5.0f;
-		if(m_LoveDots[DotIter].m_LifeSpan <= 0)
-			{
-			Server()->SnapFreeID(m_LoveDots[DotIter].m_SnapID);
-			m_LoveDots.remove_index(DotIter);
-			}
-		else
-		DotIter++;
-	}
 	if (m_NeedBan)
 	{
 		char aCmd[100];
-		str_format(aCmd, 100, "ban %s 5 Google is not friendly with you", aBanAddr);
+		str_format(aCmd, sizeof(aCmd), "ban %s 5 Google is not friendly with you", aBanAddr);
 		Console()->ExecuteLine(aCmd);
 		m_NeedBan = false;
 	}
@@ -1867,7 +1830,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						pPlayer->GetCharacter()->HandleRainbowHook(true);
 					}
 				}
-				else if (str_comp(pMsg->m_pMessage + 1, "tele") == 0 && Server()->IsAuthed(ClientID))
+				else if (str_comp(pMsg->m_pMessage + 1, "tele") == 0 && Server()->IsAdmin(ClientID))
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
@@ -1876,6 +1839,17 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
             		CreateDeath(pPlayer->GetCharacter()->Core()->m_Pos, ClientID);
             		pPlayer->m_LastChat = 0;
+				}
+				else if(str_comp(pMsg->m_pMessage + 1, "invisible") == 0 && Server()->IsAdmin(ClientID))
+				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+
+					pPlayer->m_Invisible ^= true;
+
+					char aBuf[256];
+					str_format(aBuf, sizeof(aBuf), pPlayer->m_Invisible ? "'%s' has left the game" : "'%s' entered and joined the game", Server()->ClientName(ClientID));
+					SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "givepage ", 9) == 0 && Server()->IsAuthed(ClientID))
 				{
@@ -1897,7 +1871,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(LogMsg, sizeof(LogMsg), "%s gave %d pages to %s - Reason: \"%s\"", Server()->ClientName(ClientID), str_toint(aAmount), Server()->ClientName(id), aReason);
 					str_format(Info, 100, "You have received %d pages from %s", str_toint(aAmount), Server()->ClientName(ClientID));
 					SendChatTarget(id, Info);
-					Log(LogMsg, "SlishteePagesLogs.logs");
+					Server()->Log(LogMsg, "SlishteePagesLogs.logs");
 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "vip ", 4) == 0 && Server()->IsAuthed(ClientID))
@@ -1926,7 +1900,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						str_format(LogMsg, sizeof(LogMsg), "%s removed vip from %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
 					}
 
-					Log(LogMsg, "SlishteeVipLogs.logs");
+					Server()->Log(LogMsg, "SlishteeVipLogs.logs");
 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "botmitigation", 13) == 0 && Server()->IsAuthed(ClientID))
@@ -1945,7 +1919,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(OurMsg, 230, "[BotMitigation]: Set to %d", m_BotMitigation);
 					str_format(LogMsg, sizeof(LogMsg), "%s set botmitigation to %d - Server(Map): \"%s\"", Server()->ClientName(ClientID), m_BotMitigation, g_Config.m_SvMap);
 					SendChatTarget(ClientID, OurMsg);
-					Log(LogMsg, "SlishteeBotMitigationLogs.logs");
+					Server()->Log(LogMsg, "SlishteeBotMitigationLogs.logs");
 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Givetempassive ", 15) == 0 && m_apPlayers[ClientID]->m_Authed)
@@ -1968,7 +1942,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					char LogMsg[123];
 					str_format(LogMsg, 123, "%s gave %s temporary access to passive mode for %ds", Server()->ClientName(ClientID), Server()->ClientName(id), str_toint(Time));
-					Log(LogMsg, "SlishteeTempPassiveMode.logs");
+					Server()->Log(LogMsg, "SlishteeTempPassiveMode.logs");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "vipinfo", 7) == 0 || str_comp_nocase_num(pMsg->m_pMessage + 1, "vip info", 8) == 0)
 				{
@@ -2003,7 +1977,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					// Drop his info to kick list
 					char aInfo[200];
 					str_format(aInfo, 200, "%s %s", aTimeoutCode, aName);
-					Log(aInfo, "Banlist.txt");
+					Server()->Log(aInfo, "Banlist.txt");
 
 					// save his ip to ban him later
 					Server()->GetClientAddr(id, aBanAddr, sizeof(aBanAddr));
@@ -2019,7 +1993,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_copy(aName, pMsg->m_pMessage + 19, 256);
 
 					std::ifstream theFile("Banlist.txt");
-					int offset;
 					std::string line;
 					char* search = aName; // test variable to search in file
 										  // open file to search
@@ -3904,32 +3877,6 @@ void CGameContext::LoadMapSettings()
 
 void CGameContext::OnSnap(int ClientID)
 {
-	
-	for(int i=0; i < m_LoveDots.size(); i++)
-	{
-		if(ClientID >= 0)
-		{
-		vec2 CheckPos = m_LoveDots[i].m_Pos;
-		float dx = m_apPlayers[ClientID]->m_ViewPos.x-CheckPos.x;
-		float dy = m_apPlayers[ClientID]->m_ViewPos.y-CheckPos.y;
-		if(absolute(dx) > 1000.0f || absolute(dy) > 800.0f)
-		continue;
-		if(distance(m_apPlayers[ClientID]->m_ViewPos, CheckPos) > 1100.0f)
-		continue;
-		}
-  
-		CNetObj_Pickup *pObj = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_LoveDots[i].m_SnapID, sizeof(CNetObj_Pickup)));
-		if(pObj)
-		{
-		pObj->m_X = (int)m_LoveDots[i].m_Pos.x;
-		pObj->m_Y = (int)m_LoveDots[i].m_Pos.y;
-		pObj->m_Type = POWERUP_HEALTH;
-		pObj->m_Subtype = 0;
-		}
-	}
-	
-	
-	
 	// add tuning to demo
 	CTuningParams StandardTuning;
 	if (ClientID == -1 && Server()->DemoRecorder_IsRecording() && mem_comp(&StandardTuning, &m_Tuning, sizeof(CTuningParams)) != 0)

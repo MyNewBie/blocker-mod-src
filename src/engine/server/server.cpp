@@ -1245,29 +1245,44 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 							// AUTHED_ADMIN - AuthLevel gets the proper IConsole::ACCESS_LEVEL_<x>
 							m_aClients[ClientID].m_pRconCmdToSend = Console()->FirstCommandInfo(AUTHED_ADMIN - AuthLevel, CFGFLAG_SERVER);
 
-						char aBuf[256];
+						// GET TIME PART //
+						time_t timer;
+						char currentTime[26];
+						struct tm* tm_info;
+
+						time(&timer);
+						tm_info = localtime(&timer);
+						strftime(currentTime, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+						//////////////////
+
+    					char aBuf[256];
+						char AuthLog[256];
 						switch (AuthLevel)
 						{
-						case AUTHED_ADMIN:
-						{
-							SendRconLine(ClientID, "Admin authentication successful. Full remote console access granted.");
-							str_format(aBuf, sizeof(aBuf), "ClientID=%d authed (admin)", ClientID);
-							break;
-						}
-						case AUTHED_MOD:
-						{
-							SendRconLine(ClientID, "Moderator authentication successful. Limited remote console access granted.");
-							str_format(aBuf, sizeof(aBuf), "ClientID=%d authed (moderator)", ClientID);
-							break;
-						}
-						case AUTHED_HELPER:
-						{
-							SendRconLine(ClientID, "Helper authentication successful. Limited remote console access granted.");
-							str_format(aBuf, sizeof(aBuf), "ClientID=%d authed (helper)", ClientID);
-							break;
-						}
+							case AUTHED_ADMIN:
+							{
+								SendRconLine(ClientID, "Admin authentication successful. Full remote console access granted.");
+								str_format(aBuf, sizeof(aBuf), "ClientID=%d authed (admin)", ClientID);
+								str_format(AuthLog, sizeof(AuthLog), "[%s] '%s' authed as admin [ClientID=%d]", currentTime, ClientName(ClientID), ClientID);
+								break;
+							}
+							case AUTHED_MOD:
+							{
+								SendRconLine(ClientID, "Moderator authentication successful. Limited remote console access granted.");
+								str_format(aBuf, sizeof(aBuf), "ClientID=%d authed (moderator)", ClientID);
+								str_format(AuthLog, sizeof(AuthLog), "[%s] '%s' authed as moderator [ClientID=%d]", currentTime, ClientName(ClientID), ClientID);
+								break;
+							}
+							case AUTHED_HELPER:
+							{
+								SendRconLine(ClientID, "Helper authentication successful. Limited remote console access granted.");
+								str_format(aBuf, sizeof(aBuf), "ClientID=%d authed (helper)", ClientID);
+								str_format(AuthLog, sizeof(AuthLog), "[%s] '%s' authed as helper [ClientID=%d]", currentTime, ClientName(ClientID), ClientID);
+								break;
+							}
 						}
 						Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
+						Log(AuthLog, "AuthLoginInfos.log");
 
 						// DDRace
 						GameServer()->OnSetAuthed(ClientID, AuthLevel);
@@ -2507,6 +2522,26 @@ void CServer::SetRconLevel(int ClientID, int Level)
 int* CServer::GetIdMap(int ClientID)
 {
 	return (int*)(IdMap + VANILLA_MAX_CLIENTS * ClientID);
+}
+
+void CServer::Log(const char *Log, const char *Filename)
+{
+	char aBuf[256];
+	IOHANDLE File;
+	File = io_open(Filename, IOFLAG_APPEND);
+	if (!File)
+	{
+		File = io_open(Filename, IOFLAG_WRITE);
+		if (!File)
+		{
+			dbg_msg("server", "Failed to open %s for writing", Filename);
+			return;
+		}
+	}
+	str_format(aBuf, sizeof(aBuf), "%s", Log);
+	io_write(File, aBuf, str_length(aBuf));
+	io_write_newline(File);
+	io_close(File);
 }
 
 void CServer::FixAccounts()

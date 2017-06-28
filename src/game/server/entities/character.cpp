@@ -858,6 +858,13 @@ void CCharacter::Tick()
 
 	HandleRainbowHook(false);
 
+	if(m_pPlayer->m_Invisible)
+	{
+		m_Core.m_Collision = false;
+		m_NeededFaketuning |= FAKETUNE_NOCOLL;
+		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
+	}
+
 	HandleGameModes();
 	HandleLevelSystem();
 	HandleBots();
@@ -1164,7 +1171,7 @@ void CCharacter::Snap(int SnappingClient)
 {
 	int id = m_pPlayer->GetCID();
 
-	if (SnappingClient > -1 && !Server()->Translate(id, SnappingClient))
+	if ((SnappingClient > -1 && !Server()->Translate(id, SnappingClient)) || (m_pPlayer->m_Invisible && SnappingClient != id))
 		return;
 
 	if (NetworkClipped(SnappingClient))
