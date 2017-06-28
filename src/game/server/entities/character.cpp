@@ -858,6 +858,13 @@ void CCharacter::Tick()
 
 	HandleRainbowHook(false);
 
+	if(m_pPlayer->m_Invisible)
+	{
+		m_Core.m_Collision = false;
+		m_NeededFaketuning |= FAKETUNE_NOCOLL;
+		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
+	}
+
 	HandleGameModes();
 	HandleLevelSystem();
 	HandleBots();

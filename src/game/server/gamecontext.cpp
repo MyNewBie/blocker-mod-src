@@ -1993,7 +1993,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_copy(aName, pMsg->m_pMessage + 19, 256);
 
 					std::ifstream theFile("Banlist.txt");
-					int offset;
 					std::string line;
 					char* search = aName; // test variable to search in file
 										  // open file to search
