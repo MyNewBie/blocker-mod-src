@@ -75,7 +75,6 @@ void CPlayer::Reset()
 	m_LastActionTick = Server()->Tick();
 	m_TeamChangeTick = Server()->Tick();
 	m_WeakHookSpawn = false;
-	m_Invisible = false;
 
 	// city - label everything vali so its easier to find pls
 	m_pAccount = new CAccount(this);
@@ -325,11 +324,8 @@ void CPlayer::Snap(int SnappingClient)
 	if (!Server()->ClientIngame(m_ClientID))
 		return;
 
-	if(m_Invisible && SnappingClient != GetCID())
-		return;
-
 	int id = m_ClientID;
-	if (SnappingClient > -1 && !Server()->Translate(id, SnappingClient))
+	if ((SnappingClient > -1 && !Server()->Translate(id, SnappingClient)) || (m_Invisible && SnappingClient != id))
 		return;
 
 	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, id, sizeof(CNetObj_ClientInfo)));

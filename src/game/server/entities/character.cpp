@@ -1164,13 +1164,10 @@ void CCharacter::Snap(int SnappingClient)
 {
 	int id = m_pPlayer->GetCID();
 
-	if (SnappingClient > -1 && !Server()->Translate(id, SnappingClient))
+	if ((SnappingClient > -1 && !Server()->Translate(id, SnappingClient)) || (m_pPlayer->m_Invisible && SnappingClient != id))
 		return;
 
 	if (NetworkClipped(SnappingClient))
-		return;
-
-	if(m_pPlayer->m_Invisible && SnappingClient != id)
 		return;
 
 	if (SnappingClient > -1)
