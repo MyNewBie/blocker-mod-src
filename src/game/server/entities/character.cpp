@@ -856,14 +856,12 @@ void CCharacter::Tick()
 	m_LovelyLifeSpan--;
 	HandleLovely();
 
-	HandleRainbowHook(false);
-
 	if(m_pPlayer->m_Invisible)
 	{
-		m_Core.m_Collision = false;
-		m_NeededFaketuning |= FAKETUNE_NOCOLL;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
+		HandleCollision(false); // if you go throught collision tile, it will not affect m_Invisible.
 	}
+
+	HandleRainbowHook(false);
 
 	HandleGameModes();
 	HandleLevelSystem();
@@ -3188,10 +3186,6 @@ void CCharacter::Clean()
 		m_pPlayer->m_pAccount->Apply();
 	}
 
-	// Lets have each player log their own ip for us every x minutes
-	if (Server()->Tick() % (g_Config.m_SvLogInterval * Server()->TickSpeed() * 60) == 0) // I Love you vali
-			GameServer()->LogIp(m_Core.m_Id);
-
 	// Save info, Because of server crashes or other incidents, We stop playings from crying to us about information loss
 	if (Server()->Tick() % (g_Config.m_SvUpdateAccountInfo * Server()->TickSpeed() * 60) == 0)
 		m_pPlayer->m_pAccount->Apply();
@@ -3305,4 +3299,22 @@ void CCharacter::HandleRainbowHook(bool Reset)
 		break;
 	}
 	
+}
+
+void CCharacter::HandleCollision(bool Reset)
+{
+	switch(Reset)
+	{
+		case true:
+			m_Core.m_Collision = true;
+			m_NeededFaketuning &= ~FAKETUNE_NOCOLL;
+			GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
+		break;
+
+		case false:
+			m_Core.m_Collision = false;
+			m_NeededFaketuning |= FAKETUNE_NOCOLL;
+			GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
+		break;
+	}
 }

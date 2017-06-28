@@ -344,6 +344,11 @@ void CGameContext::ConInvisible(IConsole::IResult *pResult, void *pUserData) // 
 		char FakeMsg[256];
 		str_format(FakeMsg, sizeof(FakeMsg), pSelf->m_apPlayers[Victim]->m_Invisible ? "'%s' has left the game" : "'%s' entered and joined the game", pSelf->Server()->ClientName(Victim));
 		pSelf->SendChat(-1, CGameContext::CHAT_ALL, FakeMsg);
+	
+		if(!pSelf->m_apPlayers[Victim]->m_Invisible)
+		{
+			pSelf->GetPlayerChar(Victim)->HandleCollision(true);
+		}
 	}
 }
 

@@ -1253,7 +1253,10 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 						time(&timer);
 						tm_info = localtime(&timer);
 						strftime(currentTime, 26, "%Y-%m-%d %H:%M:%S", tm_info);
-						//////////////////
+						//   GET IP   //
+						char aAddrStr[NETADDR_MAXSTRSIZE];
+						GetClientAddr(ClientID, aAddrStr, sizeof(aAddrStr));
+						////////////////
 
     					char aBuf[256];
 						char AuthLog[256];
@@ -1263,7 +1266,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 							{
 								SendRconLine(ClientID, "Admin authentication successful. Full remote console access granted.");
 								str_format(aBuf, sizeof(aBuf), "ClientID=%d authed (admin)", ClientID);
-								str_format(AuthLog, sizeof(AuthLog), "[%s] '%s' authed as admin [ClientID=%d]", currentTime, ClientName(ClientID), ClientID);
+								str_format(AuthLog, sizeof(AuthLog), "[%s] [%s] '%s' authed as admin [ClientID=%d]", currentTime, aAddrStr, ClientName(ClientID), ClientID);
 								break;
 							}
 							case AUTHED_MOD:

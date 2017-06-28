@@ -264,8 +264,6 @@ public:
 	std::vector<CKOH> m_KOH;
 
 	// Logging : FileHandling
-	void LogIp(int ClientID);
-	void Log(const char* Log, const char* Filename);
 	void RemoveLine(char *sourcefile, int line);
 	int CountLine(char *sourcefile);
 

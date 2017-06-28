@@ -703,13 +703,13 @@ void CGameContext::OnDetect(int ClientID)
 	if (g_Config.m_SvLogDetects)
 	{
 		IOHANDLE File;
-		File = io_open("detected_players.txt", IOFLAG_APPEND);
+		File = io_open("detected_players.log", IOFLAG_APPEND);
 		if (!File)
 		{
-			File = io_open("detected_players.txt", IOFLAG_WRITE);
+			File = io_open("detected_players.log", IOFLAG_WRITE);
 			if (!File)
 			{
-				dbg_msg("server", "Failed to open detected_players.txt for writing");
+				dbg_msg("server", "Failed to open detected_players.log for writing");
 				return;
 			}
 		}
@@ -719,28 +719,6 @@ void CGameContext::OnDetect(int ClientID)
 		io_write_newline(File);
 		io_close(File);
 	}
-}
-
-void CGameContext::LogIp(int ClientID)
-{
-	char aBuf[256];
-	char aIP[NETADDR_MAXSTRSIZE];
-	IOHANDLE File;
-	File = io_open("IpLogs.txt", IOFLAG_APPEND);
-	if (!File)
-	{
-		File = io_open("IpLogs.txt", IOFLAG_WRITE);
-		if (!File)
-		{
-			dbg_msg("server", "Failed to open IpLogs.txt for writing");
-			return;
-		}
-	}
-	Server()->GetClientAddr(ClientID, aIP, sizeof(aIP));
-	str_format(aBuf, sizeof(aBuf), "Name: \"%s\" IP: \"%s\"", Server()->ClientName(ClientID), aIP);
-	io_write(File, aBuf, str_length(aBuf));
-	io_write_newline(File);
-	io_close(File);
 }
 
 void CGameContext::OnTick()
@@ -1206,6 +1184,14 @@ void CGameContext::OnClientEnter(int ClientID)
 		SendVoteSet(ClientID);
 
 	m_apPlayers[ClientID]->m_Authed = ((CServer*)Server())->m_aClients[ClientID].m_Authed;
+
+	//Log His IP when connect
+	char aClientAddr[NETADDR_MAXSTRSIZE];
+	Server()->GetClientAddr(ClientID, aClientAddr, sizeof(aClientAddr));
+
+	char aLogIP[256];
+	str_format(aLogIP, sizeof(aLogIP), "Name: %s, IP: \"%s\"", Server()->ClientName(ClientID), aClientAddr);
+	Server()->Log(aLogIP, "IpLogs.log");
 }
 
 void CGameContext::OnClientConnected(int ClientID)
@@ -1850,6 +1836,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					char aBuf[256];
 					str_format(aBuf, sizeof(aBuf), pPlayer->m_Invisible ? "'%s' has left the game" : "'%s' entered and joined the game", Server()->ClientName(ClientID));
 					SendChat(-1, CGameContext::CHAT_ALL, aBuf);
+
+					if(!pPlayer->m_Invisible)
+					{
+						pPlayer->GetCharacter()->HandleCollision(true);
+					}
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "givepage ", 9) == 0 && Server()->IsAuthed(ClientID))
 				{
@@ -1871,7 +1862,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(LogMsg, sizeof(LogMsg), "%s gave %d pages to %s - Reason: \"%s\"", Server()->ClientName(ClientID), str_toint(aAmount), Server()->ClientName(id), aReason);
 					str_format(Info, 100, "You have received %d pages from %s", str_toint(aAmount), Server()->ClientName(ClientID));
 					SendChatTarget(id, Info);
-					Server()->Log(LogMsg, "SlishteePagesLogs.logs");
+					Server()->Log(LogMsg, "SlishteePagesLogs.log");
 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "vip ", 4) == 0 && Server()->IsAuthed(ClientID))
@@ -1900,7 +1891,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						str_format(LogMsg, sizeof(LogMsg), "%s removed vip from %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
 					}
 
-					Server()->Log(LogMsg, "SlishteeVipLogs.logs");
+					Server()->Log(LogMsg, "SlishteeVipLogs.log");
 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "botmitigation", 13) == 0 && Server()->IsAuthed(ClientID))
@@ -1919,7 +1910,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(OurMsg, 230, "[BotMitigation]: Set to %d", m_BotMitigation);
 					str_format(LogMsg, sizeof(LogMsg), "%s set botmitigation to %d - Server(Map): \"%s\"", Server()->ClientName(ClientID), m_BotMitigation, g_Config.m_SvMap);
 					SendChatTarget(ClientID, OurMsg);
-					Server()->Log(LogMsg, "SlishteeBotMitigationLogs.logs");
+					Server()->Log(LogMsg, "SlishteeBotMitigationLogs.log");
 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Givetempassive ", 15) == 0 && m_apPlayers[ClientID]->m_Authed)
@@ -1942,7 +1933,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					char LogMsg[123];
 					str_format(LogMsg, 123, "%s gave %s temporary access to passive mode for %ds", Server()->ClientName(ClientID), Server()->ClientName(id), str_toint(Time));
-					Server()->Log(LogMsg, "SlishteeTempPassiveMode.logs");
+					Server()->Log(LogMsg, "SlishteeTempPassiveMode.log");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "vipinfo", 7) == 0 || str_comp_nocase_num(pMsg->m_pMessage + 1, "vip info", 8) == 0)
 				{

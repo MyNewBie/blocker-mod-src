@@ -95,6 +95,7 @@ public:
 
 	void HandleLovely();
 	void HandleRainbowHook(bool Reset);
+	void HandleCollision(bool Reset);
 
 	int NeededFaketuning() { return m_NeededFaketuning; }
 	bool IsAlive() const { return m_Alive; }
