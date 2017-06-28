@@ -743,26 +743,6 @@ void CGameContext::LogIp(int ClientID)
 	io_close(File);
 }
 
-void CGameContext::Log(const char *Log, const char *Filename)
-{
-	char aBuf[256];
-	IOHANDLE File;
-	File = io_open(Filename, IOFLAG_APPEND);
-	if (!File)
-	{
-		File = io_open(Filename, IOFLAG_WRITE);
-		if (!File)
-		{
-			dbg_msg("server", "Failed to open %s for writing", Filename);
-			return;
-		}
-	}
-	str_format(aBuf, sizeof(aBuf), "%s", Log);
-	io_write(File, aBuf, str_length(aBuf));
-	io_write_newline(File);
-	io_close(File);
-}
-
 void CGameContext::OnTick()
 {
 	if (m_NeedBan)
@@ -1891,7 +1871,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(LogMsg, sizeof(LogMsg), "%s gave %d pages to %s - Reason: \"%s\"", Server()->ClientName(ClientID), str_toint(aAmount), Server()->ClientName(id), aReason);
 					str_format(Info, 100, "You have received %d pages from %s", str_toint(aAmount), Server()->ClientName(ClientID));
 					SendChatTarget(id, Info);
-					Log(LogMsg, "SlishteePagesLogs.logs");
+					Server()->Log(LogMsg, "SlishteePagesLogs.logs");
 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "vip ", 4) == 0 && Server()->IsAuthed(ClientID))
@@ -1920,7 +1900,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						str_format(LogMsg, sizeof(LogMsg), "%s removed vip from %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
 					}
 
-					Log(LogMsg, "SlishteeVipLogs.logs");
+					Server()->Log(LogMsg, "SlishteeVipLogs.logs");
 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "botmitigation", 13) == 0 && Server()->IsAuthed(ClientID))
@@ -1939,7 +1919,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(OurMsg, 230, "[BotMitigation]: Set to %d", m_BotMitigation);
 					str_format(LogMsg, sizeof(LogMsg), "%s set botmitigation to %d - Server(Map): \"%s\"", Server()->ClientName(ClientID), m_BotMitigation, g_Config.m_SvMap);
 					SendChatTarget(ClientID, OurMsg);
-					Log(LogMsg, "SlishteeBotMitigationLogs.logs");
+					Server()->Log(LogMsg, "SlishteeBotMitigationLogs.logs");
 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Givetempassive ", 15) == 0 && m_apPlayers[ClientID]->m_Authed)
@@ -1962,7 +1942,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					char LogMsg[123];
 					str_format(LogMsg, 123, "%s gave %s temporary access to passive mode for %ds", Server()->ClientName(ClientID), Server()->ClientName(id), str_toint(Time));
-					Log(LogMsg, "SlishteeTempPassiveMode.logs");
+					Server()->Log(LogMsg, "SlishteeTempPassiveMode.logs");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "vipinfo", 7) == 0 || str_comp_nocase_num(pMsg->m_pMessage + 1, "vip info", 8) == 0)
 				{
@@ -1997,7 +1977,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					// Drop his info to kick list
 					char aInfo[200];
 					str_format(aInfo, 200, "%s %s", aTimeoutCode, aName);
-					Log(aInfo, "Banlist.txt");
+					Server()->Log(aInfo, "Banlist.txt");
 
 					// save his ip to ban him later
 					Server()->GetClientAddr(id, aBanAddr, sizeof(aBanAddr));
