@@ -327,6 +327,22 @@ void CGameContext::ConRainbowHook(IConsole::IResult *pResult, void *pUserData) /
 	}
 }
 
+void CGameContext::ConStars(IConsole::IResult *pResult, void *pUserData) // give or remove stars
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_Stars ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Stars ? "%s gave you stars!" : "%s removed your stars!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
 void CGameContext::ConInvisible(IConsole::IResult *pResult, void *pUserData) // give or remove invisible
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;

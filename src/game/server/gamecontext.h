@@ -313,6 +313,7 @@ private:
 	static void ConCheckVip(IConsole::IResult *pResult, void *pUserData); // check for vip
 	static void ConSmarthammer(IConsole::IResult *pResult, void *pUserData); // Give or remove smarthammer
 	static void ConRocket(IConsole::IResult *pResult, void *pUserData); // Give or remove rocket
+	static void ConStars(IConsole::IResult *pResult, void *pUserData); // Give or remove stars
 	static void ConSkin(IConsole::IResult *pResult, void *pUserData);
 	static void ConClan(IConsole::IResult *pResult, void *pUserData);
 	static void ConFreeze(IConsole::IResult *pResult, void *pUserData);
