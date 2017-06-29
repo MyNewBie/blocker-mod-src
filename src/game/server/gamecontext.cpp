@@ -1840,6 +1840,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						pPlayer->GetCharacter()->HandleCollision(true);
 					}
 				}
+				else if(str_comp(pMsg->m_pMessage + 1, "stars") == 0 && Server()->IsAuthed(ClientID))
+				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+
+					pPlayer->m_Stars ^= true;
+					SendChatTarget(ClientID, pPlayer->m_Stars ? "Stars activated" : "Stars deactivated");
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "givepage ", 9) == 0 && Server()->IsAuthed(ClientID))
 				{
 					char aId[32];

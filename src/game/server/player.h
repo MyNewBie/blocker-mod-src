@@ -267,6 +267,7 @@ public:
 	bool m_IsBallSpawned;
 	bool m_RainbowHook;
 	bool m_Invisible;
+	bool m_Stars;
 	//Mute
 	bool m_SilentMuted;
 	//

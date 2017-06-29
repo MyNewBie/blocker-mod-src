@@ -29,7 +29,6 @@ private:
 	int m_LaserInputDir;
 	bool m_IsRotating;
 
-	vec2 m_Pos;
 	vec2 m_Pos2;
 
 	int m_TableDirV[4];

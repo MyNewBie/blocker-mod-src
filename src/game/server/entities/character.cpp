@@ -3200,6 +3200,8 @@ void CCharacter::Clean()
 		m_AntiSpam = false;
 	if (IsAlive() && (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed))
 		HandlePassiveMode();
+	if(IsAlive() && m_pPlayer->m_Stars)
+		GameServer()->CreateDamageInd(m_Pos, Server()->Tick() * 2.0f, 1, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID())); 
 }
 
 void CCharacter::HandleGameModes()
@@ -3257,7 +3259,7 @@ bool CCharacter::AimHitCharacter()
 
 void CCharacter::HandleLovely()
 {
-	if(m_pPlayer->m_Lovely)
+	if(m_pPlayer->m_Lovely && IsAlive())
 	{
 		if (m_LovelyLifeSpan <= 0)
 		{
