@@ -1822,8 +1822,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 
             		pPlayer->GetCharacter()->Core()->m_Pos = pPlayer->GetCharacter()->MousePos();
-
-            		CreateDeath(pPlayer->GetCharacter()->Core()->m_Pos, ClientID);
             		pPlayer->m_LastChat = 0;
 				}
 				else if(str_comp(pMsg->m_pMessage + 1, "invisible") == 0 && Server()->IsAdmin(ClientID))
