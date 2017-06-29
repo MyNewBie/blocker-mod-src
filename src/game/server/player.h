@@ -267,6 +267,8 @@ public:
 	bool m_IsBallSpawned;
 	bool m_RainbowHook;
 	bool m_Invisible;
+	//Mute
+	bool m_SilentMuted;
 	//
 
 	// City

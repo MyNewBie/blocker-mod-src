@@ -185,7 +185,7 @@ public:
 
 	// network
 	void CallVote(int ClientID, const char *aDesc, const char *aCmd, const char *pReason, const char *aChatmsg);
-	void SendChatTarget(int To, const char *pText);
+	void SendChatTarget(int To, const char *pText, int From = -1);
 	void SendChatTeam(int Team, const char *pText);
 	void SendChat(int ClientID, int Team, const char *pText, int SpamProtectionClientID = -1);
 	void SendEmoticon(int ClientID, int Emoticon);
@@ -234,8 +234,6 @@ public:
 
 	// City
 	void RefreshIDs();
-	void removeLine(char* sourcefile, int line);
-	int countLine(char* sourcefile);
 	void SendMotd(int ClientID, const char *pText);
 	NETADDR addr;
 	NETSOCKET Socket;
@@ -263,7 +261,7 @@ public:
 	};
 	std::vector<CKOH> m_KOH;
 
-	// Logging : FileHandling
+	// FileHandling (c++)
 	void RemoveLine(char *sourcefile, int line);
 	int CountLine(char *sourcefile);
 
@@ -404,6 +402,7 @@ private:
 
 	static void ConMute(IConsole::IResult *pResult, void *pUserData);
 	static void ConMuteID(IConsole::IResult *pResult, void *pUserData);
+	static void ConSilentMuteID(IConsole::IResult *pResult, void *pUserData);
 	static void ConMuteIP(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnmute(IConsole::IResult *pResult, void *pUserData);
 	static void ConMutes(IConsole::IResult *pResult, void *pUserData);
@@ -434,7 +433,7 @@ private:
 		int m_LastAnnounce;
 	}m_CountdownInfo;
 	
-	void Mute(IConsole::IResult *pResult, NETADDR *Addr, int Secs, const char *pDisplayName);
+	void Mute(IConsole::IResult *pResult, NETADDR *Addr, int Secs, const char *pDisplayName, bool silent = false);
 	void Whisper(int ClientID, char *pStr);
 	void WhisperID(int ClientID, int VictimID, char *pMessage);
 	void Converse(int ClientID, char *pStr);

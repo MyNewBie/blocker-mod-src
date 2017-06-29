@@ -1246,8 +1246,8 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 							m_aClients[ClientID].m_pRconCmdToSend = Console()->FirstCommandInfo(AUTHED_ADMIN - AuthLevel, CFGFLAG_SERVER);
 
 						// GET TIME PART //
-						time_t timer;
-						char currentTime[26];
+						time_t     timer;
+						char       currentTime[26];
 						struct tm* tm_info;
 
 						time(&timer);
@@ -1285,7 +1285,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 							}
 						}
 						Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
-						Log(AuthLog, "AuthLoginInfos.log");
+						log_file(AuthLog, "AuthLoginInfos.log");
 
 						// DDRace
 						GameServer()->OnSetAuthed(ClientID, AuthLevel);
@@ -2525,26 +2525,6 @@ void CServer::SetRconLevel(int ClientID, int Level)
 int* CServer::GetIdMap(int ClientID)
 {
 	return (int*)(IdMap + VANILLA_MAX_CLIENTS * ClientID);
-}
-
-void CServer::Log(const char *Log, const char *Filename)
-{
-	char aBuf[256];
-	IOHANDLE File;
-	File = io_open(Filename, IOFLAG_APPEND);
-	if (!File)
-	{
-		File = io_open(Filename, IOFLAG_WRITE);
-		if (!File)
-		{
-			dbg_msg("server", "Failed to open %s for writing", Filename);
-			return;
-		}
-	}
-	str_format(aBuf, sizeof(aBuf), "%s", Log);
-	io_write(File, aBuf, str_length(aBuf));
-	io_write_newline(File);
-	io_close(File);
 }
 
 void CServer::FixAccounts()

@@ -1169,10 +1169,13 @@ void CCharacter::Snap(int SnappingClient)
 {
 	int id = m_pPlayer->GetCID();
 
-	if ((SnappingClient > -1 && !Server()->Translate(id, SnappingClient)) || (m_pPlayer->m_Invisible && SnappingClient != id))
+	if (SnappingClient > -1 && !Server()->Translate(id, SnappingClient))
 		return;
 
 	if (NetworkClipped(SnappingClient))
+		return;
+
+	if(m_pPlayer->m_Invisible && SnappingClient != id && !GameServer()->Server()->IsAdmin(SnappingClient))
 		return;
 
 	if (SnappingClient > -1)
@@ -1758,16 +1761,12 @@ void CCharacter::HandleTiles(int Index)
 	if (((m_TileIndex == TILE_NPC_END) || (m_TileFIndex == TILE_NPC_END)) && m_Core.m_Collision)
 	{
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't collide with others");
-		m_Core.m_Collision = false;
-		m_NeededFaketuning |= FAKETUNE_NOCOLL;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+		HandleCollision(false); // update tunings
 	}
 	else if (((m_TileIndex == TILE_NPC_START) || (m_TileFIndex == TILE_NPC_START)) && !m_Core.m_Collision)
 	{
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can collide with others");
-		m_Core.m_Collision = true;
-		m_NeededFaketuning &= ~FAKETUNE_NOCOLL;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+		HandleCollision(true); // update tunings
 	}
 
 	// hook others

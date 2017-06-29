@@ -257,6 +257,26 @@ void dbg_msg(const char *sys, const char *fmt, ...)
 	}
 }
 
+void log_file(const char *Log, const char *Filename)
+{
+	char aBuf[256];
+	IOHANDLE File;
+	File = io_open(Filename, IOFLAG_APPEND);
+	if (!File)
+	{
+		File = io_open(Filename, IOFLAG_WRITE);
+		if (!File)
+		{
+			dbg_msg("server", "Failed to open %s for writing", Filename);
+			return;
+		}
+	}
+	str_format(aBuf, sizeof(aBuf), "%s", Log);
+	io_write(File, aBuf, str_length(aBuf));
+	io_write_newline(File);
+	io_close(File);
+}
+
 static void logger_stdout(const char *line)
 {
 	printf("%s\n", line);
