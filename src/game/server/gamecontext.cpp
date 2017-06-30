@@ -2155,25 +2155,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			{
 				if(m_apPlayers[ClientID]->m_SilentMuted)
 				{
-					NETADDR Addr;
-					Server()->GetClientAddr(ClientID, &Addr);
-					int Muted = 0;
-
-					for (int i = 0; i < m_NumMutes && !Muted; i++)
-					{
-						if (!net_addr_comp(&Addr, &m_aMutes[i].m_Addr))
-							Muted = (m_aMutes[i].m_Expire - Server()->Tick()) / Server()->TickSpeed();
-					}
-
-					if(Muted < 0)
-					{
-						SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
-						m_apPlayers[ClientID]->m_SilentMuted = false;
-					}
-					else
-					{
-						SendChatTarget(ClientID, pMsg->m_pMessage, ClientID);
-					}
+					ProcessSpamProtection(ClientID);
+					SendChatTarget(ClientID, pMsg->m_pMessage, ClientID);
 				}
 				else
 				{
@@ -4065,10 +4048,9 @@ int CGameContext::ProcessSpamProtection(int ClientID)
 		}
 		return 1;
 	}
-	else
-	{
+
+	if(m_apPlayers[ClientID]->m_SilentMuted)
 		m_apPlayers[ClientID]->m_SilentMuted = false;
-	}
 
 	if ((m_apPlayers[ClientID]->m_ChatScore += g_Config.m_SvChatPenalty) > g_Config.m_SvChatThreshold)
 	{

@@ -75,6 +75,7 @@ void CPlayer::Reset()
 	m_LastActionTick = Server()->Tick();
 	m_TeamChangeTick = Server()->Tick();
 	m_WeakHookSpawn = false;
+	m_SilentMuted = false;
 
 	// city - label everything vali so its easier to find pls
 	m_pAccount = new CAccount(this);
