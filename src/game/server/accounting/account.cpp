@@ -101,35 +101,18 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 	char AccRcon[32];
 	int AccID;
 
-
-
 	FILE *Accfile;
 	Accfile = fopen(aFullPath, "r");
 	fscanf(Accfile, "%s\n%s\n%s\n%d", AccUsername, AccPassword, AccRcon, &AccID);
 	fclose(Accfile);
 
-
-
-	for (int i = 0; i < MAX_SERVER; i++)
+	for (int j = 0; j < MAX_CLIENTS; j++)
 	{
-		for (int j = 0; j < MAX_CLIENTS; j++)
+		if (GameServer()->m_apPlayers[j] && GameServer()->m_apPlayers[j]->m_AccData.m_UserID == AccID)
 		{
-			if (GameServer()->m_apPlayers[j] && GameServer()->m_apPlayers[j]->m_AccData.m_UserID == AccID)
-			{
-				dbg_msg("account", "Account login failed ('%s' - already in use (local))", pUsername);
-				GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account already in use");
-				return;
-			}
-
-			if (!GameServer()->m_aaExtIDs[i][j])
-				continue;
-
-			if (AccID == GameServer()->m_aaExtIDs[i][j])
-			{
-				dbg_msg("account", "Account login failed ('%s' - already in use (extern))", pUsername);
-				GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account already in use");
-				return;
-			}
+			dbg_msg("account", "Account login failed ('%s' - already in use (local))", pUsername);
+			GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account already in use");
+			return;
 		}
 	}
 
@@ -278,6 +261,7 @@ void CAccount::Register(const char *pUsername, const char *pPassword)
 	GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 	Login(pUsername, pPassword);
 }
+
 bool CAccount::Exists(const char *Username)
 {
 	char aBuf[128];

@@ -2979,24 +2979,16 @@ void CCharacter::HandleLevelSystem()
 		}
 	}
 
-	/*// Handle Perstiges
-	if (this && IsAlive() && m_pPlayer->m_Level.m_Perstige == 50 && !m_pPlayer->m_Level.m_Informed)
-	{
-	GameServer()->SendChatTarget(m_Core.m_Id, "You can perstige with /perstige");
-	m_pPlayer->m_Level.m_Informed = true;
-	}
-	else if (this && IsAlive() && m_pPlayer->m_Level.m_Level > 50)
-	m_pPlayer->m_Level.m_Level = 50;*/
-
-	// Show off our level!
 	if (this && IsAlive() && m_pPlayer->m_AccData.m_UserID)
 	{
 		const char *pClan = Server()->ClientClan(GetPlayer()->GetCID());
 		char aLevel[16];
-		str_format(aLevel, 16, "[Lvl]: %d", m_pPlayer->m_Level);
+		str_format(aLevel, 16, "[Lvl]: %d", m_pPlayer->m_Level.m_Level);
 
-		if (str_comp_nocase(aLevel, pClan) != 0) // No spam
+		if (str_comp(aLevel, pClan) != 0) // No spam
+		{
 			Server()->SetClientClan(GetPlayer()->GetCID(), aLevel);
+		}
 	}
 
 	// Stop the fakers

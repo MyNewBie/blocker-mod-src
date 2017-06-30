@@ -2152,7 +2152,16 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 			}
 			else
-				SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
+			{
+				if(m_apPlayers[ClientID]->m_SilentMuted)
+				{
+					SendChatTarget(ClientID, pMsg->m_pMessage, ClientID);
+				}
+				else
+				{
+					SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
+				}
+			}
 		}
 		else if (MsgID == NETMSGTYPE_CL_CALLVOTE)
 		{
