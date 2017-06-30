@@ -2167,6 +2167,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					if(Muted < 0)
 					{
+						SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
 						m_apPlayers[ClientID]->m_SilentMuted = false;
 					}
 					else
