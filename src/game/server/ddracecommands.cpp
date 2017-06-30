@@ -394,7 +394,7 @@ void CGameContext::ConCheckVip(IConsole::IResult *pResult, void *pUserData)
 			str_format(aBuf, sizeof aBuf, "'%s' has Vip.", pSelf->Server()->ClientName(VipID));
 		else
 			str_format(aBuf, sizeof aBuf, "'%s' does not have Vip.", pSelf->Server()->ClientName(VipID));
-		pSelf->SendChat(-1, CHAT_ALL, aBuf);
+		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "vip", aBuf);
 	}
 }
 
