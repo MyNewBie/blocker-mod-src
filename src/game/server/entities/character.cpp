@@ -80,6 +80,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	
 	if (pPlayer->m_IsBallSpawned)
 		pPlayer->m_pBall = new CBall(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
+	if (pPlayer->m_EpicCircle)
+		pPlayer->m_pEpicCircle = new CEpicCircle(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
 
 	RainbowHookedID = -1;
 
@@ -119,6 +121,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	}
 
 	m_FreezeTimer = 0;
+
 	for (int i = 0; i < m_AnimIDNum; i++)//snap ids
 		m_apAnimIDs[i] = Server()->SnapNewID();
 
@@ -1357,36 +1360,6 @@ void CCharacter::Snap(int SnappingClient)
 			}
 		}
 	}
-
-	if (GetPlayer()->m_EpicCircle && !GameServer()->m_KOHActive) 
-	{
-		//calculate visible balls
-		float Panso = 1.0f;
-		Panso *= m_AnimIDNum;
-
-		int MaxBalls = round_to_int(Panso);
-
-		for (int i = 0; i < MaxBalls; i++)
-		{
-			CNetObj_Projectile *pFirstParticle = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_apAnimIDs[i], sizeof(CNetObj_Projectile)));
-			if (pFirstParticle && m_apAnimIDs[i] != -1)
-			{
-				float rad = 16.0f * powf(sinf(Server()->Tick() / 30.0f), 3) * 1 + 50;
-
-				float TurnFac = 0.025f;
-
-				float PosX = m_Pos.x + cosf(2 * pi * (i / (float)m_AnimIDNum) + Server()->Tick()*TurnFac) * rad;
-				float PosY = m_Pos.y + sinf(2 * pi * (i / (float)m_AnimIDNum) + Server()->Tick()*TurnFac) * rad;
-
-				pFirstParticle->m_X = PosX;
-				pFirstParticle->m_Y = PosY;
-				pFirstParticle->m_VelX = 4;
-				pFirstParticle->m_VelY = 4;
-				pFirstParticle->m_StartTick = Server()->Tick() - 4;
-				pFirstParticle->m_Type = 0;
-			}
-		}
-	}
 }
 
 int CCharacter::NetworkClipped(int SnappingClient)
@@ -1920,7 +1893,7 @@ void CCharacter::HandleTiles(int Index)
 		else
 			m_HammerStrenght = 0;
 
-		m_HammerStrenght > 0 ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got heavyhammer!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost heavyhammer!");
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_HammerStrenght > 0 ? "You got heavyhammer!" : "You lost heavyhammer!");
 		WasInHH = true;
 	}
 
@@ -1928,7 +1901,7 @@ void CCharacter::HandleTiles(int Index)
 	if (((m_TileIndex == TILE_BLOODY || m_TileFIndex == TILE_BLOODY)) && !WasInBloody)
 	{
 		m_Bloody ^= 1;
-		m_Bloody ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got Bloody!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost Bloody!");
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_Bloody ? "You got Bloody!" : "You lost Bloody!");
 		WasInBloody = true;
 	}
 
@@ -1936,7 +1909,7 @@ void CCharacter::HandleTiles(int Index)
 	if (((m_TileIndex == TILE_STEAMY || m_TileFIndex == TILE_STEAMY)) && !WasInSteam)
 	{
 		m_Steamy ^= 1;
-		m_Steamy ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got steamy!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost steamy!");
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_Steamy ? "You got steamy!" : "You lost steamy!");
 		WasInSteam = true;
 	}
 
@@ -1944,7 +1917,7 @@ void CCharacter::HandleTiles(int Index)
 	if (((m_TileIndex == TILE_XXL || m_TileFIndex == TILE_XXL)) && !WasInXXL)
 	{
 		m_XXL ^= 1;
-		m_XXL ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got xxl!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost XXL!");
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_XXL ? "You got xxl!" : "You lost XXL!");
 		WasInXXL = true;
 	}
 
@@ -1952,7 +1925,14 @@ void CCharacter::HandleTiles(int Index)
 	if (((m_TileIndex == TILE_EPICCIRCLES || m_TileFIndex == TILE_EPICCIRCLES)) && !WasInCircles && !GameServer()->m_KOHActive)
 	{
 		m_pPlayer->m_EpicCircle ^= 1;
-		m_pPlayer->m_EpicCircle ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got epic circles!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost epic circles!");
+		 
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_pPlayer->m_EpicCircle ? "You got epic circles!" : "You lost epic circles!");
+		
+		if(m_pPlayer->m_EpicCircle && IsAlive())
+			m_pPlayer->m_pEpicCircle = new CEpicCircle(&GameServer()->m_World, m_Pos, GetPlayer()->GetCID());
+		else if (!m_pPlayer->m_EpicCircle && IsAlive())
+			m_pPlayer->m_pEpicCircle->Reset();
+
 		WasInCircles = true;
 	}
 
@@ -3164,12 +3144,6 @@ void CCharacter::Clean()
 
 	// ======== BOT MITIGATION ==========
 
-	if (m_pPlayer->m_EpicCircle && GameServer()->m_KOHActive)
-	{
-		GameServer()->SendChatTarget(m_Core.m_Id, "For the greater good, we disabled your epic circles :)"); // SALUT!!!!! xD
-		m_pPlayer->m_EpicCircle = false;
-	}
-
 	if (Server()->Tick() > m_pPlayer->m_ResetDetectsTime)
 	{
 		m_pPlayer->m_Detects = 0;
@@ -3263,7 +3237,7 @@ void CCharacter::HandleLovely()
 	{
 		if (m_LovelyLifeSpan <= 0)
 		{
-			GameServer()->CreateLoveEvent(vec2(m_Pos.x+(rand()%50-25), m_Pos.y-35));
+			GameServer()->CreateLoveEvent(vec2(m_Pos.x+(rand()%50-25), m_Pos.y-35), m_pPlayer->GetCID());
 
 			SetEmote(2, Server()->Tick() + 2 * Server()->TickSpeed());
 			m_LovelyLifeSpan = Server()->TickSpeed() - (rand()%(45 - 35 + 1) + 35);

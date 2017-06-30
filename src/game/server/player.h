@@ -10,6 +10,7 @@
 #include "accounting/account.h"
 
 #include "game/server/entities/special/ball.h"
+#include "game/server/entities/special/epiccircle.h"
 
 // player object
 class CPlayer
@@ -243,6 +244,7 @@ public:
 	void QuestSetNextPart();
 	void QuestTellObjective();
 
+	CEpicCircle *m_pEpicCircle;
 	bool m_EpicCircle;
 	bool m_Rainbowepiletic; // Epiletic rainbow!
 	bool m_Rainbow;

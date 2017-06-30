@@ -4,12 +4,13 @@
 
 #include <game/generated/protocol.h>
 #include <game/server/gamecontext.h>
+#include <game/server/teams.h>
 #include "lovely.h"
 
-CLovely::CLovely(CGameWorld *pGameWorld, vec2 Pos)
+CLovely::CLovely(CGameWorld *pGameWorld, vec2 Pos, int Owner)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP)
 {
-	/*m_Owner = Owner;*/
+	m_Owner = Owner;
 	m_Pos = Pos;
 
   	m_LifeSpan = Server()->TickSpeed()/2;
@@ -30,6 +31,7 @@ void CLovely::Tick()
 	if(m_LifeSpan < 0)
 	{
 		Reset();
+		return;
 	}
 
 	m_Pos.y -= 5.0f;
@@ -39,6 +41,18 @@ void CLovely::Snap(int SnappingClient)
 {	
 	if(NetworkClipped(SnappingClient))
 		return;
+
+	CCharacter *pOwnerChar = 0;
+    int64_t TeamMask = -1LL;
+
+    if(m_Owner >= 0)
+        pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
+
+    if (pOwnerChar && pOwnerChar->IsAlive())
+            TeamMask = pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner);
+
+    if(!CmaskIsSet(TeamMask, SnappingClient))
+        return;
 	
 	CNetObj_Pickup *pObj = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
 	if(pObj)

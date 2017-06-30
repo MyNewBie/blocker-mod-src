@@ -183,12 +183,19 @@ void CGameContext::ConEpicCircles(IConsole::IResult *pResult, void *pUserData) /
 		return;
 	int Victim = pResult->GetVictim();
 
-	if (pSelf->m_apPlayers[Victim])
+	CPlayer* pPlayer = pSelf->m_apPlayers[Victim];
+
+	if (pPlayer)
 	{
-		pSelf->m_apPlayers[Victim]->m_EpicCircle ^= 1;
+		pPlayer->m_EpicCircle ^= 1;
 		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_EpicCircle ? "%s gave you epic circles!" : "%s removed your epic circles!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		str_format(aBuf, sizeof(aBuf), pPlayer->m_EpicCircle ? "%s gave you epic circles!" : "%s removed your epic circles!", pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
+
+		if(pPlayer->m_EpicCircle && pSelf->GetPlayerChar(Victim))
+			pPlayer->m_pEpicCircle = new CEpicCircle(&pSelf->m_World, pSelf->GetPlayerChar(Victim)->m_Pos, Victim);
+		else if (!pPlayer->m_EpicCircle && pSelf->GetPlayerChar(Victim))
+			pPlayer->m_pEpicCircle->Reset();
 	}
 }
 

@@ -277,9 +277,9 @@ void CGameContext::CreateSoundGlobal(int Sound, int Target)
 	}
 }
 
-void CGameContext::CreateLoveEvent(vec2 Pos)
+void CGameContext::CreateLoveEvent(vec2 Pos, int Owner)
 {
-	new CLovely(&m_World, Pos);
+	new CLovely(&m_World, Pos, Owner);
 }
 
 void CGameContext::CallVote(int ClientID, const char *pDesc, const char *pCmd, const char *pReason, const char *pChatmsg)
@@ -1796,12 +1796,15 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					pPlayer->m_Rainbowepiletic ^= 1;
 					SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Rainbow activated" : "Rainbow deactivated");
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "circle", 6) == 0 && pPlayer->m_AccData.m_Vip)
+				else if (str_comp(pMsg->m_pMessage + 1, "circle") == 0 && pPlayer->m_AccData.m_Vip)
 				{
-					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
-						return;
 					pPlayer->m_EpicCircle ^= 1;
 					SendChatTarget(ClientID, pPlayer->m_EpicCircle ? "Circle activated" : "Circle deactivated"); 
+
+					if(pPlayer->m_EpicCircle && GetPlayerChar(ClientID))
+						pPlayer->m_pEpicCircle = new CEpicCircle(&m_World, GetPlayerChar(ClientID)->m_Pos, ClientID);
+					else if (!pPlayer->m_EpicCircle && GetPlayerChar(ClientID))
+						pPlayer->m_pEpicCircle->Reset();
 				}
 				else if (str_comp(pMsg->m_pMessage + 1, "rainbowhook") == 0 && pPlayer->m_AccData.m_Vip)
 				{ // TODO: Improve the code of this rainbowhook (working atm.).
