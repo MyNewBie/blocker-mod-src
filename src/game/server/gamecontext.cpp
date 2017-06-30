@@ -314,11 +314,11 @@ void CGameContext::CallVote(int ClientID, const char *pDesc, const char *pCmd, c
 	pPlayer->m_LastVoteCall = Now;
 }
 
-void CGameContext::SendChatTarget(int To, const char *pText)
+void CGameContext::SendChatTarget(int To, const char *pText, int From)
 {
 	CNetMsg_Sv_Chat Msg;
 	Msg.m_Team = 0;
-	Msg.m_ClientID = -1;
+	Msg.m_ClientID = From;
 	Msg.m_pMessage = pText;
 	if (g_Config.m_SvDemoChat)
 		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, To);
@@ -703,13 +703,13 @@ void CGameContext::OnDetect(int ClientID)
 	if (g_Config.m_SvLogDetects)
 	{
 		IOHANDLE File;
-		File = io_open("detected_players.txt", IOFLAG_APPEND);
+		File = io_open("detected_players.log", IOFLAG_APPEND);
 		if (!File)
 		{
-			File = io_open("detected_players.txt", IOFLAG_WRITE);
+			File = io_open("detected_players.log", IOFLAG_WRITE);
 			if (!File)
 			{
-				dbg_msg("server", "Failed to open detected_players.txt for writing");
+				dbg_msg("server", "Failed to open detected_players.log for writing");
 				return;
 			}
 		}
@@ -719,28 +719,6 @@ void CGameContext::OnDetect(int ClientID)
 		io_write_newline(File);
 		io_close(File);
 	}
-}
-
-void CGameContext::LogIp(int ClientID)
-{
-	char aBuf[256];
-	char aIP[NETADDR_MAXSTRSIZE];
-	IOHANDLE File;
-	File = io_open("IpLogs.txt", IOFLAG_APPEND);
-	if (!File)
-	{
-		File = io_open("IpLogs.txt", IOFLAG_WRITE);
-		if (!File)
-		{
-			dbg_msg("server", "Failed to open IpLogs.txt for writing");
-			return;
-		}
-	}
-	Server()->GetClientAddr(ClientID, aIP, sizeof(aIP));
-	str_format(aBuf, sizeof(aBuf), "Name: \"%s\" IP: \"%s\"", Server()->ClientName(ClientID), aIP);
-	io_write(File, aBuf, str_length(aBuf));
-	io_write_newline(File);
-	io_close(File);
 }
 
 void CGameContext::OnTick()
@@ -1206,6 +1184,14 @@ void CGameContext::OnClientEnter(int ClientID)
 		SendVoteSet(ClientID);
 
 	m_apPlayers[ClientID]->m_Authed = ((CServer*)Server())->m_aClients[ClientID].m_Authed;
+
+	//Log His IP when connect
+	char aClientAddr[NETADDR_MAXSTRSIZE];
+	Server()->GetClientAddr(ClientID, aClientAddr, sizeof(aClientAddr));
+
+	char aLogIP[256];
+	str_format(aLogIP, sizeof(aLogIP), "Name: %s, IP: \"%s\"", Server()->ClientName(ClientID), aClientAddr);
+	log_file(aLogIP, "IpLogs.log");
 }
 
 void CGameContext::OnClientConnected(int ClientID)
@@ -1836,8 +1822,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 
             		pPlayer->GetCharacter()->Core()->m_Pos = pPlayer->GetCharacter()->MousePos();
-
-            		CreateDeath(pPlayer->GetCharacter()->Core()->m_Pos, ClientID);
             		pPlayer->m_LastChat = 0;
 				}
 				else if(str_comp(pMsg->m_pMessage + 1, "invisible") == 0 && Server()->IsAdmin(ClientID))
@@ -1850,6 +1834,19 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					char aBuf[256];
 					str_format(aBuf, sizeof(aBuf), pPlayer->m_Invisible ? "'%s' has left the game" : "'%s' entered and joined the game", Server()->ClientName(ClientID));
 					SendChat(-1, CGameContext::CHAT_ALL, aBuf);
+
+					if(!pPlayer->m_Invisible)
+					{
+						pPlayer->GetCharacter()->HandleCollision(true);
+					}
+				}
+				else if(str_comp(pMsg->m_pMessage + 1, "stars") == 0 && Server()->IsAuthed(ClientID))
+				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+
+					pPlayer->m_Stars ^= true;
+					SendChatTarget(ClientID, pPlayer->m_Stars ? "Stars activated" : "Stars deactivated");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "givepage ", 9) == 0 && Server()->IsAuthed(ClientID))
 				{
@@ -1871,7 +1868,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(LogMsg, sizeof(LogMsg), "%s gave %d pages to %s - Reason: \"%s\"", Server()->ClientName(ClientID), str_toint(aAmount), Server()->ClientName(id), aReason);
 					str_format(Info, 100, "You have received %d pages from %s", str_toint(aAmount), Server()->ClientName(ClientID));
 					SendChatTarget(id, Info);
-					Server()->Log(LogMsg, "SlishteePagesLogs.logs");
+					log_file(LogMsg, "SlishteePagesLogs.log");
 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "vip ", 4) == 0 && Server()->IsAuthed(ClientID))
@@ -1900,7 +1897,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						str_format(LogMsg, sizeof(LogMsg), "%s removed vip from %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
 					}
 
-					Server()->Log(LogMsg, "SlishteeVipLogs.logs");
+					log_file(LogMsg, "SlishteeVipLogs.log");
 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "botmitigation", 13) == 0 && Server()->IsAuthed(ClientID))
@@ -1919,7 +1916,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(OurMsg, 230, "[BotMitigation]: Set to %d", m_BotMitigation);
 					str_format(LogMsg, sizeof(LogMsg), "%s set botmitigation to %d - Server(Map): \"%s\"", Server()->ClientName(ClientID), m_BotMitigation, g_Config.m_SvMap);
 					SendChatTarget(ClientID, OurMsg);
-					Server()->Log(LogMsg, "SlishteeBotMitigationLogs.logs");
+					log_file(LogMsg, "SlishteeBotMitigationLogs.log");
 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Givetempassive ", 15) == 0 && m_apPlayers[ClientID]->m_Authed)
@@ -1942,7 +1939,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					char LogMsg[123];
 					str_format(LogMsg, 123, "%s gave %s temporary access to passive mode for %ds", Server()->ClientName(ClientID), Server()->ClientName(id), str_toint(Time));
-					Server()->Log(LogMsg, "SlishteeTempPassiveMode.logs");
+					log_file(LogMsg, "SlishteeTempPassiveMode.log");
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "vipinfo", 7) == 0 || str_comp_nocase_num(pMsg->m_pMessage + 1, "vip info", 8) == 0)
 				{
@@ -1977,7 +1974,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					// Drop his info to kick list
 					char aInfo[200];
 					str_format(aInfo, 200, "%s %s", aTimeoutCode, aName);
-					Server()->Log(aInfo, "Banlist.txt");
+					log_file(aInfo, "Banlist.txt");
 
 					// save his ip to ban him later
 					Server()->GetClientAddr(id, aBanAddr, sizeof(aBanAddr));
@@ -1987,10 +1984,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					// & ban him
 					m_NeedBan = true;
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "check_Banlistfor ", 18) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "check_Banlistfor ", 17) == 0 && m_apPlayers[ClientID]->m_Authed)
 				{
 					char aName[256];
-					str_copy(aName, pMsg->m_pMessage + 19, 256);
+					str_copy(aName, pMsg->m_pMessage + 18, 256);
 
 					std::ifstream theFile("Banlist.txt");
 					std::string line;
@@ -2009,13 +2006,12 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						}
 					}
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Delete_BanlistLine ", 20) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Delete_BanlistLine ", 19) == 0 && m_apPlayers[ClientID]->m_Authed)
 				{
 					char aLine[64];
-					str_copy(aLine, pMsg->m_pMessage + 21, 256);
-					std::ifstream Banlist("Banlist.txt");
+					str_copy(aLine, pMsg->m_pMessage + 20, 256);
 
-					removeLine("Banlist.txt", str_toint(aLine));
+					RemoveLine("Banlist.txt", str_toint(aLine));
 					SendChatTarget(ClientID, "Successfully deleted");
 					m_NeedFileSwap = true;
 				}
@@ -2976,24 +2972,16 @@ void CGameContext::ConSay(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConSayBy(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	int ClientID = clamp(pResult->GetInteger(0), -1, 64);
+	int ClientID = clamp(pResult->GetInteger(0), 0, 64);
 
-	if(ClientID < 0)
-	{
-		for(int i = 0; i < MAX_CLIENTS; i++)
-		{
-			if(!pSelf->m_apPlayers[i])
-				continue;
-
-			pSelf->SendChat(i, CGameContext::CHAT_ALL, pResult->GetString(1));
-		}
-
+	if(!pSelf->m_apPlayers[ClientID])
 		return;
-	}
 
-	if(pSelf->m_apPlayers[ClientID])
+	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		pSelf->SendChat(ClientID, CGameContext::CHAT_ALL, pResult->GetString(1));
+		if(!pSelf->m_apPlayers[i] || i == ClientID)
+			continue;
+		pSelf->SendChatTarget(i, pResult->GetString(1), ClientID);
 	}
 }
 
@@ -3414,7 +3402,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("restart", "?i[seconds]", CFGFLAG_SERVER | CFGFLAG_STORE, ConRestart, this, "Restart in x seconds (0 = abort)");
 	Console()->Register("broadcast", "r[message]", CFGFLAG_SERVER, ConBroadcast, this, "Broadcast message");
 	Console()->Register("say", "r[message]", CFGFLAG_SERVER, ConSay, this, "Say in chat");
-	Console()->Register("say_by", "ir[message]", CFGFLAG_SERVER, ConSayBy, this, "Say by [ID (-1 = All)] in chat");
+	Console()->Register("say_by", "ir[message]", CFGFLAG_SERVER, ConSayBy, this, "Say by [ID] in chat");
 	Console()->Register("set_team", "i[id] i[team-id] ?i[delay in minutes]", CFGFLAG_SERVER, ConSetTeam, this, "Set team of player to team");
 	Console()->Register("set_team_all", "i[team-id]", CFGFLAG_SERVER, ConSetTeamAll, this, "Set team of all players to team");
 	//Console()->Register("swap_teams", "", CFGFLAG_SERVER, ConSwapTeams, this, "Swap the current teams");
@@ -4040,13 +4028,24 @@ int CGameContext::ProcessSpamProtection(int ClientID)
 	{
 		char aBuf[128];
 		str_format(aBuf, sizeof aBuf, "You are not permitted to talk for the next %d seconds.", Muted);
-		SendChatTarget(ClientID, aBuf);
+		
+		if(!m_apPlayers[ClientID]->m_SilentMuted)
+		{
+			SendChatTarget(ClientID, aBuf);
+		}
 		return 1;
+	}
+	else
+	{
+		if(m_apPlayers[ClientID]->m_SilentMuted)
+		{
+			m_apPlayers[ClientID]->m_SilentMuted = false;
+		}
 	}
 
 	if ((m_apPlayers[ClientID]->m_ChatScore += g_Config.m_SvChatPenalty) > g_Config.m_SvChatThreshold)
 	{
-		Mute(0, &Addr, g_Config.m_SvSpamMuteDuration, Server()->ClientName(ClientID));
+		Mute(0, &Addr, g_Config.m_SvSpamMuteDuration, Server()->ClientName(ClientID), false);
 		m_apPlayers[ClientID]->m_ChatScore = 0;
 		return 1;
 	}
@@ -4267,7 +4266,7 @@ void CGameContext::List(int ClientID, const char* filter)
 	SendChatTarget(ClientID, buf);
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (m_apPlayers[i])
+		if (m_apPlayers[i] && !m_apPlayers[i]->m_Invisible)
 		{
 			total++;
 			const char* name = Server()->ClientName(i);
@@ -4306,65 +4305,57 @@ void CGameContext::DestroyLolText(int TextID)
 	CLoltext::Destroy(&m_World, TextID);
 }
 
-void CGameContext::removeLine(char* sourcefile, int line) {
+void CGameContext::RemoveLine(char* sourcefile, int line) 
+{
 
 	std::ifstream infile;
+	infile.open(sourcefile, std::ios::in);
 
 	char tempPath[100] = "tempfile.txt";
 
-	infile.open(sourcefile, std::ios::in);
-
-	if (infile) {
-
-		int numLine = countLine(sourcefile);
-
-		if (numLine<line) {
-
+	if (infile) 
+	{
+		int numLine = CountLine(sourcefile);
+		if (numLine < line) 
+		{
 			dbg_msg("LINE", "No line to delete");
-
 			return;
-
 		}
 
 		std::ofstream outfile;
-
 		outfile.open(tempPath, std::ios::out);
 
 		char data[100];
-
 		int i = 0;
 
-		while (infile.getline(data, 100)) {
-
+		while (infile.getline(data, 100)) 
+		{
 			i++;
-
-			if (i == line) continue;
+			if (i == line) 
+			{
+				continue;
+			}
 
 			outfile << data << "\n";
-
 		}
-
 		outfile.close();
-
 	}
-
 	infile.close();
 }
 
-int CGameContext::countLine(char* sourcefile) {
-
+int CGameContext::CountLine(char* sourcefile) 
+{
 	std::ifstream infile;
-
 	infile.open(sourcefile, std::ios::in);
 
 	char data[100];
-
 	int line = 0;
 
-	while (infile.getline(data, 100)) line++;
-
+	while (infile.getline(data, 100)) 
+	{
+		line++;
+	}
 	return line;
-
 }
 
 int CGameContext::IsValidCode(char *code)

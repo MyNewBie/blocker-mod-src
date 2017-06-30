@@ -160,7 +160,6 @@ public:
 	virtual void DemoRecorder_HandleAutoStart() = 0;
 	virtual bool DemoRecorder_IsRecording() = 0;
 
-	virtual void Log(const char *Log, const char *Filename) = 0;
 	virtual void FixAccounts() = 0;
 
 	// DDRace

@@ -71,6 +71,9 @@ void dbg_break();
 */
 void dbg_msg(const char *sys, const char *fmt, ...);
 
+//Handle Files:
+void log_file(const char *Log, const char *Filename);
+
 /* Group: Memory */
 
 /*

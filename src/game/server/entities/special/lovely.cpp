@@ -39,7 +39,7 @@ void CLovely::Snap(int SnappingClient)
 {	
 	if(NetworkClipped(SnappingClient))
 		return;
-
+	
 	CNetObj_Pickup *pObj = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
 	if(pObj)
 	{
