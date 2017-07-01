@@ -3167,7 +3167,7 @@ void CCharacter::Clean()
 	if (IsAlive() && (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed))
 		HandlePassiveMode();
 	if(IsAlive() && m_pPlayer->m_Stars)
-		GameServer()->CreateDamageInd(m_Pos, Server()->Tick() * 2.0f, 1, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID())); 
+		GameServer()->CreateDamageInd(m_Pos, Server()->Tick(), 1, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID())); 
 }
 
 void CCharacter::HandleGameModes()
