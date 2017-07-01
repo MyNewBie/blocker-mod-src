@@ -41,19 +41,16 @@ void CLolPlasma::Tick()
 
 void CLolPlasma::Snap(int SnappingClient)
 {
-	if (NetworkClipped(SnappingClient))
+	if (NetworkClipped(SnappingClient) || (GameServer()->GetPlayerChar(SnappingClient) && GameServer()->GetPlayerChar(SnappingClient)->Team()))
 		return;
 
-
-	CNetObj_Laser *pObj = static_cast<CNetObj_Laser*>
-		(Server()->SnapNewItem(NETOBJTYPE_LASER, m_ID, sizeof(CNetObj_Laser)));
+	CNetObj_Laser *pObj = static_cast<CNetObj_Laser*>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_ID, sizeof(CNetObj_Laser)));
 
 	pObj->m_X = (int)m_Pos.x;
 	pObj->m_Y = (int)m_Pos.y;
 	pObj->m_FromX = (int)m_Pos.x;
 	pObj->m_FromY = (int)m_Pos.y;
 	pObj->m_StartTick = m_StartTick;
-
 }
 
 

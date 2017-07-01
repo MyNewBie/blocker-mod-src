@@ -3029,7 +3029,7 @@ void CCharacter::HandleBlocking(bool die)
 			}
 			if (m_FirstFreezeTick != 0 && Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
 			{
-				GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
+				GameServer()->CreateLolText(pECore, false, vec2(0, -50), vec2(0, -1), 100, "+3");
 				m_LastBlockedTick = -1;
 				pECore->m_pPlayer->m_Level.m_Exp += 3;
 			}
@@ -3074,7 +3074,7 @@ void CCharacter::HandleBlocking(bool die)
 							}
 							if (m_LastBlockedTick != -1 && Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
 							{
-								GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
+								GameServer()->CreateLolText(pECore, false, vec2(0, -50), vec2(0, -1), 100, "+3");
 								m_LastBlockedTick = -1;
 								pECore->m_pPlayer->m_Level.m_Exp += 3;
 							}

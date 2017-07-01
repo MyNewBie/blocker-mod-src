@@ -263,6 +263,22 @@ void CGameContext::ConRainbow(IConsole::IResult *pResult, void *pUserData) // gi
 	}
 }
 
+void CGameContext::ConEpileticRainbow(IConsole::IResult *pResult, void *pUserData) // give or remove epiletic Rainbow
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_Rainbowepiletic ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Rainbowepiletic ? "%s gave you epiletic rainbow!" : "%s removed your epiletic rainbow!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
 void CGameContext::ConLovely(IConsole::IResult *pResult, void *pUserData) // give or remove Lovely
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;

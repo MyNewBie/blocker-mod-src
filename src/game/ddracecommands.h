@@ -17,6 +17,7 @@ CONSOLE_COMMAND("smarthammer_pl", "v[id]", CFGFLAG_SERVER, ConSmarthammer, this,
 CONSOLE_COMMAND("bloody_pl", "v[id]", CFGFLAG_SERVER, ConBloody, this, "give/remove player v bloody")
 CONSOLE_COMMAND("steamy_pl", "v[id]", CFGFLAG_SERVER, ConSteamy, this, "give/remove player v steamy")
 CONSOLE_COMMAND("rainbow_pl", "v[id]", CFGFLAG_SERVER, ConRainbow, this, "give/remove player v rainbow")
+CONSOLE_COMMAND("epiletic_rainbow_pl", "v[id]", CFGFLAG_SERVER, ConEpileticRainbow, this, "give/remove player v epiletic rainbow")
 CONSOLE_COMMAND("lovely_pl", "v[id]", CFGFLAG_SERVER, ConLovely, this, "give/remove player v lovely")
 CONSOLE_COMMAND("ball_pl", "v[id]", CFGFLAG_SERVER, ConBall, this, "give/remove player v ball")
 CONSOLE_COMMAND("heartguns_pl", "v[id]", CFGFLAG_SERVER, ConHeartGuns, this, "give/remove player v heartguns")

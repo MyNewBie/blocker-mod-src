@@ -303,6 +303,7 @@ private:
 	static void ConBloody(IConsole::IResult *pResult, void *pUserData); // Give or remove bloody
 	static void ConSteamy(IConsole::IResult *pResult, void *pUserData); // Give or remove steamy
 	static void ConRainbow(IConsole::IResult *pResult, void *pUserData); // Give or remove rainbow
+	static void ConEpileticRainbow(IConsole::IResult *pResult, void *pUserData); // Give or remove epiletic rainbow
 	static void ConLovely(IConsole::IResult *pResult, void *pUserData); // Give or remove lovely
 	static void ConBall(IConsole::IResult *pResult, void *pUserData); // Give or remove ball
 	static void ConHeartGuns(IConsole::IResult *pResult, void *pUserData); // Give or remove heartguns
