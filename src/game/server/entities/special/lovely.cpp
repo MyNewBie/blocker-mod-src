@@ -30,7 +30,13 @@ void CLovely::Tick()
 	CCharacter* pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 
 	m_LifeSpan--;
-	if(m_LifeSpan < 0 || GameServer()->Collision()->IntersectLine(pOwnerChar->m_Pos, vec2(m_Pos.x, m_Pos.y-10), NULL, NULL))
+	if(m_LifeSpan < 0)
+	{
+		Reset();
+		return;
+	}
+
+	if(pOwnerChar && GameServer()->Collision()->IntersectLine(pOwnerChar->m_Pos, vec2(m_Pos.x, m_Pos.y-10), NULL, NULL))
 	{
 		Reset();
 		return;

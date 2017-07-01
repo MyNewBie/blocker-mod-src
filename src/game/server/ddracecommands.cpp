@@ -357,8 +357,18 @@ void CGameContext::ConInvisible(IConsole::IResult *pResult, void *pUserData) // 
 		return;
 	int Victim = pResult->GetVictim();
 
-	if (pSelf->m_apPlayers[Victim])
+	CPlayer* pPlayer = pSelf->m_apPlayers[Victim];
+
+	if (pPlayer)
 	{
+		if(!pSelf->GetPlayerChar(Victim) || !pSelf->GetPlayerChar(Victim)->IsAlive())
+			return;
+
+		if(pPlayer->m_Invisible)
+			pSelf->CreatePlayerSpawn(pPlayer->GetCharacter()->m_Pos, pPlayer->GetCharacter()->Teams()->TeamMask(pPlayer->GetCharacter()->Team(), -1, Victim));
+		else
+			pSelf->CreateDeath(pPlayer->GetCharacter()->m_Pos, Victim, pPlayer->GetCharacter()->Teams()->TeamMask(pPlayer->GetCharacter()->Team(), -1, Victim));
+
 		pSelf->m_apPlayers[Victim]->m_Invisible ^= 1;
 		char aBuf[512];
 		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Invisible ? "%s gave you invisible!" : "%s removed your invisible!", pSelf->Server()->ClientName(pResult->m_ClientID));

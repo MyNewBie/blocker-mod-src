@@ -866,7 +866,7 @@ void CCharacter::Tick()
 		HandleCollision(false); // if you go throught collision tile, it will not affect m_Invisible.
 	}
 
-	if(m_Bloody && m_BloodyDelay > 5)
+	if(m_Bloody && m_BloodyDelay > g_Config.m_ClBloodyDelay)
 	{
 		GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID(), Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 		m_BloodyDelay = 1;
@@ -1240,7 +1240,7 @@ void CCharacter::Snap(int SnappingClient)
 	{
 		for (int i = 0; i < 3; i++)
 		{
-			GameServer()->CreatePlayerSpawn(m_Pos);
+			GameServer()->CreatePlayerSpawn(m_Pos, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 		}
 	}
 
