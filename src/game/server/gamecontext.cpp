@@ -1832,6 +1832,15 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
 
+					if(pPlayer->m_Invisible)
+					{
+						CreatePlayerSpawn(pPlayer->GetCharacter()->m_Pos, pPlayer->GetCharacter()->Teams()->TeamMask(pPlayer->GetCharacter()->Team(), -1, ClientID));
+					}
+					else
+					{
+						CreateDeath(pPlayer->GetCharacter()->m_Pos, ClientID, pPlayer->GetCharacter()->Teams()->TeamMask(pPlayer->GetCharacter()->Team(), -1, ClientID));
+					}
+
 					pPlayer->m_Invisible ^= true;
 
 					char aBuf[256];

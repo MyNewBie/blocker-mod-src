@@ -246,6 +246,7 @@ public:
 	bool m_Pullhammer;
 	bool m_XXL;
 	bool m_Bloody;
+	int m_BloodyDelay;
 	bool m_Steamy;
 	// rainbow hook
 	int RainbowHookedID;

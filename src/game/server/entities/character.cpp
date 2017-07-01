@@ -77,6 +77,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_Pos = Pos;
 	
 	m_LovelyLifeSpan = Server()->TickSpeed(); // hearty
+	m_BloodyDelay = 1;
 	
 	if (pPlayer->m_IsBallSpawned)
 		pPlayer->m_pBall = new CBall(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
@@ -857,11 +858,18 @@ void CCharacter::Tick()
 	Clean();
 	
 	m_LovelyLifeSpan--;
+	m_BloodyDelay++;
 	HandleLovely();
 
 	if(m_pPlayer->m_Invisible)
 	{
 		HandleCollision(false); // if you go throught collision tile, it will not affect m_Invisible.
+	}
+
+	if(m_Bloody && m_BloodyDelay > 5)
+	{
+		GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID(), Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+		m_BloodyDelay = 1;
 	}
 
 	HandleRainbowHook(false);
@@ -1233,14 +1241,6 @@ void CCharacter::Snap(int SnappingClient)
 		for (int i = 0; i < 3; i++)
 		{
 			GameServer()->CreatePlayerSpawn(m_Pos);
-		}
-	}
-
-	if (m_Bloody)
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID());
 		}
 	}
 
