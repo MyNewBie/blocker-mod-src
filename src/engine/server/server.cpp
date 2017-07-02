@@ -1246,13 +1246,8 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 							m_aClients[ClientID].m_pRconCmdToSend = Console()->FirstCommandInfo(AUTHED_ADMIN - AuthLevel, CFGFLAG_SERVER);
 
 						// GET TIME PART //
-						time_t     timer;
-						char       currentTime[26];
-						struct tm* tm_info;
-
-						time(&timer);
-						tm_info = localtime(&timer);
-						strftime(currentTime, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+						char currentTime[26];
+						get_current_time(currentTime, sizeof(currentTime));
 						//   GET IP   //
 						char aAddrStr[NETADDR_MAXSTRSIZE];
 						GetClientAddr(ClientID, aAddrStr, sizeof(aAddrStr));

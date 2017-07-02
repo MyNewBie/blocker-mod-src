@@ -18,8 +18,8 @@
 #endif
 
 #include <base/system.h>
-#include <engine/storage.h>
-#include <engine/config.h>
+//#include <engine/storage.h>
+#include <engine/shared/config.h>
 #include <game/server/player.h>
 //#include <game/server/gamecontext.h>
 #include "account.h"
@@ -29,17 +29,6 @@ CAccount::CAccount(CPlayer *pPlayer)
 		: m_pPlayer(pPlayer)
 {
 }
-
-/*
-#ifndef GAME_VERSION_H
-#define GAME_VERSION_H
-#ifndef NON_HASED_VERSION
-#include "generated/nethash.cpp"
-#define GAME_VERSION "0.6.1"
-#define GAME_NETVERSION "0.6 626fce9a778df4d4" //the std game version
-#endif
-#endif
-*/
 
 /*
 	-----PLEASE READ------ 
@@ -65,23 +54,17 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 	}
 
 	m_pPlayer->m_LastLoginAttempt = GameServer()->Server()->Tick();
+
 	char aBuf[128];
+
 	if (m_pPlayer->m_AccData.m_UserID)
 	{
 		dbg_msg("account", "Account login failed ('%s' - Already logged in)", pUsername);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Already logged in");
 		return;
 	}
-	else if (str_length(pUsername) > 15 || !str_length(pUsername))
+	else if (!IsCorrectSizeData(pUsername, pPassword))
 	{
-		str_format(aBuf, sizeof(aBuf), "Username too %s", str_length(pUsername) ? "long" : "short");
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
-		return;
-	}
-	else if (str_length(pPassword) > 15 || !str_length(pPassword))
-	{
-		str_format(aBuf, sizeof(aBuf), "Password too %s!", str_length(pPassword) ? "long" : "short");
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 		return;
 	}
 	else if (!Exists(pUsername))
@@ -92,9 +75,9 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 		return;
 	}
 
-	char aFullPath[512];
-	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", pUsername);
-	io_close(Storage()->OpenFile(aBuf, IOFLAG_READ, IStorage::TYPE_SAVE, aFullPath, sizeof(aFullPath)));
+	//char aFullPath[512];
+	str_format(aBuf, sizeof(aBuf), "%s/+%s.acc", g_Config.m_SvAccDir, pUsername);
+	//io_close(Storage()->OpenFile(aBuf, IOFLAG_READ, IStorage::TYPE_SAVE, aFullPath, sizeof(aFullPath)));
 
 	char AccUsername[32];
 	char AccPassword[32];
@@ -102,7 +85,7 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 	int AccID;
 
 	FILE *Accfile;
-	Accfile = fopen(aFullPath, "r");
+	Accfile = fopen(aBuf, "r"); // aFullPath
 	fscanf(Accfile, "%s\n%s\n%s\n%d", AccUsername, AccPassword, AccRcon, &AccID);
 	fclose(Accfile);
 
@@ -116,13 +99,6 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 		}
 	}
 
-	if (str_comp(pUsername, AccUsername))
-	{
-		dbg_msg("account", "Account login failed ('%s' - Wrong username)", pUsername);
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Wrong username or password");
-		return;
-	}
-
 	if (str_comp(pPassword, AccPassword))
 	{
 		dbg_msg("account", "Account login failed ('%s' - Wrong password)", pUsername);
@@ -130,8 +106,7 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 		return;
 	}
 
-
-	Accfile = fopen(aFullPath, "r");
+	Accfile = fopen(aBuf, "r"); // aFullPath
 
 	// Always change the numbers when adding please. Makes it easy 
 	fscanf(Accfile, "%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%s\n%d\n%d", // 11
@@ -176,7 +151,7 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 		{
 			dbg_msg("account", "Account login failed ('%s' - already in use (extern))", pUsername);
 			GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account already in use.");
-			m_pPlayer->m_pAccount->SetStorage(Storage());
+			//m_pPlayer->m_pAccount->SetStorage(Storage());
 			m_pPlayer->m_AccData.m_Slot--;
 			m_pPlayer->m_pAccount->Apply();
 			m_pPlayer->m_pAccount->Reset();
@@ -193,16 +168,8 @@ void CAccount::Register(const char *pUsername, const char *pPassword)
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Already logged in");
 		return;
 	}
-	if (str_length(pUsername) > 15 || !str_length(pUsername))
+	if (!IsCorrectSizeData(pUsername, pPassword))
 	{
-		str_format(aBuf, sizeof(aBuf), "Username too %s", str_length(pUsername) ? "long" : "short");
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
-		return;
-	}
-	else if (str_length(pPassword) > 15 || !str_length(pPassword))
-	{
-		str_format(aBuf, sizeof(aBuf), "Password too %s!", str_length(pPassword) ? "long" : "short");
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 		return;
 	}
 	else if (Exists(pUsername))
@@ -212,25 +179,13 @@ void CAccount::Register(const char *pUsername, const char *pPassword)
 		return;
 	}
 
-#if defined(CONF_FAMILY_UNIX)
-	char Filter[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.-_";
-	// "äöü<>|!§$%&/()=?`´*'#+~«»¢“”æßðđŋħjĸł˝;,·^°@ł€¶ŧ←↓→øþ\\";
-	if (!strpbrk(pUsername, Filter))
-#elif defined(CONF_FAMILY_WINDOWS)
-	static TCHAR * ValidChars = _T("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.-_");
-	if (_tcsspnp(pUsername, ValidChars))
-#else
-#error not implemented
-#endif
-	{
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Don't use invalid chars for username!");
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "A - Z, a - z, 0 - 9, . - _");
+	if(!IsValidChar(pUsername))
 		return;
-	}
 
-	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", pUsername);
+	str_format(aBuf, sizeof(aBuf), "%s/+%s.acc", g_Config.m_SvAccDir, pUsername);
 
-	IOHANDLE Accfile = Storage()->OpenFile(aBuf, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+	//IOHANDLE Accfile = Storage()->OpenFile(aBuf, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+	IOHANDLE Accfile = io_open(aBuf, IOFLAG_WRITE);
 	if(!Accfile)
 	{
 		dbg_msg("account/error", "Register: failed to open '%s' for writing");
@@ -262,11 +217,54 @@ void CAccount::Register(const char *pUsername, const char *pPassword)
 	Login(pUsername, pPassword);
 }
 
+bool CAccount::IsValidChar(const char *pUsername)
+{
+#if defined(CONF_FAMILY_UNIX)
+	char Filter[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.-_";
+	if (!strpbrk(pUsername, Filter))
+#elif defined(CONF_FAMILY_WINDOWS)
+	static TCHAR * ValidChars = _T("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.-_");
+	if (_tcsspnp(pUsername, ValidChars))
+#else
+#error not implemented
+#endif
+	{
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Don't use invalid chars for username!");
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "A - Z, a - z, 0 - 9, . - _");
+		return false;
+	}
+
+	return true;
+}
+
+bool CAccount::IsCorrectSizeData(const char *pUsername, const char *pPassword)
+{
+	char aBuf[256];
+
+	if (str_length(pUsername) > 15 || !str_length(pUsername))
+	{
+		str_format(aBuf, sizeof(aBuf), "Username too %s", str_length(pUsername) ? "long" : "short");
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
+		return false;
+	}
+	
+	if (str_length(pPassword) > 15 || !str_length(pPassword))
+	{
+		str_format(aBuf, sizeof(aBuf), "Password too %s!", str_length(pPassword) ? "long" : "short");
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
+		return false;
+	}
+
+	return true;
+}
+
 bool CAccount::Exists(const char *Username)
 {
-	char aBuf[128];
-	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", Username);
-	IOHANDLE Accfile = Storage()->OpenFile(aBuf, IOFLAG_READ, IStorage::TYPE_SAVE);
+	char aPath[128];
+	str_format(aPath, sizeof(aPath), "%s/+%s.acc",g_Config.m_SvAccDir, Username);
+	//IOHANDLE Accfile = Storage()->OpenFile(aPath, IOFLAG_READ, IStorage::TYPE_SAVE);
+	IOHANDLE Accfile = io_open(aPath, IOFLAG_READ);
+	
 	if (Accfile)
 	{
 		io_close(Accfile);
@@ -277,12 +275,11 @@ bool CAccount::Exists(const char *Username)
 
 void CAccount::Apply()
 {
-	if(!Storage())
-		return;
-
 	char aBuf[256];
-	str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", m_pPlayer->m_AccData.m_aUsername);
-	IOHANDLE Accfile = Storage()->OpenFile(aBuf, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+	str_format(aBuf, sizeof(aBuf), "%s/+%s.acc",g_Config.m_SvAccDir, m_pPlayer->m_AccData.m_aUsername);
+	//IOHANDLE Accfile = Storage()->OpenFile(aBuf, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+	IOHANDLE Accfile = io_open(aBuf, IOFLAG_WRITE);
+
 	if(!Accfile)
 	{
 		dbg_msg("account/error", "Apply: failed to open '%s' for writing", aBuf);
@@ -324,13 +321,18 @@ void CAccount::Delete()
 	if (m_pPlayer->m_AccData.m_UserID)
 	{
 		Reset();
-		str_format(aBuf, sizeof(aBuf), "accounts/+%s.acc", m_pPlayer->m_AccData.m_aUsername);
-		if(Storage()->RemoveFile(aBuf, IStorage::TYPE_SAVE))
+		str_format(aBuf, sizeof(aBuf), "%s/+%s.acc",g_Config.m_SvAccDir, m_pPlayer->m_AccData.m_aUsername);
+
+		if(remove(aBuf)) //if(Storage()->RemoveFile(aBuf, IStorage::TYPE_SAVE))
+		{
 			dbg_msg("account", "Account deleted ('%s')", m_pPlayer->m_AccData.m_aUsername);
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account deleted!");
+			GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account deleted!");
+		}
 	}
 	else
+	{
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Please, login to delete your account");
+	}
 }
 
 void CAccount::NewPassword(const char *pNewPassword)
@@ -365,7 +367,8 @@ int CAccount::NextID()
 	str_copy(aAccUserID, "accounts/++UserIDs++.acc", sizeof(aAccUserID));
 
 	// read the current ID
-	IOHANDLE Accfile = Storage()->OpenFile(aAccUserID, IOFLAG_READ, IStorage::TYPE_SAVE);
+	//IOHANDLE Accfile = Storage()->OpenFile(aAccUserID, IOFLAG_READ, IStorage::TYPE_SAVE);
+	IOHANDLE Accfile = io_open(aAccUserID, IOFLAG_READ);
 	if(Accfile)
 	{
 		char aBuf[32];
@@ -376,7 +379,8 @@ int CAccount::NextID()
 	}
 
 	// write the next ID
-	Accfile = Storage()->OpenFile(aAccUserID, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+	//Accfile = Storage()->OpenFile(aAccUserID, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+	Accfile = io_open(aAccUserID, IOFLAG_WRITE);
 	if(Accfile)
 	{
 		char aBuf[32];
@@ -393,10 +397,10 @@ int CAccount::NextID()
 	return 1;
 }
 
-class IStorage *CAccount::Storage() const
+/*class IStorage *CAccount::Storage() const
 {
 	return m_pStorage;
-}
+}*/
 
 class CGameContext *CAccount::GameServer()
 {

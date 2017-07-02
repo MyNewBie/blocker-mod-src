@@ -2013,6 +2013,13 @@ int str_format(char *buffer, int buffer_size, const char *format, ...)
 	return ret;
 }
 
+void get_current_time(char* str, int str_size)
+{
+	time_t time_data;
+	time(&time_data);
+	str_timestamp_ex(time_data, str, str_size, "%Y-%m-%d %H:%M:%S");
+}
+
 char *str_trim_words(char *str, int words)
 {
 	while (words && *str)

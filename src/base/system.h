@@ -790,6 +790,8 @@ int str_length(const char *str);
 */
 int str_format(char *buffer, int buffer_size, const char *format, ...);
 
+void get_current_time(char* str, int str_size);
+
 /*
 	Function: str_trim_words
 		Trims specific number of words at the start of a string.

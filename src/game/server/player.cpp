@@ -79,7 +79,7 @@ void CPlayer::Reset()
 
 	// city - label everything vali so its easier to find pls
 	m_pAccount = new CAccount(this);
-	m_pAccount->SetStorage(GameServer()->Storage());
+	//m_pAccount->SetStorage(GameServer()->Storage());
 	if (m_AccData.m_UserID)
 		m_pAccount->Apply();
 
@@ -459,7 +459,7 @@ void CPlayer::OnDisconnect(const char *pReason)
 {
 	if (m_AccData.m_UserID)
 	{
-		m_pAccount->SetStorage(GameServer()->Storage());
+		//m_pAccount->SetStorage(GameServer()->Storage());
 		m_AccData.m_Slot--;
 		m_pAccount->Apply(); // Save important Shit b4 leaving
 		m_pAccount->Reset();

@@ -1344,7 +1344,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), "Please, use '/login <username> <password>'");
 						return;
 					}
-					pPlayer->m_pAccount->SetStorage(Storage());
+					//pPlayer->m_pAccount->SetStorage(Storage());
 					pPlayer->m_pAccount->Login(Username, Password);
 					return;
 				}
@@ -1355,7 +1355,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), "Not logged in");
 						return;
 					}
-					pPlayer->m_pAccount->SetStorage(Storage());
+					//pPlayer->m_pAccount->SetStorage(Storage());
 					pPlayer->m_AccData.m_Slot--;
 					pPlayer->m_pAccount->Apply();
 					pPlayer->m_pAccount->Reset();
@@ -1395,7 +1395,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						{
 							if (m_apPlayers[i]->m_AccData.m_UserID)
 							{
-								pPlayer->m_pAccount->SetStorage(Storage());
+								//pPlayer->m_pAccount->SetStorage(Storage());
 								m_apPlayers[i]->m_AccData.m_Slot--;
 								m_apPlayers[i]->m_pAccount->Apply();
 								m_apPlayers[i]->m_pAccount->Reset();
@@ -3830,7 +3830,7 @@ void CGameContext::OnShutdown(bool FullShutdown)
 		if (!m_apPlayers[i]->m_AccData.m_UserID)
 			continue;
 
-		m_apPlayers[i]->m_pAccount->SetStorage(Storage());
+		//m_apPlayers[i]->m_pAccount->SetStorage(Storage());
 		m_apPlayers[i]->m_AccData.m_Slot--;
 		m_apPlayers[i]->m_pAccount->Apply();
 		m_apPlayers[i]->m_pAccount->Reset();
