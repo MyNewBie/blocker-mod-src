@@ -182,6 +182,11 @@ void CAccount::Register(const char *pUsername, const char *pPassword)
 	if(!IsValidChar(pUsername))
 		return;
 
+	str_format(aBuf, sizeof(aBuf), "%s", g_Config.m_SvAccDir);
+
+	if(fs_makedir(aBuf))
+        dbg_msg("account.cpp", "Failed to create accounts folder (line %d)", __LINE__);
+
 	str_format(aBuf, sizeof(aBuf), "%s/+%s.acc", g_Config.m_SvAccDir, pUsername);
 
 	//IOHANDLE Accfile = Storage()->OpenFile(aBuf, IOFLAG_WRITE, IStorage::TYPE_SAVE);
@@ -364,7 +369,7 @@ int CAccount::NextID()
 	int UserID = 1;
 	char aAccUserID[128];
 
-	str_copy(aAccUserID, "accounts/++UserIDs++.acc", sizeof(aAccUserID));
+	str_copy(aAccUserID, "%s/++UserIDs++.acc", g_Config.m_SvAccDir, sizeof(aAccUserID));
 
 	// read the current ID
 	//IOHANDLE Accfile = Storage()->OpenFile(aAccUserID, IOFLAG_READ, IStorage::TYPE_SAVE);
