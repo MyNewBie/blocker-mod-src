@@ -96,6 +96,7 @@ public:
 	void HandleLovely();
 	void HandleRainbowHook(bool Reset);
 	void HandleCollision(bool Reset);
+	void HandlePullHammer();
 
 	int NeededFaketuning() { return m_NeededFaketuning; }
 	bool IsAlive() const { return m_Alive; }
@@ -236,6 +237,7 @@ public:
 	int m_FirstFreezeTick;
 	int64 m_LastBlockedTick;
 	int m_PullingID;
+	bool m_IsFiring;
 	int m_HammerStrenght;
 	bool m_DeepFreeze;
 	bool m_EndlessHook;
