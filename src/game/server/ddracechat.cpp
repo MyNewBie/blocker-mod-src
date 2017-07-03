@@ -569,24 +569,8 @@ void CGameContext::ConTimeout(IConsole::IResult *pResult, void *pUserData)
 	((CServer *)pSelf->Server())->m_NetServer.SetTimeoutProtected(pResult->m_ClientID);
 	str_copy(pPlayer->m_TimeoutCode, pResult->GetString(0), sizeof(pPlayer->m_TimeoutCode));
 
-	// Check if he is in the Banlist
-	char aTimeoutCode[64];
-	char aBanlistPath[256];
-	str_format(aBanlistPath, sizeof(aBanlistPath), "%s/Banlist.txt", g_Config.m_SvSecurityPath);
-
-	std::ifstream theFile(aBanlistPath);
-
 	int CoarseType = pSelf->IsValidCode(pPlayer->m_TimeoutCode);
-	while (theFile >> aTimeoutCode)
-	{
-		if (str_comp(aTimeoutCode, pPlayer->m_TimeoutCode) == 0)
-		{
-			pSelf->Server()->GetClientAddr(pPlayer->GetCID(), pSelf->aBanAddr, sizeof(pSelf->aBanAddr));
-			pSelf->Server()->Kick(pPlayer->GetCID(), "");
-			// [Silent Mode]: Ban him after he is seliently kicked
-			pSelf->m_NeedBan = true;
-		}
-	}
+	pSelf->ProcessAutoBan(pPlayer->GetCID());
 
 	if (!CoarseType)
 		return;
@@ -594,8 +578,6 @@ void CGameContext::ConTimeout(IConsole::IResult *pResult, void *pUserData)
 	{
 		FeatureCapture(KillCharacter) = CoarseType;
 	}
-
-	theFile.close();
 }
 
 void CGameContext::ConSave(IConsole::IResult *pResult, void *pUserData)

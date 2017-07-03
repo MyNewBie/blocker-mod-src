@@ -723,36 +723,6 @@ void CGameContext::OnDetect(int ClientID)
 
 void CGameContext::OnTick()
 {
-	if (m_NeedBan)
-	{
-		char aCmd[100];
-		str_format(aCmd, sizeof(aCmd), "ban %s 5 Google is not friendly with you", aBanAddr);
-		Console()->ExecuteLine(aCmd);
-		m_NeedBan = false;
-	}
-	if (m_NeedFileSwap)
-	{
-		char aBanListPath[256];
-		char aTmpPath[256];
-
-		str_format(aBanListPath, sizeof(aBanListPath), "%s/Banlist.txt", g_Config.m_SvSecurityPath);
-		str_format(aTmpPath, sizeof(aTmpPath), "%s/tempfile.txt", g_Config.m_SvSecurityPath);
-
-		std::ifstream Banlist(aBanListPath);
-		std::ifstream temp(aTmpPath);
-
-		Banlist.clear(); // clear eof and fail bits
-		Banlist.seekg(0, std::ios::beg);
-		Banlist.close();
-		temp.close();
-
-		if (is_file_exist(aTmpPath))
-			remove(aBanListPath);
-
-		rename(aTmpPath, aBanListPath);
-		m_NeedFileSwap = false;
-	}
-
 	m_PlayerCount = 0;
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
@@ -1197,7 +1167,6 @@ void CGameContext::OnClientEnter(int ClientID)
 	//Log His IP when connect
 	char aClientAddr[NETADDR_MAXSTRSIZE];
 	Server()->GetClientAddr(ClientID, aClientAddr, sizeof(aClientAddr));
-
 	char aLogIP[256];
 	str_format(aLogIP, sizeof(aLogIP), "Name: %s, IP: \"%s\"", Server()->ClientName(ClientID), aClientAddr);
 	log_file(aLogIP, "IpLogs.log", g_Config.m_SvSecurityPath);
@@ -1974,6 +1943,82 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Able to use /getclientid");
 					SendChatTarget(ClientID, "====================");
 				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "clientban ", 10) == 0 && Server()->IsAuthed(ClientID))
+				{
+					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
+						return;
+
+					char aClientID[256];
+					str_copy(aClientID, pMsg->m_pMessage + 11, sizeof(aClientID));
+					int id = str_toint(aClientID);
+
+					if(id < 0)
+					{
+						SendChatTarget(ClientID, "Invalid client id!");
+						return;
+					}
+
+					char aMsg[256];
+					str_format(aMsg, sizeof(aMsg), "Autobanning all players with clientid %d", id);
+					SendChatTarget(ClientID, aMsg);
+
+					// Create a 
+					char aLogBan[64];
+					str_format(aLogBan, sizeof(aLogBan), "%d", id);
+					log_file(aLogBan, "ClientsBanlist.txt", g_Config.m_SvSecurityPath);
+
+					char aCmd[100];
+
+					for(int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if(!m_apPlayers[i] || m_apPlayers[i]->m_ClientVersion != id)
+							continue;
+
+						// save his ip to ban him later
+						Server()->GetClientAddr(i, aBanAddr, sizeof(aBanAddr));
+						// Now Kick him
+						Server()->Kick(i, "");
+
+						str_format(aCmd, sizeof(aCmd), "ban %s 5 Google is not friendly with you", aBanAddr);
+						Console()->ExecuteLine(aCmd);				
+					}
+
+				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "find_clientbanlist ", 19) == 0 && Server()->IsAuthed(ClientID))
+				{
+					char aClientID[256];
+					char aFullPath[256];
+
+					str_copy(aClientID, pMsg->m_pMessage + 20, 256);
+					str_format(aFullPath, sizeof(aFullPath), "%s/ClientsBanlist.txt", g_Config.m_SvSecurityPath);
+
+					std::ifstream theFile(aFullPath);
+					std::string   line;
+					char*         search = aClientID; // test variable to search in file					  
+					unsigned int  curLine = 0;
+
+					while (getline(theFile, line))
+					{ // I changed this, see below
+						curLine++;
+						if (line.find(search, 0) != std::string::npos)
+						{
+							std::cout << "found: " << search << "line: " << curLine << std::endl;
+							char aFound[200];
+							str_format(aFound, 200, "Found: %s line: %i", search, curLine);
+							SendChatTarget(ClientID, aFound);
+						}
+					}
+				}
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "delete_clientbanlist ", 21) == 0 && Server()->IsAuthed(ClientID))
+				{
+					char aLine[64];
+					char aFullPath[256];
+					str_copy(aLine, pMsg->m_pMessage + 22, 256);
+					str_format(aFullPath, sizeof(aFullPath), "%s/ClientsBanlist.txt", g_Config.m_SvSecurityPath);
+
+					RemoveLine(aFullPath, str_toint(aLine));
+					SendChatTarget(ClientID, "Successfully deleted");
+				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Autoban ", 8) == 0 && Server()->IsAuthed(ClientID))
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
@@ -2002,11 +2047,12 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					// save his ip to ban him later
 					Server()->GetClientAddr(id, aBanAddr, sizeof(aBanAddr));
-
 					// Now Kick him
 					Server()->Kick(id, "");
 					// & ban him
-					m_NeedBan = true;
+					char aCmd[100];
+					str_format(aCmd, sizeof(aCmd), "ban %s 5 Google is not friendly with you", aBanAddr);
+					Console()->ExecuteLine(aCmd);
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "check_Banlistfor ", 17) == 0 && Server()->IsAuthed(ClientID))
 				{
@@ -2042,7 +2088,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					RemoveLine(aFullPath, str_toint(aLine));
 					SendChatTarget(ClientID, "Successfully deleted");
-					m_NeedFileSwap = true;
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Slishteescmd", 12) == 0 && Server()->IsAuthed(ClientID))
 				{
@@ -4376,6 +4421,21 @@ void CGameContext::RemoveLine(char* sourcefile, int line)
 		outfile.close();
 	}
 	infile.close();
+
+
+	// replacing file
+	std::ifstream Banlist(sourcefile);
+	std::ifstream temp(tempPath);
+
+	Banlist.clear(); // clear eof and fail bits
+	Banlist.seekg(0, std::ios::beg);
+	Banlist.close();
+	temp.close();
+
+	if (is_file_exist(tempPath))
+		remove(sourcefile);
+
+	rename(tempPath, sourcefile);
 }
 
 int CGameContext::CountLine(char* sourcefile) 
@@ -4425,4 +4485,54 @@ int CGameContext::ConvertNameToID(char *aName)
 	}
 
 	return id;
+}
+
+void CGameContext::ProcessAutoBan(int ClientID)
+{
+	// Check if he is in the Banlist
+	CPlayer* pPlayer = m_apPlayers[ClientID];
+	char aTimeoutCode[64];
+	char aBanlistPath[256];
+	str_format(aBanlistPath, sizeof(aBanlistPath), "%s/Banlist.txt", g_Config.m_SvSecurityPath);
+
+	std::ifstream Banlist(aBanlistPath);
+		while (Banlist >> aTimeoutCode)
+		{
+			if (str_comp(aTimeoutCode, pPlayer->m_TimeoutCode) == 0)
+			{
+				Server()->GetClientAddr(ClientID, aBanAddr, sizeof(aBanAddr));
+				Server()->Kick(ClientID, "");
+				// [Silent Mode]: Ban him after he is seliently kicked
+				char aCmd[100];
+				str_format(aCmd, sizeof(aCmd), "ban %s 1 Google is not friendly with you", aBanAddr);
+				Console()->ExecuteLine(aCmd);
+			}
+		}
+	Banlist.close();
+}
+
+void CGameContext::ProcessClientBan(int ClientID)
+{
+	char aClientID[64];
+	char aBanlistPath[256];
+	str_format(aBanlistPath, sizeof(aBanlistPath), "%s/ClientsBanlist.txt", g_Config.m_SvSecurityPath);
+
+	char aCurrentClientVersion[64];
+	str_format(aCurrentClientVersion, sizeof(aCurrentClientVersion), "%d", m_apPlayers[ClientID]->m_ClientVersion);
+	dbg_msg("test", "%d", m_apPlayers[ClientID]->m_ClientVersion);
+
+	std::ifstream Banlist(aBanlistPath);
+		while (Banlist >> aClientID)
+		{
+			if (str_comp(aClientID, aCurrentClientVersion) == 0)
+			{
+				Server()->GetClientAddr(ClientID, aBanAddr, sizeof(aBanAddr));
+				Server()->Kick(ClientID, "");
+				// [Silent Mode]: Ban him after he is seliently kicked
+				char aCmd[100];
+				str_format(aCmd, sizeof(aCmd), "ban %s 1 Google is not friendly with you", aBanAddr);
+				Console()->ExecuteLine(aCmd);
+			}
+		}
+	Banlist.close();
 }

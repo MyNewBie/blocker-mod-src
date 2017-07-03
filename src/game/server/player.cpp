@@ -185,7 +185,7 @@ void CPlayer::Tick()
 	if (!g_Config.m_DbgDummies || m_ClientID < MAX_CLIENTS - g_Config.m_DbgDummies)
 #endif
 		if (!Server()->ClientIngame(m_ClientID))
-			return;
+			return;	
 
 	if (m_KillMe != 0)
 	{

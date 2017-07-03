@@ -192,6 +192,9 @@ public:
 	void SendWeaponPickup(int ClientID, int Weapon);
 	void SendBroadcast(const char *pText, int ClientID);
 
+	void ProcessAutoBan(int ClientID);
+	void ProcessClientBan(int ClientID);
+
 	void List(int ClientID, const char* filter);
 
 	//
@@ -265,7 +268,6 @@ public:
 	int CountLine(char *sourcefile);
 
 	// Banning
-	bool m_NeedBan;
 	char aBanAddr[NETADDR_MAXSTRSIZE];// = { 0 }; // no initialisations in header
 	char aReason[256];
 

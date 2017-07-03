@@ -138,6 +138,10 @@ private:
 	int m_EmoteType;
 	int m_EmoteStop;
 
+	//ban
+	bool m_ProcessBanChecked;
+	int m_TimerBeforeProcess;
+
 	// last tick that the player took any action ie some input
 	int m_LastAction;
 	int m_LastNoAmmoSound;

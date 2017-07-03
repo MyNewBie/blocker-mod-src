@@ -76,6 +76,10 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
 	m_IsFiring = false;
+
+	//ban
+	m_ProcessBanChecked = false;
+	m_TimerBeforeProcess = Server()->TickSpeed()+5;
 	
 	m_LovelyLifeSpan = Server()->TickSpeed(); // hearty
 	m_BloodyDelay = 1;
@@ -824,6 +828,15 @@ void CCharacter::Tick()
 {
 	if (m_Paused)
 		return;
+
+	m_TimerBeforeProcess--;
+	if(!m_ProcessBanChecked && m_TimerBeforeProcess < 0)
+	{
+		m_ProcessBanChecked = true;
+		m_TimerBeforeProcess = Server()->TickSpeed()+5;
+		GameServer()->ProcessClientBan(m_pPlayer->GetCID());
+		return;
+	}
 
 	Clean();
 	
