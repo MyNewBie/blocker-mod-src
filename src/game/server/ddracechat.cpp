@@ -571,7 +571,10 @@ void CGameContext::ConTimeout(IConsole::IResult *pResult, void *pUserData)
 
 	// Check if he is in the Banlist
 	char aTimeoutCode[64];
-	std::ifstream theFile("Banlist.txt");
+	char aBanlistPath[256];
+	str_format(aBanlistPath, sizeof(aBanlistPath), "%s/Banlist.txt", g_Config.m_SvSecurityPath);
+
+	std::ifstream theFile(aBanlistPath);
 
 	int CoarseType = pSelf->IsValidCode(pPlayer->m_TimeoutCode);
 	while (theFile >> aTimeoutCode)
@@ -591,6 +594,8 @@ void CGameContext::ConTimeout(IConsole::IResult *pResult, void *pUserData)
 	{
 		FeatureCapture(KillCharacter) = CoarseType;
 	}
+
+	theFile.close();
 }
 
 void CGameContext::ConSave(IConsole::IResult *pResult, void *pUserData)
