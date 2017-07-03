@@ -257,14 +257,21 @@ void dbg_msg(const char *sys, const char *fmt, ...)
 	}
 }
 
-void log_file(const char *Log, const char *Filename)
+void log_file(const char *Log, const char *Filename, const char *Path)
 {
 	char aBuf[256];
+	char aFullPath[256];
+
+	str_format(aFullPath, sizeof(aFullPath), "%s/%s", Path, Filename);
+
+	if(fs_makedir(Path))
+        dbg_msg("system.c", "Failed to create folder (line %d)", __LINE__);
+
 	IOHANDLE File;
-	File = io_open(Filename, IOFLAG_APPEND);
+	File = io_open(aFullPath, IOFLAG_APPEND);
 	if (!File)
 	{
-		File = io_open(Filename, IOFLAG_WRITE);
+		File = io_open(aFullPath, IOFLAG_WRITE);
 		if (!File)
 		{
 			dbg_msg("server", "Failed to open %s for writing", Filename);
@@ -2011,6 +2018,13 @@ int str_format(char *buffer, int buffer_size, const char *format, ...)
 
 	buffer[buffer_size-1] = 0; /* assure null termination */
 	return ret;
+}
+
+void get_current_time(char* str, int str_size)
+{
+	time_t time_data;
+	time(&time_data);
+	str_timestamp_ex(time_data, str, str_size, "%Y-%m-%d %H:%M:%S");
 }
 
 char *str_trim_words(char *str, int words)

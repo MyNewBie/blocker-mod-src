@@ -11,12 +11,6 @@ public:
 	virtual void Tick();
 	virtual void Snap(int SnappingClient);
 	inline vec2 GetPos() const { return m_Pos; }
-	
-	enum
-	{
-	    TYPE_HEART = 0, 
-	    TYPE_RIFLE,
-	};
 
 private:
 

@@ -72,7 +72,7 @@ void dbg_break();
 void dbg_msg(const char *sys, const char *fmt, ...);
 
 //Handle Files:
-void log_file(const char *Log, const char *Filename);
+void log_file(const char *Log, const char *Filename, const char *Path);
 
 /* Group: Memory */
 
@@ -789,6 +789,8 @@ int str_length(const char *str);
 		- Garantees that dst string will contain zero-termination.
 */
 int str_format(char *buffer, int buffer_size, const char *format, ...);
+
+void get_current_time(char* str, int str_size);
 
 /*
 	Function: str_trim_words

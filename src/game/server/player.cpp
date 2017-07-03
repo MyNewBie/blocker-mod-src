@@ -75,10 +75,11 @@ void CPlayer::Reset()
 	m_LastActionTick = Server()->Tick();
 	m_TeamChangeTick = Server()->Tick();
 	m_WeakHookSpawn = false;
+	m_SilentMuted = false;
 
 	// city - label everything vali so its easier to find pls
 	m_pAccount = new CAccount(this);
-	m_pAccount->SetStorage(GameServer()->Storage());
+	//m_pAccount->SetStorage(GameServer()->Storage());
 	if (m_AccData.m_UserID)
 		m_pAccount->Apply();
 
@@ -184,7 +185,7 @@ void CPlayer::Tick()
 	if (!g_Config.m_DbgDummies || m_ClientID < MAX_CLIENTS - g_Config.m_DbgDummies)
 #endif
 		if (!Server()->ClientIngame(m_ClientID))
-			return;
+			return;	
 
 	if (m_KillMe != 0)
 	{
@@ -458,7 +459,7 @@ void CPlayer::OnDisconnect(const char *pReason)
 {
 	if (m_AccData.m_UserID)
 	{
-		m_pAccount->SetStorage(GameServer()->Storage());
+		//m_pAccount->SetStorage(GameServer()->Storage());
 		m_AccData.m_Slot--;
 		m_pAccount->Apply(); // Save important Shit b4 leaving
 		m_pAccount->Reset();

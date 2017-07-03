@@ -75,11 +75,19 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_apAnimIDs = new int[m_AnimIDNum];//create id-array
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
+	m_IsFiring = false;
+
+	//ban
+	m_ProcessBanChecked = false;
+	m_TimerBeforeProcess = Server()->TickSpeed()+5;
 	
 	m_LovelyLifeSpan = Server()->TickSpeed(); // hearty
+	m_BloodyDelay = 1;
 	
 	if (pPlayer->m_IsBallSpawned)
 		pPlayer->m_pBall = new CBall(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
+	if (pPlayer->m_EpicCircle)
+		pPlayer->m_pEpicCircle = new CEpicCircle(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
 
 	RainbowHookedID = -1;
 
@@ -119,6 +127,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	}
 
 	m_FreezeTimer = 0;
+
 	for (int i = 0; i < m_AnimIDNum; i++)//snap ids
 		m_apAnimIDs[i] = Server()->SnapNewID();
 
@@ -413,6 +422,8 @@ void CCharacter::FireWeapon()
 	if (FullAuto && (m_LatestInput.m_Fire & 1) && m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
 		WillFire = true;
 
+	m_IsFiring = WillFire;
+
 	if (!WillFire && !m_Fire)
 	{
 		if (m_Pullhammer)
@@ -423,43 +434,6 @@ void CCharacter::FireWeapon()
 	if (this && !IsGrounded() && (m_pPlayer->m_KillMe == 3 || m_LastBonus))
 	{
 		m_pPlayer->m_KillMe++;
-	}
-
-	if (GetPlayer()->GetCharacter() && m_Pullhammer && m_Core.m_ActiveWeapon == WEAPON_HAMMER)
-	{
-		if (m_PullingID == -1 || !GameServer()->GetPlayerChar(m_PullingID)) //no one gets pulled, so search for one!
-		{
-			CCharacter * pTarget = GameWorld()->ClosestCharacter(MousePos(), 20.f, GetPlayer()->GetCharacter()); // Don't allow the user to use it on their self, Alot of people seem to be abusing and bugging themselves into walls... -.-
-			if (pTarget)
-				m_PullingID = pTarget->GetPlayer()->GetCID();
-		}
-		else
-		{
-			//crash prevention
-			CPlayer * pTargetPlayer = GameServer()->m_apPlayers[m_PullingID];
-
-			if (pTargetPlayer)
-			{
-				CCharacter *pTarget = GameServer()->m_apPlayers[m_PullingID]->GetCharacter();
-
-				if (pTarget->GetPlayer()->GetCharacter() && pTarget)
-				{
-					pTarget->Core()->m_Pos = MousePos();
-					pTarget->Core()->m_Vel.y = 0;
-				}
-				else
-				{
-					m_PullingID = -1;
-					return;
-				}
-			}
-			else
-			{
-				m_PullingID = -1;
-				return;
-			}
-		}
-		return;
 	}
 
 	// check for ammo
@@ -478,6 +452,11 @@ void CCharacter::FireWeapon()
 	}
 
 	vec2 ProjStartPos = m_Pos + Direction*m_ProximityRadius*0.75f;
+
+	if(m_Pullhammer) 
+	{ 
+		return; 
+	}
 
 	switch (m_Core.m_ActiveWeapon)
 	{
@@ -837,7 +816,6 @@ void CCharacter::OnDirectInput(CNetObj_PlayerInput *pNewInput)
 void CCharacter::ResetInput()
 {
 	m_Input.m_Direction = 0;
-	//m_Input.m_Hook = 0;
 	// simulate releasing the fire button
 	if ((m_Input.m_Fire & 1) != 0)
 		m_Input.m_Fire++;
@@ -851,14 +829,31 @@ void CCharacter::Tick()
 	if (m_Paused)
 		return;
 
+	m_TimerBeforeProcess--;
+	if(!m_ProcessBanChecked && m_TimerBeforeProcess < 0)
+	{
+		m_ProcessBanChecked = true;
+		m_TimerBeforeProcess = Server()->TickSpeed()+5;
+		GameServer()->ProcessClientBan(m_pPlayer->GetCID());
+		return;
+	}
+
 	Clean();
 	
 	m_LovelyLifeSpan--;
+	m_BloodyDelay++;
 	HandleLovely();
+	HandlePullHammer();
 
 	if(m_pPlayer->m_Invisible)
 	{
 		HandleCollision(false); // if you go throught collision tile, it will not affect m_Invisible.
+	}
+
+	if(m_Bloody && m_BloodyDelay > g_Config.m_ClBloodyDelay)
+	{
+		GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID(), Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+		m_BloodyDelay = 1;
 	}
 
 	HandleRainbowHook(false);
@@ -1229,15 +1224,7 @@ void CCharacter::Snap(int SnappingClient)
 	{
 		for (int i = 0; i < 3; i++)
 		{
-			GameServer()->CreatePlayerSpawn(m_Pos);
-		}
-	}
-
-	if (m_Bloody)
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID());
+			GameServer()->CreatePlayerSpawn(m_Pos, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 		}
 	}
 
@@ -1354,36 +1341,6 @@ void CCharacter::Snap(int SnappingClient)
 					pFirstParticle->m_StartTick = Server()->Tick() - 4;
 					pFirstParticle->m_Type = g_Config.m_SvKOHCircleType;
 				}
-			}
-		}
-	}
-
-	if (GetPlayer()->m_EpicCircle && !GameServer()->m_KOHActive) 
-	{
-		//calculate visible balls
-		float Panso = 1.0f;
-		Panso *= m_AnimIDNum;
-
-		int MaxBalls = round_to_int(Panso);
-
-		for (int i = 0; i < MaxBalls; i++)
-		{
-			CNetObj_Projectile *pFirstParticle = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_apAnimIDs[i], sizeof(CNetObj_Projectile)));
-			if (pFirstParticle && m_apAnimIDs[i] != -1)
-			{
-				float rad = 16.0f * powf(sinf(Server()->Tick() / 30.0f), 3) * 1 + 50;
-
-				float TurnFac = 0.025f;
-
-				float PosX = m_Pos.x + cosf(2 * pi * (i / (float)m_AnimIDNum) + Server()->Tick()*TurnFac) * rad;
-				float PosY = m_Pos.y + sinf(2 * pi * (i / (float)m_AnimIDNum) + Server()->Tick()*TurnFac) * rad;
-
-				pFirstParticle->m_X = PosX;
-				pFirstParticle->m_Y = PosY;
-				pFirstParticle->m_VelX = 4;
-				pFirstParticle->m_VelY = 4;
-				pFirstParticle->m_StartTick = Server()->Tick() - 4;
-				pFirstParticle->m_Type = 0;
 			}
 		}
 	}
@@ -1894,66 +1851,7 @@ void CCharacter::HandleTiles(int Index)
 		}
 
 	}
-
-	// rainbow tile : regular players
-	if (((m_TileIndex == TILE_RAINBOW || m_TileFIndex == TILE_RAINBOW)) && !WasInRainbow)
-	{
-		m_pPlayer->m_Rainbow ^= 1;
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_pPlayer->m_Rainbow ? "Rainbow activated" : "Rainbow deactivated");
-		WasInRainbow = true;
-	}
-
-	// Vip
-	if ((m_TileIndex == TILE_VIP || m_TileFIndex == TILE_VIP) && !m_pPlayer->m_AccData.m_Vip)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not a vip!");
-		Die(GetPlayer()->GetCID(), WEAPON_WORLD);
-	}
-
-	// heavyhammer
-	if (((m_TileIndex == TILE_HEAVYHAMMER) || (m_TileFIndex == TILE_HEAVYHAMMER)) && !WasInHH)
-	{
-		if (!m_HammerStrenght)
-			m_HammerStrenght = 3;
-		else
-			m_HammerStrenght = 0;
-
-		m_HammerStrenght > 0 ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got heavyhammer!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost heavyhammer!");
-		WasInHH = true;
-	}
-
-	// steamy
-	if (((m_TileIndex == TILE_BLOODY || m_TileFIndex == TILE_BLOODY)) && !WasInBloody)
-	{
-		m_Bloody ^= 1;
-		m_Bloody ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got Bloody!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost Bloody!");
-		WasInBloody = true;
-	}
-
-	// steamy
-	if (((m_TileIndex == TILE_STEAMY || m_TileFIndex == TILE_STEAMY)) && !WasInSteam)
-	{
-		m_Steamy ^= 1;
-		m_Steamy ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got steamy!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost steamy!");
-		WasInSteam = true;
-	}
-
-	// XXL
-	if (((m_TileIndex == TILE_XXL || m_TileFIndex == TILE_XXL)) && !WasInXXL)
-	{
-		m_XXL ^= 1;
-		m_XXL ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got xxl!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost XXL!");
-		WasInXXL = true;
-	}
-
-	// epic circles
-	if (((m_TileIndex == TILE_EPICCIRCLES || m_TileFIndex == TILE_EPICCIRCLES)) && !WasInCircles && !GameServer()->m_KOHActive)
-	{
-		m_pPlayer->m_EpicCircle ^= 1;
-		m_pPlayer->m_EpicCircle ? GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You got epic circles!") : GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost epic circles!");
-		WasInCircles = true;
-	}
-
+	
 	// passive
 	if (g_Config.m_SvWbProt != 0)
 	{
@@ -2328,6 +2226,73 @@ void CCharacter::HandleTiles(int Index)
 			m_Core.m_HookPos = m_Core.m_Pos;
 		}
 		return;
+	}
+
+	// rainbow tile : regular players
+	if (((m_TileIndex == TILE_RAINBOW || m_TileFIndex == TILE_RAINBOW)) && !WasInRainbow)
+	{
+		m_pPlayer->m_Rainbow ^= 1;
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_pPlayer->m_Rainbow ? "Rainbow activated" : "Rainbow deactivated");
+		WasInRainbow = true;
+	}
+
+	// Vip
+	if ((m_TileIndex == TILE_VIP || m_TileFIndex == TILE_VIP) && (!m_pPlayer->m_AccData.m_UserID || !m_pPlayer->m_AccData.m_Vip))
+	{
+		Die(m_pPlayer->GetCID(), WEAPON_WORLD);
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "You are not a vip!");
+		return;
+	}
+
+	// heavyhammer
+	if (((m_TileIndex == TILE_HEAVYHAMMER) || (m_TileFIndex == TILE_HEAVYHAMMER)) && !WasInHH)
+	{
+		if (!m_HammerStrenght)
+			m_HammerStrenght = 3;
+		else
+			m_HammerStrenght = 0;
+
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_HammerStrenght > 0 ? "You got heavyhammer!" : "You lost heavyhammer!");
+		WasInHH = true;
+	}
+
+	// steamy
+	if (((m_TileIndex == TILE_BLOODY || m_TileFIndex == TILE_BLOODY)) && !WasInBloody)
+	{
+		m_Bloody ^= 1;
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_Bloody ? "You got Bloody!" : "You lost Bloody!");
+		WasInBloody = true;
+	}
+
+	// steamy
+	if (((m_TileIndex == TILE_STEAMY || m_TileFIndex == TILE_STEAMY)) && !WasInSteam)
+	{
+		m_Steamy ^= 1;
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_Steamy ? "You got steamy!" : "You lost steamy!");
+		WasInSteam = true;
+	}
+
+	// XXL
+	if (((m_TileIndex == TILE_XXL || m_TileFIndex == TILE_XXL)) && !WasInXXL)
+	{
+		m_XXL ^= 1;
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_XXL ? "You got xxl!" : "You lost XXL!");
+		WasInXXL = true;
+	}
+
+	// epic circles
+	if (((m_TileIndex == TILE_EPICCIRCLES || m_TileFIndex == TILE_EPICCIRCLES)) && !WasInCircles && !GameServer()->m_KOHActive)
+	{
+		m_pPlayer->m_EpicCircle ^= 1;
+		 
+		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_pPlayer->m_EpicCircle ? "You got epic circles!" : "You lost epic circles!");
+		
+		if(m_pPlayer->m_EpicCircle && IsAlive())
+			m_pPlayer->m_pEpicCircle = new CEpicCircle(&GameServer()->m_World, m_Pos, GetPlayer()->GetCID());
+		else if (!m_pPlayer->m_EpicCircle && IsAlive())
+			m_pPlayer->m_pEpicCircle->Reset();
+
+		WasInCircles = true;
 	}
 }
 
@@ -2997,24 +2962,16 @@ void CCharacter::HandleLevelSystem()
 		}
 	}
 
-	/*// Handle Perstiges
-	if (this && IsAlive() && m_pPlayer->m_Level.m_Perstige == 50 && !m_pPlayer->m_Level.m_Informed)
-	{
-	GameServer()->SendChatTarget(m_Core.m_Id, "You can perstige with /perstige");
-	m_pPlayer->m_Level.m_Informed = true;
-	}
-	else if (this && IsAlive() && m_pPlayer->m_Level.m_Level > 50)
-	m_pPlayer->m_Level.m_Level = 50;*/
-
-	// Show off our level!
 	if (this && IsAlive() && m_pPlayer->m_AccData.m_UserID)
 	{
 		const char *pClan = Server()->ClientClan(GetPlayer()->GetCID());
 		char aLevel[16];
-		str_format(aLevel, 16, "[Lvl]: %d", m_pPlayer->m_Level);
+		str_format(aLevel, 16, "[Lvl]: %d", m_pPlayer->m_Level.m_Level);
 
-		if (str_comp_nocase(aLevel, pClan) != 0) // No spam
+		if (str_comp(aLevel, pClan) != 0) // No spam
+		{
 			Server()->SetClientClan(GetPlayer()->GetCID(), aLevel);
+		}
 	}
 
 	// Stop the fakers
@@ -3055,7 +3012,7 @@ void CCharacter::HandleBlocking(bool die)
 			}
 			if (m_FirstFreezeTick != 0 && Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
 			{
-				GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
+				GameServer()->CreateLolText(pECore, false, vec2(0, -50), vec2(0, -1), 100, "+3");
 				m_LastBlockedTick = -1;
 				pECore->m_pPlayer->m_Level.m_Exp += 3;
 			}
@@ -3100,7 +3057,7 @@ void CCharacter::HandleBlocking(bool die)
 							}
 							if (m_LastBlockedTick != -1 && Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
 							{
-								GameServer()->CreateLolText(pECore, true, vec2(0, -50), vec2(0, 0), 100, "+3");
+								GameServer()->CreateLolText(pECore, false, vec2(0, -50), vec2(0, -1), 100, "+3");
 								m_LastBlockedTick = -1;
 								pECore->m_pPlayer->m_Level.m_Exp += 3;
 							}
@@ -3162,12 +3119,6 @@ void CCharacter::Clean()
 
 	// ======== BOT MITIGATION ==========
 
-	if (m_pPlayer->m_EpicCircle && GameServer()->m_KOHActive)
-	{
-		GameServer()->SendChatTarget(m_Core.m_Id, "For the greater good, we disabled your epic circles :)"); // SALUT!!!!! xD
-		m_pPlayer->m_EpicCircle = false;
-	}
-
 	if (Server()->Tick() > m_pPlayer->m_ResetDetectsTime)
 	{
 		m_pPlayer->m_Detects = 0;
@@ -3199,7 +3150,7 @@ void CCharacter::Clean()
 	if (IsAlive() && (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed))
 		HandlePassiveMode();
 	if(IsAlive() && m_pPlayer->m_Stars)
-		GameServer()->CreateDamageInd(m_Pos, Server()->Tick() * 2.0f, 1, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID())); 
+		GameServer()->CreateDamageInd(m_Pos, Server()->Tick(), 1, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID())); 
 }
 
 void CCharacter::HandleGameModes()
@@ -3261,7 +3212,7 @@ void CCharacter::HandleLovely()
 	{
 		if (m_LovelyLifeSpan <= 0)
 		{
-			GameServer()->CreateLoveEvent(vec2(m_Pos.x+(rand()%50-25), m_Pos.y-35));
+			GameServer()->CreateLoveEvent(vec2(m_Pos.x+(rand()%50-25), m_Pos.y-35), m_pPlayer->GetCID());
 
 			SetEmote(2, Server()->Tick() + 2 * Server()->TickSpeed());
 			m_LovelyLifeSpan = Server()->TickSpeed() - (rand()%(45 - 35 + 1) + 35);
@@ -3315,5 +3266,49 @@ void CCharacter::HandleCollision(bool Reset)
 			m_NeededFaketuning |= FAKETUNE_NOCOLL;
 			GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
 		break;
+	}
+}
+
+void CCharacter::HandlePullHammer()
+{
+	if(!m_Pullhammer || m_Core.m_ActiveWeapon != WEAPON_HAMMER)
+   		return;
+
+	if(!m_IsFiring)
+	{
+   		m_PullingID = -1;
+		return;
+	}
+
+	if(m_PullingID == -1)
+	{
+		CCharacter * pTarget = GameWorld()->ClosestCharacter(MousePos(), 20.f, this); // Don't allow the user to use it on their self, Alot of people seem to be abusing and bugging themselves into walls... -.-
+		if (pTarget)
+		{
+			m_PullingID = pTarget->GetPlayer()->GetCID();
+		}
+	}
+	else
+	{
+		CCharacter* pTarget = GameServer()->GetPlayerChar(m_PullingID);
+		CPlayer* pTargetPlayer = GameServer()->m_apPlayers[m_PullingID];
+		int CollTile = GameServer()->Collision()->GetTileRaw(m_Input.m_TargetX + m_Pos.x, m_Input.m_TargetY + m_Pos.y);
+
+		if(pTargetPlayer)
+		{
+			if(pTarget)
+			{
+				if(CollTile != TILE_VIP && CollTile != TILE_ADMIN && CollTile != TILE_DEATH)
+				{
+		  			pTarget->Core()->m_Pos = MousePos();
+		  			pTarget->Core()->m_Vel.y = 0;
+				}
+		  	}
+		}
+		else
+		{
+	    	m_PullingID = -1;
+	    	return;
+		}
 	}
 }

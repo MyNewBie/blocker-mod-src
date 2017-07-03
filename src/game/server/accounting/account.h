@@ -7,14 +7,10 @@
 class CAccount
 {
 	class CPlayer *m_pPlayer;
-	class IStorage *m_pStorage;
-
-	class IStorage *Storage() const;
 	class CGameContext *GameServer();
 
 public:
 	CAccount(class CPlayer *pPlayer);
-	void SetStorage(class IStorage *pStorage) { m_pStorage = pStorage; }
 
 	void Login(const char *pUsername, const char *pPassword);
 	void Register(const char *pUsername, const char *pPassword);
@@ -22,13 +18,11 @@ public:
 	void Reset();
 	void Delete();
 	void NewPassword(const char *pNewPassword);
+	bool IsValidChar(const char *pUsername);
+	bool IsCorrectSizeData(const char *pUsername, const char *pPassword);
 	bool Exists(const char * Username);
 
-	enum { MAX_SERVER = 2 };
 	int NextID();
-
-	//bool LoggedIn(const char * Username);
-	//int NameToID(const char * Username);
 };
 
 #endif

@@ -96,6 +96,7 @@ public:
 	void HandleLovely();
 	void HandleRainbowHook(bool Reset);
 	void HandleCollision(bool Reset);
+	void HandlePullHammer();
 
 	int NeededFaketuning() { return m_NeededFaketuning; }
 	bool IsAlive() const { return m_Alive; }
@@ -136,6 +137,10 @@ private:
 
 	int m_EmoteType;
 	int m_EmoteStop;
+
+	//ban
+	bool m_ProcessBanChecked;
+	int m_TimerBeforeProcess;
 
 	// last tick that the player took any action ie some input
 	int m_LastAction;
@@ -236,6 +241,7 @@ public:
 	int m_FirstFreezeTick;
 	int64 m_LastBlockedTick;
 	int m_PullingID;
+	bool m_IsFiring;
 	int m_HammerStrenght;
 	bool m_DeepFreeze;
 	bool m_EndlessHook;
@@ -246,6 +252,7 @@ public:
 	bool m_Pullhammer;
 	bool m_XXL;
 	bool m_Bloody;
+	int m_BloodyDelay;
 	bool m_Steamy;
 	// rainbow hook
 	int RainbowHookedID;

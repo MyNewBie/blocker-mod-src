@@ -171,7 +171,7 @@ public:
 	void CreateDeath(vec2 Pos, int Who, int64_t Mask=-1);
 	void CreateSound(vec2 Pos, int Sound, int64_t Mask=-1);
 	void CreateSoundGlobal(int Sound, int Target=-1);
-	void CreateLoveEvent(vec2 Pos);
+	void CreateLoveEvent(vec2 Pos, int Owner);
 
 	enum
 	{
@@ -191,6 +191,9 @@ public:
 	void SendEmoticon(int ClientID, int Emoticon);
 	void SendWeaponPickup(int ClientID, int Weapon);
 	void SendBroadcast(const char *pText, int ClientID);
+
+	void ProcessAutoBan(int ClientID);
+	void ProcessClientBan(int ClientID);
 
 	void List(int ClientID, const char* filter);
 
@@ -237,7 +240,6 @@ public:
 	void SendMotd(int ClientID, const char *pText);
 	NETADDR addr;
 	NETSOCKET Socket;
-	int m_aaExtIDs[2][MAX_CLIENTS];
 	int64 m_LastBroadcast;
 	int m_TeleNR[MAX_CLIENTS];
 	int m_TeleNum;
@@ -266,7 +268,6 @@ public:
 	int CountLine(char *sourcefile);
 
 	// Banning
-	bool m_NeedBan;
 	char aBanAddr[NETADDR_MAXSTRSIZE];// = { 0 }; // no initialisations in header
 	char aReason[256];
 
@@ -274,7 +275,7 @@ public:
 	bool m_NeedFileSwap;
 
 	// Useful functions
-	int ConvertNameToIp(char *aName);
+	int ConvertNameToID(char *aName);
 
 	// Botmitigation
 	bool m_BotProtWasOn;
@@ -304,6 +305,7 @@ private:
 	static void ConBloody(IConsole::IResult *pResult, void *pUserData); // Give or remove bloody
 	static void ConSteamy(IConsole::IResult *pResult, void *pUserData); // Give or remove steamy
 	static void ConRainbow(IConsole::IResult *pResult, void *pUserData); // Give or remove rainbow
+	static void ConEpileticRainbow(IConsole::IResult *pResult, void *pUserData); // Give or remove epiletic rainbow
 	static void ConLovely(IConsole::IResult *pResult, void *pUserData); // Give or remove lovely
 	static void ConBall(IConsole::IResult *pResult, void *pUserData); // Give or remove ball
 	static void ConHeartGuns(IConsole::IResult *pResult, void *pUserData); // Give or remove heartguns

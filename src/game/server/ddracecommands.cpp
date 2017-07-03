@@ -107,7 +107,7 @@ void CGameContext::ConLevelReset(IConsole::IResult *pResult, void *pUserData)
 	{
 		pSelf->m_apPlayers[Victim]->m_Level.m_Exp = 0;
 		pSelf->m_apPlayers[Victim]->m_Level.m_Level = 0;
-		pSelf->m_apPlayers[Victim]->m_pAccount->SetStorage(pSelf->Storage());
+		//pSelf->m_apPlayers[Victim]->m_pAccount->SetStorage(pSelf->Storage());
 		pSelf->m_apPlayers[Victim]->m_pAccount->Apply(); // save it
 	}
 }
@@ -183,12 +183,19 @@ void CGameContext::ConEpicCircles(IConsole::IResult *pResult, void *pUserData) /
 		return;
 	int Victim = pResult->GetVictim();
 
-	if (pSelf->m_apPlayers[Victim])
+	CPlayer* pPlayer = pSelf->m_apPlayers[Victim];
+
+	if (pPlayer)
 	{
-		pSelf->m_apPlayers[Victim]->m_EpicCircle ^= 1;
+		pPlayer->m_EpicCircle ^= 1;
 		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_EpicCircle ? "%s gave you epic circles!" : "%s removed your epic circles!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		str_format(aBuf, sizeof(aBuf), pPlayer->m_EpicCircle ? "%s gave you epic circles!" : "%s removed your epic circles!", pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
+
+		if(pPlayer->m_EpicCircle && pSelf->GetPlayerChar(Victim))
+			pPlayer->m_pEpicCircle = new CEpicCircle(&pSelf->m_World, pSelf->GetPlayerChar(Victim)->m_Pos, Victim);
+		else if (!pPlayer->m_EpicCircle && pSelf->GetPlayerChar(Victim))
+			pPlayer->m_pEpicCircle->Reset();
 	}
 }
 
@@ -252,6 +259,22 @@ void CGameContext::ConRainbow(IConsole::IResult *pResult, void *pUserData) // gi
 		pSelf->m_apPlayers[Victim]->m_Rainbow ^= 1;
 		char aBuf[512];
 		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Rainbow ? "%s gave you rainbow!" : "%s removed your rainbow!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+	}
+}
+
+void CGameContext::ConEpileticRainbow(IConsole::IResult *pResult, void *pUserData) // give or remove epiletic Rainbow
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	if (pSelf->m_apPlayers[Victim])
+	{
+		pSelf->m_apPlayers[Victim]->m_Rainbowepiletic ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Rainbowepiletic ? "%s gave you epiletic rainbow!" : "%s removed your epiletic rainbow!", pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
 	}
 }
@@ -350,8 +373,18 @@ void CGameContext::ConInvisible(IConsole::IResult *pResult, void *pUserData) // 
 		return;
 	int Victim = pResult->GetVictim();
 
-	if (pSelf->m_apPlayers[Victim])
+	CPlayer* pPlayer = pSelf->m_apPlayers[Victim];
+
+	if (pPlayer)
 	{
+		if(!pSelf->GetPlayerChar(Victim) || !pSelf->GetPlayerChar(Victim)->IsAlive())
+			return;
+
+		if(pPlayer->m_Invisible)
+			pSelf->CreatePlayerSpawn(pPlayer->GetCharacter()->m_Pos, pPlayer->GetCharacter()->Teams()->TeamMask(pPlayer->GetCharacter()->Team(), -1, Victim));
+		else
+			pSelf->CreateDeath(pPlayer->GetCharacter()->m_Pos, Victim, pPlayer->GetCharacter()->Teams()->TeamMask(pPlayer->GetCharacter()->Team(), -1, Victim));
+
 		pSelf->m_apPlayers[Victim]->m_Invisible ^= 1;
 		char aBuf[512];
 		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->m_Invisible ? "%s gave you invisible!" : "%s removed your invisible!", pSelf->Server()->ClientName(pResult->m_ClientID));

@@ -4,6 +4,7 @@
 
 #include <game/generated/protocol.h>
 #include <game/server/gamecontext.h>
+#include <game/server/teams.h>
 #include "ball.h"
 
 CBall::CBall(CGameWorld *pGameWorld, vec2 Pos, int Owner)
@@ -69,6 +70,18 @@ void CBall::Snap(int SnappingClient)
 {	
 	if(NetworkClipped(SnappingClient))
 		return;
+
+	CCharacter *pOwnerChar = 0;
+    int64_t TeamMask = -1LL;
+
+    if(m_Owner >= 0)
+        pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
+
+    if (pOwnerChar && pOwnerChar->IsAlive())
+            TeamMask = pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner);
+
+    if(!CmaskIsSet(TeamMask, SnappingClient))
+        return;
 
 	CNetObj_Laser *pObj;
 	pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_aIDs[0], sizeof(CNetObj_Laser)));

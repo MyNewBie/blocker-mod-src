@@ -1246,13 +1246,8 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 							m_aClients[ClientID].m_pRconCmdToSend = Console()->FirstCommandInfo(AUTHED_ADMIN - AuthLevel, CFGFLAG_SERVER);
 
 						// GET TIME PART //
-						time_t     timer;
-						char       currentTime[26];
-						struct tm* tm_info;
-
-						time(&timer);
-						tm_info = localtime(&timer);
-						strftime(currentTime, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+						char currentTime[26];
+						get_current_time(currentTime, sizeof(currentTime));
 						//   GET IP   //
 						char aAddrStr[NETADDR_MAXSTRSIZE];
 						GetClientAddr(ClientID, aAddrStr, sizeof(aAddrStr));
@@ -1285,7 +1280,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 							}
 						}
 						Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
-						log_file(AuthLog, "AuthLoginInfos.log");
+						log_file(AuthLog, "AuthLoginInfos.log", g_Config.m_SvSecurityPath);
 
 						// DDRace
 						GameServer()->OnSetAuthed(ClientID, AuthLevel);
@@ -1937,14 +1932,14 @@ void CServer::ConStatus(IConsole::IResult *pResult, void *pUser)
 	{
 		if (pThis->m_aClients[i].m_State != CClient::STATE_EMPTY)
 		{
-			net_addr_str(pThis->m_NetServer.ClientAddr(i), aAddrStr, sizeof(aAddrStr), true);
+			net_addr_str(pThis->m_NetServer.ClientAddr(i), aAddrStr, sizeof(aAddrStr), false);
 			if (pThis->m_aClients[i].m_State == CClient::STATE_INGAME)
 			{
-				const char *pAuthStr = pThis->m_aClients[i].m_Authed == CServer::AUTHED_ADMIN ? "(Admin)" :
-					pThis->m_aClients[i].m_Authed == CServer::AUTHED_MOD ? "(Mod)" :
-					pThis->m_aClients[i].m_Authed == CServer::AUTHED_HELPER ? "(Helper)" : "";
-				str_format(aBuf, sizeof(aBuf), "id=%d addr=%s name='%s' score=%d client=%d secure=%s %s", i, aAddrStr,
-					pThis->m_aClients[i].m_aName, pThis->m_aClients[i].m_Score, ((CGameContext *)(pThis->GameServer()))->m_apPlayers[i]->m_ClientVersion, pThis->m_NetServer.HasSecurityToken(i) ? "yes" : "no", pAuthStr);
+				const char *pAuthStr = pThis->m_aClients[i].m_Authed == CServer::AUTHED_ADMIN ? "[Admin]" :
+									   pThis->m_aClients[i].m_Authed == CServer::AUTHED_MOD ? "[Mod]" :
+					                   pThis->m_aClients[i].m_Authed == CServer::AUTHED_HELPER ? "[Helper]" : "";
+				str_format(aBuf, sizeof(aBuf), "[ID= %02i] [NAME= %s] [ADDR= %s] [SCORE= %d] [CLIENT= %d] [SECURE= %s] %s", i,pThis->m_aClients[i].m_aName, 
+					       aAddrStr, pThis->m_aClients[i].m_Score, ((CGameContext *)(pThis->GameServer()))->m_apPlayers[i]->m_ClientVersion, pThis->m_NetServer.HasSecurityToken(i) ? "yes" : "no", pAuthStr);
 			}
 			else
 				str_format(aBuf, sizeof(aBuf), "id=%d addr=%s connecting", i, aAddrStr);
@@ -1965,14 +1960,14 @@ void CServer::ConDnsblStatus(IConsole::IResult *pResult, void *pUser)
 		if (pThis->m_aClients[i].m_State != CClient::STATE_EMPTY &&
 			pThis->m_aClients[i].m_DnsblState == CClient::DNSBL_STATE_BLACKLISTED)
 		{
-			net_addr_str(pThis->m_NetServer.ClientAddr(i), aAddrStr, sizeof(aAddrStr), true);
+			net_addr_str(pThis->m_NetServer.ClientAddr(i), aAddrStr, sizeof(aAddrStr), false);
 			if (pThis->m_aClients[i].m_State == CClient::STATE_INGAME)
 			{
-				const char *pAuthStr = pThis->m_aClients[i].m_Authed == CServer::AUTHED_ADMIN ? "(Admin)" :
-					pThis->m_aClients[i].m_Authed == CServer::AUTHED_MOD ? "(Mod)" :
-					pThis->m_aClients[i].m_Authed == CServer::AUTHED_HELPER ? "(Helper)" : "";
-				str_format(aBuf, sizeof(aBuf), "id=%d addr=%s name='%s' score=%d client=%d secure=%s %s", i, aAddrStr,
-					pThis->m_aClients[i].m_aName, pThis->m_aClients[i].m_Score, ((CGameContext *)(pThis->GameServer()))->m_apPlayers[i]->m_ClientVersion, pThis->m_NetServer.HasSecurityToken(i) ? "yes" : "no", pAuthStr);
+				const char *pAuthStr = pThis->m_aClients[i].m_Authed == CServer::AUTHED_ADMIN ? "[Admin]" :
+					pThis->m_aClients[i].m_Authed == CServer::AUTHED_MOD ? "[Mod]" :
+					pThis->m_aClients[i].m_Authed == CServer::AUTHED_HELPER ? "[Helper]" : "";
+				str_format(aBuf, sizeof(aBuf), "[ID= %02i] [NAME= %s] [ADDR= %s] [SCORE= %d] [CLIENT= %d] [SECURE= %s] %s", i, pThis->m_aClients[i].m_aName, 
+						   aAddrStr, pThis->m_aClients[i].m_Score, ((CGameContext *)(pThis->GameServer()))->m_apPlayers[i]->m_ClientVersion, pThis->m_NetServer.HasSecurityToken(i) ? "yes" : "no", pAuthStr);
 			}
 			else
 				str_format(aBuf, sizeof(aBuf), "id=%d addr=%s connecting", i, aAddrStr);
@@ -2529,8 +2524,10 @@ int* CServer::GetIdMap(int ClientID)
 
 void CServer::FixAccounts()
 {
+	char aCmd[256];
 	#if defined(CONF_FAMILY_UNIX)
-		system("sed -i '11s/1/0/' /root/.teeworlds/accounts/*"); // set your account folder path
+		str_format(aCmd, sizeof(aCmd), "sed -i '11s/1/0/' %s/*", g_Config.m_SvAccountsPath);
+		system(aCmd);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "fix_accounts", "Done.");
 	#endif
-	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "fix_accounts", "Done.");
 }
