@@ -15,14 +15,12 @@ CLovely::CLovely(CGameWorld *pGameWorld, vec2 Pos, int Owner)
 
   	m_LifeSpan = Server()->TickSpeed()/2;
 
-	m_ID = Server()->SnapNewID();
   	GameWorld()->InsertEntity(this);
 }
 
 void CLovely::Reset()
 {
 	GameServer()->m_World.DestroyEntity(this);
-	Server()->SnapFreeID(m_ID);
 }
 
 void CLovely::Tick()

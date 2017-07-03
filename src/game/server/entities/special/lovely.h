@@ -12,7 +12,6 @@ public:
 
 private:
 	int m_Owner;
-	int m_ID;
 	int m_LifeSpan;
 };
 
