@@ -387,5 +387,7 @@ MACRO_CONFIG_INT(ClDemoShowSpeed, cl_demo_show_speed, 0, 0, 1, CFGFLAG_SAVE|CFGF
 
 MACRO_CONFIG_STR(SvAccountsPath, sv_accounts_path, 256, "accounts", CFGFLAG_SAVE|CFGFLAG_SERVER, "set accounts folder path")
 MACRO_CONFIG_STR(SvSecurityPath, sv_security_path, 256, "security", CFGFLAG_SAVE|CFGFLAG_SERVER, "set security folder path (logs and banlists)")
+MACRO_CONFIG_STR(SvClientbanMessage, sv_clientban_message, 256, "Bot client detected, Use another official client (DDNet, Vanilla..)", CFGFLAG_SAVE|CFGFLAG_SERVER, "set ban message when client connects with banned clientid")
+MACRO_CONFIG_STR(SvAutobanMessage, sv_autoban_message, 256, "Google is not friendly with you", CFGFLAG_SAVE|CFGFLAG_SERVER, "set autoban message")
 
 #endif
