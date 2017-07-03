@@ -1280,7 +1280,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 							}
 						}
 						Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
-						log_file(AuthLog, "AuthLoginInfos.log");
+						log_file(AuthLog, "AuthLoginInfos.log", g_Config.m_SvSecurityPath);
 
 						// DDRace
 						GameServer()->OnSetAuthed(ClientID, AuthLevel);
@@ -2524,8 +2524,10 @@ int* CServer::GetIdMap(int ClientID)
 
 void CServer::FixAccounts()
 {
+	char aCmd[256];
 	#if defined(CONF_FAMILY_UNIX)
-		system("sed -i '11s/1/0/' /root/.teeworlds/accounts/*"); // set your account folder path
+		str_format(aCmd, sizeof(aCmd), "sed -i '11s/1/0/' %s/*", g_Config.m_SvAccountsPath);
+		system(aCmd);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "fix_accounts", "Done.");
 	#endif
-	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "fix_accounts", "Done.");
 }

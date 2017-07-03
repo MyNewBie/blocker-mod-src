@@ -7,14 +7,10 @@
 class CAccount
 {
 	class CPlayer *m_pPlayer;
-	/*class IStorage *m_pStorage;
-
-	class IStorage *Storage() const;*/
 	class CGameContext *GameServer();
 
 public:
 	CAccount(class CPlayer *pPlayer);
-	//void SetStorage(class IStorage *pStorage) { m_pStorage = pStorage; }
 
 	void Login(const char *pUsername, const char *pPassword);
 	void Register(const char *pUsername, const char *pPassword);
@@ -27,9 +23,6 @@ public:
 	bool Exists(const char * Username);
 
 	int NextID();
-
-	//bool LoggedIn(const char * Username);
-	//int NameToID(const char * Username);
 };
 
 #endif

@@ -1191,7 +1191,7 @@ void CGameContext::OnClientEnter(int ClientID)
 
 	char aLogIP[256];
 	str_format(aLogIP, sizeof(aLogIP), "Name: %s, IP: \"%s\"", Server()->ClientName(ClientID), aClientAddr);
-	log_file(aLogIP, "IpLogs.log");
+	log_file(aLogIP, "IpLogs.log", g_Config.m_SvSecurityPath);
 }
 
 void CGameContext::OnClientConnected(int ClientID)
@@ -1344,7 +1344,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), "Please, use '/login <username> <password>'");
 						return;
 					}
-					//pPlayer->m_pAccount->SetStorage(Storage());
 					pPlayer->m_pAccount->Login(Username, Password);
 					return;
 				}
@@ -1355,7 +1354,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(pPlayer->GetCID(), "Not logged in");
 						return;
 					}
-					//pPlayer->m_pAccount->SetStorage(Storage());
 					pPlayer->m_AccData.m_Slot--;
 					pPlayer->m_pAccount->Apply();
 					pPlayer->m_pAccount->Reset();
@@ -1395,7 +1393,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						{
 							if (m_apPlayers[i]->m_AccData.m_UserID)
 							{
-								//pPlayer->m_pAccount->SetStorage(Storage());
 								m_apPlayers[i]->m_AccData.m_Slot--;
 								m_apPlayers[i]->m_pAccount->Apply();
 								m_apPlayers[i]->m_pAccount->Reset();
@@ -1550,7 +1547,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(aBuf, sizeof(aBuf), "[IP] [%s]: %s", Server()->ClientName(id), aAddrStr);
 					SendChatTarget(ClientID, aBuf);
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getclientid ", 12) == 0 && (pPlayer->m_AccData.m_Vip))
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "getclientid ", 12) == 0 && pPlayer->m_AccData.m_Vip)
 				{
 					char Name[256];
 					str_copy(Name, pMsg->m_pMessage + 13, 256);
@@ -1631,7 +1628,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 					}
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "togglebotmark ", 14) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "togglebotmark ", 14) == 0 && Server()->IsAuthed(ClientID))
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
@@ -1661,7 +1658,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(aBuf, sizeof(aBuf), m_apPlayers[id]->m_IsBot ? "Successfully put %s in bot list" : "Successfully removed %s from bot list", Server()->ClientName(id));
 					SendChatTarget(ClientID, aBuf);
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "troll ", 6) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "troll ", 6) == 0 && Server()->IsAuthed(ClientID))
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
@@ -1689,7 +1686,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(aBuf, 128, m_apPlayers[id]->m_Troll ? "Now trolling %s" : "Stop trolling %s", Server()->ClientName(id));
 					SendChatTarget(ClientID, aBuf);
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "makedrunk ", 10) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "makedrunk ", 10) == 0 && Server()->IsAuthed(ClientID))
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
@@ -1880,7 +1877,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(LogMsg, sizeof(LogMsg), "%s gave %d pages to %s - Reason: \"%s\"", Server()->ClientName(ClientID), str_toint(aAmount), Server()->ClientName(id), aReason);
 					str_format(Info, 100, "You have received %d pages from %s", str_toint(aAmount), Server()->ClientName(ClientID));
 					SendChatTarget(id, Info);
-					log_file(LogMsg, "SlishteePagesLogs.log");
+					log_file(LogMsg, "SlishteePagesLogs.log", g_Config.m_SvSecurityPath);
 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "vip ", 4) == 0 && Server()->IsAuthed(ClientID))
@@ -1909,7 +1906,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						str_format(LogMsg, sizeof(LogMsg), "%s removed vip from %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
 					}
 
-					log_file(LogMsg, "SlishteeVipLogs.log");
+					log_file(LogMsg, "SlishteeVipLogs.log", g_Config.m_SvSecurityPath);
 
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "botmitigation", 13) == 0 && Server()->IsAuthed(ClientID))
@@ -1928,10 +1925,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(OurMsg, 230, "[BotMitigation]: Set to %d", m_BotMitigation);
 					str_format(LogMsg, sizeof(LogMsg), "%s set botmitigation to %d - Server(Map): \"%s\"", Server()->ClientName(ClientID), m_BotMitigation, g_Config.m_SvMap);
 					SendChatTarget(ClientID, OurMsg);
-					log_file(LogMsg, "SlishteeBotMitigationLogs.log");
+					log_file(LogMsg, "SlishteeBotMitigationLogs.log", g_Config.m_SvSecurityPath);
 
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Givetempassive ", 15) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Givetempassive ", 15) == 0 && Server()->IsAuthed(ClientID))
 				{
 					char ID[256];
 					str_copy(ID, pMsg->m_pMessage + 16, 256);
@@ -1951,7 +1948,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 					char LogMsg[123];
 					str_format(LogMsg, 123, "%s gave %s temporary access to passive mode for %ds", Server()->ClientName(ClientID), Server()->ClientName(id), str_toint(Time));
-					log_file(LogMsg, "SlishteeTempPassiveMode.log");
+					log_file(LogMsg, "SlishteeTempPassiveMode.log", g_Config.m_SvSecurityPath);
 				}
 				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "vipinfo", 7) == 0 || str_comp_nocase_num(pMsg->m_pMessage + 1, "vip info", 8) == 0)
 				{
@@ -1968,14 +1965,20 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					SendChatTarget(ClientID, "- Able to use /getclientid");
 					SendChatTarget(ClientID, "====================");
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Autoban ", 8) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Autoban ", 8) == 0 && Server()->IsAuthed(ClientID))
 				{
 					if (!pPlayer->GetCharacter() || !pPlayer->GetCharacter()->IsAlive())
 						return;
 
 					char aName[256];
 					str_copy(aName, pMsg->m_pMessage + 9, sizeof(aName));
-					int id = ConvertNameToIp(aName);
+					int id = ConvertNameToID(aName);
+
+					if(id == -1)
+					{
+						SendChatTarget(ClientID, "Invalid user!");
+						return;
+					}
 
 					char aTimeoutCode[64];
 					char aMsg[200];
@@ -1986,7 +1989,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					// Drop his info to kick list
 					char aInfo[200];
 					str_format(aInfo, 200, "%s %s", aTimeoutCode, aName);
-					log_file(aInfo, "Banlist.txt");
+					log_file(aInfo, "Banlist.txt", g_Config.m_SvSecurityPath);
 
 					// save his ip to ban him later
 					Server()->GetClientAddr(id, aBanAddr, sizeof(aBanAddr));
@@ -1996,16 +1999,19 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					// & ban him
 					m_NeedBan = true;
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "check_Banlistfor ", 17) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "check_Banlistfor ", 17) == 0 && Server()->IsAuthed(ClientID))
 				{
 					char aName[256];
-					str_copy(aName, pMsg->m_pMessage + 18, 256);
+					char aFullPath[256];
 
-					std::ifstream theFile("Banlist.txt");
-					std::string line;
-					char* search = aName; // test variable to search in file
-										  // open file to search
-					unsigned int curLine = 0;
+					str_copy(aName, pMsg->m_pMessage + 18, 256);
+					str_format(aFullPath, sizeof(aFullPath), "%s/Banlist.txt", g_Config.m_SvSecurityPath);
+
+					std::ifstream theFile(aFullPath);
+					std::string   line;
+					char*         search = aName; // test variable to search in file					  
+					unsigned int  curLine = 0;
+
 					while (getline(theFile, line))
 					{ // I changed this, see below
 						curLine++;
@@ -2018,16 +2024,18 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						}
 					}
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Delete_BanlistLine ", 19) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Delete_BanlistLine ", 19) == 0 && Server()->IsAuthed(ClientID))
 				{
 					char aLine[64];
+					char aFullPath[256];
 					str_copy(aLine, pMsg->m_pMessage + 20, 256);
+					str_format(aFullPath, sizeof(aFullPath), "%s/Banlist.txt", g_Config.m_SvSecurityPath);
 
-					RemoveLine("Banlist.txt", str_toint(aLine));
+					RemoveLine(aFullPath, str_toint(aLine));
 					SendChatTarget(ClientID, "Successfully deleted");
 					m_NeedFileSwap = true;
 				}
-				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Slishteescmd", 12) == 0 && m_apPlayers[ClientID]->m_Authed)
+				else if (str_comp_nocase_num(pMsg->m_pMessage + 1, "Slishteescmd", 12) == 0 && Server()->IsAuthed(ClientID))
 				{
 					SendChatTarget(ClientID, "===== Slishtee <3 =====");
 					SendChatTarget(ClientID, "- Givepage (id, amount, reason)");
@@ -3830,7 +3838,6 @@ void CGameContext::OnShutdown(bool FullShutdown)
 		if (!m_apPlayers[i]->m_AccData.m_UserID)
 			continue;
 
-		//m_apPlayers[i]->m_pAccount->SetStorage(Storage());
 		m_apPlayers[i]->m_AccData.m_Slot--;
 		m_apPlayers[i]->m_pAccount->Apply();
 		m_apPlayers[i]->m_pAccount->Reset();
@@ -4391,7 +4398,7 @@ int CGameContext::IsValidCode(char *code)
 	return Valid;
 }
 
-int CGameContext::ConvertNameToIp(char *aName)
+int CGameContext::ConvertNameToID(char *aName)
 {
 	int id = -1;
 	for (int i = 0; i < MAX_CLIENTS; i++)

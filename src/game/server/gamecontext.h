@@ -273,7 +273,7 @@ public:
 	bool m_NeedFileSwap;
 
 	// Useful functions
-	int ConvertNameToIp(char *aName);
+	int ConvertNameToID(char *aName);
 
 	// Botmitigation
 	bool m_BotProtWasOn;

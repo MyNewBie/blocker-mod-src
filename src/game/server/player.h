@@ -290,7 +290,7 @@ public:
 	} m_AccData;
 
 	class CAccount *m_pAccount;//(CPlayer *m_Player, CGameContext *gameserver);
-
+	
 private:
 	CCharacter *m_pCharacter;
 	int m_NumInputs;

@@ -3285,13 +3285,10 @@ void CCharacter::HandlePullHammer()
 		{
 			if(pTarget)
 			{
-		  		pTarget->Core()->m_Pos = MousePos();
-		  		pTarget->Core()->m_Vel.y = 0;
-
-		  		if(CollTile == TILE_VIP)
+				if(CollTile != TILE_VIP && CollTile != TILE_ADMIN && CollTile != TILE_DEATH)
 				{
-					m_PullingID = -1;
-					return;
+		  			pTarget->Core()->m_Pos = MousePos();
+		  			pTarget->Core()->m_Vel.y = 0;
 				}
 		  	}
 		}

@@ -18,7 +18,6 @@
 #endif
 
 #include <base/system.h>
-//#include <engine/storage.h>
 #include <engine/shared/config.h>
 #include <game/server/player.h>
 //#include <game/server/gamecontext.h>
@@ -75,9 +74,7 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 		return;
 	}
 
-	//char aFullPath[512];
-	str_format(aBuf, sizeof(aBuf), "%s/+%s.acc", g_Config.m_SvAccDir, pUsername);
-	//io_close(Storage()->OpenFile(aBuf, IOFLAG_READ, IStorage::TYPE_SAVE, aFullPath, sizeof(aFullPath)));
+	str_format(aBuf, sizeof(aBuf), "%s/+%s.acc", g_Config.m_SvAccountsPath, pUsername);
 
 	char AccUsername[32];
 	char AccPassword[32];
@@ -85,7 +82,7 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 	int AccID;
 
 	FILE *Accfile;
-	Accfile = fopen(aBuf, "r"); // aFullPath
+	Accfile = fopen(aBuf, "r");
 	fscanf(Accfile, "%s\n%s\n%s\n%d", AccUsername, AccPassword, AccRcon, &AccID);
 	fclose(Accfile);
 
@@ -106,7 +103,7 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 		return;
 	}
 
-	Accfile = fopen(aBuf, "r"); // aFullPath
+	Accfile = fopen(aBuf, "r");
 
 	// Always change the numbers when adding please. Makes it easy 
 	fscanf(Accfile, "%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%s\n%d\n%d", // 11
@@ -151,7 +148,6 @@ void CAccount::Login(const char *pUsername, const char *pPassword)
 		{
 			dbg_msg("account", "Account login failed ('%s' - already in use (extern))", pUsername);
 			GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account already in use.");
-			//m_pPlayer->m_pAccount->SetStorage(Storage());
 			m_pPlayer->m_AccData.m_Slot--;
 			m_pPlayer->m_pAccount->Apply();
 			m_pPlayer->m_pAccount->Reset();
@@ -182,14 +178,13 @@ void CAccount::Register(const char *pUsername, const char *pPassword)
 	if(!IsValidChar(pUsername))
 		return;
 
-	str_format(aBuf, sizeof(aBuf), "%s", g_Config.m_SvAccDir);
+	str_format(aBuf, sizeof(aBuf), "%s", g_Config.m_SvAccountsPath);
 
 	if(fs_makedir(aBuf))
         dbg_msg("account.cpp", "Failed to create accounts folder (line %d)", __LINE__);
 
-	str_format(aBuf, sizeof(aBuf), "%s/+%s.acc", g_Config.m_SvAccDir, pUsername);
+	str_format(aBuf, sizeof(aBuf), "%s/+%s.acc", g_Config.m_SvAccountsPath, pUsername);
 
-	//IOHANDLE Accfile = Storage()->OpenFile(aBuf, IOFLAG_WRITE, IStorage::TYPE_SAVE);
 	IOHANDLE Accfile = io_open(aBuf, IOFLAG_WRITE);
 	if(!Accfile)
 	{
@@ -266,8 +261,7 @@ bool CAccount::IsCorrectSizeData(const char *pUsername, const char *pPassword)
 bool CAccount::Exists(const char *Username)
 {
 	char aPath[128];
-	str_format(aPath, sizeof(aPath), "%s/+%s.acc",g_Config.m_SvAccDir, Username);
-	//IOHANDLE Accfile = Storage()->OpenFile(aPath, IOFLAG_READ, IStorage::TYPE_SAVE);
+	str_format(aPath, sizeof(aPath), "%s/+%s.acc",g_Config.m_SvAccountsPath, Username);
 	IOHANDLE Accfile = io_open(aPath, IOFLAG_READ);
 	
 	if (Accfile)
@@ -281,8 +275,7 @@ bool CAccount::Exists(const char *Username)
 void CAccount::Apply()
 {
 	char aBuf[256];
-	str_format(aBuf, sizeof(aBuf), "%s/+%s.acc",g_Config.m_SvAccDir, m_pPlayer->m_AccData.m_aUsername);
-	//IOHANDLE Accfile = Storage()->OpenFile(aBuf, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+	str_format(aBuf, sizeof(aBuf), "%s/+%s.acc",g_Config.m_SvAccountsPath, m_pPlayer->m_AccData.m_aUsername);
 	IOHANDLE Accfile = io_open(aBuf, IOFLAG_WRITE);
 
 	if(!Accfile)
@@ -326,9 +319,9 @@ void CAccount::Delete()
 	if (m_pPlayer->m_AccData.m_UserID)
 	{
 		Reset();
-		str_format(aBuf, sizeof(aBuf), "%s/+%s.acc",g_Config.m_SvAccDir, m_pPlayer->m_AccData.m_aUsername);
+		str_format(aBuf, sizeof(aBuf), "%s/+%s.acc",g_Config.m_SvAccountsPath, m_pPlayer->m_AccData.m_aUsername);
 
-		if(remove(aBuf)) //if(Storage()->RemoveFile(aBuf, IStorage::TYPE_SAVE))
+		if(remove(aBuf))
 		{
 			dbg_msg("account", "Account deleted ('%s')", m_pPlayer->m_AccData.m_aUsername);
 			GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account deleted!");
@@ -369,10 +362,9 @@ int CAccount::NextID()
 	int UserID = 1;
 	char aAccUserID[128];
 
-	str_copy(aAccUserID, "%s/++UserIDs++.acc", g_Config.m_SvAccDir, sizeof(aAccUserID));
+	str_format(aAccUserID, sizeof(aAccUserID), "%s/++UserIDs++.acc", g_Config.m_SvAccountsPath);
 
 	// read the current ID
-	//IOHANDLE Accfile = Storage()->OpenFile(aAccUserID, IOFLAG_READ, IStorage::TYPE_SAVE);
 	IOHANDLE Accfile = io_open(aAccUserID, IOFLAG_READ);
 	if(Accfile)
 	{
@@ -384,7 +376,6 @@ int CAccount::NextID()
 	}
 
 	// write the next ID
-	//Accfile = Storage()->OpenFile(aAccUserID, IOFLAG_WRITE, IStorage::TYPE_SAVE);
 	Accfile = io_open(aAccUserID, IOFLAG_WRITE);
 	if(Accfile)
 	{
@@ -401,11 +392,6 @@ int CAccount::NextID()
 
 	return 1;
 }
-
-/*class IStorage *CAccount::Storage() const
-{
-	return m_pStorage;
-}*/
 
 class CGameContext *CAccount::GameServer()
 {

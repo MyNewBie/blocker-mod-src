@@ -385,6 +385,7 @@ MACRO_CONFIG_INT(ClDemoSliceBegin, cl_demo_slice_begin, -1, 0, 0, CFGFLAG_SAVE|C
 MACRO_CONFIG_INT(ClDemoSliceEnd, cl_demo_slice_end, -1, 0, 0, CFGFLAG_SAVE|CFGFLAG_CLIENT, "End marker for demo slice")
 MACRO_CONFIG_INT(ClDemoShowSpeed, cl_demo_show_speed, 0, 0, 1, CFGFLAG_SAVE|CFGFLAG_CLIENT, "Show speed meter on change")
 
-MACRO_CONFIG_STR(SvAccDir, sv_accdir, 256, "accounts", CFGFLAG_SAVE|CFGFLAG_SERVER, "set path accounts")
+MACRO_CONFIG_STR(SvAccountsPath, sv_accounts_path, 256, "accounts", CFGFLAG_SAVE|CFGFLAG_SERVER, "set accounts folder path")
+MACRO_CONFIG_STR(SvSecurityPath, sv_security_path, 256, "security", CFGFLAG_SAVE|CFGFLAG_SERVER, "set security folder path (logs and banlists)")
 
 #endif
