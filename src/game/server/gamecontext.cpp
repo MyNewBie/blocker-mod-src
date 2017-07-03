@@ -732,15 +732,24 @@ void CGameContext::OnTick()
 	}
 	if (m_NeedFileSwap)
 	{
-		std::ifstream Banlist("Banlist.txt");
-		std::ifstream temp("tempfile.txt");
+		char aBanListPath[256];
+		char aTmpPath[256];
+
+		str_format(aBanListPath, sizeof(aBanListPath), "%s/Banlist.txt", g_Config.m_SvSecurityPath);
+		str_format(aTmpPath, sizeof(aTmpPath), "%s/tempfile.txt", g_Config.m_SvSecurityPath);
+
+		std::ifstream Banlist(aBanListPath);
+		std::ifstream temp(aTmpPath);
+
 		Banlist.clear(); // clear eof and fail bits
 		Banlist.seekg(0, std::ios::beg);
 		Banlist.close();
 		temp.close();
-		if (is_file_exist("tempfile.txt"))
-			remove("Banlist.txt");
-		rename("tempfile.txt", "Banlist.txt");
+
+		if (is_file_exist(aTmpPath))
+			remove(aBanListPath);
+
+		rename(aTmpPath, aBanListPath);
 		m_NeedFileSwap = false;
 	}
 
@@ -4332,11 +4341,12 @@ void CGameContext::DestroyLolText(int TextID)
 
 void CGameContext::RemoveLine(char* sourcefile, int line) 
 {
-
 	std::ifstream infile;
 	infile.open(sourcefile, std::ios::in);
 
-	char tempPath[100] = "tempfile.txt";
+	char tempPath[256];
+
+	str_format(tempPath, sizeof(tempPath), "%s/tempfile.txt", g_Config.m_SvSecurityPath);
 
 	if (infile) 
 	{
