@@ -539,7 +539,7 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
         str_format(aBuf, sizeof(aBuf), "[IP] [%s]: %s", Server()->ClientName(id), aAddrStr);
         SendChatTarget(ClientID, aBuf);
     }
-    else if (str_comp_nocase_num(pMsg + 1, "clientban ", 10) == 0 && IsAuthed)
+    else if (str_comp_nocase_num(pMsg + 1, "clientban ", 10) == 0 && IsAdmin)
     {
         if (!pChar || !pChar->IsAlive())
             return;
@@ -578,7 +578,7 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
             Console()->ExecuteLine(aCmd);               
         }
     }
-    else if (str_comp_nocase_num(pMsg + 1, "find_clientbanlist ", 19) == 0 && IsAuthed)
+    else if (str_comp_nocase_num(pMsg + 1, "find_clientbanlist ", 19) == 0 && IsAdmin)
     {
         char aClientID[256];
         char aFullPath[256];
@@ -603,7 +603,7 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
             }
         }
     }
-    else if (str_comp_nocase_num(pMsg + 1, "delete_clientbanlist ", 21) == 0 && IsAuthed)
+    else if (str_comp_nocase_num(pMsg + 1, "delete_clientbanlist ", 21) == 0 && IsAdmin)
     {
         char aLine[64];
         char aFullPath[256];
@@ -613,7 +613,7 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
         RemoveLine(aFullPath, str_toint(aLine));
         SendChatTarget(ClientID, "Successfully deleted");
     }
-    else if (str_comp_nocase_num(pMsg + 1, "Autoban ", 8) == 0 && IsAuthed)
+    else if (str_comp_nocase_num(pMsg + 1, "Autoban ", 8) == 0 && IsAdmin)
     {
         if (!pChar || !pChar->IsAlive())
             return;
@@ -648,7 +648,7 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
         str_format(aCmd, sizeof(aCmd), "ban %s 5 %s", aBanAddr, g_Config.m_SvAutobanMessage);
         Console()->ExecuteLine(aCmd);
     }
-    else if (str_comp_nocase_num(pMsg + 1, "check_Banlistfor ", 17) == 0 && IsAuthed)
+    else if (str_comp_nocase_num(pMsg + 1, "check_Banlistfor ", 17) == 0 && IsAdmin)
     {
         char aName[256];
         char aFullPath[256];
@@ -673,7 +673,7 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
             }
         }
     }
-    else if (str_comp_nocase_num(pMsg + 1, "Delete_BanlistLine ", 19) == 0 && IsAuthed)
+    else if (str_comp_nocase_num(pMsg + 1, "Delete_BanlistLine ", 19) == 0 && IsAdmin)
     {
         char aLine[64];
         char aFullPath[256];
@@ -689,7 +689,7 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
             return;
 
         char aName[256];
-        str_copy(aName, pMsg + 15, sizeof(aName)); // forgot to change these -.- Copy&Pasting my own code to much
+        str_copy(aName, pMsg + 15, sizeof(aName)); 
         int id = -1;
         for (int i = 0; i < MAX_CLIENTS; i++)
         {
