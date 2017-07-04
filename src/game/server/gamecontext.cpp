@@ -2980,9 +2980,7 @@ void CGameContext::OnShutdown(bool FullShutdown)
 {
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (!m_apPlayers[i])
-			continue;
-		if (!m_apPlayers[i]->m_AccData.m_UserID)
+		if (!m_apPlayers[i] || !m_apPlayers[i]->m_AccData.m_UserID)
 			continue;
 
 		m_apPlayers[i]->m_AccData.m_Slot--;

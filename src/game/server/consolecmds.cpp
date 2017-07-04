@@ -517,20 +517,9 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
     {
         char Name[256];
         str_copy(Name, pMsg + 7, 256);
-        int id = -1;
-        for (int i = 0; i < MAX_CLIENTS; i++)
-        {
-            if (!GetPlayerChar(i))
-                continue;
-            if (str_comp_nocase(Name, Server()->ClientName(i)) != 0)
-                continue;
-            if (str_comp_nocase(Name, Server()->ClientName(i)) == 0)
-            {
-                id = i;
-                break;
-            }
-        }
-        if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
+        int id = ConvertNameToID(Name);
+
+        if (id < 0 || id > 64 || !m_apPlayers[id]) //->should work without character check //->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
             return;
 
         char aAddrStr[NETADDR_MAXSTRSIZE] = { 0 };
