@@ -181,6 +181,15 @@ public:
 
 		int m_SavedStartTick;
 
+		//Mod Stuff
+		bool m_SavedLovely;
+		bool m_SavedHeartGuns;
+		bool m_SavedBall;
+		bool m_SavedRainbow;
+		bool m_SavedERainbow;
+		bool m_SavedEpicCircle;
+		bool m_SavedRainbowHook;
+
 		void Reset()
 		{
 			m_SavedSpawn = vec2(0, 0);
@@ -189,10 +198,20 @@ public:
 			m_SavedLaser = false;
 			m_SavedEHook = false;
 			m_SavedStartTick = 0;
+
+			//Mod
+			m_SavedLovely = false;
+			m_SavedHeartGuns = false;
+			m_SavedBall = false;
+			m_SavedRainbow = false;
+			m_SavedERainbow = false;
+			m_SavedEpicCircle = false;
+			m_SavedRainbowHook = false;
 		}
 	} m_SavedStats;
 
 	void SaveStats();
+	void LMBRestore();
 
 	int m_InLMB;
 
@@ -318,7 +337,6 @@ public:
 
 	int m_LastTriggerTick;
 	const char * m_pSkin;
-	std::string m_aSkins[16];
 	int m_RandIndex;
 
 	int m_Paused;

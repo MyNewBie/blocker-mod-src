@@ -31,6 +31,7 @@ public:
 	void RemoveParticipant(int CID);
 	
 	void TeleportParticipants();
+	void Reset(int ClientID);
 	
 	int m_LastLMB;
 	

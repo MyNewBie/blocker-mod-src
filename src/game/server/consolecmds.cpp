@@ -18,7 +18,6 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
     bool IsAdmin = Server()->IsAdmin(ClientID);
     bool IsMod = Server()->IsMod(ClientID);
     bool IsAuthed = Server()->IsAuthed(ClientID);
-    bool IsVip = pPlayer->m_AccData.m_Vip;
 
     if (!str_comp_num(pMsg + 1, "login", 5))
     {
@@ -252,14 +251,14 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
         SendChatTarget(ClientID, "- Able to use /getclientid");
         SendChatTarget(ClientID, "====================");
     }
-    else if (str_comp_nocase_num(pMsg + 1, "lovely", 7) == 0 && (IsVip || IsAdmin)) 
+    else if (str_comp_nocase_num(pMsg + 1, "lovely", 7) == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin)) 
     {
         /*if (!pChar || !pChar->IsAlive())
             return;*/
         pPlayer->m_Lovely ^= true;
         SendChatTarget(ClientID, pPlayer->m_Lovely ? "Lovely activated" : "Lovely deactivated");
     }
-    else if (str_comp(pMsg + 1, "ball") == 0 && (IsVip || IsAdmin))
+    else if (str_comp(pMsg + 1, "ball") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
     {
         pPlayer->m_IsBallSpawned ^= true;
         SendChatTarget(ClientID, pPlayer->m_IsBallSpawned ? "Ball spawned" : "Ball removed");
@@ -269,13 +268,13 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
         else if (!pPlayer->m_IsBallSpawned && pChar)
             pPlayer->m_pBall->Reset();
     }   
-    else if (str_comp(pMsg + 1, "heartguns") == 0 && (IsVip || IsAdmin)) 
+    else if (str_comp(pMsg + 1, "heartguns") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin)) 
     {   
         // i use sublime text me xd
         pPlayer->m_HeartGuns ^= true;
         SendChatTarget(ClientID, pPlayer->m_HeartGuns ? "Heart guns activated" : "Heart guns deactivated");
     }   
-    else if (str_comp_nocase_num(pMsg + 1, "weapons", 7) == 0 && (IsVip || pPlayer->m_AccData.m_Weaponkits > 0 || IsAdmin))
+    else if (str_comp(pMsg + 1, "weapons") == 0 && (pPlayer->m_AccData.m_Vip || (pPlayer->m_AccData.m_UserID && pPlayer->m_AccData.m_Weaponkits > 0) || IsAdmin))
     {
         if (!pChar || !pChar->IsAlive())
             return; // Tested and found a crashbug -- heres the fix 
@@ -295,7 +294,7 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
         pChar->GiveAllWeapons();
         SendChatTarget(ClientID, "You received all weapons!");
     }
-    else if (str_comp_nocase_num(pMsg + 1, "getclientid ", 12) == 0 && (IsVip || IsAdmin))
+    else if (str_comp_nocase_num(pMsg + 1, "getclientid ", 12) == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
     {
         char Name[256];
         str_copy(Name, pMsg + 13, 256);
@@ -318,14 +317,14 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
         str_format(aBuf, sizeof(aBuf), "[ClientID] [%s]: %d", Server()->ClientName(id), m_apPlayers[id]->m_ClientVersion);
         SendChatTarget(ClientID, aBuf);
     }           
-    else if (str_comp(pMsg + 1, "rainbow") == 0 && (IsVip || IsAdmin))
+    else if (str_comp(pMsg + 1, "rainbow") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
     {
         if (!pChar || !pChar->IsAlive())
             return;
         pPlayer->m_Rainbowepiletic ^= 1;
         SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Rainbow activated" : "Rainbow deactivated");
     }
-    else if (str_comp(pMsg + 1, "circle") == 0 && (IsVip || IsAdmin))
+    else if (str_comp(pMsg + 1, "circle") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
     {
         pPlayer->m_EpicCircle ^= 1;
         SendChatTarget(ClientID, pPlayer->m_EpicCircle ? "Circle activated" : "Circle deactivated"); 
@@ -335,7 +334,7 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
         else if (!pPlayer->m_EpicCircle && pChar)
             pPlayer->m_pEpicCircle->Reset();
     }
-    else if (str_comp(pMsg + 1, "rainbowhook") == 0 && (IsVip || IsAdmin))
+    else if (str_comp(pMsg + 1, "rainbowhook") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
     {
         if (!pChar || !pChar->IsAlive())
             return;
@@ -426,8 +425,7 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
         char LogMsg[230];
         m_apPlayers[id]->m_AccData.m_Vip ^= 1;
 
-        bool IsVip = m_apPlayers[id]->m_AccData.m_Vip;
-        if (IsVip)
+        if (m_apPlayers[id]->m_AccData.m_Vip)
         {
             SendChatTarget(id, "You are now vip!");
             str_format(LogMsg, sizeof(LogMsg), "%s gave vip to %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);

@@ -162,10 +162,9 @@ void CLMB::TeleportParticipants()
 		{
 			if (m_pGameServer->m_apPlayers[m_Participants[i]]->GetCharacter() && m_pGameServer->m_apPlayers[m_Participants[i]]->m_InLMB == LMB_REGISTERED)
 			{
-				if(m_pGameServer->m_apPlayers[m_Participants[i]]->m_IsBallSpawned)
-					m_pGameServer->m_apPlayers[m_Participants[i]]->m_pBall->Reset();
 				m_pGameServer->m_World.ReleaseHooked(i);
 				m_pGameServer->m_apPlayers[m_Participants[i]]->SaveStats();
+				Reset(m_Participants[i]);
 				m_pGameServer->m_apPlayers[m_Participants[i]]->KillCharacter();
 				m_pGameServer->m_apPlayers[m_Participants[i]]->m_InLMB = LMB_PARTICIPATE;
 			}
@@ -237,4 +236,16 @@ void CLMB::RemoveParticipant(int CID)
 		m_pGameServer->SendBroadcast(aBuf, -1);
 	}
 
+}
+
+void CLMB::Reset(int ClientID)
+{
+	CPlayer* pPlayer = m_pGameServer->m_apPlayers[ClientID];
+	pPlayer->m_Lovely = false;
+	pPlayer->m_HeartGuns = false;
+	pPlayer->m_IsBallSpawned = false;
+	pPlayer->m_Rainbow = false;
+	pPlayer->m_Rainbowepiletic = false;
+	pPlayer->m_EpicCircle = false;
+	pPlayer->m_RainbowHook = false;
 }

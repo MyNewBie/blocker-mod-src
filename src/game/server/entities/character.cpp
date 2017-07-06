@@ -84,12 +84,6 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	
 	m_LovelyLifeSpan = Server()->TickSpeed(); // hearty
 	m_BloodyDelay = 1;
-	
-	if (pPlayer->m_IsBallSpawned)
-		pPlayer->m_pBall = new CBall(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
-	if (pPlayer->m_EpicCircle)
-		pPlayer->m_pEpicCircle = new CEpicCircle(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
-
 	RainbowHookedID = -1;
 
 	m_Core.Reset();
@@ -126,6 +120,11 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	{
 		GetPlayer()->m_QuestData.m_RaceStartTick = 0;
 	}
+
+	if (pPlayer->m_IsBallSpawned)
+		pPlayer->m_pBall = new CBall(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
+	if (pPlayer->m_EpicCircle)
+		pPlayer->m_pEpicCircle = new CEpicCircle(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
 
 	m_FreezeTimer = 0;
 
@@ -840,6 +839,11 @@ void CCharacter::Tick()
 	}
 
 	Clean();
+
+	if(m_pPlayer->m_InLMB == LMB_PARTICIPATE)
+	{
+		SetEmoteType(EMOTE_NORMAL);
+	}
 	
 	m_LovelyLifeSpan--;
 	m_BloodyDelay++;

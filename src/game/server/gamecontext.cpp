@@ -1266,6 +1266,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 	{
 		if (MsgID == NETMSGTYPE_CL_SAY)
 		{
+			if(m_apPlayers[ClientID]->m_InLMB == 2)
+				return;
+
 			CNetMsg_Cl_Say *pMsg = (CNetMsg_Cl_Say *)pRawMsg;
 			if (!str_utf8_check(pMsg->m_pMessage))
 			{
@@ -1761,6 +1764,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			if(!pPlayer->m_Authed && pPlayer->m_AccData.m_Vip && pPlayer->m_LastChangeInfo && pPlayer->m_LastChangeInfo + Server()->TickSpeed()*0.1 > Server()->Tick())
 				return;
 
+			if(m_apPlayers[ClientID]->m_InLMB == 2)
+				return;
+
 			CNetMsg_Cl_ChangeInfo *pMsg = (CNetMsg_Cl_ChangeInfo *)pRawMsg;
 			if (!str_utf8_check(pMsg->m_pName)
 				|| !str_utf8_check(pMsg->m_pClan)
@@ -1799,6 +1805,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 		else if (MsgID == NETMSGTYPE_CL_EMOTICON && !m_World.m_Paused)
 		{
 			CNetMsg_Cl_Emoticon *pMsg = (CNetMsg_Cl_Emoticon *)pRawMsg;
+
+			if(m_apPlayers[ClientID]->m_InLMB == 2)
+				return;
 
 			if (g_Config.m_SvSpamprotection && pPlayer->m_LastEmote && pPlayer->m_LastEmote + Server()->TickSpeed()*g_Config.m_SvEmoticonDelay > Server()->Tick())
 				return;

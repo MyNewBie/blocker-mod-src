@@ -538,21 +538,6 @@ pP->m_TeeInfos.m_ColorFeet = 12895054;
 
 int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon)
 {
-	/*// do scoreing
-	if(!pKiller || Weapon == WEAPON_GAME)
-	return 0;
-	if(pKiller == pVictim->GetPlayer())
-	pVictim->GetPlayer()->m_Score--; // suicide
-	else
-	{
-	if(IsTeamplay() && pVictim->GetPlayer()->GetTeam() == pKiller->GetTeam())
-	pKiller->m_Score--; // teamkill
-	else
-	pKiller->m_Score++; // normal kill
-	}
-	if(Weapon == WEAPON_SELF)
-	pVictim->GetPlayer()->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()*3.0f;*/
-
 	if (pVictim->GetPlayer()->m_InLMB == LMB_PARTICIPATE)
 	{
 		if (GameServer()->m_LMB.State() == CLMB::STATE_RUNNING)
