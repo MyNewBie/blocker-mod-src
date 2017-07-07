@@ -1933,17 +1933,18 @@ void CServer::ConStatus(IConsole::IResult *pResult, void *pUser)
 		if (pThis->m_aClients[i].m_State != CClient::STATE_EMPTY)
 		{
 			net_addr_str(pThis->m_NetServer.ClientAddr(i), aAddrStr, sizeof(aAddrStr), false);
+
 			if (pThis->m_aClients[i].m_State == CClient::STATE_INGAME)
 			{
-				const char *pAuthStr = pThis->m_aClients[i].m_Authed == CServer::AUTHED_ADMIN ? "[Admin]" :
-									   pThis->m_aClients[i].m_Authed == CServer::AUTHED_MOD ? "[Mod]" :
-					                   pThis->m_aClients[i].m_Authed == CServer::AUTHED_HELPER ? "[Helper]" : "";
-				str_format(aBuf, sizeof(aBuf), "[ID= %02i] [NAME= %s] [ADDR= %s] [SCORE= %d] [CLIENT= %d] [SECURE= %s] %s", i,pThis->m_aClients[i].m_aName, 
-					       aAddrStr, pThis->m_aClients[i].m_Score, ((CGameContext *)(pThis->GameServer()))->m_apPlayers[i]->m_ClientVersion, pThis->m_NetServer.HasSecurityToken(i) ? "yes" : "no", pAuthStr);
+				const char *pAuthStr = pThis->IsAdmin(i) ? "[Admin]" : pThis->IsMod(i) ? "[Mod]" : pThis->IsAuthed(i) ? "[Helper]" : "";
+				str_format(aBuf, sizeof(aBuf), "[%02i] %s:   addr= %s,   score= %d,   client= %d,   secure= %s   %s", i, pThis->ClientName(i), aAddrStr, 
+					       pThis->m_aClients[i].m_Score, ((CGameContext *)(pThis->GameServer()))->m_apPlayers[i]->m_ClientVersion, pThis->m_NetServer.HasSecurityToken(i) ? "yes" : "no", pAuthStr);
 			}
 			else
-				str_format(aBuf, sizeof(aBuf), "id=%d addr=%s connecting", i, aAddrStr);
-			pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "Server", aBuf);
+			{
+				str_format(aBuf, sizeof(aBuf), "[%02i] addr= %s, connecting...", i, aAddrStr);
+			}
+			pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "status", aBuf);
 		}
 	}
 }
@@ -1957,21 +1958,21 @@ void CServer::ConDnsblStatus(IConsole::IResult *pResult, void *pUser)
 
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (pThis->m_aClients[i].m_State != CClient::STATE_EMPTY &&
-			pThis->m_aClients[i].m_DnsblState == CClient::DNSBL_STATE_BLACKLISTED)
+		if (pThis->m_aClients[i].m_State != CClient::STATE_EMPTY && pThis->m_aClients[i].m_DnsblState == CClient::DNSBL_STATE_BLACKLISTED)
 		{
 			net_addr_str(pThis->m_NetServer.ClientAddr(i), aAddrStr, sizeof(aAddrStr), false);
+
 			if (pThis->m_aClients[i].m_State == CClient::STATE_INGAME)
 			{
-				const char *pAuthStr = pThis->m_aClients[i].m_Authed == CServer::AUTHED_ADMIN ? "[Admin]" :
-					pThis->m_aClients[i].m_Authed == CServer::AUTHED_MOD ? "[Mod]" :
-					pThis->m_aClients[i].m_Authed == CServer::AUTHED_HELPER ? "[Helper]" : "";
-				str_format(aBuf, sizeof(aBuf), "[ID= %02i] [NAME= %s] [ADDR= %s] [SCORE= %d] [CLIENT= %d] [SECURE= %s] %s", i, pThis->m_aClients[i].m_aName, 
-						   aAddrStr, pThis->m_aClients[i].m_Score, ((CGameContext *)(pThis->GameServer()))->m_apPlayers[i]->m_ClientVersion, pThis->m_NetServer.HasSecurityToken(i) ? "yes" : "no", pAuthStr);
+				const char *pAuthStr = pThis->IsAdmin(i) ? "[Admin]" : pThis->IsMod(i) ? "[Mod]" : pThis->IsAuthed(i) ? "[Helper]" : "";
+				str_format(aBuf, sizeof(aBuf), "[%02i] %s:   addr= %s,   score= %d,   client= %d,   secure= %s   %s", i, pThis->ClientName(i),aAddrStr, 
+					       pThis->m_aClients[i].m_Score, ((CGameContext *)(pThis->GameServer()))->m_apPlayers[i]->m_ClientVersion, pThis->m_NetServer.HasSecurityToken(i) ? "yes" : "no", pAuthStr);
 			}
 			else
-				str_format(aBuf, sizeof(aBuf), "id=%d addr=%s connecting", i, aAddrStr);
-			pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "Server", aBuf);
+			{
+				str_format(aBuf, sizeof(aBuf), "[%02i] addr= %s, connecting...", i, aAddrStr);
+			}
+			pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "status", aBuf);
 		}
 	}
 }

@@ -5,6 +5,7 @@
 #include <game/server/gamecontext.h>
 #include <game/server/entities/special/vacuum.h>
 #include <game/server/entities/special/rocket.h>
+#include <game/server/entities/special/passiveindicator.h>
 #include <game/mapitems.h>
 
 #include "character.h"
@@ -1862,6 +1863,7 @@ void CCharacter::HandleTiles(int Index)
 				GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode enabled!");
 				m_ThreeSecondRule = false;
 				m_PassiveMode = true;
+				new CPassiveIndicator(&GameServer()->m_World, m_Pos, m_pPlayer->GetCID());
 			}
 			else if ((m_TileIndex == TILE_PASSIVE_OUT || m_TileFIndex == TILE_PASSIVE_OUT) && m_PassiveMode && !m_TilePauser)
 			{
@@ -1878,6 +1880,7 @@ void CCharacter::HandleTiles(int Index)
 				GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode enabled!");
 				m_ThreeSecondRule = false;
 				m_PassiveMode = true;
+				new CPassiveIndicator(&GameServer()->m_World, m_Pos, m_pPlayer->GetCID());
 			}
 			else if ((m_TileIndex == TILE_PASSIVE_OUT || m_TileFIndex == TILE_PASSIVE_OUT) && m_PassiveMode && !m_TilePauser)
 			{
