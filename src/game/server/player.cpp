@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "specialchars.h"
+
 inline int ms_rand(int *seed)
 {
 	*seed = *seed * 0x343fd + 0x269EC3;  // a=214013, b=2531011
@@ -35,22 +37,15 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	FeatureCapture(NumInputs) = 0;
 	FeatureCapture(KillMe) = 0;
 	FeatureCapture(EpicCircle) = false;
-	FeatureCapture(aSkins[0]) = "bluekitty";
-	FeatureCapture(aSkins[1]) = "bluestripe";
-	FeatureCapture(aSkins[2]) = "brownbear";
-	FeatureCapture(aSkins[3]) = "cammo";
-	FeatureCapture(aSkins[4]) = "cammostripes";
-	FeatureCapture(aSkins[5]) = "coala";
-	FeatureCapture(aSkins[6]) = "default";
-	FeatureCapture(aSkins[7]) = "limekitty";
-	FeatureCapture(aSkins[8]) = "pinky";
-	FeatureCapture(aSkins[9]) = "redbopp";
-	FeatureCapture(aSkins[10]) = "redstripe";
-	FeatureCapture(aSkins[11]) = "saddo";
-	FeatureCapture(aSkins[12]) = "toptri";
-	FeatureCapture(aSkins[13]) = "twinbop";
-	FeatureCapture(aSkins[14]) = "twintri";
-	FeatureCapture(aSkins[15]) = "warpaint";
+	FeatureCapture(IsBallSpawned) = false;
+	FeatureCapture(RainbowHook) = false;
+	FeatureCapture(Lovely) = false;
+	FeatureCapture(HeartGuns) = false;
+	FeatureCapture(Stars) = false;
+	FeatureCapture(Invisible) = false;
+	FeatureCapture(Rainbowepiletic) = false;
+	FeatureCapture(Rainbow) = false;
+	FeatureCapture(Blackhole) = false;
 
 	Reset();
 }
@@ -64,7 +59,7 @@ CPlayer::~CPlayer()
 void CPlayer::Reset()
 {
 	m_RandIndex = rand() % 16;
-	m_pSkin = m_aSkins[m_RandIndex].c_str();
+	m_pSkin = aSkins[m_RandIndex];
 	m_DieTick = Server()->Tick();
 	m_JoinTick = Server()->Tick();
 	if (m_pCharacter)
@@ -337,7 +332,7 @@ void CPlayer::Snap(int SnappingClient)
 	if (!pClientInfo)
 		return;
 
-	if (g_Config.m_SvAnonymousBlock)
+	if (g_Config.m_SvAnonymousBlock || m_InLMB == LMB_PARTICIPATE)
 	{
 		StrToInts(&pClientInfo->m_Name0, 4, " ");
 		StrToInts(&pClientInfo->m_Clan0, 3, " ");
@@ -359,12 +354,12 @@ void CPlayer::Snap(int SnappingClient)
 	}
 	else
 	{
-		if (g_Config.m_SvAnonymousBlock)
+		if (g_Config.m_SvAnonymousBlock || m_InLMB == LMB_PARTICIPATE)
 		{
 			if (Server()->Tick() >= m_LastTriggerTick + Server()->TickSpeed() * 2) {
 				m_LastTriggerTick = Server()->Tick();
 				m_RandIndex = rand() % 16;
-				m_pSkin = m_aSkins[m_RandIndex].c_str();
+				m_pSkin = aSkins[m_RandIndex];
 			}
 			StrToInts(&pClientInfo->m_Skin0, 6, m_pSkin);
 			pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
@@ -410,7 +405,7 @@ void CPlayer::Snap(int SnappingClient)
 	else
 		pPlayerInfo->m_Score = abs(m_Score) * -1;
 
-	if (g_Config.m_SvAnonymousBlock)
+	if (g_Config.m_SvAnonymousBlock || m_InLMB == LMB_PARTICIPATE)
 		pPlayerInfo->m_Score = -9999;
 }
 
@@ -659,28 +654,8 @@ void CPlayer::TryRespawn()
 	m_pCharacter->Spawn(this, SpawnPos);
 	GameServer()->CreatePlayerSpawn(SpawnPos, m_pCharacter->Teams()->TeamMask(m_pCharacter->Team(), -1, m_ClientID));
 
-	if (!m_InLMB)
-	{
-		if (m_SavedStats.m_SavedShotgun)
-			m_pCharacter->GiveWeapon(WEAPON_SHOTGUN);
-
-		if (m_SavedStats.m_SavedGrenade)
-			m_pCharacter->GiveWeapon(WEAPON_GRENADE);
-
-		if (m_SavedStats.m_SavedLaser)
-			m_pCharacter->GiveWeapon(WEAPON_RIFLE);
-
-		m_pCharacter->m_EndlessHook = m_SavedStats.m_SavedEHook;
-
-		if (m_SavedStats.m_SavedStartTick)
-		{
-			m_pCharacter->Teams()->OnCharacterStart(GetCID());
-			m_pCharacter->m_StartTime = m_SavedStats.m_SavedStartTick;
-		}
-
-		m_SavedStats.Reset();
-	}
-
+	if(!m_InLMB)
+		LMBRestore();
 
 	if (g_Config.m_SvTeam == 3)
 	{
@@ -1041,19 +1016,71 @@ void CPlayer::QuestSetNextPart()
 	QuestTellObjective();
 }
 
-
-
 void CPlayer::SaveStats()
 {
-	if (!GetCharacter()) // It already checks for alive
-		return;
-
 	m_SavedStats.m_SavedSpawn = GetCharacter()->Core()->m_Pos;
 	m_SavedStats.m_SavedShotgun = GetCharacter()->GetWeaponGot(WEAPON_SHOTGUN);
 	m_SavedStats.m_SavedGrenade = GetCharacter()->GetWeaponGot(WEAPON_GRENADE);
 	m_SavedStats.m_SavedLaser = GetCharacter()->GetWeaponGot(WEAPON_RIFLE);
 	m_SavedStats.m_SavedEHook = GetCharacter()->m_EndlessHook;
 
+	m_SavedStats.m_SavedLovely = m_Lovely;
+	m_SavedStats.m_SavedHeartGuns = m_HeartGuns;
+	m_SavedStats.m_SavedBall = m_IsBallSpawned;
+	m_SavedStats.m_SavedRainbow = m_Rainbow;
+	m_SavedStats.m_SavedERainbow = m_Rainbowepiletic;
+	m_SavedStats.m_SavedEpicCircle = m_EpicCircle;
+	m_SavedStats.m_SavedRainbowHook = m_RainbowHook;
+
 	if (GetCharacter()->m_DDRaceState == DDRACE_STARTED)
 		m_SavedStats.m_SavedStartTick = GetCharacter()->m_StartTime;
+}
+
+void CPlayer::LMBRestore()
+{
+	if (m_SavedStats.m_SavedShotgun)
+		m_pCharacter->GiveWeapon(WEAPON_SHOTGUN);
+
+	if (m_SavedStats.m_SavedGrenade)
+		m_pCharacter->GiveWeapon(WEAPON_GRENADE);
+
+	if (m_SavedStats.m_SavedLaser)
+		m_pCharacter->GiveWeapon(WEAPON_RIFLE);
+
+	if (m_SavedStats.m_SavedRainbow)
+		m_Rainbow = true;
+
+	if (m_SavedStats.m_SavedERainbow)
+		m_Rainbowepiletic = true;
+
+	if (m_SavedStats.m_SavedLovely)
+		m_Lovely = true;
+
+	if (m_SavedStats.m_SavedHeartGuns)
+		m_HeartGuns = true;
+
+	if (m_SavedStats.m_SavedRainbowHook)
+		m_RainbowHook = true;	
+
+	if (m_SavedStats.m_SavedBall)
+	{
+		m_IsBallSpawned = true;
+		new CBall(&GameServer()->m_World, GetCharacter()->m_Pos, GetCID());
+	}
+		
+	if (m_SavedStats.m_SavedEpicCircle)
+	{
+		m_EpicCircle = true;
+		new CEpicCircle(&GameServer()->m_World, GetCharacter()->m_Pos, GetCID());
+	}
+
+	m_pCharacter->m_EndlessHook = m_SavedStats.m_SavedEHook;
+
+	if (m_SavedStats.m_SavedStartTick)
+	{
+		m_pCharacter->Teams()->OnCharacterStart(GetCID());
+		m_pCharacter->m_StartTime = m_SavedStats.m_SavedStartTick;
+	}
+
+	m_SavedStats.Reset();
 }

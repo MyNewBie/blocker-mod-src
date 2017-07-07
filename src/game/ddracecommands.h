@@ -81,6 +81,7 @@ CONSOLE_COMMAND("freezehammer", "v[id]", CFGFLAG_SERVER, ConFreezeHammer, this, 
 CONSOLE_COMMAND("unfreezehammer", "v[id]", CFGFLAG_SERVER, ConUnFreezeHammer, this, "Removes Freeze Hammer from a player")
 
 CONSOLE_COMMAND("fixaccounts", "", CFGFLAG_SERVER, ConFixAccounts, this, "allow players to login back.");
+CONSOLE_COMMAND("fifo_command", "r", CFGFLAG_SERVER, ConFifoCommand, this, "run a command in every servers");
 #undef CONSOLE_COMMAND
 
 #endif

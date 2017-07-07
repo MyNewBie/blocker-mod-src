@@ -36,6 +36,12 @@ void CEpicCircle::Tick()
 		Reset();
 		return;
 	}
+
+	if(GameServer()->m_apPlayers[m_Owner] && GameServer()->m_apPlayers[m_Owner]->m_InLMB == 2)
+    {
+    	Reset();
+    	return;
+    }
 	
 	if (GameServer()->m_KOHActive)	
 	{

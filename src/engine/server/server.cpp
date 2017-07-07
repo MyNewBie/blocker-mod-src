@@ -2531,4 +2531,13 @@ void CServer::FixAccounts()
 		system(aCmd);
 		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "fix_accounts", "Done.");
 	#endif
+} 
+
+void CServer::RunFifoCmd(const char* Command)
+{
+	char aCmd[256];
+	#if defined(CONF_FAMILY_UNIX)
+		str_format(aCmd, sizeof(aCmd), "echo \"%s\" > %s", Command, g_Config.m_SvInputFifo);
+		system(aCmd);
+	#endif
 }

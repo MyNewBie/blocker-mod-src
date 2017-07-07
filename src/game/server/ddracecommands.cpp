@@ -414,8 +414,8 @@ void CGameContext::ConVip(IConsole::IResult *pResult, void *pUserData)
 	{
 		if (pChr->GetPlayer()->m_AccData.m_UserID)
 		{
-			pChr->GetPlayer()->m_AccData.m_Vip ^= 1;
-			pChr->GetPlayer()->m_pAccount->Apply();
+			pPlayer->m_AccData.m_Vip ^= 1;
+			pPlayer->m_pAccount->Apply();
 
 			if (pChr->GetPlayer()->m_AccData.m_Vip)
 				str_format(aBuf, sizeof aBuf, "'%s' is Vip now.", pSelf->Server()->ClientName(VipID));
@@ -1109,4 +1109,14 @@ void CGameContext::ConFixAccounts(IConsole::IResult *pResult, void *pUserData)
 	char aBuf[128];
 	str_format(aBuf, sizeof(aBuf), "Accounts fixed!");
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
+}
+
+void CGameContext::ConFifoCommand(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	pSelf->Server()->RunFifoCmd(pResult->GetString(1));
+
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), "executed %s", pResult->GetString(1));
+	pSelf->SendChatTarget(pResult->m_ClientID, aBuf);
 }

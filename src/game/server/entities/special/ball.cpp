@@ -46,6 +46,12 @@ void CBall::Tick()
         return;
     }
 
+    if(GameServer()->m_apPlayers[m_Owner] && GameServer()->m_apPlayers[m_Owner]->m_InLMB == 2)
+    {
+    	Reset();
+    	return;
+    }
+
     m_LaserLifeSpan--;
 
     if(m_LaserLifeSpan <= 0)
