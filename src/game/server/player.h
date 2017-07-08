@@ -190,6 +190,9 @@ public:
 		bool m_SavedEpicCircle;
 		bool m_SavedRainbowHook;
 
+		bool m_SavedHammerHit;
+		bool m_SavedHook;
+
 		void Reset()
 		{
 			m_SavedSpawn = vec2(0, 0);
@@ -207,6 +210,9 @@ public:
 			m_SavedERainbow = false;
 			m_SavedEpicCircle = false;
 			m_SavedRainbowHook = false;
+
+			m_SavedHammerHit = false;
+			m_SavedHook = false;
 		}
 	} m_SavedStats;
 

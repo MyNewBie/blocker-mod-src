@@ -72,8 +72,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_LastRefillJumps = false;
 	m_LastPenalty = false;
 	m_LastBonus = false;
-	m_AnimIDNum = 9; //maximum number of "animation balls"
-	m_apAnimIDs = new int[m_AnimIDNum];//create id-array
+	/*m_AnimIDNum = 9; //maximum number of "animation balls" m_KOH
+	m_apAnimIDs = new int[m_AnimIDNum];//create id-array*/
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
 	m_IsFiring = false;
@@ -128,8 +128,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_FreezeTimer = 0;
 
-	for (int i = 0; i < m_AnimIDNum; i++)//snap ids
-		m_apAnimIDs[i] = Server()->SnapNewID();
+	/*for (int i = 0; i < m_AnimIDNum; i++)//snap ids
+		m_apAnimIDs[i] = Server()->SnapNewID();*/
 
 	return true;
 }
@@ -1319,7 +1319,7 @@ void CCharacter::Snap(int SnappingClient)
 
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
 
-	if (GameServer()->m_KOHActive)
+	/*if (GameServer()->m_KOHActive)
 	{
 		//calculate visible balls
 		for (unsigned z = 0; z < GameServer()->m_KOH.size(); z++)
@@ -1348,7 +1348,7 @@ void CCharacter::Snap(int SnappingClient)
 				}
 			}
 		}
-	}
+	}*/
 }
 
 int CCharacter::NetworkClipped(int SnappingClient)
@@ -1707,16 +1707,12 @@ void CCharacter::HandleTiles(int Index)
 	if (((m_TileIndex == TILE_HIT_END) || (m_TileFIndex == TILE_HIT_END)) && m_Hit != (DISABLE_HIT_GRENADE | DISABLE_HIT_HAMMER | DISABLE_HIT_RIFLE | DISABLE_HIT_SHOTGUN))
 	{
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't hit others");
-		m_Hit = DISABLE_HIT_GRENADE | DISABLE_HIT_HAMMER | DISABLE_HIT_RIFLE | DISABLE_HIT_SHOTGUN;
-		m_NeededFaketuning |= FAKETUNE_NOHAMMER;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+		HandleHit(false);
 	}
 	else if (((m_TileIndex == TILE_HIT_START) || (m_TileFIndex == TILE_HIT_START)) && m_Hit != HIT_ALL)
 	{
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can hit others");
-		m_Hit = HIT_ALL;
-		m_NeededFaketuning &= ~FAKETUNE_NOHAMMER;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+		HandleHit(true);
 	}
 
 	// collide with others
@@ -1735,16 +1731,12 @@ void CCharacter::HandleTiles(int Index)
 	if (((m_TileIndex == TILE_NPH_END) || (m_TileFIndex == TILE_NPH_END)) && m_Core.m_Hook)
 	{
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't hook others");
-		m_Core.m_Hook = false;
-		m_NeededFaketuning |= FAKETUNE_NOHOOK;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+		HandleHook(false);
 	}
 	else if (((m_TileIndex == TILE_NPH_START) || (m_TileFIndex == TILE_NPH_START)) && !m_Core.m_Hook)
 	{
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can hook others");
-		m_Core.m_Hook = true;
-		m_NeededFaketuning &= ~FAKETUNE_NOHOOK;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+		HandleHook(true);
 	}
 
 	// unlimited air jumps
@@ -1813,7 +1805,7 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// King of the hill !
-	if (GameServer()->m_KOHActive && Team() == 0)
+	/*if (GameServer()->m_KOHActive && Team() == 0)
 	{
 		for (unsigned z = 0; z < GameServer()->m_KOH.size(); z++)
 		{
@@ -1855,7 +1847,7 @@ void CCharacter::HandleTiles(int Index)
 			}
 		}
 
-	}
+	}*/
 
 	// passive
 	if (g_Config.m_SvWbProt != 0)
@@ -3229,50 +3221,77 @@ void CCharacter::HandleLovely()
 
 void CCharacter::HandleRainbowHook(bool Reset)
 {
-	switch(Reset)
+	if(Reset)
 	{
-		case true:
-			if(RainbowHookedID != -1)
-			{
-				if(GameServer()->m_apPlayers[RainbowHookedID])
-					GameServer()->m_apPlayers[RainbowHookedID]->m_Rainbowepiletic = false;
-				RainbowHookedID = -1;
-			}
-		break;
-
-		case false:
-			if(m_pPlayer->m_RainbowHook)
-			{
-				if(m_Core.m_HookedPlayer != -1 && GameServer()->GetPlayerChar(m_Core.m_HookedPlayer))
-				{
-					RainbowHookedID = m_Core.m_HookedPlayer;
-					GameServer()->m_apPlayers[RainbowHookedID]->m_Rainbowepiletic = true;
-				}
-				else
-				{	
-					HandleRainbowHook(true);
-				}
-			}
-		break;
+		if(RainbowHookedID != -1)
+		{
+			if(GameServer()->m_apPlayers[RainbowHookedID])
+				GameServer()->m_apPlayers[RainbowHookedID]->m_Rainbowepiletic = false;
+			RainbowHookedID = -1;
+		}
 	}
-	
+	else
+	{
+		if(m_pPlayer->m_RainbowHook)
+		{
+			if(m_Core.m_HookedPlayer != -1 && GameServer()->GetPlayerChar(m_Core.m_HookedPlayer))
+			{
+				RainbowHookedID = m_Core.m_HookedPlayer;
+				GameServer()->m_apPlayers[RainbowHookedID]->m_Rainbowepiletic = true;
+			}
+			else
+			{	
+				HandleRainbowHook(true);
+			}
+		}
+	}	
 }
 
 void CCharacter::HandleCollision(bool Reset)
 {
-	switch(Reset)
+	if(Reset)
 	{
-		case true:
-			m_Core.m_Collision = true;
-			m_NeededFaketuning &= ~FAKETUNE_NOCOLL;
-			GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
-		break;
+		m_Core.m_Collision = true;
+		m_NeededFaketuning &= ~FAKETUNE_NOCOLL;
+		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
+	}
+	else
+	{
+		m_Core.m_Collision = false;
+		m_NeededFaketuning |= FAKETUNE_NOCOLL;
+		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
+	}
+}
 
-		case false:
-			m_Core.m_Collision = false;
-			m_NeededFaketuning |= FAKETUNE_NOCOLL;
-			GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
-		break;
+void CCharacter::HandleHit(bool Reset)
+{
+	if(Reset)
+	{
+		m_Hit = HIT_ALL;
+		m_NeededFaketuning &= ~FAKETUNE_NOHAMMER;
+		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	}
+	else
+	{
+		m_Hit = DISABLE_HIT_GRENADE | DISABLE_HIT_HAMMER | DISABLE_HIT_RIFLE | DISABLE_HIT_SHOTGUN;
+		m_NeededFaketuning |= FAKETUNE_NOHAMMER;
+		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	}
+}
+
+void CCharacter::HandleHook(bool Reset)
+{
+	if(Reset)
+	{
+		m_Core.m_Hook = true;
+		m_NeededFaketuning &= ~FAKETUNE_NOHOOK;
+		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	}
+	else
+	{
+		m_Core.m_Hook = false;
+		m_NeededFaketuning |= FAKETUNE_NOHOOK;
+		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
 	}
 }
 
@@ -3299,17 +3318,13 @@ void CCharacter::HandlePullHammer()
 	{
 		CCharacter* pTarget = GameServer()->GetPlayerChar(m_PullingID);
 		CPlayer* pTargetPlayer = GameServer()->m_apPlayers[m_PullingID];
-		int CollTile = GameServer()->Collision()->GetTileRaw(m_Input.m_TargetX + m_Pos.x, m_Input.m_TargetY + m_Pos.y);
 
 		if(pTargetPlayer)
 		{
 			if(pTarget)
 			{
-				if(CollTile != TILE_VIP && CollTile != TILE_ADMIN && CollTile != TILE_DEATH)
-				{
-		  			pTarget->Core()->m_Pos = MousePos();
-		  			pTarget->Core()->m_Vel.y = 0;
-				}
+		  		pTarget->Core()->m_Pos = MousePos();
+		  		pTarget->Core()->m_Vel.y = 0;
 		  	}
 		}
 		else

@@ -1032,6 +1032,9 @@ void CPlayer::SaveStats()
 	m_SavedStats.m_SavedEpicCircle = m_EpicCircle;
 	m_SavedStats.m_SavedRainbowHook = m_RainbowHook;
 
+	m_SavedStats.m_SavedHammerHit = GetCharacter()->m_Hit;
+	m_SavedStats.m_SavedHook = GetCharacter()->Core()->m_Hook;
+
 	if (GetCharacter()->m_DDRaceState == DDRACE_STARTED)
 		m_SavedStats.m_SavedStartTick = GetCharacter()->m_StartTime;
 }
@@ -1072,6 +1075,16 @@ void CPlayer::LMBRestore()
 	{
 		m_EpicCircle = true;
 		new CEpicCircle(&GameServer()->m_World, GetCharacter()->m_Pos, GetCID());
+	}
+
+	if(m_SavedStats.m_SavedHammerHit)
+	{
+		GetCharacter()->HandleHit(true);
+	}
+
+	if(m_SavedStats.m_SavedHook)
+	{
+		GetCharacter()->HandleHook(true);
 	}
 
 	m_pCharacter->m_EndlessHook = m_SavedStats.m_SavedEHook;
