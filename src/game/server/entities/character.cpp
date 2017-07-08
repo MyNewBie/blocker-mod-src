@@ -72,8 +72,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_LastRefillJumps = false;
 	m_LastPenalty = false;
 	m_LastBonus = false;
-	/*m_AnimIDNum = 9; //maximum number of "animation balls" m_KOH
-	m_apAnimIDs = new int[m_AnimIDNum];//create id-array*/
+	m_AnimIDNum = 9; //maximum number of "animation balls" m_KOH
+	m_apAnimIDs = new int[m_AnimIDNum];//create id-array
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
 	m_IsFiring = false;
@@ -152,18 +152,6 @@ void CCharacter::SetWeapon(int W)
 
 	if (m_Core.m_ActiveWeapon < 0 || m_Core.m_ActiveWeapon >= NUM_WEAPONS)
 		m_Core.m_ActiveWeapon = 0;
-}
-
-void CCharacter::SetSolo(bool Solo)
-{
-	Teams()->m_Core.SetSolo(m_pPlayer->GetCID(), Solo);
-
-	if (Solo)
-		m_NeededFaketuning |= FAKETUNE_SOLO;
-	else
-		m_NeededFaketuning &= ~FAKETUNE_SOLO;
-
-	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
 }
 
 bool CCharacter::IsGrounded()
@@ -1319,7 +1307,7 @@ void CCharacter::Snap(int SnappingClient)
 
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
 
-	/*if (GameServer()->m_KOHActive)
+	if (GameServer()->m_KOHActive)
 	{
 		//calculate visible balls
 		for (unsigned z = 0; z < GameServer()->m_KOH.size(); z++)
@@ -1348,7 +1336,7 @@ void CCharacter::Snap(int SnappingClient)
 				}
 			}
 		}
-	}*/
+	}
 }
 
 int CCharacter::NetworkClipped(int SnappingClient)
@@ -1805,7 +1793,7 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// King of the hill !
-	/*if (GameServer()->m_KOHActive && Team() == 0)
+	if (GameServer()->m_KOHActive && Team() == 0)
 	{
 		for (unsigned z = 0; z < GameServer()->m_KOH.size(); z++)
 		{
@@ -1847,7 +1835,7 @@ void CCharacter::HandleTiles(int Index)
 			}
 		}
 
-	}*/
+	}
 
 	// passive
 	if (g_Config.m_SvWbProt != 0)
@@ -1892,12 +1880,12 @@ void CCharacter::HandleTiles(int Index)
 	if ((m_TileIndex == TILE_SOLO_START || m_TileFIndex == TILE_SOLO_START) && !Teams()->m_Core.GetSolo(m_pPlayer->GetCID()))
 	{
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are now in a solo part");
-		SetSolo(true);
+		HandleSolo(true);
 	}
 	else if ((m_TileIndex == TILE_SOLO_END || m_TileFIndex == TILE_SOLO_END) && Teams()->m_Core.GetSolo(m_pPlayer->GetCID()))
 	{
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are now out of the solo part");
-		SetSolo(false);
+		HandleSolo(false);
 	}
 
 	// refill jumps
@@ -2443,7 +2431,7 @@ void CCharacter::DDRacePostCoreTick()
 	// handle Anti-Skip tiles
 	std::list < int > Indices = GameServer()->Collision()->GetMapIndices(m_PrevPos, m_Pos);
 	if (!Indices.empty())
-		for (std::list < int >::iterator i = Indices.begin(); i != Indices.end(); i++)
+		for (std::list < int >::iterator i = Indices.begin(); i != Indices.end() && m_Alive; i++)
 			HandleTiles(*i);
 	else
 	{
@@ -3249,50 +3237,30 @@ void CCharacter::HandleRainbowHook(bool Reset)
 
 void CCharacter::HandleCollision(bool Reset)
 {
-	if(Reset)
-	{
-		m_Core.m_Collision = true;
-		m_NeededFaketuning &= ~FAKETUNE_NOCOLL;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
-	}
-	else
-	{
-		m_Core.m_Collision = false;
-		m_NeededFaketuning |= FAKETUNE_NOCOLL;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
-	}
+	m_Core.m_Collision = Reset;
+	m_NeededFaketuning = Reset ? m_NeededFaketuning & ~FAKETUNE_NOCOLL : m_NeededFaketuning | FAKETUNE_NOCOLL;
+	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
 }
 
 void CCharacter::HandleHit(bool Reset)
 {
-	if(Reset)
-	{
-		m_Hit = HIT_ALL;
-		m_NeededFaketuning &= ~FAKETUNE_NOHAMMER;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-	}
-	else
-	{
-		m_Hit = DISABLE_HIT_GRENADE | DISABLE_HIT_HAMMER | DISABLE_HIT_RIFLE | DISABLE_HIT_SHOTGUN;
-		m_NeededFaketuning |= FAKETUNE_NOHAMMER;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-	}
+    m_Hit = Reset ? HIT_ALL : DISABLE_HIT_GRENADE | DISABLE_HIT_HAMMER | DISABLE_HIT_RIFLE | DISABLE_HIT_SHOTGUN;
+	m_NeededFaketuning = Reset ? m_NeededFaketuning & ~FAKETUNE_NOHAMMER : m_NeededFaketuning | FAKETUNE_NOHAMMER;
+    GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
 }
 
 void CCharacter::HandleHook(bool Reset)
 {
-	if(Reset)
-	{
-		m_Core.m_Hook = true;
-		m_NeededFaketuning &= ~FAKETUNE_NOHOOK;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-	}
-	else
-	{
-		m_Core.m_Hook = false;
-		m_NeededFaketuning |= FAKETUNE_NOHOOK;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-	}
+    m_Core.m_Hook = Reset;
+	m_NeededFaketuning = Reset ? m_NeededFaketuning & ~FAKETUNE_NOHOOK : m_NeededFaketuning | FAKETUNE_NOHOOK;
+	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
+}
+
+void CCharacter::HandleSolo(bool Set)
+{
+	Teams()->m_Core.SetSolo(m_pPlayer->GetCID(), Set);
+	m_NeededFaketuning = Set ? m_NeededFaketuning | FAKETUNE_SOLO : m_NeededFaketuning & ~FAKETUNE_SOLO;
+	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
 }
 
 void CCharacter::HandlePullHammer()
@@ -3310,9 +3278,7 @@ void CCharacter::HandlePullHammer()
 	{
 		CCharacter * pTarget = GameWorld()->ClosestCharacter(MousePos(), 20.f, this); // Don't allow the user to use it on their self, Alot of people seem to be abusing and bugging themselves into walls... -.-
 		if (pTarget)
-		{
 			m_PullingID = pTarget->GetPlayer()->GetCID();
-		}
 	}
 	else
 	{
@@ -3328,9 +3294,6 @@ void CCharacter::HandlePullHammer()
 		  	}
 		}
 		else
-		{
 	    	m_PullingID = -1;
-	    	return;
-		}
 	}
 }

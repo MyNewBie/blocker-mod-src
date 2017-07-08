@@ -604,9 +604,9 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 				Msg.AddInt(0);
 			}
 			else if ((i == 32) // hooking
-				&& (m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_SOLO
+				&& ((m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_SOLO
 					|| m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_NOHOOK)
-				|| m_apPlayers[ClientID]->m_Drunk)
+				|| m_apPlayers[ClientID]->m_Drunk))
 			{
 				Msg.AddInt(0);
 			}
@@ -730,7 +730,7 @@ void CGameContext::OnTick()
 			m_PlayerCount++;
 	}
 
-	/*if (m_KOHActive)
+	if (m_KOHActive)
 	{
 		for (unsigned z = 0; z < m_KOH.size(); z++)
 		{
@@ -767,7 +767,7 @@ void CGameContext::OnTick()
 			}
 		}
 
-	}*/
+	}
 
 	if (m_CountdownInfo.m_Time > 0 && Server()->Tick() - m_CountdownInfo.m_LastAnnounce > 50)
 	{
@@ -2528,10 +2528,10 @@ void CGameContext::ConOpenLMB(IConsole::IResult *pResult, void *pUserData)
 
 void CGameContext::ConOpenKOH(IConsole::IResult *pResult, void *pUserData)
 {
-	/*CGameContext *pSelf = (CGameContext *)pUserData;
+	CGameContext *pSelf = (CGameContext *)pUserData;
 	pSelf->m_KOHActive ^= 1; // Toggle
 	for (unsigned i = 0; i < pSelf->m_KOH.size(); i++)
-		pSelf->m_KOH[i].m_NumContestants = 0;*/
+		pSelf->m_KOH[i].m_NumContestants = 0;
 }
 
 void CGameContext::ConDetectedPlayers(IConsole::IResult *pResult, void *pUserData)

@@ -192,6 +192,7 @@ public:
 
 		bool m_SavedHammerHit;
 		bool m_SavedHook;
+		bool m_SavedSolo;
 
 		void Reset()
 		{
@@ -213,6 +214,7 @@ public:
 
 			m_SavedHammerHit = false;
 			m_SavedHook = false;
+			m_SavedSolo = false;
 		}
 	} m_SavedStats;
 

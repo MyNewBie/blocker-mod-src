@@ -61,7 +61,6 @@ public:
 	bool IsGrounded();
 
 	void SetWeapon(int W);
-	void SetSolo(bool Solo);
 	void HandleWeaponSwitch();
 	void EmoteCheck(int Index);
 	void DoWeaponSwitch();
@@ -98,6 +97,7 @@ public:
 	void HandleCollision(bool Reset);
 	void HandleHit(bool Reset);
 	void HandleHook(bool Reset);
+	void HandleSolo(bool Set);
 	void HandlePullHammer();
 
 	int NeededFaketuning() { return m_NeededFaketuning; }
