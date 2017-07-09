@@ -36,6 +36,8 @@
 
 #define QUERY_MAX_LEN 512
 
+LOCK QueryLock;
+
 struct CResultData
 {
 	char m_aUsername[32];
@@ -62,9 +64,19 @@ static void QueryThreadFunction(void *pData)
 	sql::Statement *pStatement = NULL;
 	sql::ResultSet *pResults = NULL;
 
+	lock_wait(QueryLock);
+
 	try
 	{
-		dbg_msg(0, "%s, %s, %s", g_Config.m_SvAccSqlIp, g_Config.m_SvAccSqlName, g_Config.m_SvAccSqlPassword);
+		sql::ConnectOptionsMap connection_properties;
+		connection_properties["hostName"]      = sql::SQLString(g_Config.m_SvAccSqlIp);
+		connection_properties["port"]          = 3306;
+		connection_properties["userName"]      = sql::SQLString(g_Config.m_SvAccSqlName);
+		connection_properties["password"]      = sql::SQLString(g_Config.m_SvAccSqlPassword);
+		connection_properties["OPT_CONNECT_TIMEOUT"] = 10;
+		connection_properties["OPT_READ_TIMEOUT"] = 10;
+		connection_properties["OPT_WRITE_TIMEOUT"] = 20;
+		connection_properties["OPT_RECONNECT"] = true;
 
 		pDriver = get_driver_instance();
 		pConnection = pDriver->connect(g_Config.m_SvAccSqlIp, g_Config.m_SvAccSqlName, g_Config.m_SvAccSqlPassword);
@@ -91,6 +103,8 @@ static void QueryThreadFunction(void *pData)
 			delete pResults;
 	if (pConnection)
 		delete pConnection;
+
+	lock_unlock(QueryLock);
 
 #endif
 
@@ -135,14 +149,14 @@ void CAccountDatabase::CreateNewQuery(char *pQuery, SqlResultFunction ResultCall
 	pFeed->m_SetSchema = SetSchema;
 	pFeed->m_ExpectResult = ExpectResult;
 
-	dbg_msg("QUERY", pQuery);
-
-	//thread_init(QueryThreadFunction, pFeed);
-	QueryThreadFunction(pFeed);
+	thread_init(QueryThreadFunction, pFeed);
+	//QueryThreadFunction(pFeed);
 }
 
 void CAccountDatabase::InitTables()
 {
+	QueryLock = lock_create();
+
 	//Init schema
 	char aBuf[64];
 	str_format(aBuf, sizeof(aBuf), "CREATE DATABASE IF NOT EXISTS %s", g_Config.m_SvAccSqlDatabase);
