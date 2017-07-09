@@ -64,6 +64,8 @@ static void QueryThreadFunction(void *pData)
 
 	try
 	{
+		dbg_msg(0, "%s, %s, %s", g_Config.m_SvAccSqlIp, g_Config.m_SvAccSqlName, g_Config.m_SvAccSqlPassword);
+
 		pDriver = get_driver_instance();
 		pConnection = pDriver->connect(g_Config.m_SvAccSqlIp, g_Config.m_SvAccSqlName, g_Config.m_SvAccSqlPassword);
 		if(pFeed->m_SetSchema == true)
@@ -133,7 +135,7 @@ void CAccountDatabase::CreateNewQuery(char *pQuery, SqlResultFunction ResultCall
 	pFeed->m_SetSchema = SetSchema;
 	pFeed->m_ExpectResult = ExpectResult;
 
-	//dbg_msg("QUERY", pQuery);
+	dbg_msg("QUERY", pQuery);
 
 	//thread_init(QueryThreadFunction, pFeed);
 	QueryThreadFunction(pFeed);
