@@ -85,6 +85,8 @@ class CGameContext : public IGameServer
 	static void ConSayBy(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetTeamAll(IConsole::IResult *pResult, void *pUserData);
+	static int UploadFileCallback(const char *name, int is_dir, int dir_type, void *user);
+	static void ConAccountUploadFile(IConsole::IResult *pResult, void *pUserData);
 	//static void ConSwapTeams(IConsole::IResult *pResult, void *pUserData);
 	//static void ConShuffleTeams(IConsole::IResult *pResult, void *pUserData);
 	//static void ConLockTeams(IConsole::IResult *pResult, void *pUserData);

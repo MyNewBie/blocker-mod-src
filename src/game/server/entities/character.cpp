@@ -7,6 +7,7 @@
 #include <game/server/entities/special/rocket.h>
 #include <game/server/entities/special/passiveindicator.h>
 #include <game/mapitems.h>
+#include <game/server/accounting/account.h>
 
 #include "character.h"
 #include "laser.h"

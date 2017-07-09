@@ -10,6 +10,8 @@
 #include <game/gamecore.h>
 #include <game/version.h>
 #include <game/server/teams.h>
+#include "accounting/account_database.h"
+#include "accounting/account_file.h"
 #include "gamemodes/DDRace.h"
 #include <stdio.h>
 #include <time.h>
@@ -72,8 +74,13 @@ void CPlayer::Reset()
 	m_WeakHookSpawn = false;
 	m_SilentMuted = false;
 
-	// city - label everything vali so its easier to find pls
-	m_pAccount = new CAccount(this);
+	// city - label everything vali so its easier to find pls// ok sir
+#if defined(CONF_SQL)
+	m_pAccount = new CAccountDatabase(this);
+#else
+	m_pAccount = new CAccountFile(this);
+#endif
+
 	//m_pAccount->SetStorage(GameServer()->Storage());
 	if (m_AccData.m_UserID)
 		m_pAccount->Apply();

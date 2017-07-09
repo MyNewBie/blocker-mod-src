@@ -4,6 +4,7 @@
 #include "player.h"
 #include <engine/shared/config.h>
 #include <engine/server/server.h>
+#include <game/server/accounting/account.h>
 
 #include <fstream>
 #include <iostream>
