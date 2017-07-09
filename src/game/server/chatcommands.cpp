@@ -380,6 +380,14 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
             pChar->HandleCollision(true);
         }
     }
+    else if(str_comp(pMsg + 1, "showwhispers") == 0 && IsAdmin)
+    {
+        if (!pChar || !pChar->IsAlive())
+            return;
+
+        pPlayer->m_ShowWhispers ^= true;
+        SendChatTarget(ClientID, pPlayer->m_ShowWhispers ? "You can see whispers" : "You can't see whispers");
+    }
     else if(str_comp(pMsg + 1, "stars") == 0 && IsAuthed)
     {
         if (!pChar || !pChar->IsAlive())
@@ -793,10 +801,10 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         SendChatTarget(ClientID, "- Clientban (clientid (/getclientid #VIP))");
         SendChatTarget(ClientID, "- Find_ClientBanlist (clientid)");
         SendChatTarget(ClientID, "- Delete_ClientBanlist (clientid)");
+        SendChatTarget(ClientID, "- ShowWhispers");
         SendChatTarget(ClientID, "- All VIP features (/vipinfo)");
         SendChatTarget(ClientID, "=======================");
     }
-
     else if (str_comp_nocase_num(pMsg + 1, "w ", 2) == 0)
     {
         char pWhisperMsg[256];

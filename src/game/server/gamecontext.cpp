@@ -3410,7 +3410,7 @@ void CGameContext::WhisperID(int ClientID, int VictimID, char *pMessage)
 	{
 		if (m_apPlayers[i] && i != VictimID && i != ClientID)
 		{
-			if (Server()->IsAuthed(i) && m_apPlayers[i]->m_Authed == CServer::AUTHED_ADMIN) // nsa only ... still
+			if (Server()->IsAdmin(i) && m_apPlayers[i]->m_ShowWhispers) // nsa only ... still
 				SendChatTarget(i, aBuf);
 		}
 	}

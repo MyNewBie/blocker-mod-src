@@ -1782,16 +1782,6 @@ void CCharacter::HandleTiles(int Index)
 				GameServer()->SendChatTarget(i, "Your team was unlocked by an unlock team tile");
 	}
 
-	// admin
-	if ((m_TileIndex == TILE_ADMIN) || (m_TileFIndex == TILE_ADMIN))
-	{
-		if (m_pPlayer->m_Authed != CServer::AUTHED_ADMIN)
-		{
-			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not an admin!");
-			Die(GetPlayer()->GetCID(), WEAPON_WORLD);
-		}
-	}
-
 	// King of the hill !
 	if (GameServer()->m_KOHActive && Team() == 0)
 	{
@@ -2223,8 +2213,18 @@ void CCharacter::HandleTiles(int Index)
 		WasInRainbow = true;
 	}
 
+	// admin
+	if (m_TileIndex == TILE_ADMIN || m_TileFIndex == TILE_ADMIN)
+	{
+		if (!GameServer()->Server()->IsAdmin(GetPlayer()->GetCID()))
+		{
+			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not an admin!");
+			Die(GetPlayer()->GetCID(), WEAPON_WORLD);
+		}
+	}
+
 	// Vip
-	if ((m_TileIndex == TILE_VIP || m_TileFIndex == TILE_VIP) && (!m_pPlayer->m_AccData.m_UserID || !m_pPlayer->m_AccData.m_Vip))
+	if ((m_TileIndex == TILE_VIP || m_TileFIndex == TILE_VIP) && !m_pPlayer->m_AccData.m_Vip)
 	{
 		Die(m_pPlayer->GetCID(), WEAPON_WORLD);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "You are not a vip!");

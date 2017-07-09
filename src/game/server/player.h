@@ -299,6 +299,7 @@ public:
 	bool m_Stars;
 	//Mute
 	bool m_SilentMuted;
+	bool m_ShowWhispers;
 	//
 
 	// City
