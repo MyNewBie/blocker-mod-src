@@ -18,6 +18,8 @@ private:
 	static void ExistsResultRegister(bool Failed, void *pResultData, void *pData);
 	static void ReloadDataResult(bool Failed, void *pResultData, void *pData);
 
+	bool PreventInjection(const char *pSrc);
+
 public:
 	CAccountDatabase(class CPlayer *pPlayer);
 

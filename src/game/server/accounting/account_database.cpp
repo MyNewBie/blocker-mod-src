@@ -148,6 +148,11 @@ CAccountDatabase::CAccountDatabase(CPlayer *pPlayer)
 	and force shut and have fun checking every users slot, and setting it to 0 manually <3 Great work team!
 */
 
+bool CAccountDatabase::PreventInjection(const char *pSrc)
+{
+	return str_find(pSrc, "'") != NULL || str_find(pSrc, ";") != NULL;
+};
+
 void CAccountDatabase::CreateNewQuery(char *pQuery, SqlResultFunction ResultCallback, void *pData, bool ExpectResult, bool SetSchema)
 {
 	CThreadFeed *pFeed = new CThreadFeed();
@@ -308,6 +313,12 @@ void CAccountDatabase::Login(const char *pUsername, const char *pPassword)
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 		return;
 	}
+	else if(PreventInjection(pUsername) || PreventInjection(pPassword))
+	{
+		str_format(aBuf, sizeof(aBuf), "Invalid chars used");
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
+		return;
+	}
 
 	for (int j = 0; j < MAX_CLIENTS; j++)
 	{
@@ -420,6 +431,12 @@ void CAccountDatabase::Register(const char *pUsername, const char *pPassword)
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 		return;
 	}
+	else if(PreventInjection(pUsername) || PreventInjection(pPassword))
+	{
+		str_format(aBuf, sizeof(aBuf), "Invalid chars used");
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
+		return;
+	}
 
 
 	char aQuery[QUERY_MAX_LEN];
@@ -493,6 +510,12 @@ void CAccountDatabase::NewPassword(const char *pNewPassword)
 	if (str_length(pNewPassword) > 15 || !str_length(pNewPassword))
 	{
 		str_format(aBuf, sizeof(aBuf), "Password too %s!", str_length(pNewPassword) ? "long" : "short");
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
+		return;
+	}
+	else if(PreventInjection(pNewPassword))
+	{
+		str_format(aBuf, sizeof(aBuf), "Invalid chars used");
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 		return;
 	}

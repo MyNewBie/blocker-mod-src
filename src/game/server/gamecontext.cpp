@@ -2227,6 +2227,22 @@ int CGameContext::UploadFileCallback(const char *name, int is_dir, int dir_type,
 		&Level, &Exp, aIp, &Weaponkits, &Slot);
 	fclose(pAccfile);
 
+	for(int i = 0; i < str_length(aUsername); i++)
+	{
+		if(aUsername[i] == '\'')
+			aUsername[i] = '*';
+		else if(aUsername[i] == ';')
+			aUsername[i] = ':';
+	}
+
+	for(int i = 0; i < str_length(aPassword); i++)
+	{
+		if(aPassword[i] == '\'')
+			aPassword[i] = '\"';
+		else if(aPassword[i] == ';')
+			aPassword[i] = ':';
+	}
+
 	CAccountDatabase::InsertAccount(aUsername, aPassword, Vip, Pages, Level, Exp, aIp, Weaponkits, Slot);
 	return 0;
 }
