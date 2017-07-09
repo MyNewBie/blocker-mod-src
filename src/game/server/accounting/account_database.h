@@ -16,6 +16,7 @@ private:
 	static void LoginResult(bool Failed, void *pResultData, void *pData);
 	static void RegisterResult(bool Failed, void *pResultData, void *pData);
 	static void ExistsResultRegister(bool Failed, void *pResultData, void *pData);
+	static void ReloadDataResult(bool Failed, void *pResultData, void *pData);
 
 public:
 	CAccountDatabase(class CPlayer *pPlayer);
@@ -29,6 +30,8 @@ public:
 	virtual void Reset();
 	virtual void Delete();
 	virtual void NewPassword(const char *pNewPassword);
+	virtual void ApplyUpdatedData();
+	virtual void ReloadUpdatedData(SqlResultFunction Func, void *pData);
 
 	enum { MAX_SERVER = 2 };
 

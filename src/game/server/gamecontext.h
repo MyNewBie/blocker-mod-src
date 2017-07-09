@@ -174,6 +174,7 @@ public:
 	void CreateSound(vec2 Pos, int Sound, int64_t Mask=-1);
 	void CreateSoundGlobal(int Sound, int Target=-1);
 	void CreateLoveEvent(vec2 Pos, int Owner);
+	static void DeathnoteUpdate(bool Failed, void *pResultData, void *pData);
 	void ConsoleCmds(const char* pMsg, int ClientID);
 
 	enum

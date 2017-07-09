@@ -4,12 +4,52 @@
 #include "player.h"
 #include <engine/shared/config.h>
 #include <engine/server/server.h>
-#include <game/server/accounting/account.h>
+#include <game/server/accounting/account_database.h>
 
 #include <fstream>
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
+
+struct CDeathnoteUpdateData
+{
+	CGameContext *m_pGameServer;
+	CPlayer *m_pPlayer;
+	int m_id;
+};
+
+void CGameContext::DeathnoteUpdate(bool Failed, void *pResultData, void *pData)
+{
+	CDeathnoteUpdateData *pUpdateData = (CDeathnoteUpdateData *) pData;
+	CGameContext *pGameServer = pUpdateData->m_pGameServer;
+	CPlayer *pPlayer = pUpdateData->m_pPlayer;
+	int id = pUpdateData->m_id;
+	int ClientID = pPlayer->GetCID();
+
+	if (pPlayer->m_QuestData.m_Pages != 0)
+    {
+		pGameServer->m_apPlayers[id]->KillCharacter(WEAPON_WORLD);
+
+        char aBuf[128];
+        str_format(aBuf, sizeof(aBuf), "%s used a Deathnote to kill you!", pGameServer->Server()->ClientName(ClientID));
+        pGameServer->SendChatTarget(id, aBuf);
+        str_format(aBuf, sizeof(aBuf), "Successfully killed %s, Pages: %d", pGameServer->Server()->ClientName(id), pPlayer->m_QuestData.m_Pages);
+        pGameServer->SendChatTarget(ClientID, aBuf);
+        pPlayer->m_QuestData.m_Pages--;
+        pPlayer->m_LastDeathnote = pGameServer->Server()->Tick();
+
+		CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(pPlayer->m_pAccount);
+		if(pAccDb)
+			pAccDb->ApplyUpdatedData();
+    }
+    else
+    {
+        if (!pPlayer->m_QuestData.QuestActive())
+            pGameServer->SendChatTarget(ClientID, "You don't have any pages, type /beginquest to start your quests to get some pages.");
+        else
+            pGameServer->SendChatTarget(ClientID, "You don't have any pages, complete your quests to get some pages.");
+    }
+}
 
 void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
 {
@@ -128,44 +168,37 @@ void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
             SendChatTarget(ClientID, "You cannot use deathnotes right now");
             return;
         }
-        if (pPlayer->m_QuestData.m_Pages != 0)
+
+		char aName[256];
+        str_copy(aName, pMsg + 11, sizeof(aName));
+        int id = -1;
+        for (int i = 0; i < MAX_CLIENTS; i++)
         {
-            char aName[256];
-            str_copy(aName, pMsg + 11, sizeof(aName));
-            int id = -1;
-            for (int i = 0; i < MAX_CLIENTS; i++)
+            if (!GetPlayerChar(i))
+                continue;
+            if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
+                continue;
+            if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
             {
-                if (!GetPlayerChar(i))
-                    continue;
-                if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
-                    continue;
-                if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
-                {
-                    id = i;
-                    break;
-                }
+                id = i;
+                break;
             }
-            if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
-                return;
-
-            m_apPlayers[id]->KillCharacter(WEAPON_WORLD);
-
-            char aBuf[128];
-            str_format(aBuf, sizeof(aBuf), "%s used a Deathnote to kill you!", Server()->ClientName(ClientID));
-            SendChatTarget(id, aBuf);
-            str_format(aBuf, sizeof(aBuf), "Successfully killed %s, Pages: %d", Server()->ClientName(id), pPlayer->m_QuestData.m_Pages);
-            SendChatTarget(ClientID, aBuf);
-            pPlayer->m_QuestData.m_Pages--;
-            pPlayer->m_LastDeathnote = Server()->Tick();
         }
-        else
-        {
-            if (!pPlayer->m_QuestData.QuestActive())
-                SendChatTarget(ClientID, "You don't have any pages, type /beginquest to start your quests to get some pages.");
-            else
-                SendChatTarget(ClientID, "You don't have any pages, complete your quests to get some pages.");
+        if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
             return;
-        }
+
+		CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(pPlayer->m_pAccount);
+
+		CDeathnoteUpdateData *pResultData = new CDeathnoteUpdateData;
+		pResultData->m_pGameServer = this;
+		pResultData->m_pPlayer = pPlayer;
+		pResultData->m_id = id;
+
+		if(pAccDb != NULL)
+			pAccDb->ReloadUpdatedData(DeathnoteUpdate, pResultData);
+		else
+			DeathnoteUpdate(false, NULL, pResultData);
+
     }
     else if (str_comp_nocase_num(pMsg + 1, "Deathnoteinfo", 13) == 0)
     {

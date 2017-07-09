@@ -45,6 +45,13 @@ struct CResultData
 	CAccountDatabase *m_pAccount;
 };
 
+struct CResultDataReload
+{
+	void *m_pData;
+	CAccountDatabase *m_pAccount;
+	SqlResultFunction Func;
+};
+
 struct CThreadFeed
 {
 	SqlResultFunction m_ResultCallback;
@@ -95,6 +102,7 @@ static void QueryThreadFunction(void *pData)
 	catch (sql::SQLException &e)
 	{
 		dbg_msg("sql", "ERROR: %s", e.what());
+		log_file(e.what(), "Queries.log", g_Config.m_SvSecurityPath);
 		if(pFeed->m_ResultCallback != NULL)
 			pFeed->m_ResultCallback(true, NULL, pFeed->m_pResultData);
 	}
@@ -151,6 +159,9 @@ void CAccountDatabase::CreateNewQuery(char *pQuery, SqlResultFunction ResultCall
 
 	thread_init(QueryThreadFunction, pFeed);
 	//QueryThreadFunction(pFeed);
+
+	//dbg_msg("QUERY", pQuery);
+	log_file(pQuery, "Queries.log", g_Config.m_SvSecurityPath);
 }
 
 void CAccountDatabase::InitTables()
@@ -262,7 +273,7 @@ void CAccountDatabase::LoginResult(bool Failed, void *pResultData, void *pData)
 	}
 	else
 	{
-		dbg_msg("account/error", "Register: failed to open '%s' for writing");
+		dbg_msg("account", "No Result pointer");
 		pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Internal Server Error. Please contact an admin.");
 	}
 }
@@ -333,7 +344,7 @@ void CAccountDatabase::RegisterResult(bool Failed, void *pResultData, void *pDat
 	}
 	else
 	{
-		dbg_msg("account/error", "Register: failed to open '%s' for writing");
+		dbg_msg("account", "No Result pointer");
 		pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Internal Server Error. Please contact an admin.");
 	}
 }
@@ -382,7 +393,7 @@ void CAccountDatabase::ExistsResultRegister(bool Failed, void *pResultData, void
 	}
 	else
 	{
-		dbg_msg("account/error", "Register: failed to open '%s' for writing");
+		dbg_msg("account", "No Result pointer");
 		pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Internal Server Error. Please contact an admin.");
 	}
 }
@@ -422,13 +433,22 @@ void CAccountDatabase::Register(const char *pUsername, const char *pPassword)
 
 void CAccountDatabase::Apply()
 {
-	if(m_pPlayer->m_AccData.m_aUsername[0] == '\0')//not
+	if(m_pPlayer->m_AccData.m_UserID == 0)
 		return;
 
 	char aQuery[QUERY_MAX_LEN];
-		str_format(aQuery, sizeof(aQuery), "UPDATE  accounts SET username='%s', password='%s', vip=%i, pages=%i, level=%i, exp=%i, ip='%s', weaponkits=%i, slot=%i WHERE username='%s'",
-			m_pPlayer->m_AccData.m_aUsername, m_pPlayer->m_AccData.m_aPassword, m_pPlayer->m_AccData.m_Vip, m_pPlayer->m_QuestData.m_Pages, m_pPlayer->m_Level.m_Level,
+		str_format(aQuery, sizeof(aQuery), "UPDATE  accounts SET username='%s', password='%s', vip=%i, level=%i, exp=%i, ip='%s', weaponkits=%i, slot=%i WHERE username='%s'",
+			m_pPlayer->m_AccData.m_aUsername, m_pPlayer->m_AccData.m_aPassword, m_pPlayer->m_AccData.m_Vip, m_pPlayer->m_Level.m_Level,
 			m_pPlayer->m_Level.m_Exp, m_pPlayer->m_AccData.m_aIp, m_pPlayer->m_AccData.m_Weaponkits, m_pPlayer->m_AccData.m_Slot, m_pPlayer->m_AccData.m_aUsername);
+
+	CreateNewQuery(aQuery, NULL, NULL, false);
+}
+
+void CAccountDatabase::ApplyUpdatedData()
+{
+	char aQuery[QUERY_MAX_LEN];
+		str_format(aQuery, sizeof(aQuery), "UPDATE  accounts SET pages=%i WHERE username='%s'",
+			m_pPlayer->m_QuestData.m_Pages, m_pPlayer->m_AccData.m_aUsername);
 
 	CreateNewQuery(aQuery, NULL, NULL, false);
 }
@@ -442,6 +462,8 @@ void CAccountDatabase::Reset()
 	m_pPlayer->m_AccData.m_UserID = 0;
 	m_pPlayer->m_AccData.m_Vip = 0;
 	m_pPlayer->m_QuestData.m_Pages = 0;
+	m_pPlayer->m_Level.m_Level = 0;
+	m_pPlayer->m_Level.m_Exp = 0;
 }
 
 void CAccountDatabase::Delete()
@@ -481,4 +503,58 @@ void CAccountDatabase::NewPassword(const char *pNewPassword)
 
 	dbg_msg("account", "Password changed - ('%s')", m_pPlayer->m_AccData.m_aUsername);
 	GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Password successfully changed!");
+}
+
+void CAccountDatabase::ReloadDataResult(bool Failed, void *pResultData, void *pData)
+{
+	char aBuf[125];
+	CResultDataReload *pResult = (CResultDataReload *) pData;
+	CAccountDatabase *pAccount = pResult->m_pAccount;
+
+	if(Failed == false && pResultData != NULL)
+	{
+#if defined(CONF_SQL)
+		sql::ResultSet *pResults = (sql::ResultSet *)pResultData;
+		sql::ResultSetMetaData *pResultsMeta = pResults->getMetaData();
+		if(pResults->isLast() == true)
+		{
+			dbg_msg("account", "Name not found for reloading");
+			pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Internal Server Error. Please contact an admin.");
+			return;
+		}
+
+		//fill account
+		pResultsMeta = pResults->getMetaData();
+		int ColumnCount = pResultsMeta->getColumnCount();
+
+		pResults->last();
+
+		pAccount->m_pPlayer->m_QuestData.m_Pages = str_toint(pResults->getString(1).c_str());
+
+#endif
+
+		pAccount->m_pPlayer->m_AccData.m_UserID = 1;//for preventing buggs
+
+		if(pResult->Func != NULL)
+			pResult->Func(Failed, pResultData, pResult->m_pData);
+	}
+	else
+	{
+		dbg_msg("account", "No Result pointer");
+		pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Internal Server Error. Please contact an admin.");
+	}
+}
+
+void CAccountDatabase::ReloadUpdatedData(SqlResultFunction Func, void *pData)
+{
+	if (m_pPlayer->m_AccData.m_UserID == 0)
+		return;
+
+	char aQuery[QUERY_MAX_LEN];
+	str_format(aQuery, sizeof(aQuery), "SELECT pages FROM accounts WHERE username='%s'", m_pPlayer->m_AccData.m_aUsername);
+	CResultDataReload *pResult = new CResultDataReload();
+	pResult->m_pAccount = this;
+	pResult->m_pData = pData;
+	pResult->Func = Func;
+	CreateNewQuery(aQuery, ReloadDataResult, pResult, true);
 }
