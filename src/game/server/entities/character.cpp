@@ -128,8 +128,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_FreezeTimer = 0;
 
-	/*for (int i = 0; i < m_AnimIDNum; i++)//snap ids
-		m_apAnimIDs[i] = Server()->SnapNewID();*/
+	for (int i = 0; i < m_AnimIDNum; i++)//snap ids
+		m_apAnimIDs[i] = Server()->SnapNewID();
 
 	return true;
 }
@@ -3137,7 +3137,7 @@ void CCharacter::Clean()
 	if (IsAlive() && (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed))
 		HandlePassiveMode();
 	if(IsAlive() && m_pPlayer->m_Stars)
-		GameServer()->CreateDamageInd(m_Pos, Server()->Tick(), 1, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID())); 
+		GameServer()->CreateDamageInd(m_Pos, Server()->Tick()%180, 1, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID())); 
 }
 
 void CCharacter::HandleGameModes()
