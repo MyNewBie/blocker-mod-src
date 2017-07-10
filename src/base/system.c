@@ -259,6 +259,7 @@ void dbg_msg(const char *sys, const char *fmt, ...)
 
 void log_file(const char *Log, const char *Filename, const char *Path)
 {
+	IOHANDLE File;// this is c not c++
 	char aBuf[256];
 	char aFullPath[256];
 
@@ -267,7 +268,6 @@ void log_file(const char *Log, const char *Filename, const char *Path)
 	if(fs_makedir(Path))
         dbg_msg("system.c", "Failed to create folder (line %d)", __LINE__);
 
-	IOHANDLE File;
 	File = io_open(aFullPath, IOFLAG_APPEND);
 	if (!File)
 	{

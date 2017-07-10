@@ -4,25 +4,33 @@
 #ifndef GAME_SERVER_ACCOUNT_H
 #define GAME_SERVER_ACCOUNT_H
 
+class CPlayer;
+class IStorage;
+class CGameContext;
+
 class CAccount
 {
-	class CPlayer *m_pPlayer;
-	class CGameContext *GameServer();
+protected:
+	CPlayer *m_pPlayer;
+	IStorage *m_pStorage;
+	CGameContext *m_pGameServer;
 
 public:
-	CAccount(class CPlayer *pPlayer);
+	CAccount(CPlayer *pPlayer);
+	void SetStorage(IStorage *pStorage) { m_pStorage = pStorage; }
 
-	void Login(const char *pUsername, const char *pPassword);
-	void Register(const char *pUsername, const char *pPassword);
-	void Apply();
-	void Reset();
-	void Delete();
-	void NewPassword(const char *pNewPassword);
-	bool IsValidChar(const char *pUsername);
-	bool IsCorrectSizeData(const char *pUsername, const char *pPassword);
-	bool Exists(const char * Username);
+	virtual void Login(const char *pUsername, const char *pPassword) = 0;
+	virtual void Register(const char *pUsername, const char *pPassword) = 0;
+	virtual void Apply() = 0;
+	virtual void Reset() = 0;
+	virtual void Delete() = 0;
+	virtual void NewPassword(const char *pNewPassword) = 0;
+	virtual bool Exists(const char * Username) { return true; };
 
-	int NextID();
+	//bool LoggedIn(const char * Username);
+	//int NameToID(const char * Username);
+	IStorage *Storage() { return m_pStorage; }
+	CGameContext *GameServer() { return m_pGameServer; }
 };
 
 #endif

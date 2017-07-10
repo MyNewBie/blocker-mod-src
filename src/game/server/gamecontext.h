@@ -85,6 +85,8 @@ class CGameContext : public IGameServer
 	static void ConSayBy(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetTeamAll(IConsole::IResult *pResult, void *pUserData);
+	static int UploadFileCallback(const char *name, int is_dir, int dir_type, void *user);
+	static void ConAccountUploadFile(IConsole::IResult *pResult, void *pUserData);
 	//static void ConSwapTeams(IConsole::IResult *pResult, void *pUserData);
 	//static void ConShuffleTeams(IConsole::IResult *pResult, void *pUserData);
 	//static void ConLockTeams(IConsole::IResult *pResult, void *pUserData);
@@ -173,6 +175,10 @@ public:
 	void CreateSoundGlobal(int Sound, int Target=-1);
 	void CreateLoveEvent(vec2 Pos, int Owner);
 	void ChatCommands(const char* pMsg, int ClientID);
+
+	static void DeathnoteUpdate(bool Failed, void *pResultData, void *pData);
+	void ConsoleCmds(const char* pMsg, int ClientID);
+
 
 	enum
 	{
