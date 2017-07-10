@@ -175,10 +175,13 @@ void CAccountDatabase::InitTables()
 
 	//Init schema
 	char aBuf[64];
+
+#if defined(CONF_SQL)
 	str_format(aBuf, sizeof(aBuf), "CREATE DATABASE IF NOT EXISTS %s", g_Config.m_SvAccSqlDatabase);
 	CreateNewQuery(aBuf, NULL, NULL, false, false);
 
 	CreateNewQuery("CREATE TABLE IF NOT EXISTS accounts (username VARCHAR(32) BINARY NOT NULL, password VARCHAR(32) BINARY NOT NULL, vip INT DEFAULT 0, pages INT DEFAULT 0, level INT DEFAULT 1, exp INT DEFAULT 0, ip VARCHAR(47), weaponkits INT DEFAULT 0, slot INT DEFAULT 0,  PRIMARY KEY (username)) CHARACTER SET utf8 ;", NULL, NULL, false);
+#endif
 }
 
 void CAccountDatabase::InsertAccount(char *pUsername, char *pPassword, int Vip, int Pages, int Level, int Exp, char *pIp, int WeaponKits, int Slot)
