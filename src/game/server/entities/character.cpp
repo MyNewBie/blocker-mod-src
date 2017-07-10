@@ -7,6 +7,7 @@
 #include <game/server/entities/special/rocket.h>
 #include <game/server/entities/special/passiveindicator.h>
 #include <game/mapitems.h>
+#include <game/server/accounting/account.h>
 
 #include "character.h"
 #include "laser.h"
@@ -64,6 +65,9 @@ void CCharacter::Reset()
 
 bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 {
+	m_TempHasSword = false;
+	m_TempPassTime = 0;
+
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
@@ -531,7 +535,18 @@ void CCharacter::FireWeapon()
 
 	case WEAPON_GUN:
 	{
-		if (!m_Jetpack || !m_pPlayer->m_NinjaJetpack)
+		if(m_TempHasSword)
+		{
+			CCharacter * pTarget = GameWorld()->ClosestCharacter(ProjStartPos, 16.0f, this);
+
+			if(pTarget)
+				GameServer()->CreateSound(m_Pos, SOUND_NINJA_HIT);
+			else
+				GameServer()->CreateSound(m_Pos, SOUND_HAMMER_FIRE);
+			if(pTarget)
+				pTarget->TakeDamage(Direction*4.0f, 0, m_pPlayer->GetCID(), WEAPON_NINJA);
+		}
+		else if (!m_Jetpack || !m_pPlayer->m_NinjaJetpack)
 		{
 			int Lifetime;
 			if (!m_TuneZone)
@@ -1304,6 +1319,9 @@ void CCharacter::Snap(int SnappingClient)
 			GameServer()->SendEmoticon(m_pPlayer->GetCID(), EMOTICON_GHOST);
 		}
 	}
+
+	if(m_TempHasSword == true && m_Core.m_ActiveWeapon == WEAPON_GUN && isFreezed == false)
+		pCharacter->m_Weapon = 6;
 
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
 
@@ -2229,6 +2247,24 @@ void CCharacter::HandleTiles(int Index)
 		Die(m_pPlayer->GetCID(), WEAPON_WORLD);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "You are not a vip!");
 		return;
+	}
+
+	static int64 s_TempChangeTime = time_get();
+	if(s_TempChangeTime < time_get())
+	{
+		m_TempRandEmote = rand()%NUM_EMOTES;
+		s_TempChangeTime = time_get() + time_freq() * 5.0f;
+	}
+
+	if((m_TileIndex == 148 || m_TileFIndex == 148) && m_TempPassTime < time_get())
+	{
+		m_Core.m_Vel.x = 1.5f;
+	}
+	
+	if((m_TileIndex == 149 || m_TileFIndex == 149))
+	{
+		m_TempHasSword = true;
+		GiveNinja();
 	}
 
 	// heavyhammer

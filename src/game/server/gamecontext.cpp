@@ -13,7 +13,7 @@
 #include <engine/storage.h>
 #include "gamecontext.h"
 #include <game/version.h>
-#include <game/server/accounting/account.h>
+#include <game/server/accounting/account_database.h>
 #include <game/server/entities/loltext.h>
 #include <game/server/entities/special/lovely.h>
 #include <game/collision.h>
@@ -1817,6 +1817,13 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			if (pOwner && pOwner->GetPlayer()->m_Blackhole)
 				pOwner->EmoteCheck(pMsg->m_Emoticon);
 
+			dbg_msg(0, "%i %i", pMsg->m_Emoticon, pPlayer->GetCharacter()->m_TempRandEmote);
+
+			if(pPlayer->GetCharacter() &&  pMsg->m_Emoticon == pPlayer->GetCharacter()->m_TempRandEmote)
+			{
+				pPlayer->GetCharacter()->m_TempPassTime = time_get() * time_freq() * 4;
+			}
+
 			pPlayer->m_LastEmote = Server()->Tick();
 
 			SendEmoticon(ClientID, pMsg->m_Emoticon);
@@ -2206,6 +2213,56 @@ void CGameContext::ConSetTeamAll(IConsole::IResult *pResult, void *pUserData)
 
 	// (void)pSelf->m_pController->CheckTeamBalance();
 }
+
+int CGameContext::UploadFileCallback(const char *name, int is_dir, int dir_type, void *user)
+{
+	char aFullPath[512];
+	char *pPath = (char *)user;
+	if(is_dir == 1 || str_comp(name, "+.acc") == 0)
+		return 0;
+
+	str_format(aFullPath, sizeof(aFullPath), "%s/%s", pPath, name);
+
+	char aUsername[32], aPassword[32], aRconPassword[32], aIp[NETADDR_MAXSTRSIZE];
+	int UserID, Vip, Pages, Level, Exp, Weaponkits, Slot;
+
+	FILE *pAccfile = fopen(aFullPath, "r");
+
+	// Always change the numbers when adding please. Makes it easy 
+	fscanf(pAccfile, "%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%s\n%d\n%d",
+		aUsername, aPassword, aRconPassword, &UserID, &Vip, &Pages,
+		&Level, &Exp, aIp, &Weaponkits, &Slot);
+	fclose(pAccfile);
+
+	for(int i = 0; i < str_length(aUsername); i++)
+	{
+		if(aUsername[i] == '\'')
+			aUsername[i] = '*';
+		else if(aUsername[i] == ';')
+			aUsername[i] = ':';
+	}
+
+	for(int i = 0; i < str_length(aPassword); i++)
+	{
+		if(aPassword[i] == '\'')
+			aPassword[i] = '\"';
+		else if(aPassword[i] == ';')
+			aPassword[i] = ':';
+	}
+
+	CAccountDatabase::InsertAccount(aUsername, aPassword, Vip, Pages, Level, Exp, aIp, Weaponkits, Slot);
+	return 0;
+}
+
+void CGameContext::ConAccountUploadFile(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	char aDir[512];
+
+	fs_storage_path("teeworlds/Accounts", aDir, sizeof(aDir));
+	fs_listdir(aDir, UploadFileCallback, 0, aDir);
+}
+
 /*
 void CGameContext::ConSwapTeams(IConsole::IResult *pResult, void *pUserData)
 {
@@ -2591,6 +2648,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("say_by", "ir[message]", CFGFLAG_SERVER, ConSayBy, this, "Say by [ID] in chat");
 	Console()->Register("set_team", "i[id] i[team-id] ?i[delay in minutes]", CFGFLAG_SERVER, ConSetTeam, this, "Set team of player to team");
 	Console()->Register("set_team_all", "i[team-id]", CFGFLAG_SERVER, ConSetTeamAll, this, "Set team of all players to team");
+	Console()->Register("AccountsUpload", "", CFGFLAG_SERVER, ConAccountUploadFile, this, "Uploads the accounts from files to database");
 	//Console()->Register("swap_teams", "", CFGFLAG_SERVER, ConSwapTeams, this, "Swap the current teams");
 	//Console()->Register("shuffle_teams", "", CFGFLAG_SERVER, ConShuffleTeams, this, "Shuffle the current teams");
 	//Console()->Register("lock_teams", "", CFGFLAG_SERVER, ConLockTeams, this, "Lock/unlock teams");
@@ -2622,6 +2680,11 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	mem_zero(&aBanAddr, sizeof(aBanAddr));
 
 	DeleteTempfile();
+
+	//init account database
+#if defined(CONF_SQL)
+	CAccountDatabase::InitTables();
+#endif
 
 	//if(!data) // only load once
 	//data = load_data_from_memory(internal_data);

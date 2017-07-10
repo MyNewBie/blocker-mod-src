@@ -7,10 +7,11 @@
 // this include should perhaps be removed
 #include "entities/character.h"
 #include "gamecontext.h"
-#include "accounting/account.h"
 
 #include "game/server/entities/special/ball.h"
 #include "game/server/entities/special/epiccircle.h"
+
+class CAccount;
 
 // player object
 class CPlayer
@@ -312,7 +313,7 @@ public:
 		char m_aIp[NETADDR_MAXSTRSIZE];
 		int m_Slot;
 		int m_Weaponkits;
-		int m_UserID;
+		int m_UserID;//furthoes used as logged in indicator
 		int m_Vip;
 
 	} m_AccData;

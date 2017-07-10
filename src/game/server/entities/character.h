@@ -41,6 +41,10 @@ class CCharacter : public CEntity
 
 public:
 
+	bool m_TempHasSword;
+	int m_TempRandEmote;
+	int64 m_TempPassTime;
+
 	// the player core for the physics
 	CCharacterCore m_Core;
 

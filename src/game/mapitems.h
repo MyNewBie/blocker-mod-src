@@ -169,6 +169,8 @@ enum
 	TILE_RAINBOW,
 	TILE_ADMIN,
 	TILE_KOH, // 184
+	TILE_TEMP_BARRIER,
+	TILE_TEMP_GIVESWORD,
 
 	//End of higher tiles
 	//Layers

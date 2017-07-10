@@ -26,6 +26,8 @@ src/game/generated
 /versionsrv*
 other/boost*
 other/msinttypes*
+other/mysql/include/boost
+other/mysql/include/msinttypes
 
 Debug/
 *.bat
@@ -55,6 +57,7 @@ buildlog.txt
 *.dll
 *.map
 *.VC.opendb
+*.VC*db
 
 *.acc
 autoexec_server.cfg
