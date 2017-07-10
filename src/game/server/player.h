@@ -190,6 +190,10 @@ public:
 		bool m_SavedEpicCircle;
 		bool m_SavedRainbowHook;
 
+		bool m_SavedHammerHit;
+		bool m_SavedHook;
+		bool m_SavedSolo;
+
 		void Reset()
 		{
 			m_SavedSpawn = vec2(0, 0);
@@ -207,6 +211,10 @@ public:
 			m_SavedERainbow = false;
 			m_SavedEpicCircle = false;
 			m_SavedRainbowHook = false;
+
+			m_SavedHammerHit = false;
+			m_SavedHook = false;
+			m_SavedSolo = false;
 		}
 	} m_SavedStats;
 
@@ -291,6 +299,7 @@ public:
 	bool m_Stars;
 	//Mute
 	bool m_SilentMuted;
+	bool m_ShowWhispers;
 	//
 
 	// City

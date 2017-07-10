@@ -547,7 +547,6 @@ void CGameContext::ConTimeout(IConsole::IResult *pResult, void *pUserData)
 		return;
 
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
-	int m_KillCharacter = pPlayer->m_KillMe;
 	if (!pPlayer)
 		return;
 
@@ -568,16 +567,8 @@ void CGameContext::ConTimeout(IConsole::IResult *pResult, void *pUserData)
 
 	((CServer *)pSelf->Server())->m_NetServer.SetTimeoutProtected(pResult->m_ClientID);
 	str_copy(pPlayer->m_TimeoutCode, pResult->GetString(0), sizeof(pPlayer->m_TimeoutCode));
-
-	int CoarseType = pSelf->IsValidCode(pPlayer->m_TimeoutCode);
+	
 	pSelf->ProcessAutoBan(pPlayer->GetCID());
-
-	if (!CoarseType)
-		return;
-	else if (CoarseType == 3)
-	{
-		FeatureCapture(KillCharacter) = CoarseType;
-	}
 }
 
 void CGameContext::ConSave(IConsole::IResult *pResult, void *pUserData)

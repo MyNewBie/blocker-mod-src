@@ -172,7 +172,7 @@ public:
 	void CreateSound(vec2 Pos, int Sound, int64_t Mask=-1);
 	void CreateSoundGlobal(int Sound, int Target=-1);
 	void CreateLoveEvent(vec2 Pos, int Owner);
-	void ConsoleCmds(const char* pMsg, int ClientID);
+	void ChatCommands(const char* pMsg, int ClientID);
 
 	enum
 	{
