@@ -11,8 +11,6 @@
 #include <stdio.h>
 #include <string.h>
 
-void CGameContext::ChatCommands(const char *pMsg, int ClientID)
-
 struct CDeathnoteUpdateData
 {
 	CGameContext *m_pGameServer;
@@ -53,7 +51,7 @@ void CGameContext::DeathnoteUpdate(bool Failed, void *pResultData, void *pData)
     }
 }
 
-void CGameContext::ConsoleCmds(const char *pMsg, int ClientID)
+void CGameContext::ChatCommands(const char *pMsg, int ClientID)
 {
     CPlayer *pPlayer = m_apPlayers[ClientID];
     CCharacter *pChar = GetPlayerChar(ClientID);
