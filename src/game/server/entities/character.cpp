@@ -1826,7 +1826,7 @@ void CCharacter::HandleTiles(int Index)
 		}
 
 	}
-
+	
 	// passive
 	if (g_Config.m_SvWbProt != 0)
 	{
