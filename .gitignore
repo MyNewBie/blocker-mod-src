@@ -27,6 +27,7 @@ src/game/generated
 other/boost*
 other/msinttypes*
 other/mysql/include/boost
+other/mysql/include/msinttypes
 
 Debug/
 *.bat
