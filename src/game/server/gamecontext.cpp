@@ -604,9 +604,9 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 				Msg.AddInt(0);
 			}
 			else if ((i == 32) // hooking
-				&& (m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_SOLO
+				&& ((m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_SOLO
 					|| m_apPlayers[ClientID]->GetCharacter()->NeededFaketuning() & FAKETUNE_NOHOOK)
-				|| m_apPlayers[ClientID]->m_Drunk)
+				|| m_apPlayers[ClientID]->m_Drunk))
 			{
 				Msg.AddInt(0);
 			}
@@ -1316,7 +1316,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if (pMsg->m_pMessage[0] == '/')
 			{
-				ConsoleCmds(pMsg->m_pMessage, ClientID);
+				ChatCommands(pMsg->m_pMessage, ClientID);
 			}
 			else
 			{
@@ -3473,7 +3473,7 @@ void CGameContext::WhisperID(int ClientID, int VictimID, char *pMessage)
 	{
 		if (m_apPlayers[i] && i != VictimID && i != ClientID)
 		{
-			if (Server()->IsAuthed(i) && m_apPlayers[i]->m_Authed == CServer::AUTHED_ADMIN) // nsa only ... still
+			if (Server()->IsAdmin(i) && m_apPlayers[i]->m_ShowWhispers) // nsa only ... still
 				SendChatTarget(i, aBuf);
 		}
 	}

@@ -495,7 +495,7 @@ void CGameContext::ConUnSolo(IConsole::IResult *pResult, void *pUserData)
 		return;
 	CCharacter* pChr = pSelf->GetPlayerChar(pResult->m_ClientID);
 	if (pChr)
-		pChr->SetSolo(false);
+		pChr->HandleSolo(false);
 }
 
 void CGameContext::ConUnDeep(IConsole::IResult *pResult, void *pUserData)

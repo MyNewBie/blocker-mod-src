@@ -48,6 +48,7 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	FeatureCapture(Rainbowepiletic) = false;
 	FeatureCapture(Rainbow) = false;
 	FeatureCapture(Blackhole) = false;
+	FeatureCapture(ShowWhispers) = false;
 
 	Reset();
 }
@@ -1039,6 +1040,10 @@ void CPlayer::SaveStats()
 	m_SavedStats.m_SavedEpicCircle = m_EpicCircle;
 	m_SavedStats.m_SavedRainbowHook = m_RainbowHook;
 
+	m_SavedStats.m_SavedHammerHit = GetCharacter()->m_Hit;
+	m_SavedStats.m_SavedHook = GetCharacter()->Core()->m_Hook;
+	m_SavedStats.m_SavedSolo = GetCharacter()->Teams()->m_Core.GetSolo(GetCID());
+
 	if (GetCharacter()->m_DDRaceState == DDRACE_STARTED)
 		m_SavedStats.m_SavedStartTick = GetCharacter()->m_StartTime;
 }
@@ -1054,20 +1059,12 @@ void CPlayer::LMBRestore()
 	if (m_SavedStats.m_SavedLaser)
 		m_pCharacter->GiveWeapon(WEAPON_RIFLE);
 
-	if (m_SavedStats.m_SavedRainbow)
-		m_Rainbow = true;
-
-	if (m_SavedStats.m_SavedERainbow)
-		m_Rainbowepiletic = true;
-
-	if (m_SavedStats.m_SavedLovely)
-		m_Lovely = true;
-
-	if (m_SavedStats.m_SavedHeartGuns)
-		m_HeartGuns = true;
-
-	if (m_SavedStats.m_SavedRainbowHook)
-		m_RainbowHook = true;	
+	m_Rainbow = m_SavedStats.m_SavedRainbow;
+	m_Rainbowepiletic = m_SavedStats.m_SavedERainbow;
+	m_Lovely = m_SavedStats.m_SavedLovely;
+	m_HeartGuns = m_SavedStats.m_SavedHeartGuns;
+	m_RainbowHook = m_SavedStats.m_SavedRainbowHook;
+	m_pCharacter->m_EndlessHook = m_SavedStats.m_SavedEHook;
 
 	if (m_SavedStats.m_SavedBall)
 	{
@@ -1081,7 +1078,14 @@ void CPlayer::LMBRestore()
 		new CEpicCircle(&GameServer()->m_World, GetCharacter()->m_Pos, GetCID());
 	}
 
-	m_pCharacter->m_EndlessHook = m_SavedStats.m_SavedEHook;
+	if(m_SavedStats.m_SavedHammerHit)
+		GetCharacter()->HandleHit(false);
+
+	if(m_SavedStats.m_SavedHook)
+		GetCharacter()->HandleHook(false);
+
+	if(m_SavedStats.m_SavedSolo)
+		GetCharacter()->HandleSolo(true);
 
 	if (m_SavedStats.m_SavedStartTick)
 	{

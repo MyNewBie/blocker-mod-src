@@ -315,7 +315,7 @@ void dbg_logger_stdout() { dbg_logger(logger_stdout); }
 void dbg_logger_debugger() { dbg_logger(logger_debugger); }
 void dbg_logger_file(const char *filename)
 {
-	logfile = io_open(filename, IOFLAG_WRITE);
+	logfile = io_open(filename, IOFLAG_APPEND);
 	if(logfile)
 		dbg_logger(logger_file);
 	else
