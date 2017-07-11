@@ -1751,7 +1751,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			if (pOwner && pOwner->GetPlayer()->m_Blackhole)
 				pOwner->EmoteCheck(pMsg->m_Emoticon);
 
-			dbg_msg(0, "%i %i", pMsg->m_Emoticon, pPlayer->GetCharacter()->m_TempRandEmote);
+			if(pPlayer->GetCharacter())
+				dbg_msg("emoticon", "%d %d", pMsg->m_Emoticon, pPlayer->GetCharacter()->m_TempRandEmote);
 
 			if(pPlayer->GetCharacter() &&  pMsg->m_Emoticon == pPlayer->GetCharacter()->m_TempRandEmote)
 			{
