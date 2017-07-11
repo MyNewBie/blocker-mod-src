@@ -1041,7 +1041,7 @@ void CPlayer::SaveStats()
 	m_SavedStats.m_SavedRainbowHook = m_RainbowHook;
 
 	m_SavedStats.m_SavedHammerHit = GetCharacter()->m_Hit;
-	m_SavedStats.m_SavedHook = GetCharacter()->Core()->m_Hook;
+	m_SavedStats.m_SavedHook = !GetCharacter()->Core()->m_Hook;
 	m_SavedStats.m_SavedSolo = GetCharacter()->Teams()->m_Core.GetSolo(GetCID());
 
 	if (GetCharacter()->m_DDRaceState == DDRACE_STARTED)
