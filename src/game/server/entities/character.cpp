@@ -2739,127 +2739,6 @@ void CCharacter::HandleBots()
 			}
 		}
 	}
-
-	/*if (this && IsAlive() && m_pPlayer->m_Bots.m_Grenadebot && m_Core.m_ActiveWeapon == WEAPON_GRENADE)
-	{
-	CCharacter *pMe = m_pPlayer->GetCharacter();
-	CCharacter *pEe = GameWorld()->ClosestCharacter(pMe->m_Pos + MousePos(), 130.f, pMe);
-	CCharacterCore* apTarget[MAX_CLIENTS];
-	vec2 AimPoint;
-	if (!pMe)
-	return;
-
-	vec2 Pos = pMe->m_Pos;
-
-	if (pEe && pEe->IsAlive())
-	{
-	int c = pEe->GetPlayer()->GetCID();
-	int GoodDir = -1;
-
-	vec2 aProjectilePos[BOT_HOOK_DIRS];
-
-	const int NbLoops = 10;
-
-	vec2 aTargetPos[MAX_CLIENTS];
-	vec2 aTargetVel[MAX_CLIENTS];
-
-	float Curvature = 0, Speed = 0, Time = 0;
-	Curvature = GameServer()->Tuning()->m_ShotgunCurvature;
-	Speed = GameServer()->Tuning()->m_ShotgunSpeed;
-	Time = GameServer()->Tuning()->m_ShotgunLifetime;
-
-	int DTick = (int)(Time * GameServer()->Server()->TickSpeed() / NbLoops);
-
-	aTargetPos[c] = apTarget[c]->m_Pos;
-	aTargetVel[c] = apTarget[c]->m_Vel*DTick;
-
-	for (int i = 0; i < BOT_HOOK_DIRS; i++) {
-	vec2 dir = direction(2 * i*pi / BOT_HOOK_DIRS);
-	aProjectilePos[i] = Pos + dir*28.*0.75;
-	}
-
-	int aIsDead[BOT_HOOK_DIRS] = { 0 };
-
-	for (int k = 0; k < NbLoops && GoodDir == -1; k++) {
-	for (int i = 0; i < BOT_HOOK_DIRS; i++) {
-	if (aIsDead[i])
-	continue;
-	vec2 dir = direction(2 * i*pi / BOT_HOOK_DIRS);
-	vec2 NextPos = CalcPos(Pos + dir*28.*0.75, dir, Curvature, Speed, (k + 1) * Time / NbLoops);
-	// vec2 NextPos = aProjectilePos[i];
-	// NextPos.x += dir.x*DTime;
-	// NextPos.y += dir.y*DTime + Curvature*(DTime*DTime)*(2*k+1);
-	aIsDead[i] = GameServer()->Collision()->FastIntersectLine(aProjectilePos[i], NextPos, &NextPos, 0);
-	for (int c = 0; c < 64; c++)
-	{
-	vec2 InterPos = closest_point_on_line(aProjectilePos[i], NextPos, aTargetPos[c]);
-	if (distance(aTargetPos[c], InterPos)< 28) {
-	GoodDir = i;
-	break;
-	}
-	}
-	aProjectilePos[i] = NextPos;
-	}
-	for (int c = 0; c < 64; c++)
-	{
-	//Collision()->MoveBox(&aTargetPos[c], &aTargetVel[c], vec2(28.f,28.f), 0);
-	GameServer()->Collision()->FastIntersectLine(aTargetPos[c], aTargetPos[c] + aTargetVel[c], 0, &aTargetPos[c]);
-	aTargetVel[c].y += GameServer()->Tuning()->m_Gravity*DTick*DTick;
-	}
-	if (GoodDir != -1)
-	{
-	AimPoint = direction(2 * GoodDir*pi / BOT_HOOK_DIRS) * 50;
-	break;
-	}
-	}
-	}
-	if (m_Core.m_ActiveWeapon == WEAPON_GRENADE)
-	{
-	if (m_LatestInput.m_Fire)
-	{
-	m_LatestInput.m_TargetX = AimPoint.x;
-	m_LatestInput.m_TargetY = AimPoint.y;
-	}
-	}
-
-	// Accuracy
-	float Angle = angle(AimPoint) + (random_int() % 64 - 32)*pi / 1024.0f;
-	AimPoint = direction(Angle)*length(AimPoint);
-	}
-
-	if (GetPlayer()->m_Bots.m_AutoHook)
-	{
-	CCharacter *pMain = GetPlayer()->GetCharacter();
-	if (pMain->GetPlayer()->m_PlayerFlags&PLAYERFLAG_AIM)
-	{
-	// Releases go first
-	if (pMain->Core()->m_HookState == HOOK_RETRACTED)
-	pMain->Core()->m_RevokeHook = true;
-	else if (pMain->Core()->m_HookState == HOOK_RETRACT_END)
-	pMain->Core()->m_RevokeHook = true;
-	else if (pMain->Core()->m_HookState == HOOK_GRABBED && pMain->Core()->m_HookedPlayer == -1)
-	pMain->Core()->m_RevokeHook = true;
-	else if (pMain->Core()->m_RevokeHook)
-	pMain->Core()->m_RevokeHook = false;
-
-	vec2 Shit;
-	const int Angle = round(atan2(pMain->m_LatestInput.m_TargetX, pMain->m_LatestInput.m_TargetY) * 256); // compress
-	const vec2 Direction = vec2(sin(Angle / 256.f), cos(Angle / 256.f)); // decompress
-	vec2 initPos = pMain->m_Pos + Direction * 28.0f * 1.5f;
-	vec2 finishPos = pMain->m_Pos + Direction * (GameServer()->Tuning()->m_HookLength - 18.0f);
-	CCharacter *pTarget = GameServer()->m_World.IntersectCharacter(initPos, finishPos, .0f, Shit, pMain);
-
-	if (pTarget)
-	{
-	char Hooked[32];
-	str_format(Hooked, 32, "Hooked!");
-	//GameServer()->SendBroadcast(Hooked, -1);
-	pMain->m_LatestInput.m_Hook = 1;
-	pMain->Core()->m_Hook = 1;
-	pMain->m_Input.m_Hook = 1;
-	}
-	}
-	}*/
 }
 
 void CCharacter::HandleRainbow()
@@ -3123,29 +3002,7 @@ void CCharacter::Clean()
 		GameServer()->SendTuningParams(m_Core.m_Id, 0);
 		m_pPlayer->m_WasTrolled = false;
 	}
-	// ======== BOT MITIGATION ==========
-	if (GameServer()->m_BotMitigation > 0)
-	{
-		GameServer()->m_BotProtWasOn = true;
-		if (m_pPlayer->m_IsBot)
-			m_pPlayer->m_IsBot = false;
-		// What i had here before was very stupid lol
-		GameServer()->SendTuningParams(m_Core.m_Id, 0);
-	}
-	else if (GameServer()->m_BotProtWasOn)
-	{
-		GameServer()->SendTuningParams(m_Core.m_Id, 0); // Fix tunes
-		GameServer()->m_BotProtWasOn = false;
-	}
-
-	// ======== BOT MITIGATION ==========
-
-	if (Server()->Tick() > m_pPlayer->m_ResetDetectsTime)
-	{
-		m_pPlayer->m_Detects = 0;
-		m_pPlayer->m_ResetDetectsTime = Server()->Tick() + Server()->TickSpeed() * 60;
-	}
-
+	
 	// We work very hard for valis sake !
 	char Ip[NETADDR_MAXSTRSIZE] = { 0 };
 	Server()->GetClientAddr(m_Core.m_Id, Ip, sizeof(Ip));
@@ -3191,23 +3048,6 @@ void CCharacter::HandleGameModes()
 	if (IsAlive() && !GameServer()->m_KOHActive)
 	{
 		m_pPlayer->m_Koh.Reset();
-	}
-}
-
-void CCharacter::CheckBot()
-{
-	vec2 AimPos = m_Pos + vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY);
-	for (int i = 0; i < MAX_CLIENTS; i++)
-	{
-		if (i != GetPlayer()->GetCID() && GameServer()->GetPlayerChar(i))
-		{
-			if (distance(GameServer()->GetPlayerChar(i)->m_Pos, AimPos) <= ms_PhysSize)
-			{
-				m_pPlayer->m_Detects++;
-				if (m_pPlayer->m_Detects >= 5)
-					GameServer()->OnDetect(m_pPlayer->GetCID());
-			}
-		}
 	}
 }
 
