@@ -284,10 +284,6 @@ public:
 	// Useful functions
 	int ConvertNameToID(char *aName);
 
-	// Botmitigation
-	bool m_BotProtWasOn;
-	int m_BotMitigation;
-
 private:
 
 	bool m_VoteWillPass;
@@ -295,7 +291,6 @@ private:
 
 	//DDRace Console Commands
 
-	static void ConDetectedPlayers(IConsole::IResult *pResult, void *pUserData);
 	//static void ConMute(IConsole::IResult *pResult, void *pUserData);
 	//static void ConUnmute(IConsole::IResult *pResult, void *pUserData);
 	static void ConKillPlayer(IConsole::IResult *pResult, void *pUserData);

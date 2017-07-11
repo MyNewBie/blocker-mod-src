@@ -480,25 +480,6 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
 
         log_file(LogMsg, "AdminVipLogs.log", g_Config.m_SvSecurityPath);
     }
-    else if (str_comp_nocase_num(pMsg + 1, "botmitigation", 13) == 0 && IsAuthed)
-    {
-        char LogMsg[230];
-        char OurMsg[230];
-        m_BotMitigation++;
-        SendTuningParams(0, 0);
-
-        if (m_BotMitigation > 2) // reset
-            m_BotMitigation = 0;
-        else if (m_BotMitigation < 0) // For some reason botmitigation is set to -8239138273291732178
-            m_BotMitigation = 0; // This is why it was bad prob vali we can test it now maybe up 2 u 
-
-                                             //g_Config.m_Map
-        str_format(OurMsg, 230, "[BotMitigation]: Set to %d", m_BotMitigation);
-        str_format(LogMsg, sizeof(LogMsg), "%s set botmitigation to %d - Server(Map): \"%s\"", Server()->ClientName(ClientID), m_BotMitigation, g_Config.m_SvMap);
-        
-        SendChatTarget(ClientID, OurMsg);
-        log_file(LogMsg, "AdminBotMitigationLogs.log", g_Config.m_SvSecurityPath);
-    }
     else if (str_comp_nocase_num(pMsg + 1, "Givetempassive ", 15) == 0 && IsAuthed)
     {
         char ID[256];
@@ -520,14 +501,6 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         char LogMsg[123];
         str_format(LogMsg, 123, "%s gave %s temporary access to passive mode for %ds", Server()->ClientName(ClientID), Server()->ClientName(id), str_toint(Time));
         log_file(LogMsg, "AdminTempPassiveMode.log", g_Config.m_SvSecurityPath);
-    }
-    else if (str_comp_nocase_num(pMsg + 1, "grenadebot", 10) == 0 && IsAuthed)
-    {
-        if (!pChar || !pChar->IsAlive())
-            return;
-
-        pPlayer->m_Bots.m_Grenadebot ^= true;
-        SendChatTarget(ClientID, pPlayer->m_Bots.m_Grenadebot ? "Grenadebot enabled!" : "Grenadebot disabled!");
     }
     else if (str_comp_nocase_num(pMsg + 1, "getTOcode ", 10) == 0 && IsAuthed)
     {
@@ -712,36 +685,6 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         RemoveLine(aFullPath, str_toint(aLine));
         SendChatTarget(ClientID, "Successfully deleted");
     }
-    else if (str_comp_nocase_num(pMsg + 1, "togglebotmark ", 14) == 0 && IsAuthed)
-    {
-        if (!pChar || !pChar->IsAlive())
-            return;
-
-        char aName[256];
-        str_copy(aName, pMsg + 15, sizeof(aName)); 
-        int id = -1;
-        for (int i = 0; i < MAX_CLIENTS; i++)
-        {
-            if (!GetPlayerChar(i))
-                continue;
-            if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
-                continue;
-            if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
-            {
-                id = i;
-                break;
-            }
-        }
-        if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
-            return;
-
-        char aBuf[128];
-        m_apPlayers[id]->m_IsBot ^= 1;
-        str_format(aBuf, sizeof(aBuf), m_apPlayers[id]->m_IsBot ? "%s has listed you as a botter!" : "%s has (un)listed you as a botter!", Server()->ClientName(ClientID));
-        SendChatTarget(id, aBuf);
-        str_format(aBuf, sizeof(aBuf), m_apPlayers[id]->m_IsBot ? "Successfully put %s in bot list" : "Successfully removed %s from bot list", Server()->ClientName(id));
-        SendChatTarget(ClientID, aBuf);
-    }
     else if (str_comp_nocase_num(pMsg + 1, "troll ", 6) == 0 && IsAuthed)
     {
         if (!pChar || !pChar->IsAlive())
@@ -819,7 +762,6 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         SendChatTarget(ClientID, "- Givetempassive (id, time, reason)");
         SendChatTarget(ClientID, "- Vip (id, reason)");
         SendChatTarget(ClientID, "- Togglebotmark (name)");
-        SendChatTarget(ClientID, "- Botmitigation");
         SendChatTarget(ClientID, "- ToggleColl");
         SendChatTarget(ClientID, "- Makedrunk (name)");
         SendChatTarget(ClientID, "- Troll (name)");

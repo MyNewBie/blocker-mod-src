@@ -109,11 +109,6 @@ public:
 	int64 m_LastDeathnote;
 	int64 m_LastLoginAttempt;
 
-	// Botdetection
-	bool m_BotDetected;
-	int m_Detects;
-	int64 m_ResetDetectsTime;
-
 	// TODO: clean this up
 	struct
 	{
@@ -227,8 +222,6 @@ public:
 	struct
 	{
 		bool m_SmartHammer;
-		bool m_AutoHook;
-		bool m_Grenadebot;
 
 		bool m_Active;
 	} m_Bots;
