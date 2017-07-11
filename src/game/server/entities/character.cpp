@@ -46,8 +46,6 @@ inline int ms_rand(int *seed)
 	return (*seed >> 0x10) & 0x7FFF;
 }
 
-
-
 // Character, "physical" player's part
 #define FeatureCapture(X) m_ ## X
 CCharacter::CCharacter(CGameWorld *pWorld)
@@ -3312,7 +3310,7 @@ void CCharacter::HandlePullHammer()
 
 	if(m_PullingID == -1)
 	{
-		CCharacter * pTarget = GameWorld()->ClosestCharacter(MousePos(), 20.f, this); // Don't allow the user to use it on their self, Alot of people seem to be abusing and bugging themselves into walls... -.-
+		CCharacter * pTarget = GameWorld()->ClosestCharacter(MousePos(), 20.f, this);
 		if (pTarget)
 			m_PullingID = pTarget->GetPlayer()->GetCID();
 	}
