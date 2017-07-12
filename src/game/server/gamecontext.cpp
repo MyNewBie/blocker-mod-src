@@ -1751,13 +1751,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			if (pOwner && pOwner->GetPlayer()->m_Blackhole)
 				pOwner->EmoteCheck(pMsg->m_Emoticon);
 
-			if(pPlayer->GetCharacter())
-				dbg_msg("emoticon", "%d %d", pMsg->m_Emoticon, pPlayer->GetCharacter()->m_TempRandEmote);
-
 			if(pPlayer->GetCharacter() &&  pMsg->m_Emoticon == pPlayer->GetCharacter()->m_TempRandEmote)
-			{
-				pPlayer->GetCharacter()->m_TempPassTime = time_get() * time_freq() * 4;
-			}
+				pPlayer->GetCharacter()->m_TempPassTime = time_get() + time_freq() * 4;
 
 			pPlayer->m_LastEmote = Server()->Tick();
 

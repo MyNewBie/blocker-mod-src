@@ -1,6 +1,13 @@
 #include "lmb.h"
 #include "gamecontext.h"
 #include <engine/shared/config.h>
+#include <game/server/accounting/account_database.h>
+
+struct CDatabaseUpdateData
+{
+	CGameContext *m_pGameServer;
+	CPlayer *m_pPlayer;
+};
 
 CLMB::CLMB()
 {
@@ -190,6 +197,32 @@ void CLMB::TeleportParticipants()
 	}
 }
 
+void CLMB::DatabaseUpdate(bool Failed, void *pResultData, void *pData)
+{
+	CDatabaseUpdateData *pUpdateData = (CDatabaseUpdateData *) pData;
+	CPlayer *Winner = pUpdateData->m_pPlayer;
+	CGameContext *pGamecontext = pUpdateData->m_pGameServer;
+	int ID = Winner->GetCID();
+
+	if (Winner->m_AccData.m_UserID)
+	{
+
+		pGamecontext->SendChatTarget(ID, "+2 pages!");
+		pGamecontext->SendChatTarget(ID, "(+3) WeaponKits (use /weapons)!");
+		pGamecontext->SendChatTarget(ID, "Temoporary access to passivemode for 2Hours! (Anti WB)");
+
+		Winner->m_QuestData.m_Pages += 2;
+		Winner->m_AccData.m_Weaponkits += 3;
+		Winner->Temporary.m_PassiveMode = true;
+		Winner->Temporary.m_PassiveModeTime = pGamecontext->Server()->Tick();
+		Winner->Temporary.m_PassiveTimeLength = 10800;
+
+		CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(Winner->m_pAccount);
+		if(pAccDb)
+			pAccDb->ApplyUpdatedData();
+	}
+}
+
 void CLMB::RemoveParticipant(int CID)
 {
 	std::vector<int>::iterator it = FindParticipant(CID);
@@ -209,20 +242,16 @@ void CLMB::RemoveParticipant(int CID)
 		char aBuf2[256];
 		str_format(aBuf2, sizeof(aBuf2), Winner->m_AccData.m_UserID ? "'%s' has won the LMB tournament and has been given rewards! \n Congratulations!" : "'%s' has won the LMB tournament! Congratulations.", m_pGameServer->Server()->ClientName(ID));
 		m_pGameServer->SendChatTarget(-1, aBuf2);
-		m_pGameServer->SendChatTarget(ID, "+2 pages!");
-		m_pGameServer->SendChatTarget(ID, "(+3) WeaponKits (use /weapons)!");
-		m_pGameServer->SendChatTarget(ID, "Temoporary access to passivemode for 2Hours! (Anti WB)");
 
-		/*Im thinking about doing temporary vip access too but i asked some players on their thoughts and they said
-		it might be too much*/
-		if (Winner->m_AccData.m_UserID)
-		{
-			Winner->m_QuestData.m_Pages += 2;
-			Winner->m_AccData.m_Weaponkits += 3;
-			Winner->Temporary.m_PassiveMode = true;
-			Winner->Temporary.m_PassiveModeTime = m_pGameServer->Server()->Tick();
-			Winner->Temporary.m_PassiveTimeLength = 10800;
-		}
+		CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(Winner->m_pAccount);
+		CDatabaseUpdateData *pResultData = new CDatabaseUpdateData();
+		pResultData->m_pGameServer = m_pGameServer;
+		pResultData->m_pPlayer = Winner;
+
+		if(pAccDb != NULL)
+			pAccDb->ReloadUpdatedData(DatabaseUpdate, pResultData);
+		else
+			DatabaseUpdate(false, NULL, pResultData);
 
 		dbg_msg("LMB", "%d has won!", ID);
 

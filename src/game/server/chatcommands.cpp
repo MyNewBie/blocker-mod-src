@@ -26,7 +26,7 @@ void CGameContext::DeathnoteUpdate(bool Failed, void *pResultData, void *pData)
 	int id = pUpdateData->m_id;
 	int ClientID = pPlayer->GetCID();
 
-	if (pPlayer->m_QuestData.m_Pages != 0)
+	if (pPlayer->m_QuestData.m_Pages > 0)
     {
 		pGameServer->m_apPlayers[id]->KillCharacter(WEAPON_WORLD);
 
