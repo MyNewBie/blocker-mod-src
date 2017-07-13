@@ -89,7 +89,3 @@ void CRocket::Tick()
 
 	GameServer()->CreateExplosion(m_Pos, m_Owner, -1, true, (!pOwnerChar ? -1 : pOwnerChar->Team()), (m_Owner != -1)? TeamMask : -1LL);
 }
-
-void CRocket::Snap(int SnappingClient)
-{
-}

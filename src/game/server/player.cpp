@@ -1059,12 +1059,23 @@ void CPlayer::LMBRestore()
 	if (m_SavedStats.m_SavedLaser)
 		m_pCharacter->GiveWeapon(WEAPON_RIFLE);
 
-	m_Rainbow = m_SavedStats.m_SavedRainbow;
-	m_Rainbowepiletic = m_SavedStats.m_SavedERainbow;
-	m_Lovely = m_SavedStats.m_SavedLovely;
-	m_HeartGuns = m_SavedStats.m_SavedHeartGuns;
-	m_RainbowHook = m_SavedStats.m_SavedRainbowHook;
-	m_pCharacter->m_EndlessHook = m_SavedStats.m_SavedEHook;
+	if(m_SavedStats.m_SavedRainbow)
+		m_Rainbow = true;
+
+	if(m_SavedStats.m_SavedERainbow)
+		m_Rainbowepiletic = true;
+	
+	if(m_SavedStats.m_SavedLovely)
+		m_Lovely = true;
+	
+	if(m_SavedStats.m_SavedHeartGuns)
+		m_HeartGuns = true;
+
+	if(m_SavedStats.m_SavedRainbowHook)
+		m_RainbowHook = true;
+
+	if(m_SavedStats.m_SavedEHook)
+		m_pCharacter->m_EndlessHook = true;
 
 	if (m_SavedStats.m_SavedBall)
 	{

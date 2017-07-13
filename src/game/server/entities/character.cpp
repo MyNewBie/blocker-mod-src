@@ -1842,7 +1842,7 @@ void CCharacter::HandleTiles(int Index)
 		}
 
 	}
-	
+
 	// passive
 	if (g_Config.m_SvWbProt != 0)
 	{
@@ -1880,6 +1880,23 @@ void CCharacter::HandleTiles(int Index)
 				m_TilePauser = true;
 			}
 		}
+	}
+
+	if (m_TileIndex == TILE_ADMIN || m_TileFIndex == TILE_ADMIN)
+	{
+		if (!GameServer()->Server()->IsAdmin(GetPlayer()->GetCID()))
+		{
+			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not an admin!");
+			Die(GetPlayer()->GetCID(), WEAPON_WORLD);
+		}
+	}
+
+	// Vip
+	if ((m_TileIndex == TILE_VIP || m_TileFIndex == TILE_VIP) && !m_pPlayer->m_AccData.m_Vip)
+	{
+		Die(m_pPlayer->GetCID(), WEAPON_WORLD);
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "You are not a vip!");
+		return;
 	}
 
 	// solo part
@@ -2230,22 +2247,6 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// admin
-	if (m_TileIndex == TILE_ADMIN || m_TileFIndex == TILE_ADMIN)
-	{
-		if (!GameServer()->Server()->IsAdmin(GetPlayer()->GetCID()))
-		{
-			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not an admin!");
-			Die(GetPlayer()->GetCID(), WEAPON_WORLD);
-		}
-	}
-
-	// Vip
-	if ((m_TileIndex == TILE_VIP || m_TileFIndex == TILE_VIP) && !m_pPlayer->m_AccData.m_Vip)
-	{
-		Die(m_pPlayer->GetCID(), WEAPON_WORLD);
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "You are not a vip!");
-		return;
-	}
 
 	static int64 s_TempChangeTime = time_get();
 	if(s_TempChangeTime < time_get())

@@ -11,7 +11,6 @@ public:
 
 	virtual void Reset();
 	virtual void Tick();
-	virtual void Snap(int SnappingClient);
 
 private:
 	vec2 m_Direction;

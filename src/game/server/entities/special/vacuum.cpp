@@ -113,21 +113,3 @@ void CVacuum::Tick()
 			pOwnerChar->GetPlayer()->m_Vacuum--;
 	}
 }
-
-void CVacuum::Snap(int SnappingClient)
-{
-	/*if(NetworkClipped(SnappingClient))
-		return;
-	
-	CCharacter *pOwnerChar = 0;
-	int64_t TeamMask = -1LL;
-
-	if(m_Owner >= 0)
-		pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
-
-	if (pOwnerChar && pOwnerChar->IsAlive())
-		TeamMask = pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner);
-
-	if(m_Owner != -1 && !CmaskIsSet(TeamMask, SnappingClient))
-		return;*/
-}
