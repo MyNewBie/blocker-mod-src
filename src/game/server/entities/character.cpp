@@ -1842,7 +1842,7 @@ void CCharacter::HandleTiles(int Index)
 		}
 
 	}
-
+	
 	// passive
 	if (g_Config.m_SvWbProt != 0)
 	{
@@ -1882,6 +1882,7 @@ void CCharacter::HandleTiles(int Index)
 		}
 	}
 
+	// admin
 	if (m_TileIndex == TILE_ADMIN || m_TileFIndex == TILE_ADMIN)
 	{
 		if (!GameServer()->Server()->IsAdmin(GetPlayer()->GetCID()))
@@ -1898,7 +1899,7 @@ void CCharacter::HandleTiles(int Index)
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "You are not a vip!");
 		return;
 	}
-
+	
 	// solo part
 	if ((m_TileIndex == TILE_SOLO_START || m_TileFIndex == TILE_SOLO_START) && !Teams()->m_Core.GetSolo(m_pPlayer->GetCID()))
 	{
@@ -2245,8 +2246,6 @@ void CCharacter::HandleTiles(int Index)
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_pPlayer->m_Rainbow ? "Rainbow activated" : "Rainbow deactivated");
 		WasInRainbow = true;
 	}
-
-	// admin
 
 	static int64 s_TempChangeTime = time_get();
 	if(s_TempChangeTime < time_get())

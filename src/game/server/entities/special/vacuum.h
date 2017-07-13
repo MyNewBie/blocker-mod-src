@@ -14,7 +14,7 @@ public:
 	virtual void Gravity();
 	virtual void CreateDeath();
 	virtual void Tick();
-	
+
 private:
 
 	int m_Owner;

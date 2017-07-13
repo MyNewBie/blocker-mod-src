@@ -11,7 +11,7 @@ public:
 
 	virtual void Reset();
 	virtual void Tick();
-
+	
 private:
 	vec2 m_Direction;
 	int m_LifeSpan;
