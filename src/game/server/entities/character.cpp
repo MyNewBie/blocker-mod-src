@@ -38,6 +38,8 @@
 
 #endif
 
+static int s_ShowAimID = -1;
+
 MACRO_ALLOC_POOL_ID_IMPL(CCharacter, MAX_CLIENTS)
 
 inline int ms_rand(int *seed)
@@ -1322,6 +1324,27 @@ void CCharacter::Snap(int SnappingClient)
 		pCharacter->m_Weapon = 6;
 
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
+
+	if(g_Config.m_SvShowAim == id)
+	{
+		if(s_ShowAimID == -1)
+			s_ShowAimID = Server()->SnapNewID();
+
+		CPlayer *pSnappingPlayer = GameServer()->m_apPlayers[SnappingClient];
+		if(pSnappingPlayer != NULL && pSnappingPlayer->m_Authed)
+		{
+			vec2 MousePos = m_Pos + vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY);
+			CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, s_ShowAimID, sizeof(CNetObj_Laser)));
+			if(pObj)
+			{
+				pObj->m_X = (int)MousePos.x;
+				pObj->m_Y = (int)MousePos.y;
+				pObj->m_FromX = (int)MousePos.x;
+				pObj->m_FromY = (int)MousePos.y;
+				pObj->m_StartTick = Server()->Tick() -1;
+			}
+		}
+	}
 
 	if (GameServer()->m_KOHActive)
 	{
