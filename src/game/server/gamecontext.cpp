@@ -30,6 +30,7 @@
 #include <string.h>
 #include <engine/server/server.h>
 #include "gamemodes/DDRace.h"
+#include "botprotections.h"
 #include "score.h"
 #include "score/file_score.h"
 #include <time.h>
@@ -2193,6 +2194,21 @@ void CGameContext::ConAccountUploadFile(IConsole::IResult *pResult, void *pUserD
 	fs_listdir(aDir, UploadFileCallback, 0, aDir);
 }
 
+void CGameContext::ConShowBots(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	char aBuf[512];
+	int ClientID = clamp(pResult->GetInteger(0), 0, (int)MAX_CLIENTS - 1);
+	CPlayer *pPlayer = pSelf->m_apPlayers[ClientID];
+	if(pPlayer == NULL)
+		return;
+
+	CBotProtections *pProtection = pPlayer->BotProtections();
+	str_format(aBuf, sizeof(aBuf), "Bot-Usage for %s: Hook-Assist: %.2f:%i",
+		pSelf->Server()->ClientName(ClientID), pProtection->GetHACountRatio(), pProtection->GetHACountTotal());
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
+}
+
 /*
 void CGameContext::ConSwapTeams(IConsole::IResult *pResult, void *pUserData)
 {
@@ -2562,7 +2578,8 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("say_by", "ir[message]", CFGFLAG_SERVER, ConSayBy, this, "Say by [ID] in chat");
 	Console()->Register("set_team", "i[id] i[team-id] ?i[delay in minutes]", CFGFLAG_SERVER, ConSetTeam, this, "Set team of player to team");
 	Console()->Register("set_team_all", "i[team-id]", CFGFLAG_SERVER, ConSetTeamAll, this, "Set team of all players to team");
-	Console()->Register("AccountsUpload", "", CFGFLAG_SERVER, ConAccountUploadFile, this, "Uploads the accounts from files to database");
+	Console()->Register("accounts_upload", "", CFGFLAG_SERVER, ConAccountUploadFile, this, "Uploads the accounts from files to database");
+	Console()->Register("show_bots", "i[id]", CFGFLAG_SERVER, ConShowBots, this, "Show the analysis of botusage");
 	//Console()->Register("swap_teams", "", CFGFLAG_SERVER, ConSwapTeams, this, "Swap the current teams");
 	//Console()->Register("shuffle_teams", "", CFGFLAG_SERVER, ConShuffleTeams, this, "Shuffle the current teams");
 	//Console()->Register("lock_teams", "", CFGFLAG_SERVER, ConLockTeams, this, "Lock/unlock teams");
