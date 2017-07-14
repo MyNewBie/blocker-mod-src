@@ -41,6 +41,8 @@ public:
 		STATE_REGISTRATION,
 		STATE_RUNNING,
 	};
+
+	static void DatabaseUpdate(bool Failed, void *pResultData, void *pData);
 	
 private:
 		

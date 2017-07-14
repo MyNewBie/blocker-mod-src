@@ -14,7 +14,6 @@ public:
 	virtual void Gravity();
 	virtual void CreateDeath();
 	virtual void Tick();
-	virtual void Snap(int SnappingClient);
 
 private:
 

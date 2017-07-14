@@ -42,7 +42,8 @@ struct CResultData
 {
 	char m_aUsername[32];
 	char m_aPassword[32];
-	CAccountDatabase *m_pAccount;
+	int m_ID;
+	CGameContext *m_pGameServer;
 };
 
 struct CResultDataReload
@@ -197,18 +198,22 @@ void CAccountDatabase::LoginResult(bool Failed, void *pResultData, void *pData)
 {
 	char aBuf[125];
 	CResultData *pResult = (CResultData *) pData;
-	CAccountDatabase *pAccount = pResult->m_pAccount;
+	int ClientID = pResult->m_ID;
+	CGameContext *pGameServer = pResult->m_pGameServer;
+	CPlayer *pPlayer = pGameServer->m_apPlayers[ClientID];
 
-	if(Failed == false && pResultData != NULL)
+	if(Failed == false && pResultData != NULL && pPlayer != NULL)
 	{
 #if defined(CONF_SQL)
+		CAccount *pAccount = pPlayer->m_pAccount;
+
 		sql::ResultSet *pResults = (sql::ResultSet *)pResultData;
 		sql::ResultSetMetaData *pResultsMeta = pResults->getMetaData();
 		if(pResults->isLast() == true)
 		{
 			dbg_msg("account", "Account login failed ('%s' - Missing)", pResult->m_aUsername);
-			pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "This account does not exist.");
-			pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Please register first. (/register <user> <pass>)");
+			pGameServer->SendChatTarget(ClientID, "This account does not exist.");
+			pGameServer->SendChatTarget(ClientID, "Please register first. (/register <user> <pass>)");
 			return;
 		}
 
@@ -221,7 +226,7 @@ void CAccountDatabase::LoginResult(bool Failed, void *pResultData, void *pData)
 		if(str_comp(pResult->m_aPassword, pResults->getString(2).c_str()) != 0)
 		{
 			dbg_msg("account", "Account login failed ('%s' - Wrong password)", pResult->m_aUsername);
-			pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Wrong username or password");
+			pGameServer->SendChatTarget(ClientID, "Wrong username or password");
 			return;
 		}
 
@@ -231,41 +236,38 @@ void CAccountDatabase::LoginResult(bool Failed, void *pResultData, void *pData)
 
 			switch(i)
 			{
-			case 0: str_copy(pAccount->m_pPlayer->m_AccData.m_aUsername, str.c_str(), sizeof(pAccount->m_pPlayer->m_AccData.m_aUsername)); break;
-			case 1: str_copy(pAccount->m_pPlayer->m_AccData.m_aPassword, str.c_str(), sizeof(pAccount->m_pPlayer->m_AccData.m_aPassword)); break;
-			case 2: pAccount->m_pPlayer->m_AccData.m_Vip = str_toint(str.c_str()); break;
-			case 3: pAccount->m_pPlayer->m_QuestData.m_Pages = str_toint(str.c_str()); break;
-			case 4: pAccount->m_pPlayer->m_Level.m_Level = str_toint(str.c_str()); break;
-			case 5: pAccount->m_pPlayer->m_Level.m_Exp = str_toint(str.c_str()); break;
-			case 6: str_copy(pAccount->m_pPlayer->m_AccData.m_aIp, str.c_str(), sizeof(pAccount->m_pPlayer->m_AccData.m_aIp)); break;
-			case 7: pAccount->m_pPlayer->m_AccData.m_Weaponkits = str_toint(str.c_str()); break;
-			case 8: pAccount->m_pPlayer->m_AccData.m_Slot = str_toint(str.c_str()); break;
+			case 0: str_copy(pPlayer->m_AccData.m_aUsername, str.c_str(), sizeof(pPlayer->m_AccData.m_aUsername)); break;
+			case 1: str_copy(pPlayer->m_AccData.m_aPassword, str.c_str(), sizeof(pPlayer->m_AccData.m_aPassword)); break;
+			case 2: pPlayer->m_AccData.m_Vip = str_toint(str.c_str()); break;
+			case 3: pPlayer->m_QuestData.m_Pages = str_toint(str.c_str()); break;
+			case 4: pPlayer->m_Level.m_Level = str_toint(str.c_str()); break;
+			case 5: pPlayer->m_Level.m_Exp = str_toint(str.c_str()); break;
+			case 6: str_copy(pPlayer->m_AccData.m_aIp, str.c_str(), sizeof(pPlayer->m_AccData.m_aIp)); break;
+			case 7: pPlayer->m_AccData.m_Weaponkits = str_toint(str.c_str()); break;
+			case 8: pPlayer->m_AccData.m_Slot = str_toint(str.c_str()); break;
 			}
 		}
 
 #endif
 
-		pAccount->m_pPlayer->m_AccData.m_UserID = 1;//logged in
+		pPlayer->m_AccData.m_UserID = 1;//logged in
 
-		CCharacter *pOwner = pAccount->GameServer()->GetPlayerChar(pAccount->m_pPlayer->GetCID());
-		if (pOwner)
-		{
-			if (pOwner->IsAlive())
-				pOwner->Die(pAccount->m_pPlayer->GetCID(), WEAPON_GAME);
-		}
+		CCharacter *pOwner = pPlayer->GetCharacter();
+		if (pOwner && pOwner->IsAlive())
+			pOwner->Die(ClientID, WEAPON_GAME);
 
-		if (pAccount->m_pPlayer->GetTeam() == TEAM_SPECTATORS)
-			pAccount->m_pPlayer->SetTeam(TEAM_RED);
+		if (pPlayer->GetTeam() == TEAM_SPECTATORS)
+			pPlayer->SetTeam(TEAM_RED);
 
 		dbg_msg("account", "Account login sucessful ('%s')", pResult->m_aUsername);
-		pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Login successful");
+		pGameServer->SendChatTarget(ClientID, "Login successful");
 
 		if (pOwner)
 		{
-			pAccount->m_pPlayer->m_AccData.m_Slot++;
-			pAccount->m_pPlayer->m_DeathNote = true;
-			pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "You have reveived a Deathnote.");
-			pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Write /Deathnoteinfo for more information");
+			pPlayer->m_AccData.m_Slot++;
+			pPlayer->m_DeathNote = true;
+			pGameServer->SendChatTarget(ClientID, "You have reveived a Deathnote.");
+			pGameServer->SendChatTarget(ClientID, "Write /Deathnoteinfo for more information");
 			pAccount->Apply();
 
 			/*if(pOwner->GetPlayer()->m_AccData.m_Slot > 1)
@@ -282,7 +284,7 @@ void CAccountDatabase::LoginResult(bool Failed, void *pResultData, void *pData)
 	else
 	{
 		dbg_msg("account", "No Result pointer");
-		pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Internal Server Error. Please contact an admin.");
+		pGameServer->SendChatTarget(ClientID, "Internal Server Error. Please contact an admin.");
 	}
 }
 
@@ -339,7 +341,8 @@ void CAccountDatabase::Login(const char *pUsername, const char *pPassword)
 	CResultData *pResult = new CResultData();
 	str_copy(pResult->m_aUsername, pUsername, sizeof(pResult->m_aUsername));
 	str_copy(pResult->m_aPassword, pPassword, sizeof(pResult->m_aPassword));
-	pResult->m_pAccount = this;
+	pResult->m_pGameServer = GameServer();
+	pResult->m_ID = m_pPlayer->GetCID();
 	CreateNewQuery(aQuery, LoginResult, pResult, true);
 }
 
@@ -347,19 +350,21 @@ void CAccountDatabase::RegisterResult(bool Failed, void *pResultData, void *pDat
 {
 	char aBuf[125];
 	CResultData *pResult = (CResultData *) pData;
-	CAccountDatabase *pAccount = pResult->m_pAccount;
+	int ClientID = pResult->m_ID;
+	CGameContext *pGameServer = pResult->m_pGameServer;
+	CPlayer *pPlayer = pGameServer->m_apPlayers[ClientID];
 
-	if(Failed == false)
+	if(Failed == false && pPlayer != NULL)
 	{
 		dbg_msg("account", "Registration successful ('%s')", pResult->m_aUsername);
 		str_format(aBuf, sizeof(aBuf), "Registration successful - ('/login %s %s'): ", pResult->m_aUsername, pResult->m_aPassword);
-		pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), aBuf);
-		pAccount->Login(pResult->m_aUsername, pResult->m_aPassword);
+		pGameServer->SendChatTarget(ClientID, aBuf);
+		pPlayer->m_pAccount->Login(pResult->m_aUsername, pResult->m_aPassword);
 	}
 	else
 	{
 		dbg_msg("account", "No Result pointer");
-		pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Internal Server Error. Please contact an admin.");
+		pGameServer->SendChatTarget(ClientID, "Internal Server Error. Please contact an admin.");
 	}
 }
 
@@ -367,9 +372,11 @@ void CAccountDatabase::ExistsResultRegister(bool Failed, void *pResultData, void
 {
 	char aBuf[125];
 	CResultData *pResult = (CResultData *) pData;
-	CAccountDatabase *pAccount = pResult->m_pAccount;
+	int ClientID = pResult->m_ID;
+	CGameContext *pGameServer = pResult->m_pGameServer;
+	CPlayer *pPlayer = pGameServer->m_apPlayers[ClientID];
 
-	if(Failed == false && pResultData != 0x0)
+	if(Failed == false && pResultData != 0x0 && pPlayer != NULL)
 	{
 
 #if defined(CONF_SQL)
@@ -377,7 +384,7 @@ void CAccountDatabase::ExistsResultRegister(bool Failed, void *pResultData, void
 		if(pResults->isLast() == false)
 		{
 			dbg_msg("account", "Account registration failed ('%s' - Already exists)", pResult->m_aUsername);
-			pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Account already exists.");
+			pGameServer->SendChatTarget(ClientID, "Account already exists.");
 			return;
 		}
 #endif
@@ -393,22 +400,22 @@ void CAccountDatabase::ExistsResultRegister(bool Failed, void *pResultData, void
 #error not implemented
 #endif
 		{
-			pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Don't use invalid chars for username!");
-			pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "A - Z, a - z, 0 - 9, . - _");
+			pGameServer->SendChatTarget(ClientID, "Don't use invalid chars for username!");
+			pGameServer->SendChatTarget(ClientID, "A - Z, a - z, 0 - 9, . - _");
 			return;
 		}
 
 		char aQuery[QUERY_MAX_LEN];
 		str_format(aQuery, sizeof(aQuery), "INSERT INTO accounts VALUES('%s', '%s', %i, %i, %i, %i, '%s', %i, %i)",
-			pResult->m_aUsername, pResult->m_aPassword, pAccount->m_pPlayer->m_AccData.m_Vip, pAccount->m_pPlayer->m_QuestData.m_Pages, pAccount->m_pPlayer->m_Level.m_Level,
-			pAccount->m_pPlayer->m_Level.m_Exp, pAccount->m_pPlayer->m_AccData.m_aIp, pAccount->m_pPlayer->m_AccData.m_Weaponkits, pAccount->m_pPlayer->m_AccData.m_Slot);
+			pResult->m_aUsername, pResult->m_aPassword, pPlayer->m_AccData.m_Vip, pPlayer->m_QuestData.m_Pages, pPlayer->m_Level.m_Level,
+			pPlayer->m_Level.m_Exp, pPlayer->m_AccData.m_aIp, pPlayer->m_AccData.m_Weaponkits, pPlayer->m_AccData.m_Slot);
 
-		pAccount->CreateNewQuery(aQuery, RegisterResult, pResult, false);
+		((CAccountDatabase *)pPlayer->m_pAccount)->CreateNewQuery(aQuery, RegisterResult, pResult, false);
 	}
 	else
 	{
 		dbg_msg("account", "No Result pointer");
-		pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Internal Server Error. Please contact an admin.");
+		pGameServer->SendChatTarget(ClientID, "Internal Server Error. Please contact an admin.");
 	}
 }
 
@@ -447,7 +454,8 @@ void CAccountDatabase::Register(const char *pUsername, const char *pPassword)
 	CResultData *pResult = new CResultData();
 	str_copy(pResult->m_aUsername, pUsername, sizeof(pResult->m_aUsername));
 	str_copy(pResult->m_aPassword, pPassword, sizeof(pResult->m_aPassword));
-	pResult->m_pAccount = this;
+	pResult->m_pGameServer = GameServer();
+	pResult->m_ID = m_pPlayer->GetCID();
 	CreateNewQuery(aQuery, ExistsResultRegister, pResult, true);
 }
 

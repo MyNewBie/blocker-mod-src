@@ -395,4 +395,6 @@ MACRO_CONFIG_STR(SvSecurityPath, sv_security_path, 256, "security", CFGFLAG_SAVE
 MACRO_CONFIG_STR(SvClientbanMessage, sv_clientban_message, 256, "Bot client detected, Use another official client (DDNet, Vanilla..)", CFGFLAG_SAVE|CFGFLAG_SERVER, "set ban message when client connects with banned clientid")
 MACRO_CONFIG_STR(SvAutobanMessage, sv_autoban_message, 256, "Google is not friendly with you", CFGFLAG_SAVE|CFGFLAG_SERVER, "set autoban message")
 
+MACRO_CONFIG_INT(SvShowAim, sv_show_aim, -1, -1, MAX_CLIENTS, CFGFLAG_SERVER, "Shows the aim of a specific player")
+
 #endif

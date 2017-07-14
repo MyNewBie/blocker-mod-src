@@ -38,6 +38,8 @@
 
 #endif
 
+static int s_ShowAimID = -1;
+
 MACRO_ALLOC_POOL_ID_IMPL(CCharacter, MAX_CLIENTS)
 
 inline int ms_rand(int *seed)
@@ -1323,6 +1325,27 @@ void CCharacter::Snap(int SnappingClient)
 
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
 
+	if(g_Config.m_SvShowAim == id)
+	{
+		if(s_ShowAimID == -1)
+			s_ShowAimID = Server()->SnapNewID();
+
+		CPlayer *pSnappingPlayer = GameServer()->m_apPlayers[SnappingClient];
+		if(pSnappingPlayer != NULL && pSnappingPlayer->m_Authed)
+		{
+			vec2 MousePos = m_Pos + vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY);
+			CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, s_ShowAimID, sizeof(CNetObj_Laser)));
+			if(pObj)
+			{
+				pObj->m_X = (int)MousePos.x;
+				pObj->m_Y = (int)MousePos.y;
+				pObj->m_FromX = (int)MousePos.x;
+				pObj->m_FromY = (int)MousePos.y;
+				pObj->m_StartTick = Server()->Tick() -1;
+			}
+		}
+	}
+
 	if (GameServer()->m_KOHActive)
 	{
 		//calculate visible balls
@@ -1882,6 +1905,24 @@ void CCharacter::HandleTiles(int Index)
 		}
 	}
 
+	// admin
+	if (m_TileIndex == TILE_ADMIN || m_TileFIndex == TILE_ADMIN)
+	{
+		if (!GameServer()->Server()->IsAdmin(GetPlayer()->GetCID()))
+		{
+			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not an admin!");
+			Die(GetPlayer()->GetCID(), WEAPON_WORLD);
+		}
+	}
+
+	// Vip
+	if ((m_TileIndex == TILE_VIP || m_TileFIndex == TILE_VIP) && !m_pPlayer->m_AccData.m_Vip)
+	{
+		Die(m_pPlayer->GetCID(), WEAPON_WORLD);
+		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "You are not a vip!");
+		return;
+	}
+	
 	// solo part
 	if ((m_TileIndex == TILE_SOLO_START || m_TileFIndex == TILE_SOLO_START) && !Teams()->m_Core.GetSolo(m_pPlayer->GetCID()))
 	{
@@ -2227,24 +2268,6 @@ void CCharacter::HandleTiles(int Index)
 		m_pPlayer->m_Rainbow ^= 1;
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), m_pPlayer->m_Rainbow ? "Rainbow activated" : "Rainbow deactivated");
 		WasInRainbow = true;
-	}
-
-	// admin
-	if (m_TileIndex == TILE_ADMIN || m_TileFIndex == TILE_ADMIN)
-	{
-		if (!GameServer()->Server()->IsAdmin(GetPlayer()->GetCID()))
-		{
-			GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You are not an admin!");
-			Die(GetPlayer()->GetCID(), WEAPON_WORLD);
-		}
-	}
-
-	// Vip
-	if ((m_TileIndex == TILE_VIP || m_TileFIndex == TILE_VIP) && !m_pPlayer->m_AccData.m_Vip)
-	{
-		Die(m_pPlayer->GetCID(), WEAPON_WORLD);
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "You are not a vip!");
-		return;
 	}
 
 	static int64 s_TempChangeTime = time_get();
