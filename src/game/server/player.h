@@ -12,14 +12,15 @@
 #include "game/server/entities/special/epiccircle.h"
 
 class CAccount;
+class CBotProtections;
 
 // player object
 class CPlayer
 {
 	MACRO_ALLOC_POOL_ID()
 
-		friend class CSaveTee;
-	friend class CAccount;
+	friend class CSaveTee;
+	friend class CAccount;//???
 
 public:
 	CPlayer(CGameContext *pGameServer, int ClientID, int Team);
@@ -265,7 +266,7 @@ public:
 	void QuestSetNextPart();
 	void QuestTellObjective();
 
-	CEpicCircle *m_pEpicCircle;
+	CEpicCircle *m_pEpicCircle;//TODO: clear memory 
 	bool m_EpicCircle;
 	bool m_Rainbowepiletic; // Epiletic rainbow!
 	bool m_Rainbow;
@@ -311,15 +312,17 @@ public:
 
 	} m_AccData;
 
-	class CAccount *m_pAccount;//(CPlayer *m_Player, CGameContext *gameserver);
+	CAccount *m_pAccount;//TODO: handle this private
+
+	CBotProtections *BotProtections() const { return m_pBotProtections; }
+	CGameContext *GameServer() const { return m_pGameServer; }
+	IServer *Server() const;
 	
 private:
 	CCharacter *m_pCharacter;
 	int m_NumInputs;
 	CGameContext *m_pGameServer;
-
-	CGameContext *GameServer() const { return m_pGameServer; }
-	IServer *Server() const;
+	CBotProtections *m_pBotProtections;
 
 	//
 	bool m_Spawning;

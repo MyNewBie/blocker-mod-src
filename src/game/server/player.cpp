@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "botprotections.h"
 #include "specialchars.h"
 
 inline int ms_rand(int *seed)
@@ -57,6 +58,8 @@ CPlayer::~CPlayer()
 {
 	delete m_pCharacter;
 	m_pCharacter = 0;
+	delete m_pAccount;
+	delete m_pBotProtections;
 }
 
 void CPlayer::Reset()
@@ -81,6 +84,8 @@ void CPlayer::Reset()
 #else
 	m_pAccount = new CAccountFile(this);
 #endif
+
+	m_pBotProtections = new CBotProtections(this);
 
 	//m_pAccount->SetStorage(GameServer()->Storage());
 	if (m_AccData.m_UserID)
@@ -288,6 +293,8 @@ void CPlayer::Tick()
 	}
 
 	HandleQuest();
+
+	m_pBotProtections->Tick();
 }
 
 void CPlayer::PostTick()
@@ -534,7 +541,10 @@ void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 	if (m_pCharacter)
 	{
 		if (!m_Paused)
+		{
 			m_pCharacter->OnDirectInput(NewInput);
+			m_pBotProtections->NewInput(NewInput);
+		}
 		else
 			m_pCharacter->ResetInput();
 	}
