@@ -69,8 +69,8 @@ void CBotProtections::HATick()
 		return;
 
 	//filter some shit for prevent bypassing this protection
-	if(Server()->Tick() - m_HALastHammered > Server()->TickSpeed() * 5.0f ||
-		Server()->Tick() - m_HALastGotHooked > Server()->TickSpeed() * 3.0f)
+	if(Server()->Tick() - m_HALastHammered > Server()->TickSpeed() * 3.0f ||
+		Server()->Tick() - m_HALastGotHooked > Server()->TickSpeed() * 2.0f)
 		return;
 
 	if(pCore->m_HookedPlayer == m_HAHookingTee)
@@ -95,7 +95,7 @@ void CBotProtections::HAInspectInput(CNetObj_PlayerInput *pInput)
 	m_HAFinishedAnalyse = false; // need to analys this hook
 
 	vec2 MousePos = pChr->m_Pos + vec2(pInput->m_TargetX, pInput->m_TargetY);
-	CCharacter *pHookingTee = GameServer()->m_World.ClosestCharacter(MousePos, 32.0f, pChr);
+	CCharacter *pHookingTee = GameServer()->m_World.ClosestCharacter(MousePos, 30.0f, pChr);
 	if(pHookingTee == NULL || pHookingTee->IsAlive() == false)
 		return;
 

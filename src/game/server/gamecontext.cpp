@@ -2198,15 +2198,32 @@ void CGameContext::ConShowBots(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	char aBuf[512];
-	int ClientID = clamp(pResult->GetInteger(0), 0, (int)MAX_CLIENTS - 1);
-	CPlayer *pPlayer = pSelf->m_apPlayers[ClientID];
-	if(pPlayer == NULL)
-		return;
 
-	CBotProtections *pProtection = pPlayer->BotProtections();
-	str_format(aBuf, sizeof(aBuf), "Bot-Usage for %s: Hook-Assist: %.2f:%i",
-		pSelf->Server()->ClientName(ClientID), pProtection->GetHACountRatio(), pProtection->GetHACountTotal());
-	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
+	if(pResult->GetInteger(0) < 0)
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			CPlayer *pPlayer = pSelf->m_apPlayers[i];
+			if(pPlayer == NULL) continue;
+
+			CBotProtections *pProtection = pPlayer->BotProtections();
+			str_format(aBuf, sizeof(aBuf), "Bot-Usage for %s: Hook-Assist: %.2f:%i",
+				pSelf->Server()->ClientName(i), pProtection->GetHACountRatio(), pProtection->GetHACountTotal());
+			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
+		}
+	}
+	else
+	{
+		int ClientID = clamp(pResult->GetInteger(0), 0, (int)MAX_CLIENTS - 1);
+		CPlayer *pPlayer = pSelf->m_apPlayers[ClientID];
+		if(pPlayer == NULL)
+			return;
+
+		CBotProtections *pProtection = pPlayer->BotProtections();
+		str_format(aBuf, sizeof(aBuf), "Bot-Usage for %s: Hook-Assist: %.2f:%i",
+			pSelf->Server()->ClientName(ClientID), pProtection->GetHACountRatio(), pProtection->GetHACountTotal());
+		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
+	}
 }
 
 /*

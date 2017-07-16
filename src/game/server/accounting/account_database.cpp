@@ -17,11 +17,7 @@
 #endif
 
 #if defined(CONF_SQL)
-#include <mysql_connection.h>
-
-#include <cppconn/driver.h>
-#include <cppconn/exception.h>
-#include <cppconn/statement.h>
+#include <cppconn/resultset.h>
 #endif
 
 #include <base/system.h>
@@ -33,10 +29,6 @@
 
 #include "account.h"
 #include "account_database.h"
-
-#define QUERY_MAX_LEN 512
-
-LOCK QueryLock;
 
 struct CResultData
 {
@@ -53,149 +45,42 @@ struct CResultDataReload
 	SqlResultFunction Func;
 };
 
-struct CThreadFeed
-{
-	SqlResultFunction m_ResultCallback;
-	void *m_pResultData;
-	char m_aCommand[QUERY_MAX_LEN];
-	bool m_SetSchema;
-	bool m_ExpectResult;
-};
-
-static void QueryThreadFunction(void *pData)
-{
-	CThreadFeed *pFeed = (CThreadFeed *)pData;
-
-#if defined(CONF_SQL)
-	sql::Driver *pDriver = NULL;
-	sql::Connection *pConnection = NULL;
-	sql::Statement *pStatement = NULL;
-	sql::ResultSet *pResults = NULL;
-
-	lock_wait(QueryLock);
-
-	try
-	{
-		sql::ConnectOptionsMap connection_properties;
-		connection_properties["hostName"]      = sql::SQLString(g_Config.m_SvAccSqlIp);
-		connection_properties["port"]          = 3306;
-		connection_properties["userName"]      = sql::SQLString(g_Config.m_SvAccSqlName);
-		connection_properties["password"]      = sql::SQLString(g_Config.m_SvAccSqlPassword);
-		connection_properties["OPT_CONNECT_TIMEOUT"] = 10;
-		connection_properties["OPT_READ_TIMEOUT"] = 10;
-		connection_properties["OPT_WRITE_TIMEOUT"] = 20;
-		connection_properties["OPT_RECONNECT"] = true;
-
-		pDriver = get_driver_instance();
-		pConnection = pDriver->connect(g_Config.m_SvAccSqlIp, g_Config.m_SvAccSqlName, g_Config.m_SvAccSqlPassword);
-		if(pFeed->m_SetSchema == true)
-			pConnection->setSchema(g_Config.m_SvAccSqlDatabase);
-
-		pStatement = pConnection->createStatement();
-		if(pFeed->m_SetSchema == true && pFeed->m_ExpectResult)
-			pResults = pStatement->executeQuery(pFeed->m_aCommand);
-		else
-			pStatement->execute(pFeed->m_aCommand);
-
-		if(pFeed->m_ResultCallback != NULL)//no error
-			pFeed->m_ResultCallback(false, pResults, pFeed->m_pResultData);
-	}
-	catch (sql::SQLException &e)
-	{
-		dbg_msg("sql", "ERROR: %s", e.what());
-		log_file(e.what(), "Queries.log", g_Config.m_SvSecurityPath);
-		if(pFeed->m_ResultCallback != NULL)
-			pFeed->m_ResultCallback(true, NULL, pFeed->m_pResultData);
-	}
-
-	if (pResults)
-			delete pResults;
-	if (pConnection)
-		delete pConnection;
-
-	lock_unlock(QueryLock);
-
-#endif
-
-}
-
-
 CAccountDatabase::CAccountDatabase(CPlayer *pPlayer)
 		: CAccount(pPlayer)
 {
-}
-
-/*
-#ifndef GAME_VERSION_H
-#define GAME_VERSION_H
-#ifndef NON_HASED_VERSION
-#include "generated/nethash.cpp"
-#define GAME_VERSION "0.6.1"
-#define GAME_NETVERSION "0.6 626fce9a778df4d4" //the std game version
-#endif
-#endif
-*/
-
-/*
-	-----PLEASE READ------ 
-	Keep in mind with slots they only get set to 0 on player disconnections
-	So please remember when updating server do not force close it, please use the shutdown cmd
-	So we can insure that all logged in users slots get set to 0,
-	If we just force close the server nothing gets saved and their slots remain as 1
-	And they cannot get back into their accounts and we will have many scrubs in our Dms requesting
-	access back into their accounts :), Please keep this in Mind :)
-
-	Or if you like work :) Like Captain teemo who hardly does shit for the Mod, you can give yourself work
-	and force shut and have fun checking every users slot, and setting it to 0 manually <3 Great work team!
-*/
-
-bool CAccountDatabase::PreventInjection(const char *pSrc)
-{
-	return str_find(pSrc, "'") != NULL || str_find(pSrc, ";") != NULL;
-};
-
-void CAccountDatabase::CreateNewQuery(char *pQuery, SqlResultFunction ResultCallback, void *pData, bool ExpectResult, bool SetSchema)
-{
-	CThreadFeed *pFeed = new CThreadFeed();
-	pFeed->m_ResultCallback = ResultCallback;
-	pFeed->m_pResultData = pData;
-	str_copy(pFeed->m_aCommand, pQuery, sizeof(pFeed->m_aCommand));
-	pFeed->m_SetSchema = SetSchema;
-	pFeed->m_ExpectResult = ExpectResult;
-
-	thread_init(QueryThreadFunction, pFeed);
-	//QueryThreadFunction(pFeed);
-
-	//dbg_msg("QUERY", pQuery);
-	log_file(pQuery, "Queries.log", g_Config.m_SvSecurityPath);
+	Init(g_Config.m_SvAccSqlIp, g_Config.m_SvAccSqlName, g_Config.m_SvAccSqlPassword, g_Config.m_SvAccSqlDatabase);
 }
 
 void CAccountDatabase::InitTables()
 {
-	QueryLock = lock_create();
-
 	//Init schema
 	char aBuf[64];
 
 #if defined(CONF_SQL)
 	str_format(aBuf, sizeof(aBuf), "CREATE DATABASE IF NOT EXISTS %s", g_Config.m_SvAccSqlDatabase);
-	CreateNewQuery(aBuf, NULL, NULL, false, false);
+	CreateNewQuery(g_Config.m_SvAccSqlIp, g_Config.m_SvAccSqlName, g_Config.m_SvAccSqlPassword, g_Config.m_SvAccSqlDatabase, aBuf, NULL, NULL, false);
 
-	CreateNewQuery("CREATE TABLE IF NOT EXISTS accounts (username VARCHAR(32) BINARY NOT NULL, password VARCHAR(32) BINARY NOT NULL, vip INT DEFAULT 0, pages INT DEFAULT 0, level INT DEFAULT 1, exp INT DEFAULT 0, ip VARCHAR(47), weaponkits INT DEFAULT 0, slot INT DEFAULT 0,  PRIMARY KEY (username)) CHARACTER SET utf8 ;", NULL, NULL, false);
+	CreateNewQuery(g_Config.m_SvAccSqlIp, g_Config.m_SvAccSqlName, g_Config.m_SvAccSqlPassword, g_Config.m_SvAccSqlDatabase, 
+		"CREATE TABLE IF NOT EXISTS accounts (username VARCHAR(32) BINARY NOT NULL, password VARCHAR(32) BINARY NOT NULL, vip INT DEFAULT 0, pages INT DEFAULT 0, level INT DEFAULT 1, exp INT DEFAULT 0, ip VARCHAR(47), weaponkits INT DEFAULT 0, slot INT DEFAULT 0,  PRIMARY KEY (username)) CHARACTER SET utf8 ;", NULL, NULL, false);
 #endif
 }
 
 void CAccountDatabase::InsertAccount(char *pUsername, char *pPassword, int Vip, int Pages, int Level, int Exp, char *pIp, int WeaponKits, int Slot)
 {
+#if defined(CONF_SQL)
+
 	char aQuery[QUERY_MAX_LEN];
 	str_format(aQuery, sizeof(aQuery), "INSERT INTO accounts VALUES('%s', '%s', %i, %i, %i, %i, '%s', %i, %i)",
 		pUsername, pPassword, Vip, Pages, Level, Exp, pIp, WeaponKits, Slot);
 
-	CreateNewQuery(aQuery, NULL, NULL, false);
+	CreateNewQuery(g_Config.m_SvAccSqlIp, g_Config.m_SvAccSqlName, g_Config.m_SvAccSqlPassword, g_Config.m_SvAccSqlDatabase, aQuery, NULL, NULL, false);
+#endif
 }
 
 void CAccountDatabase::LoginResult(bool Failed, void *pResultData, void *pData)
 {
+
+	char aUsername[32], aPassword[32];
 	char aBuf[125];
 	CResultData *pResult = (CResultData *) pData;
 	int ClientID = pResult->m_ID;
@@ -207,11 +92,14 @@ void CAccountDatabase::LoginResult(bool Failed, void *pResultData, void *pData)
 #if defined(CONF_SQL)
 		CAccount *pAccount = pPlayer->m_pAccount;
 
+		DatabaseStringCopyRevert(aUsername, pResult->m_aUsername, sizeof(aUsername));
+		DatabaseStringCopyRevert(aPassword, pResult->m_aPassword, sizeof(aPassword));
+
 		sql::ResultSet *pResults = (sql::ResultSet *)pResultData;
 		sql::ResultSetMetaData *pResultsMeta = pResults->getMetaData();
 		if(pResults->isLast() == true)
 		{
-			dbg_msg("account", "Account login failed ('%s' - Missing)", pResult->m_aUsername);
+			dbg_msg("account", "Account login failed ('%s' - Missing)", aUsername);
 			pGameServer->SendChatTarget(ClientID, "This account does not exist.");
 			pGameServer->SendChatTarget(ClientID, "Please register first. (/register <user> <pass>)");
 			return;
@@ -223,9 +111,9 @@ void CAccountDatabase::LoginResult(bool Failed, void *pResultData, void *pData)
 
 		pResults->last();
 
-		if(str_comp(pResult->m_aPassword, pResults->getString(2).c_str()) != 0)
+		if(str_comp(aPassword, pResults->getString(2).c_str()) != 0)
 		{
-			dbg_msg("account", "Account login failed ('%s' - Wrong password)", pResult->m_aUsername);
+			dbg_msg("account", "Account login failed ('%s' Wrong password)", aUsername);
 			pGameServer->SendChatTarget(ClientID, "Wrong username or password");
 			return;
 		}
@@ -259,7 +147,7 @@ void CAccountDatabase::LoginResult(bool Failed, void *pResultData, void *pData)
 		if (pPlayer->GetTeam() == TEAM_SPECTATORS)
 			pPlayer->SetTeam(TEAM_RED);
 
-		dbg_msg("account", "Account login sucessful ('%s')", pResult->m_aUsername);
+		dbg_msg("account", "Account login sucessful ('%s')", aUsername);
 		pGameServer->SendChatTarget(ClientID, "Login successful");
 
 		if (pOwner)
@@ -290,6 +178,8 @@ void CAccountDatabase::LoginResult(bool Failed, void *pResultData, void *pData)
 
 void CAccountDatabase::Login(const char *pUsername, const char *pPassword)
 {
+	char aUsername[32], aPassword[32];
+
 	if (m_pPlayer->m_LastLoginAttempt + 3 * GameServer()->Server()->TickSpeed() > GameServer()->Server()->Tick())
 	{
 		char aBuf[256];
@@ -318,18 +208,15 @@ void CAccountDatabase::Login(const char *pUsername, const char *pPassword)
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 		return;
 	}
-	else if(PreventInjection(pUsername) || PreventInjection(pPassword))
-	{
-		str_format(aBuf, sizeof(aBuf), "Invalid chars used");
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
-		return;
-	}
+	
+	DatabaseStringCopy(aUsername, pUsername, sizeof(aUsername));
+	DatabaseStringCopy(aPassword, pPassword, sizeof(aPassword));
 
 	for (int j = 0; j < MAX_CLIENTS; j++)
 	{
-		if (GameServer()->m_apPlayers[j] && str_comp(GameServer()->m_apPlayers[j]->m_AccData.m_aUsername, pUsername) == 0)
+		if (GameServer()->m_apPlayers[j] && str_comp(GameServer()->m_apPlayers[j]->m_AccData.m_aUsername, aUsername) == 0)
 		{
-			dbg_msg("account", "Account login failed ('%s' - already in use (local))", pUsername);
+			dbg_msg("account", "Account login failed ('%s' - already in use (local))", aUsername);
 			GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account already in use");
 			return;
 		}
@@ -337,10 +224,10 @@ void CAccountDatabase::Login(const char *pUsername, const char *pPassword)
 
 
 	char aQuery[QUERY_MAX_LEN];
-	str_format(aQuery, sizeof(aQuery), "SELECT * FROM accounts WHERE username='%s'", pUsername);
+	str_format(aQuery, sizeof(aQuery), "SELECT * FROM accounts WHERE username='%s'", aUsername);
 	CResultData *pResult = new CResultData();
-	str_copy(pResult->m_aUsername, pUsername, sizeof(pResult->m_aUsername));
-	str_copy(pResult->m_aPassword, pPassword, sizeof(pResult->m_aPassword));
+	str_copy(pResult->m_aUsername, aUsername, sizeof(pResult->m_aUsername));
+	str_copy(pResult->m_aPassword, aPassword, sizeof(pResult->m_aPassword));
 	pResult->m_pGameServer = GameServer();
 	pResult->m_ID = m_pPlayer->GetCID();
 	CreateNewQuery(aQuery, LoginResult, pResult, true);
@@ -348,6 +235,7 @@ void CAccountDatabase::Login(const char *pUsername, const char *pPassword)
 
 void CAccountDatabase::RegisterResult(bool Failed, void *pResultData, void *pData)
 {
+	char aUsername[32], aPassword[32];
 	char aBuf[125];
 	CResultData *pResult = (CResultData *) pData;
 	int ClientID = pResult->m_ID;
@@ -356,10 +244,13 @@ void CAccountDatabase::RegisterResult(bool Failed, void *pResultData, void *pDat
 
 	if(Failed == false && pPlayer != NULL)
 	{
-		dbg_msg("account", "Registration successful ('%s')", pResult->m_aUsername);
-		str_format(aBuf, sizeof(aBuf), "Registration successful - ('/login %s %s'): ", pResult->m_aUsername, pResult->m_aPassword);
+		DatabaseStringCopyRevert(aUsername, pResult->m_aUsername, sizeof(aUsername));
+		DatabaseStringCopyRevert(aPassword, pResult->m_aPassword, sizeof(aPassword));
+
+		dbg_msg("account", "Registration successful ('%s')", aUsername);
+		str_format(aBuf, sizeof(aBuf), "Registration successful - ('/login %s %s'): ", aUsername, aPassword);
 		pGameServer->SendChatTarget(ClientID, aBuf);
-		pPlayer->m_pAccount->Login(pResult->m_aUsername, pResult->m_aPassword);
+		pPlayer->m_pAccount->Login(aUsername, aPassword);
 	}
 	else
 	{
@@ -389,22 +280,6 @@ void CAccountDatabase::ExistsResultRegister(bool Failed, void *pResultData, void
 		}
 #endif
 
-#if defined(CONF_FAMILY_UNIX)
-		char Filter[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.-_";
-		// "äöü<>|!§$%&/()=?`´*'#+~«»¢“”æßðđŋħjĸł˝;,·^°@ł€¶ŧ←↓→øþ\\";
-		if (!strpbrk(pResult->m_aUsername, Filter))
-#elif defined(CONF_FAMILY_WINDOWS)
-		static TCHAR * ValidChars = _T("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.-_");
-		if (_tcsspnp(pResult->m_aUsername, ValidChars))
-#else
-#error not implemented
-#endif
-		{
-			pGameServer->SendChatTarget(ClientID, "Don't use invalid chars for username!");
-			pGameServer->SendChatTarget(ClientID, "A - Z, a - z, 0 - 9, . - _");
-			return;
-		}
-
 		char aQuery[QUERY_MAX_LEN];
 		str_format(aQuery, sizeof(aQuery), "INSERT INTO accounts VALUES('%s', '%s', %i, %i, %i, %i, '%s', %i, %i)",
 			pResult->m_aUsername, pResult->m_aPassword, pPlayer->m_AccData.m_Vip, pPlayer->m_QuestData.m_Pages, pPlayer->m_Level.m_Level,
@@ -422,6 +297,7 @@ void CAccountDatabase::ExistsResultRegister(bool Failed, void *pResultData, void
 
 void CAccountDatabase::Register(const char *pUsername, const char *pPassword)
 {
+	char aUsername[32], aPassword[32];
 	char aBuf[125];
 	if (m_pPlayer->m_AccData.m_UserID)
 	{
@@ -441,19 +317,16 @@ void CAccountDatabase::Register(const char *pUsername, const char *pPassword)
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 		return;
 	}
-	else if(PreventInjection(pUsername) || PreventInjection(pPassword))
-	{
-		str_format(aBuf, sizeof(aBuf), "Invalid chars used");
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
-		return;
-	}
+	
+	DatabaseStringCopy(aUsername, pUsername, sizeof(aUsername));
+	DatabaseStringCopy(aPassword, pPassword, sizeof(aPassword));
 
 
 	char aQuery[QUERY_MAX_LEN];
-	str_format(aQuery, sizeof(aQuery), "SELECT * FROM accounts WHERE username='%s'", pUsername);
+	str_format(aQuery, sizeof(aQuery), "SELECT * FROM accounts WHERE username='%s'", aUsername);
 	CResultData *pResult = new CResultData();
-	str_copy(pResult->m_aUsername, pUsername, sizeof(pResult->m_aUsername));
-	str_copy(pResult->m_aPassword, pPassword, sizeof(pResult->m_aPassword));
+	str_copy(pResult->m_aUsername, aUsername, sizeof(pResult->m_aUsername));
+	str_copy(pResult->m_aPassword, aPassword, sizeof(pResult->m_aPassword));
 	pResult->m_pGameServer = GameServer();
 	pResult->m_ID = m_pPlayer->GetCID();
 	CreateNewQuery(aQuery, ExistsResultRegister, pResult, true);
@@ -461,22 +334,31 @@ void CAccountDatabase::Register(const char *pUsername, const char *pPassword)
 
 void CAccountDatabase::Apply()
 {
+	char aUsername[32], aPassword[32];
+
 	if(m_pPlayer->m_AccData.m_UserID == 0)
 		return;
 
+	DatabaseStringCopy(aUsername, m_pPlayer->m_AccData.m_aUsername, sizeof(aUsername));
+	DatabaseStringCopy(aPassword, m_pPlayer->m_AccData.m_aPassword, sizeof(aPassword));
+
 	char aQuery[QUERY_MAX_LEN];
 		str_format(aQuery, sizeof(aQuery), "UPDATE  accounts SET username='%s', password='%s', vip=%i, level=%i, exp=%i, ip='%s', weaponkits=%i, slot=%i WHERE username='%s'",
-			m_pPlayer->m_AccData.m_aUsername, m_pPlayer->m_AccData.m_aPassword, m_pPlayer->m_AccData.m_Vip, m_pPlayer->m_Level.m_Level,
-			m_pPlayer->m_Level.m_Exp, m_pPlayer->m_AccData.m_aIp, m_pPlayer->m_AccData.m_Weaponkits, m_pPlayer->m_AccData.m_Slot, m_pPlayer->m_AccData.m_aUsername);
+			aUsername, aPassword, m_pPlayer->m_AccData.m_Vip, m_pPlayer->m_Level.m_Level,
+			m_pPlayer->m_Level.m_Exp, m_pPlayer->m_AccData.m_aIp, m_pPlayer->m_AccData.m_Weaponkits, m_pPlayer->m_AccData.m_Slot, aUsername);
 
 	CreateNewQuery(aQuery, NULL, NULL, false);
 }
 
 void CAccountDatabase::ApplyUpdatedData()
 {
+	char aUsername[32], aPassword[32];
 	char aQuery[QUERY_MAX_LEN];
+
+	DatabaseStringCopy(aUsername, m_pPlayer->m_AccData.m_aUsername, sizeof(aUsername));
+
 		str_format(aQuery, sizeof(aQuery), "UPDATE  accounts SET pages=%i WHERE username='%s'",
-			m_pPlayer->m_QuestData.m_Pages, m_pPlayer->m_AccData.m_aUsername);
+			m_pPlayer->m_QuestData.m_Pages, aUsername);
 
 	CreateNewQuery(aQuery, NULL, NULL, false);
 }
@@ -490,17 +372,20 @@ void CAccountDatabase::Reset()
 	m_pPlayer->m_AccData.m_UserID = 0;
 	m_pPlayer->m_AccData.m_Vip = 0;
 	m_pPlayer->m_QuestData.m_Pages = 0;
-	m_pPlayer->m_Level.m_Level = 0;
+	m_pPlayer->m_Level.m_Level = 1;
 	m_pPlayer->m_Level.m_Exp = 0;
 }
 
 void CAccountDatabase::Delete()
 {
+	char aUsername[32];
 	char aBuf[128];
 	if (m_pPlayer->m_AccData.m_UserID)
 	{
+		DatabaseStringCopy(aUsername, m_pPlayer->m_AccData.m_aUsername, sizeof(aUsername));
+
 		char aQuery[QUERY_MAX_LEN];
-		str_format(aQuery, sizeof(aQuery), "DELETE FROM accounts WHERE username='%s'", m_pPlayer->m_AccData.m_aUsername);
+		str_format(aQuery, sizeof(aQuery), "DELETE FROM accounts WHERE username='%s'", aUsername);
 		CreateNewQuery(aQuery, NULL, NULL, false);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account deleted!");
 
@@ -512,6 +397,7 @@ void CAccountDatabase::Delete()
 
 void CAccountDatabase::NewPassword(const char *pNewPassword)
 {
+	char aPassword[32];
 	char aBuf[128];
 	if (!m_pPlayer->m_AccData.m_UserID)
 	{
@@ -524,14 +410,10 @@ void CAccountDatabase::NewPassword(const char *pNewPassword)
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
 		return;
 	}
-	else if(PreventInjection(pNewPassword))
-	{
-		str_format(aBuf, sizeof(aBuf), "Invalid chars used");
-		GameServer()->SendChatTarget(m_pPlayer->GetCID(), aBuf);
-		return;
-	}
 
-	str_copy(m_pPlayer->m_AccData.m_aPassword, pNewPassword, 32);
+	DatabaseStringCopy(aPassword, pNewPassword, sizeof(aPassword));
+
+	str_copy(m_pPlayer->m_AccData.m_aPassword, aPassword, 32);
 	Apply();
 
 
@@ -581,11 +463,15 @@ void CAccountDatabase::ReloadDataResult(bool Failed, void *pResultData, void *pD
 
 void CAccountDatabase::ReloadUpdatedData(SqlResultFunction Func, void *pData)
 {
+	char aUsername[32];
+
 	if (m_pPlayer->m_AccData.m_UserID == 0)
 		return;
 
+	DatabaseStringCopy(aUsername, m_pPlayer->m_AccData.m_aUsername, sizeof(aUsername));
+
 	char aQuery[QUERY_MAX_LEN];
-	str_format(aQuery, sizeof(aQuery), "SELECT pages FROM accounts WHERE username='%s'", m_pPlayer->m_AccData.m_aUsername);
+	str_format(aQuery, sizeof(aQuery), "SELECT pages FROM accounts WHERE username='%s'", aUsername);
 	CResultDataReload *pResult = new CResultDataReload();
 	pResult->m_pAccount = this;
 	pResult->m_pData = pData;

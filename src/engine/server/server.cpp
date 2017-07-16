@@ -373,6 +373,10 @@ int CServer::TrySetClientName(int ClientID, const char *pName)
 
 	// set the client name
 	str_copy(m_aClients[ClientID].m_aName, pName, MAX_NAME_LENGTH);
+
+	char aAddrStr[NETADDR_MAXSTRSIZE];
+	net_addr_str(m_NetServer.ClientAddr(ClientID), aAddrStr, sizeof(aAddrStr), false);
+	m_AddressLogger.InsertEntry(pName, aAddrStr);
 	return 0;
 }
 
@@ -1659,6 +1663,7 @@ int CServer::Run()
 	m_NetServer.SetCallbacks(NewClientCallback, NewClientNoAuthCallback, ClientRejoinCallback, DelClientCallback, this);
 
 	m_Econ.Init(Console(), &m_ServerBan);
+	m_AddressLogger.Init();
 
 #if defined(CONF_FAMILY_UNIX)
 	m_Fifo.Init(Console(), g_Config.m_SvInputFifo, CFGFLAG_SERVER);

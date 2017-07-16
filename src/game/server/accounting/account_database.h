@@ -4,21 +4,17 @@
 #ifndef GAME_SERVER_ACCOUNT_DATABASE_H
 #define GAME_SERVER_ACCOUNT_DATABASE_H
 
+#include <engine/shared/database.h>
+
 #include "account.h"
 
-typedef void (*SqlResultFunction)(bool Failed, void *pResultData, void *pData);
-
-class CAccountDatabase : public CAccount
+class CAccountDatabase : public CAccount, public CDatabase
 {
 private:
-	static void CreateNewQuery(char *pQuery, SqlResultFunction ResultCallback, void *pData, bool ExpectResult, bool SetSchema = true);
-
 	static void LoginResult(bool Failed, void *pResultData, void *pData);
 	static void RegisterResult(bool Failed, void *pResultData, void *pData);
 	static void ExistsResultRegister(bool Failed, void *pResultData, void *pData);
 	static void ReloadDataResult(bool Failed, void *pResultData, void *pData);
-
-	bool PreventInjection(const char *pSrc);
 
 public:
 	CAccountDatabase(class CPlayer *pPlayer);
