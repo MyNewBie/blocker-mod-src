@@ -24,6 +24,8 @@
 #include "sql_server.h"
 #endif
 
+#include "address_logger.h"
+
 class CSnapIDPool
 {
 	enum
@@ -182,6 +184,7 @@ public:
 	CFifo m_Fifo;
 #endif
 	CServerBan m_ServerBan;
+	CAddressLogger m_AddressLogger;
 
 	IEngineMap *m_pMap;
 

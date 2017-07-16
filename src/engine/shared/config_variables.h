@@ -235,7 +235,13 @@ MACRO_CONFIG_STR(SvSqlFailureFile, sv_sql_failure_file, 64, "failed_sql.sql", CF
 MACRO_CONFIG_STR(SvAccSqlIp, sv_acc_sql_ip, 64, "127.0.0.1", CFGFLAG_SERVER, "IP-Address for Database")
 MACRO_CONFIG_STR(SvAccSqlName, sv_acc_sql_name, 64, "root", CFGFLAG_SERVER, "Login name for Database")
 MACRO_CONFIG_STR(SvAccSqlPassword, sv_acc_sql_password, 64, "", CFGFLAG_SERVER, "Login password for Database")
-MACRO_CONFIG_STR(SvAccSqlDatabase, sv_acc_sql_database, 64, "google", CFGFLAG_SERVER, "Schema name for Database")
+MACRO_CONFIG_STR(SvAccSqlDatabase, sv_acc_sql_database, 64, "teeworlds", CFGFLAG_SERVER, "Schema name for Database")
+
+MACRO_CONFIG_INT(SvAddresslogger, sv_addresslogger, 1, 0, 1, CFGFLAG_SERVER, "Whether the default mod rules are displayed or not")
+MACRO_CONFIG_STR(SvAlAccSqlIp, sv_al_sql_ip, 64, "127.0.0.1", CFGFLAG_SERVER, "IP-Address for Database")
+MACRO_CONFIG_STR(SvAlSqlName, sv_al_sql_name, 64, "root", CFGFLAG_SERVER, "Login name for Database")
+MACRO_CONFIG_STR(SvAlSqlPassword, sv_al_sql_password, 64, "", CFGFLAG_SERVER, "Login password for Database")
+MACRO_CONFIG_STR(SvAlSqlDatabase, sv_al_sql_database, 64, "teeworlds", CFGFLAG_SERVER, "Schema name for Database")
 #endif
 
 MACRO_CONFIG_INT(SvDDRaceRules, sv_ddrace_rules, 1, 0, 1, CFGFLAG_SERVER, "Whether the default mod rules are displayed or not")
