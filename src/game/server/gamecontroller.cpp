@@ -164,7 +164,7 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 	sides[7] = GameServer()->Collision()->Entity(x - 1, y + 1, Layer);
 
 
-	if (Index == ENTITY_SPAWN || Index == ENTITY_SPAWN_RED || Index == ENTITY_SPAWN_BLUE)
+	if (Index == ENTITY_SPAWN /*|| Index == ENTITY_SPAWN_RED || Index == ENTITY_SPAWN_BLUE*/)
 	{
 		m_aaSpawnPoints[Mappart][m_aNumSpawnPoints[Mappart]++] = Pos;
 	}
