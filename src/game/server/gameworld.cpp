@@ -56,11 +56,11 @@ void CGameWorld::UpdatePlayerMaps(void *pData)
 				continue;
 			}
 
-			if(pThreadData->m_Mapparts[i] != pThreadData->m_Mapparts[j] && pThreadData->m_pMetaPlayers[j].GetTeam() != TEAM_SPECTATORS && pThreadData->m_pMetaPlayers[i].GetTeam() != TEAM_SPECTATORS)
+			/*if(pThreadData->m_Mapparts[i] != pThreadData->m_Mapparts[j] && pThreadData->m_pMetaPlayers[j].GetTeam() != TEAM_SPECTATORS && pThreadData->m_pMetaPlayers[i].GetTeam() != TEAM_SPECTATORS)
 			{
 				dist[j].first = 1e10;
 				continue;
-			}
+			}*/
 
 			if (pThreadData->m_CharacterExists[j] == false)
 			{

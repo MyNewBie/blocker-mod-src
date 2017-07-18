@@ -390,11 +390,11 @@ void CDragger::Snap(int SnappingClient)
 CDraggerTeam::CDraggerTeam(CGameWorld *pGameWorld, vec2 Pos, float Strength, int Mappart,
 		bool NW, int Layer, int Number)
 {
-	for (int i = 0; i < MAX_CLIENTS; ++i)
+	/*for (int i = 0; i < MAX_CLIENTS; ++i)
 	{
 		m_Draggers[i] = new CDragger(pGameWorld, Pos, Strength, NW, i, Mappart, Layer,
 				Number);
-	}
+	}*/
 }
 
 //CDraggerTeam::~CDraggerTeam() {
