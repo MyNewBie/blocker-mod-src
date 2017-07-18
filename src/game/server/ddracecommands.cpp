@@ -193,7 +193,7 @@ void CGameContext::ConEpicCircles(IConsole::IResult *pResult, void *pUserData) /
 		pSelf->SendChatTarget(Victim, aBuf);
 
 		if(pPlayer->m_EpicCircle && pSelf->GetPlayerChar(Victim))
-			pPlayer->m_pEpicCircle = new CEpicCircle(&pSelf->m_World, pSelf->GetPlayerChar(Victim)->m_Pos, Victim);
+			pPlayer->m_pEpicCircle = new CEpicCircle(&pSelf->m_World, pSelf->GetPlayerChar(Victim)->m_Pos, Victim, pSelf->Server()->GetClientMappart(Victim));
 		else if (!pPlayer->m_EpicCircle && pSelf->GetPlayerChar(Victim))
 			pPlayer->m_pEpicCircle->Reset();
 	}
@@ -312,7 +312,7 @@ void CGameContext::ConBall(IConsole::IResult *pResult, void *pUserData) // give 
 		pSelf->SendChatTarget(Victim, aBuf);
 
 		if (pPlayer->m_IsBallSpawned && pSelf->GetPlayerChar(Victim))
-			pPlayer->m_pBall = new CBall(&pSelf->m_World, pSelf->GetPlayerChar(Victim)->m_Pos, Victim);
+			pPlayer->m_pBall = new CBall(&pSelf->m_World, pSelf->GetPlayerChar(Victim)->m_Pos, Victim, pSelf->Server()->GetClientMappart(Victim));
 		else if (!pPlayer->m_IsBallSpawned && pSelf->GetPlayerChar(Victim))
 			pPlayer->m_pBall->Reset();
 	}
@@ -381,9 +381,9 @@ void CGameContext::ConInvisible(IConsole::IResult *pResult, void *pUserData) // 
 			return;
 
 		if(pPlayer->m_Invisible)
-			pSelf->CreatePlayerSpawn(pPlayer->GetCharacter()->m_Pos, pPlayer->GetCharacter()->Teams()->TeamMask(pPlayer->GetCharacter()->Team(), -1, Victim));
+			pSelf->CreatePlayerSpawn(pPlayer->GetCharacter()->m_Pos, pSelf->Server()->GetClientMappart(Victim), pPlayer->GetCharacter()->Teams()->TeamMask(pPlayer->GetCharacter()->Team(), -1, Victim));
 		else
-			pSelf->CreateDeath(pPlayer->GetCharacter()->m_Pos, Victim, pPlayer->GetCharacter()->Teams()->TeamMask(pPlayer->GetCharacter()->Team(), -1, Victim));
+			pSelf->CreateDeath(pPlayer->GetCharacter()->m_Pos, Victim, pSelf->Server()->GetClientMappart(Victim), pPlayer->GetCharacter()->Teams()->TeamMask(pPlayer->GetCharacter()->Team(), -1, Victim));
 
 		pSelf->m_apPlayers[Victim]->m_Invisible ^= 1;
 		char aBuf[512];
@@ -734,7 +734,7 @@ void CGameContext::ConSendSound(IConsole::IResult *pResult, void *pUserData)
 
 	if(pSelf->m_apPlayers[ClientID] && pSelf->GetPlayerChar(ClientID))
 	{
-		pSelf->CreateSound(pSelf->GetPlayerChar(ClientID)->Core()->m_Pos, Sound, -1LL);
+		pSelf->CreateSound(pSelf->GetPlayerChar(ClientID)->Core()->m_Pos, Sound, pSelf->Server()->GetClientMappart(ClientID), -1LL);
 	}
 }
 

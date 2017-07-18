@@ -165,7 +165,7 @@ void CLMB::TeleportParticipants()
 	{
 		vec2 ActPos; bool CanSpawn;
 
-		if ((CanSpawn = m_pGameServer->m_pController->CanSpawn(2, &ActPos)) && m_pGameServer->m_apPlayers[m_Participants[i]])
+		if ((CanSpawn = m_pGameServer->m_pController->CanSpawn(0, 2, &ActPos)) && m_pGameServer->m_apPlayers[m_Participants[i]])
 		{
 			if (m_pGameServer->m_apPlayers[m_Participants[i]]->GetCharacter() && m_pGameServer->m_apPlayers[m_Participants[i]]->m_InLMB == LMB_REGISTERED)
 			{

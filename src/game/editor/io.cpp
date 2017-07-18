@@ -409,6 +409,8 @@ int CEditorMap::Save(class IStorage *pStorage, const char *pFileName)
 					Item.m_Flags = TILESLAYERFLAG_SWITCH;
 				else if(pLayer->m_Tune)
 					Item.m_Flags = TILESLAYERFLAG_TUNE;
+				else if(pLayer->m_Mapparts)
+					Item.m_Flags = TILESLAYERFLAG_MAPPARTS;
 				else
 					Item.m_Flags = pLayer->m_Game ? TILESLAYERFLAG_GAME : 0;
 
@@ -451,6 +453,14 @@ int CEditorMap::Save(class IStorage *pStorage, const char *pFileName)
 					mem_zero(Tiles, pLayer->m_Width*pLayer->m_Height*sizeof(CTile));
 					Item.m_Data = df.AddData(pLayer->m_Width*pLayer->m_Height*sizeof(CTile), Tiles);
 					Item.m_Tune = df.AddData(pLayer->m_Width*pLayer->m_Height*sizeof(CTuneTile), ((CLayerTune *)pLayer)->m_pTuneTile);
+					delete[] Tiles;
+				}
+				else if(pLayer->m_Mapparts)
+				{
+					CTile *Tiles = new CTile[pLayer->m_Width*pLayer->m_Height];
+					mem_zero(Tiles, pLayer->m_Width*pLayer->m_Height*sizeof(CTile));
+					Item.m_Data = df.AddData(pLayer->m_Width*pLayer->m_Height*sizeof(CTile), Tiles);
+					Item.m_Mapparts = df.AddData(pLayer->m_Width*pLayer->m_Height*sizeof(CTile), pLayer->m_pTiles);
 					delete[] Tiles;
 				}
 				else
@@ -873,6 +883,14 @@ int CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Storag
 							pTiles = new CLayerTune(pTilemapItem->m_Width, pTilemapItem->m_Height);
 							MakeTuneLayer(pTiles);
 						}
+						else if(pTilemapItem->m_Flags&TILESLAYERFLAG_MAPPARTS)
+						{
+							if(pTilemapItem->m_Version <= 2)
+								pTilemapItem->m_Mapparts = *((int*)(pTilemapItem) + 17);
+
+							pTiles = new CLayerMapparts(pTilemapItem->m_Width, pTilemapItem->m_Height);
+							MakeMappartsLayer(pTiles);
+						}
 						else
 						{
 							pTiles = new CLayerTiles(pTilemapItem->m_Width, pTilemapItem->m_Height);
@@ -1055,6 +1073,15 @@ int CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Storag
 								}
 							}
 							DataFile.UnloadData(pTilemapItem->m_Tune);
+						}
+						else if(pTiles->m_Mapparts)
+						{
+							void *pMappartsData = DataFile.GetData(pTilemapItem->m_Mapparts);
+							unsigned int Size = DataFile.GetUncompressedDataSize(pTilemapItem->m_Mapparts);
+							if (Size >= pTiles->m_Width*pTiles->m_Height*sizeof(CTile))
+								mem_copy(((CLayerMapparts*)pTiles)->m_pTiles, pMappartsData, pTiles->m_Width*pTiles->m_Height*sizeof(CTile));
+
+							DataFile.UnloadData(pTilemapItem->m_Mapparts);
 						}
 						else // regular tile layer or game layer
 						{

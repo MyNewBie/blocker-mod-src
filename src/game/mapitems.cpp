@@ -37,6 +37,14 @@ bool IsValidFrontTile(int Index)
 	);
 }
 
+bool IsValidMappartsTile(int Index)
+{
+	return (
+		    Index >= TILE_MAPPARTS_AIR && Index <= TILE_MAPPARTS_V5
+	);
+}
+
+
 bool IsValidEntity(int Index)
 {
 	Index -= ENTITY_OFFSET;

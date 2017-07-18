@@ -293,6 +293,7 @@ void CServer::CClient::Reset()
 	m_Score = 0;
 	m_AccID = -1;
 	m_NextMapChunk = 0;
+	m_Mappart = MAPPART_LOBBY;//rand()%NUM_MAPPARTS;//
 }
 
 CServer::CServer()
@@ -663,6 +664,8 @@ void CServer::DoSnapshot()
 		m_aDemoRecorder[MAX_CLIENTS].RecordSnapshot(Tick(), aExtraInfoRemoved, SnapshotSize);
 	}
 
+	//int64 timeSnap = time_get();
+
 	// create snapshots for all clients
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
@@ -783,6 +786,10 @@ void CServer::DoSnapshot()
 			}
 		}
 	}
+
+	/*float time = (time_get() - timeSnap) / (float)time_freq();
+	if(time > 0.05f)
+	dbg_msg(0, "%f", time);*/
 
 	GameServer()->OnPostSnap();
 }
@@ -996,7 +1003,7 @@ void CServer::UpdateClientRconCommands()
 	}
 }
 
-void CServer::ProcessClientPacket(CNetChunk *pPacket)
+void CServer::ProcessClientPacket(CNetChunk *pPacket, int Socket)
 {
 	int ClientID = pPacket->m_ClientID;
 	CUnpacker Unpacker;
@@ -1101,6 +1108,8 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 			{
 				char aAddrStr[NETADDR_MAXSTRSIZE];
 				net_addr_str(m_NetServer.ClientAddr(ClientID), aAddrStr, sizeof(aAddrStr), true);
+
+				m_aClients[ClientID].m_Mappart = Socket;
 
 				char aBuf[256];
 				str_format(aBuf, sizeof(aBuf), "player is ready. ClientID=%d addr=%s secure=%s", ClientID, aAddrStr, m_NetServer.HasSecurityToken(ClientID) ? "yes" : "no");
@@ -1345,7 +1354,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 	}
 }
 
-void CServer::SendServerInfoConnless(const NETADDR *pAddr, int Token, bool Extended)
+void CServer::SendServerInfoConnless(const NETADDR *pAddr, int Token, bool Extended, int Socket)
 {
 	const int MaxRequests = g_Config.m_SvServerInfoPerSecond;
 	int64 Now = Tick();
@@ -1361,10 +1370,10 @@ void CServer::SendServerInfoConnless(const NETADDR *pAddr, int Token, bool Exten
 	}
 
 	bool Short = m_ServerInfoNumRequests > MaxRequests || m_ServerInfoHighLoad;
-	SendServerInfo(pAddr, Token, Extended, 0, Short);
+	SendServerInfo(pAddr, Token, Socket, Extended, 0, Short);
 }
 
-void CServer::SendServerInfo(const NETADDR *pAddr, int Token, bool Extended, int Offset, bool Short)
+void CServer::SendServerInfo(const NETADDR *pAddr, int Token, int Socket, bool Extended, int Offset, bool Short)
 {
 	CNetChunk Packet;
 	CPacker p;
@@ -1397,22 +1406,31 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, bool Extended, int
 	str_format(aBuf, sizeof(aBuf), "%d", Token);
 	p.AddString(aBuf, 6);
 
+	char aFullSvName[64];
+	str_format(aFullSvName, sizeof(aFullSvName), "%s - %s", g_Config.m_SvName, s_MappartNames[Socket]);
+
 	p.AddString(GameServer()->Version(), 32);
 	if (Extended)
 	{
-		p.AddString(g_Config.m_SvName, 256);
+		if (m_NetServer.MaxClients() <= DDNET_MAX_CLIENTS)
+			p.AddString(aFullSvName, 64);
+		else
+		{
+			str_format(aBuf, sizeof(aBuf), "%s [%d/%d]", aFullSvName, ClientCount, m_NetServer.MaxClients());
+			p.AddString(aBuf, 64);
+		}
 	}
 	else
 	{
 		if (m_NetServer.MaxClients() <= VANILLA_MAX_CLIENTS)
-			p.AddString(g_Config.m_SvName, 64);
+			p.AddString(aFullSvName, 64);
 		else
 		{
-			str_format(aBuf, sizeof(aBuf), "%s [%d/%d]", g_Config.m_SvName, ClientCount, m_NetServer.MaxClients());
+			str_format(aBuf, sizeof(aBuf), "%s [%d/%d]", aFullSvName, ClientCount, m_NetServer.MaxClients());
 			p.AddString(aBuf, 64);
 		}
 	}
-	p.AddString(GetMapName(), 32);
+	p.AddString(s_MappartMapNames[Socket], 32);
 
 	// gametype
 	p.AddString(GameServer()->GameType(), 16);
@@ -1435,6 +1453,17 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, bool Extended, int
 				ClientCount = VANILLA_MAX_CLIENTS;
 		}
 		if (MaxClients > VANILLA_MAX_CLIENTS) MaxClients = VANILLA_MAX_CLIENTS;
+	}
+	else
+	{
+		if (ClientCount >= DDNET_MAX_CLIENTS)
+		{
+			if (ClientCount < MaxClients)
+				ClientCount = DDNET_MAX_CLIENTS - 1;
+			else
+				ClientCount = DDNET_MAX_CLIENTS;
+		}
+		if (MaxClients > DDNET_MAX_CLIENTS) MaxClients = DDNET_MAX_CLIENTS;
 	}
 
 	if (PlayerCount > ClientCount)
@@ -1480,10 +1509,10 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, bool Extended, int
 
 	Packet.m_DataSize = p.Size();
 	Packet.m_pData = p.Data();
-	m_NetServer.Send(&Packet);
+	m_NetServer.Send(&Packet, Socket);
 
 	if (Extended && Take < 0)
-		SendServerInfo(pAddr, Token, Extended, Offset + ClientsPerPacket);
+		SendServerInfo(pAddr, Token, Socket, Extended, Offset + ClientsPerPacket);
 }
 
 void CServer::UpdateServerInfo()
@@ -1506,12 +1535,13 @@ void CServer::PumpNetwork()
 	m_NetServer.Update();
 
 	// process packets
-	while (m_NetServer.Recv(&Packet))
+	for (int i = 0; i < NUM_MAPPARTS; i++)
+	while (m_NetServer.Recv(&Packet, i))
 	{
 		if (Packet.m_ClientID == -1)
 		{
 			// stateless
-			if (!m_Register.RegisterProcessPacket(&Packet))
+			if (!m_Register.RegisterProcessPacket(&Packet, i))
 			{
 				bool ServerInfo = false;
 				bool Extended = false;
@@ -1531,12 +1561,12 @@ void CServer::PumpNetwork()
 				if (ServerInfo)
 				{
 					int Token = ((unsigned char *)Packet.m_pData)[sizeof(SERVERBROWSE_GETINFO)];
-					SendServerInfoConnless(&Packet.m_Address, Token, Extended);
+					SendServerInfoConnless(&Packet.m_Address, Token, Extended, i);
 				}
 			}
 		}
 		else
-			ProcessClientPacket(&Packet);
+			ProcessClientPacket(&Packet, i);
 	}
 
 	m_ServerBan.Update();
@@ -2523,9 +2553,14 @@ void CServer::SetRconLevel(int ClientID, int Level)
 	GameServer()->OnSetAuthed(ClientID, Level);
 }
 
-int* CServer::GetIdMap(int ClientID)
+const int* CServer::GetIdMap(int ClientID)
 {
-	return (int*)(IdMap + VANILLA_MAX_CLIENTS * ClientID);
+	return (const int*)(m_IdMap + DDNET_MAX_CLIENTS * ClientID);
+}
+
+void CServer::WriteIdMap(void *pData)
+{
+	mem_copy(m_IdMap, pData, sizeof(m_IdMap));
 }
 
 void CServer::FixAccounts()

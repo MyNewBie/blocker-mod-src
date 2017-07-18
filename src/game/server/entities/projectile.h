@@ -19,6 +19,7 @@ public:
 		float Force,
 		int SoundImpact,
 		int Weapon,
+		int Mappart,
 		int Layer = 0,
 		int Number = 0
 	);

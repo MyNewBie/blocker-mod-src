@@ -6,8 +6,8 @@
 CLolPlasma *CLoltext::s_aapPlasma[MAX_LOLTEXTS][MAX_PLASMA_PER_LOLTEXT];
 int CLoltext::s_aExpire[MAX_LOLTEXTS];
 
-CLolPlasma::CLolPlasma(CGameWorld *pGameWorld, CEntity *pParent, vec2 Pos, vec2 Vel, int Lifespan, int ltid, int plid)
-	: CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER), m_ltid(ltid), m_plid(plid)
+CLolPlasma::CLolPlasma(CGameWorld *pGameWorld, CEntity *pParent, vec2 Pos, vec2 Vel, int Lifespan, int ltid, int plid, int Mappart)
+	: CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER, Mappart), m_ltid(ltid), m_plid(plid)
 {
 	m_LocalPos = vec2(0.0f, 0.0f);
 	m_StartOff = Pos;
@@ -69,7 +69,7 @@ vec2 CLoltext::TextSize(const char *pText, int size)
 	return vec2(Count*size*4.0f, size*5.0f);
 }
 
-int CLoltext::Create(CGameWorld *pGameWorld, CEntity *pParent, vec2 Pos, vec2 Vel, int Lifespan, const char *pText, bool Center, bool Follow, int size)
+int CLoltext::Create(CGameWorld *pGameWorld, CEntity *pParent, vec2 Pos, vec2 Vel, int Lifespan, const char *pText, bool Center, bool Follow, int Mappart, int size)
 {
 	char c;
 	vec2 CurPos = Pos;
@@ -110,7 +110,7 @@ int CLoltext::Create(CGameWorld *pGameWorld, CEntity *pParent, vec2 Pos, vec2 Ve
 				if (s_aaaChars[(unsigned)c][y][x] && NumPlasmas < MAX_PLASMA_PER_LOLTEXT) {
 					s_aapPlasma[TextID][NumPlasmas] =
 						new CLolPlasma(pGameWorld, pParent, CurPos + vec2(x*size, y*size),
-							Vel, Lifespan, TextID, NumPlasmas);
+							Vel, Lifespan, TextID, NumPlasmas, Mappart);
 					NumPlasmas++;
 				}
 		CurPos.x += 4 * 14;

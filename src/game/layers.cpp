@@ -17,6 +17,7 @@ CLayers::CLayers()
 	m_pFrontLayer = 0;
 	m_pSwitchLayer = 0;
 	m_pTuneLayer = 0;
+	m_pMappartsLayer = 0;
 }
 
 void CLayers::Init(class IKernel *pKernel)
@@ -30,6 +31,7 @@ void CLayers::Init(class IKernel *pKernel)
 	m_pFrontLayer = 0;
 	m_pSwitchLayer = 0;
 	m_pTuneLayer = 0;
+	m_pMappartsLayer = 0;
 
 	for(int g = 0; g < NumGroups(); g++)
 	{
@@ -103,6 +105,14 @@ void CLayers::Init(class IKernel *pKernel)
 						pTilemap->m_Tune = *((int*)(pTilemap) + 19);
 					}
 					m_pTuneLayer = pTilemap;
+				}
+				if(pTilemap->m_Flags&TILESLAYERFLAG_MAPPARTS)
+				{
+					if(pTilemap->m_Version <= 2)
+					{
+						pTilemap->m_Mapparts = *((int*)(pTilemap) + 19);
+					}
+					m_pMappartsLayer = pTilemap;
 				}
 			}
 		}

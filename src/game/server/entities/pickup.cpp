@@ -6,8 +6,8 @@
 
 #include <game/server/teams.h>
 
-CPickup::CPickup(CGameWorld *pGameWorld, int Type, int SubType, int Layer, int Number)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP)
+CPickup::CPickup(CGameWorld *pGameWorld, int Type, int Mappart, int SubType, int Layer, int Number)
+: CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP, Mappart)
 {
 	m_Type = Type;
 	m_Subtype = SubType;
@@ -48,7 +48,7 @@ void CPickup::Tick()
 	}*/
 	// Check if a player intersected us
 	CCharacter *apEnts[MAX_CLIENTS];
-	int Num = GameWorld()->FindEntities(m_Pos, 20.0f, (CEntity**)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+	int Num = GameWorld()->FindEntities(m_Pos, 20.0f, (CEntity**)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER, GetMappart());
 	for(int i = 0; i < Num; ++i) {
 		CCharacter * pChr = apEnts[i];
 		if(pChr && pChr->IsAlive())
@@ -59,7 +59,7 @@ void CPickup::Tick()
 			switch (m_Type)
 			{
 				case POWERUP_HEALTH:
-					if(pChr->Freeze()) GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH, pChr->Teams()->TeamMask(pChr->Team()));
+					if(pChr->Freeze()) GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH, GetMappart(), pChr->Teams()->TeamMask(pChr->Team()));
 					break;
 
 				case POWERUP_ARMOR:
@@ -82,7 +82,7 @@ void CPickup::Tick()
 					if (sound)
 					{
 						pChr->SetLastWeapon(WEAPON_GUN);
-						GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR, pChr->Teams()->TeamMask(pChr->Team()));
+						GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR, GetMappart(), pChr->Teams()->TeamMask(pChr->Team()));
 					}
 					if(!pChr->m_FreezeTime && pChr->GetActiveWeapon() >= WEAPON_SHOTGUN)
 						pChr->SetActiveWeapon(WEAPON_HAMMER);
@@ -97,11 +97,11 @@ void CPickup::Tick()
 						//RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;
 
 						if (m_Subtype == WEAPON_GRENADE)
-							GameServer()->CreateSound(m_Pos, SOUND_PICKUP_GRENADE, pChr->Teams()->TeamMask(pChr->Team()));
+							GameServer()->CreateSound(m_Pos, SOUND_PICKUP_GRENADE, GetMappart(), pChr->Teams()->TeamMask(pChr->Team()));
 						else if (m_Subtype == WEAPON_SHOTGUN)
-							GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN, pChr->Teams()->TeamMask(pChr->Team()));
+							GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN, GetMappart(), pChr->Teams()->TeamMask(pChr->Team()));
 						else if (m_Subtype == WEAPON_RIFLE)
-							GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN, pChr->Teams()->TeamMask(pChr->Team()));
+							GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN, GetMappart(), pChr->Teams()->TeamMask(pChr->Team()));
 
 						if (pChr->GetPlayer())
 							GameServer()->SendWeaponPickup(pChr->GetPlayer()->GetCID(), m_Subtype);

@@ -7,8 +7,8 @@
 #include <game/server/teams.h>
 #include "passiveindicator.h"
 
-CPassiveIndicator::CPassiveIndicator(CGameWorld *pGameWorld, vec2 Pos, int Owner)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP)
+CPassiveIndicator::CPassiveIndicator(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Mappart)
+: CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP, Mappart)
 {
 	m_Owner = Owner;
 	m_Pos = Pos;
@@ -33,7 +33,7 @@ void CPassiveIndicator::Tick()
 
 	if(!pOwnerChar->m_PassiveMode)
 	{
-		GameServer()->CreateDeath(m_Pos, m_Owner, pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner));
+		GameServer()->CreateDeath(m_Pos, m_Owner, GetMappart(), pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner));
 		Reset();
 		return;
 	}     

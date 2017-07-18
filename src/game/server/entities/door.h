@@ -19,7 +19,7 @@ public:
 	void Open(int Team);
 	void Close(int Team);
 	CDoor(CGameWorld *pGameWorld, vec2 Pos, float Rotation, int Length,
-			int Number);
+			int Number, int Mappart);
 
 	virtual void Reset();
 	virtual void Tick();

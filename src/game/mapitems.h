@@ -20,6 +20,7 @@ enum
 	LAYERTYPE_TUNE,
 	LAYERTYPE_SOUNDS_DEPRECATED, // deprecated! do not use this, this is just for compatibility reasons
 	LAYERTYPE_SOUNDS,
+	LAYERTYPE_MAPPARTS,
 
 	MAPITEMTYPE_VERSION=0,
 	MAPITEMTYPE_INFO,
@@ -172,6 +173,18 @@ enum
 	TILE_TEMP_BARRIER,
 	TILE_TEMP_GIVESWORD,
 
+	TILE_MAPPARTS_AIR=0,
+	TILE_MAPPARTS_LOBBY,
+	TILE_MAPPARTS_CHILL,
+	TILE_MAPPARTS_ROYAL,
+	TILE_MAPPARTS_PEPE,
+	TILE_MAPPARTS_STARBLOCK,
+	TILE_MAPPARTS_BAAM,
+	TILE_MAPPARTS_TOUCHUP,
+	TILE_MAPPARTS_V3,
+	TILE_MAPPARTS_V2,
+	TILE_MAPPARTS_V5,
+
 	//End of higher tiles
 	//Layers
 	LAYER_GAME=0,
@@ -199,6 +212,7 @@ enum
 	TILESLAYERFLAG_FRONT=8,
 	TILESLAYERFLAG_SWITCH=16,
 	TILESLAYERFLAG_TUNE=32,
+	TILESLAYERFLAG_MAPPARTS=64,
 
 	ENTITY_OFFSET=255-16*4,
 };
@@ -317,6 +331,7 @@ struct CMapItemLayerTilemap
 	int m_Front;
 	int m_Switch;
 	int m_Tune;
+	int m_Mapparts;
 } ;
 
 struct CMapItemLayerQuads
@@ -475,6 +490,7 @@ public:
 
 bool IsValidGameTile(int Index);
 bool IsValidFrontTile(int Index);
+bool IsValidMappartsTile(int Index);
 bool IsValidEntity(int Index);
 
 #endif

@@ -96,7 +96,7 @@ void CDatabase::CreateNewQuery(const char *pAddress, const char *pName, const ch
 	else
 		thread_init(ExecuteQuery, pFeed);
 
-	dbg_msg("SQL", pQuery);
+	//dbg_msg("SQL", pQuery);
 	log_file(pQuery, "Queries.log", g_Config.m_SvSecurityPath);
 }
 

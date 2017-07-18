@@ -9,6 +9,7 @@
 #include <base/math.h>
 
 #include <engine/message.h>
+#include <engine/server.h>
 
 /*
 
@@ -52,7 +53,7 @@ enum
 	NET_MAX_PAYLOAD = NET_MAX_PACKETSIZE-6,
 	NET_MAX_CHUNKHEADERSIZE = 5,
 	NET_PACKETHEADERSIZE = 3,
-	NET_MAX_CLIENTS = 64,
+	NET_MAX_CLIENTS = 256,
 	NET_MAX_CONSOLE_CLIENTS = 4,
 	NET_MAX_SEQUENCE = 1<<10,
 	NET_SEQUENCE_MASK = NET_MAX_SEQUENCE-1,
@@ -199,6 +200,8 @@ public:
 	int Connect(NETADDR *pAddr);
 	void Disconnect(const char *pReason);
 
+	void SetSocket(NETSOCKET Socket) { m_Socket = Socket; }
+
 	int Update();
 	int Flush();
 
@@ -285,6 +288,7 @@ class CNetServer
 	{
 	public:
 		CNetConnection m_Connection;
+		int m_Socket;
 	};
 
 	struct CSpamConn
@@ -294,7 +298,7 @@ class CNetServer
 		int m_Conns;
 	};
 
-	NETSOCKET m_Socket;
+	NETSOCKET m_Sockets[NUM_MAPPARTS];
 	class CNetBan *m_pNetBan;
 	CSlot m_aSlots[NET_MAX_CLIENTS];
 	int m_MaxClients;
@@ -320,17 +324,17 @@ class CNetServer
 
 	CNetRecvUnpacker m_RecvUnpacker;
 
-	void OnTokenCtrlMsg(NETADDR &Addr, int ControlMsg, const CNetPacketConstruct &Packet);
-	void OnPreConnMsg(NETADDR &Addr, CNetPacketConstruct &Packet);
-	void OnConnCtrlMsg(NETADDR &Addr, int ClientID, int ControlMsg, const CNetPacketConstruct &Packet);
+	void OnTokenCtrlMsg(NETADDR &Addr, int ControlMsg, const CNetPacketConstruct &Packet, int Socket);
+	void OnPreConnMsg(NETADDR &Addr, CNetPacketConstruct &Packet, int Socket);
+	void OnConnCtrlMsg(NETADDR &Addr, int ClientID, int ControlMsg, const CNetPacketConstruct &Packet, int Socket);
 	bool ClientExists(const NETADDR &Addr) { return GetClientSlot(Addr) != -1; };
 	int GetClientSlot(const NETADDR &Addr);
-	void SendControl(NETADDR &Addr, int ControlMsg, const void *pExtra, int ExtraSize, SECURITY_TOKEN SecurityToken);
+	void SendControl(NETADDR &Addr, int ControlMsg, const void *pExtra, int ExtraSize, SECURITY_TOKEN SecurityToken, int Socket);
 
-	int TryAcceptClient(NETADDR &Addr, SECURITY_TOKEN SecurityToken, bool VanillaAuth=false);
+	int TryAcceptClient(NETADDR &Addr, SECURITY_TOKEN SecurityToken, int Socket, bool VanillaAuth=false);
 	int NumClientsWithAddr(NETADDR Addr);
 	bool Connlimit(NETADDR Addr);
-	void SendMsgs(NETADDR &Addr, const CMsgPacker *Msgs[], int num);
+	void SendMsgs(NETADDR &Addr, const CMsgPacker *Msgs[], int num, int Socket);
 
 public:
 	int SetCallbacks(NETFUNC_NEWCLIENT pfnNewClient, NETFUNC_DELCLIENT pfnDelClient, void *pUser);
@@ -341,8 +345,8 @@ public:
 	int Close();
 
 	//
-	int Recv(CNetChunk *pChunk);
-	int Send(CNetChunk *pChunk);
+	int Recv(CNetChunk *pChunk, int Socket);
+	int Send(CNetChunk *pChunk, int Socket = -1);
 	int Update();
 
 	//
@@ -351,9 +355,9 @@ public:
 	// status requests
 	const NETADDR *ClientAddr(int ClientID) const { return m_aSlots[ClientID].m_Connection.PeerAddress(); }
 	bool HasSecurityToken(int ClientID) const { return m_aSlots[ClientID].m_Connection.SecurityToken() != NET_SECURITY_TOKEN_UNSUPPORTED; }
-	NETSOCKET Socket() const { return m_Socket; }
+	NETSOCKET Socket(int Index = 0) const { return m_Sockets[Index]; }
 	class CNetBan *NetBan() const { return m_pNetBan; }
-	int NetType() const { return m_Socket.type; }
+	int NetType(int Index = 0) const { return m_Sockets[Index].type; }
 	int MaxClients() const { return m_MaxClients; }
 
 	//

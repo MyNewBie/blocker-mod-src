@@ -133,7 +133,7 @@ class CCharacter *CGameContext::GetPlayerChar(int ClientID)
 	return m_apPlayers[ClientID]->GetCharacter();
 }
 
-void CGameContext::CreateDamageInd(vec2 Pos, float Angle, int Amount, int64_t Mask)
+void CGameContext::CreateDamageInd(vec2 Pos, float Angle, int Amount, int Mappart, int64_t Mask)
 {
 	float a = 3 * 3.14159f / 2 + Angle;
 	//float a = get_angle(dir);
@@ -142,7 +142,7 @@ void CGameContext::CreateDamageInd(vec2 Pos, float Angle, int Amount, int64_t Ma
 	for (int i = 0; i < Amount; i++)
 	{
 		float f = mix(s, e, float(i + 1) / float(Amount + 2));
-		CNetEvent_DamageInd *pEvent = (CNetEvent_DamageInd *)m_Events.Create(NETEVENTTYPE_DAMAGEIND, sizeof(CNetEvent_DamageInd), Mask);
+		CNetEvent_DamageInd *pEvent = (CNetEvent_DamageInd *)m_Events.Create(NETEVENTTYPE_DAMAGEIND, sizeof(CNetEvent_DamageInd), Mappart, Mask);
 		if (pEvent)
 		{
 			pEvent->m_X = (int)Pos.x;
@@ -152,10 +152,10 @@ void CGameContext::CreateDamageInd(vec2 Pos, float Angle, int Amount, int64_t Ma
 	}
 }
 
-void CGameContext::CreateHammerHit(vec2 Pos, int64_t Mask)
+void CGameContext::CreateHammerHit(vec2 Pos, int Mappart, int64_t Mask)
 {
 	// create the event
-	CNetEvent_HammerHit *pEvent = (CNetEvent_HammerHit *)m_Events.Create(NETEVENTTYPE_HAMMERHIT, sizeof(CNetEvent_HammerHit), Mask);
+	CNetEvent_HammerHit *pEvent = (CNetEvent_HammerHit *)m_Events.Create(NETEVENTTYPE_HAMMERHIT, sizeof(CNetEvent_HammerHit), Mappart, Mask);
 	if (pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -164,10 +164,10 @@ void CGameContext::CreateHammerHit(vec2 Pos, int64_t Mask)
 }
 
 
-void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int ActivatedTeam, int64_t Mask)
+void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int ActivatedTeam, int Mappart, int64_t Mask)
 {
 	// create the event
-	CNetEvent_Explosion *pEvent = (CNetEvent_Explosion *)m_Events.Create(NETEVENTTYPE_EXPLOSION, sizeof(CNetEvent_Explosion), Mask);
+	CNetEvent_Explosion *pEvent = (CNetEvent_Explosion *)m_Events.Create(NETEVENTTYPE_EXPLOSION, sizeof(CNetEvent_Explosion), Mappart, Mask);
 	if (pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -181,11 +181,15 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamag
 	CCharacter *apEnts[MAX_CLIENTS];
 	float Radius = 135.0f;
 	float InnerRadius = 48.0f;
-	int Num = m_World.FindEntities(Pos, Radius, (CEntity**)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+	int Num = m_World.FindEntities(Pos, Radius, (CEntity**)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER, Mappart);
 	for (int i = 0; i < Num; i++)
 	{
 		vec2 Diff = apEnts[i]->m_Pos - Pos;
 		vec2 ForceDir(0, 1);
+
+		if(apEnts[i]->GetMappart() != Mappart)
+			continue;
+
 		float l = length(Diff);
 		if (l)
 			ForceDir = normalize(Diff);
@@ -222,10 +226,10 @@ pEvent->y = (int)Pos.y;
 }
 }*/
 
-void CGameContext::CreatePlayerSpawn(vec2 Pos, int64_t Mask)
+void CGameContext::CreatePlayerSpawn(vec2 Pos, int Mappart, int64_t Mask)
 {
 	// create the event
-	CNetEvent_Spawn *ev = (CNetEvent_Spawn *)m_Events.Create(NETEVENTTYPE_SPAWN, sizeof(CNetEvent_Spawn), Mask);
+	CNetEvent_Spawn *ev = (CNetEvent_Spawn *)m_Events.Create(NETEVENTTYPE_SPAWN, sizeof(CNetEvent_Spawn), Mappart, Mask);
 	if (ev)
 	{
 		ev->m_X = (int)Pos.x;
@@ -233,10 +237,10 @@ void CGameContext::CreatePlayerSpawn(vec2 Pos, int64_t Mask)
 	}
 }
 
-void CGameContext::CreateDeath(vec2 Pos, int ClientID, int64_t Mask)
+void CGameContext::CreateDeath(vec2 Pos, int ClientID, int Mappart, int64_t Mask)
 {
 	// create the event
-	CNetEvent_Death *pEvent = (CNetEvent_Death *)m_Events.Create(NETEVENTTYPE_DEATH, sizeof(CNetEvent_Death), Mask);
+	CNetEvent_Death *pEvent = (CNetEvent_Death *)m_Events.Create(NETEVENTTYPE_DEATH, sizeof(CNetEvent_Death), Mappart, Mask);
 	if (pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -245,13 +249,13 @@ void CGameContext::CreateDeath(vec2 Pos, int ClientID, int64_t Mask)
 	}
 }
 
-void CGameContext::CreateSound(vec2 Pos, int Sound, int64_t Mask)
+void CGameContext::CreateSound(vec2 Pos, int Sound, int Mappart, int64_t Mask)
 {
 	if (Sound < 0)
 		return;
 
 	// create a sound
-	CNetEvent_SoundWorld *pEvent = (CNetEvent_SoundWorld *)m_Events.Create(NETEVENTTYPE_SOUNDWORLD, sizeof(CNetEvent_SoundWorld), Mask);
+	CNetEvent_SoundWorld *pEvent = (CNetEvent_SoundWorld *)m_Events.Create(NETEVENTTYPE_SOUNDWORLD, sizeof(CNetEvent_SoundWorld), Mappart, Mask);
 	if (pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -280,7 +284,7 @@ void CGameContext::CreateSoundGlobal(int Sound, int Target)
 
 void CGameContext::CreateLoveEvent(vec2 Pos, int Owner)
 {
-	new CLovely(&m_World, Pos, Owner);
+	new CLovely(&m_World, Pos, Owner, Server()->GetClientMappart(Owner));
 }
 
 void CGameContext::CallVote(int ClientID, const char *pDesc, const char *pCmd, const char *pReason, const char *pChatmsg)
@@ -381,7 +385,7 @@ void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, in
 		for (int i = 0; i < MAX_CLIENTS; i++)
 		{
 			if (m_apPlayers[i] != 0) {
-				if (!m_apPlayers[i]->m_DND)
+				if (!m_apPlayers[i]->m_DND && (ChatterClientID == -1 || Server()->GetClientMappart(ChatterClientID) == Server()->GetClientMappart(i) ))
 					Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NORECORD, i);
 			}
 		}
@@ -414,8 +418,16 @@ void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, in
 					}
 				}
 				else {
-					if (Teams->Team(i) == Team && m_apPlayers[i]->GetTeam() != CHAT_SPEC) {
-						Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NORECORD, i);
+					if (Teams->Team(i) == Team && m_apPlayers[i]->GetTeam() != CHAT_SPEC ) {
+						if(Team == 0)
+						{
+							if(Server()->GetClientMappart(ChatterClientID) == Server()->GetClientMappart(i))
+								Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NORECORD, i);
+						}
+						else
+							Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NORECORD, i);
+							
+						
 					}
 				}
 			}
@@ -502,6 +514,12 @@ void CGameContext::SendVoteStatus(int ClientID, int Total, int Yes, int No)
 		Yes = float(Yes) * VANILLA_MAX_CLIENTS / float(Total);
 		No = float(No) * VANILLA_MAX_CLIENTS / float(Total);
 		Total = VANILLA_MAX_CLIENTS;
+	}
+	else if(Total > DDNET_MAX_CLIENTS)
+	{
+		Yes = float(Yes) * DDNET_MAX_CLIENTS / float(Total);
+		No = float(No) * DDNET_MAX_CLIENTS / float(Total);
+		Total = DDNET_MAX_CLIENTS;
 	}
 
 	CNetMsg_Sv_VoteStatus Msg = { 0 };
@@ -3484,9 +3502,9 @@ void CGameContext::List(int ClientID, const char* filter)
 	SendChatTarget(ClientID, buf);
 }
 
-int CGameContext::CreateLolText(CEntity *pParent, bool Follow, vec2 Pos, vec2 Vel, int Lifespan, const char *pText, int size)
+int CGameContext::CreateLolText(CEntity *pParent, bool Follow, vec2 Pos, vec2 Vel, int Lifespan, const char *pText, int Mappart, int size)
 {
-	return CLoltext::Create(&m_World, pParent, Pos, Vel, Lifespan, pText, true, Follow, size);
+	return CLoltext::Create(&m_World, pParent, Pos, Vel, Lifespan, pText, true, Follow, Mappart, size);
 }
 
 void CGameContext::DestroyLolText(int TextID)

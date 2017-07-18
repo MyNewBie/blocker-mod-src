@@ -7,8 +7,8 @@
 #include <game/server/teams.h>
 #include "lovely.h"
 
-CLovely::CLovely(CGameWorld *pGameWorld, vec2 Pos, int Owner)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP)
+CLovely::CLovely(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Mappart)
+: CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP, Mappart)
 {
 	m_Owner = Owner;
 	m_Pos = Pos;

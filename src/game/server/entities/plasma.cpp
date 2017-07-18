@@ -10,8 +10,8 @@
 const float ACCEL = 1.1f;
 
 CPlasma::CPlasma(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, bool Freeze,
-		bool Explosive, int ResponsibleTeam) :
-		CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
+		bool Explosive, int ResponsibleTeam, int Mappart) :
+		CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER, Mappart)
 {
 	m_Pos = Pos;
 	m_Core = Dir;
@@ -27,7 +27,7 @@ bool CPlasma::HitCharacter()
 {
 	vec2 To2;
 	CCharacter *Hit = GameServer()->m_World.IntersectCharacter(m_Pos,
-			m_Pos + m_Core, 0.0f, To2);
+			m_Pos + m_Core, 0.0f, To2, GetMappart());
 	if (!Hit)
 		return false;
 
@@ -36,7 +36,7 @@ bool CPlasma::HitCharacter()
 	m_Freeze ? Hit->Freeze() : Hit->UnFreeze();
 	if (m_Explosive)
 		GameServer()->CreateExplosion(m_Pos, -1, WEAPON_GRENADE, true,
-				m_ResponsibleTeam, Hit->Teams()->TeamMask(m_ResponsibleTeam));
+				m_ResponsibleTeam, GetMappart(), Hit->Teams()->TeamMask(m_ResponsibleTeam));
 	GameServer()->m_World.DestroyEntity(this);
 	return true;
 }
@@ -75,6 +75,7 @@ void CPlasma::Tick()
 					WEAPON_GRENADE,
 					true,
 					m_ResponsibleTeam,
+					GetMappart(),
 					((CGameControllerDDRace*) GameServer()->m_pController)->m_Teams.TeamMask(
 							m_ResponsibleTeam));
 		Reset();

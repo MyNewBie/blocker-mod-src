@@ -39,9 +39,8 @@ IGameController::IGameController(class CGameContext *pGameServer)
 	m_UnbalancedTick = -1;
 	m_ForceBalanced = false;
 
-	m_aNumSpawnPoints[0] = 0;
-	m_aNumSpawnPoints[1] = 0;
-	m_aNumSpawnPoints[2] = 0;
+	for(int i = 0; i < NUM_MAPPARTS; i++)
+		m_aNumSpawnPoints[i] = 0;
 
 	m_CurrentRecord = 0;
 }
@@ -68,14 +67,14 @@ float IGameController::EvaluateSpawnPos(CSpawnEval *pEval, vec2 Pos)
 	return Score;
 }
 
-void IGameController::EvaluateSpawnType(CSpawnEval *pEval, int Type)
+void IGameController::EvaluateSpawnType(CSpawnEval *pEval, int Mappart)
 {
 	// get spawn point
-	for (int i = 0; i < m_aNumSpawnPoints[Type]; i++)
+	for (int i = 0; i < m_aNumSpawnPoints[Mappart]; i++)
 	{
 		// check if the position is occupado
 		CCharacter *aEnts[MAX_CLIENTS];
-		int Num = GameServer()->m_World.FindEntities(m_aaSpawnPoints[Type][i], 64, (CEntity**)aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+		int Num = GameServer()->m_World.FindEntities(m_aaSpawnPoints[Mappart][i], 64, (CEntity**)aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER, Mappart);
 		vec2 Positions[5] = { vec2(0.0f, 0.0f), vec2(-32.0f, 0.0f), vec2(0.0f, -32.0f), vec2(32.0f, 0.0f), vec2(0.0f, 32.0f) };	// start, left, up, right, down
 		int Result = -1;
 		for (int Index = 0; Index < 5 && Result == -1; ++Index)
@@ -84,8 +83,8 @@ void IGameController::EvaluateSpawnType(CSpawnEval *pEval, int Type)
 			if (!GameServer()->m_World.m_Core.m_Tuning[0].m_PlayerCollision)
 				break;
 			for (int c = 0; c < Num; ++c)
-				if (GameServer()->Collision()->CheckPoint(m_aaSpawnPoints[Type][i] + Positions[Index]) ||
-					distance(aEnts[c]->m_Pos, m_aaSpawnPoints[Type][i] + Positions[Index]) <= aEnts[c]->m_ProximityRadius)
+				if (GameServer()->Collision()->CheckPoint(m_aaSpawnPoints[Mappart][i] + Positions[Index]) ||
+					distance(aEnts[c]->m_Pos, m_aaSpawnPoints[Mappart][i] + Positions[Index]) <= aEnts[c]->m_ProximityRadius)
 				{
 					Result = -1;
 					break;
@@ -94,7 +93,7 @@ void IGameController::EvaluateSpawnType(CSpawnEval *pEval, int Type)
 		if (Result == -1)
 			continue;	// try next spawn point
 
-		vec2 P = m_aaSpawnPoints[Type][i] + Positions[Result];
+		vec2 P = m_aaSpawnPoints[Mappart][i] + Positions[Result];
 		float S = EvaluateSpawnPos(pEval, P);
 		if (!pEval->m_Got || pEval->m_Score > S)
 		{
@@ -105,7 +104,7 @@ void IGameController::EvaluateSpawnType(CSpawnEval *pEval, int Type)
 	}
 }
 
-bool IGameController::CanSpawn(int Team, vec2 *pOutPos)
+bool IGameController::CanSpawn(int Mappart, int Team, vec2 *pOutPos)
 {
 	CSpawnEval Eval;
 
@@ -128,7 +127,7 @@ bool IGameController::CanSpawn(int Team, vec2 *pOutPos)
 	}
 	else
 	{*/
-	EvaluateSpawnType(&Eval, Team);
+	EvaluateSpawnType(&Eval, Mappart);
 	//EvaluateSpawnType(&Eval, 1);
 	//EvaluateSpawnType(&Eval, 2);
 	//}
@@ -143,6 +142,10 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 {
 	if (Index < 0)
 		return false;
+
+	int IndexMapparts = GameServer()->Collision()->GetMappartsIndex(Pos);
+	int Mappart = GameServer()->m_World.TranslateMappartTiles(IndexMapparts);
+	Mappart = Mappart == -1 ? MAPPART_LOBBY : Mappart;
 
 	int Type = -1;
 	int SubType = 0;
@@ -161,89 +164,98 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 	sides[7] = GameServer()->Collision()->Entity(x - 1, y + 1, Layer);
 
 
-	if (Index == ENTITY_SPAWN)
-		m_aaSpawnPoints[0][m_aNumSpawnPoints[0]++] = Pos;
-	else if (Index == ENTITY_SPAWN_RED)
-		m_aaSpawnPoints[1][m_aNumSpawnPoints[1]++] = Pos;
-	else if (Index == ENTITY_SPAWN_BLUE)
-		m_aaSpawnPoints[2][m_aNumSpawnPoints[2]++] = Pos;
+	if (Index == ENTITY_SPAWN || Index == ENTITY_SPAWN_RED || Index == ENTITY_SPAWN_BLUE)
+	{
+		m_aaSpawnPoints[Mappart][m_aNumSpawnPoints[Mappart]++] = Pos;
+	}
 
 	else if (Index == ENTITY_DOOR)
 	{
-		for (int i = 0; i < 8; i++)
+		if(Mappart != -1)
 		{
-			if (sides[i] >= ENTITY_LASER_SHORT && sides[i] <= ENTITY_LASER_LONG)
+			for (int i = 0; i < 8; i++)
 			{
-				new CDoor
-					(
-						&GameServer()->m_World, //GameWorld
-						Pos, //Pos
-						pi / 4 * i, //Rotation
-						32 * 3 + 32 * (sides[i] - ENTITY_LASER_SHORT) * 3, //Length
-						Number //Number
-						);
+				if (sides[i] >= ENTITY_LASER_SHORT && sides[i] <= ENTITY_LASER_LONG)
+				{
+					new CDoor
+						(
+							&GameServer()->m_World, //GameWorld
+							Pos, //Pos
+							pi / 4 * i, //Rotation
+							32 * 3 + 32 * (sides[i] - ENTITY_LASER_SHORT) * 3, //Length
+							Number, //Number
+							Mappart);
+				}
 			}
 		}
 	}
 	else if (Index == ENTITY_CRAZY_SHOTGUN_EX)
 	{
-		int Dir;
-		if (!Flags)
-			Dir = 0;
-		else if (Flags == ROTATION_90)
-			Dir = 1;
-		else if (Flags == ROTATION_180)
-			Dir = 2;
-		else
-			Dir = 3;
-		float Deg = Dir * (pi / 2);
-		CProjectile *bullet = new CProjectile
-			(
-				&GameServer()->m_World,
-				WEAPON_SHOTGUN, //Type
-				-1, //Owner
-				Pos, //Pos
-				vec2(sin(Deg), cos(Deg)), //Dir
-				-2, //Span
-				true, //Freeze
-				true, //Explosive
-				0, //Force
-				(g_Config.m_SvShotgunBulletSound) ? SOUND_GRENADE_EXPLODE : -1,//SoundImpact
-				WEAPON_SHOTGUN,//Weapon
-				Layer,
-				Number
-				);
-		bullet->SetBouncing(2 - (Dir % 2));
+		if(Mappart != -1)
+		{
+			int Dir;
+			if (!Flags)
+				Dir = 0;
+			else if (Flags == ROTATION_90)
+				Dir = 1;
+			else if (Flags == ROTATION_180)
+				Dir = 2;
+			else
+				Dir = 3;
+			float Deg = Dir * (pi / 2);
+			CProjectile *bullet = new CProjectile
+				(
+					&GameServer()->m_World,
+					WEAPON_SHOTGUN, //Type
+					-1, //Owner
+					Pos, //Pos
+					vec2(sin(Deg), cos(Deg)), //Dir
+					-2, //Span
+					true, //Freeze
+					true, //Explosive
+					0, //Force
+					(g_Config.m_SvShotgunBulletSound) ? SOUND_GRENADE_EXPLODE : -1,//SoundImpact
+					WEAPON_SHOTGUN,//Weapon
+					Mappart,
+					Layer,
+					Number
+					);
+			bullet->SetBouncing(2 - (Dir % 2));
+		}
 	}
 	else if (Index == ENTITY_CRAZY_SHOTGUN)
 	{
-		int Dir;
-		if (!Flags)
-			Dir = 0;
-		else if (Flags == (TILEFLAG_ROTATE))
-			Dir = 1;
-		else if (Flags == (TILEFLAG_VFLIP | TILEFLAG_HFLIP))
-			Dir = 2;
-		else
-			Dir = 3;
-		float Deg = Dir * (pi / 2);
-		CProjectile *bullet = new CProjectile
-			(
-				&GameServer()->m_World,
-				WEAPON_SHOTGUN, //Type
-				-1, //Owner
-				Pos, //Pos
-				vec2(sin(Deg), cos(Deg)), //Dir
-				-2, //Span
-				true, //Freeze
-				false, //Explosive
-				0,
-				SOUND_GRENADE_EXPLODE,
-				WEAPON_SHOTGUN, //Weapon
-				Layer,
-				Number
-				);
-		bullet->SetBouncing(2 - (Dir % 2));
+		if(Mappart != -1)
+		{
+			int Dir;
+			if (!Flags)
+				Dir = 0;
+			else if (Flags == (TILEFLAG_ROTATE))
+				Dir = 1;
+			else if (Flags == (TILEFLAG_VFLIP | TILEFLAG_HFLIP))
+				Dir = 2;
+			else
+				Dir = 3;
+			float Deg = Dir * (pi / 2);
+			CProjectile *bullet = new CProjectile
+				(
+					&GameServer()->m_World,
+					WEAPON_SHOTGUN, //Type
+					-1, //Owner
+					Pos, //Pos
+					vec2(sin(Deg), cos(Deg)), //Dir
+					-2, //Span
+					true, //Freeze
+					false, //Explosive
+					0,
+					SOUND_GRENADE_EXPLODE,
+					WEAPON_SHOTGUN, //Weapon
+					Mappart,
+					Layer,
+					Number
+					);
+			bullet->SetBouncing(2 - (Dir % 2));
+		}
 	}
 
 	if (Index == ENTITY_ARMOR_1)
@@ -311,55 +323,67 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 		{
 			if (sides[i] >= ENTITY_LASER_SHORT && sides[i] <= ENTITY_LASER_LONG)
 			{
-				CLight *Lgt = new CLight(&GameServer()->m_World, Pos, pi / 4 * i, 32 * 3 + 32 * (sides[i] - ENTITY_LASER_SHORT) * 3, Layer, Number);
-				Lgt->m_AngularSpeed = AngularSpeed;
-				if (sides2[i] >= ENTITY_LASER_C_SLOW && sides2[i] <= ENTITY_LASER_C_FAST)
+				if(Mappart != -1)
 				{
-					Lgt->m_Speed = 1 + (sides2[i] - ENTITY_LASER_C_SLOW) * 2;
-					Lgt->m_CurveLength = Lgt->m_Length;
+					CLight *Lgt = new CLight(&GameServer()->m_World, Pos, pi / 4 * i, 32 * 3 + 32 * (sides[i] - ENTITY_LASER_SHORT) * 3, Mappart, Layer, Number);
+					Lgt->m_AngularSpeed = AngularSpeed;
+					if (sides2[i] >= ENTITY_LASER_C_SLOW && sides2[i] <= ENTITY_LASER_C_FAST)
+					{
+						Lgt->m_Speed = 1 + (sides2[i] - ENTITY_LASER_C_SLOW) * 2;
+						Lgt->m_CurveLength = Lgt->m_Length;
+					}
+					else if (sides2[i] >= ENTITY_LASER_O_SLOW && sides2[i] <= ENTITY_LASER_O_FAST)
+					{
+						Lgt->m_Speed = 1 + (sides2[i] - ENTITY_LASER_O_SLOW) * 2;
+						Lgt->m_CurveLength = 0;
+					}
+					else
+						Lgt->m_CurveLength = Lgt->m_Length;
 				}
-				else if (sides2[i] >= ENTITY_LASER_O_SLOW && sides2[i] <= ENTITY_LASER_O_FAST)
-				{
-					Lgt->m_Speed = 1 + (sides2[i] - ENTITY_LASER_O_SLOW) * 2;
-					Lgt->m_CurveLength = 0;
-				}
-				else
-					Lgt->m_CurveLength = Lgt->m_Length;
 			}
 		}
 
 	}
 	else if (Index >= ENTITY_DRAGGER_WEAK && Index <= ENTITY_DRAGGER_STRONG)
 	{
-		CDraggerTeam(&GameServer()->m_World, Pos, Index - ENTITY_DRAGGER_WEAK + 1, false, Layer, Number);
+		if(Mappart != -1)
+			CDraggerTeam(&GameServer()->m_World, Pos, Index - ENTITY_DRAGGER_WEAK + 1, false, Mappart, Layer, Number);
 	}
 	else if (Index >= ENTITY_DRAGGER_WEAK_NW && Index <= ENTITY_DRAGGER_STRONG_NW)
 	{
-		CDraggerTeam(&GameServer()->m_World, Pos, Index - ENTITY_DRAGGER_WEAK_NW + 1, true, Layer, Number);
+		if(Mappart != -1)
+			CDraggerTeam(&GameServer()->m_World, Pos, Index - ENTITY_DRAGGER_WEAK_NW + 1, true, Mappart, Layer, Number);
 	}
 	else if (Index == ENTITY_PLASMAE)
 	{
-		new CGun(&GameServer()->m_World, Pos, false, true, Layer, Number);
+		if(Mappart != -1)
+			new CGun(&GameServer()->m_World, Pos, false, true, Mappart, Layer, Number);
 	}
 	else if (Index == ENTITY_PLASMAF)
 	{
-		new CGun(&GameServer()->m_World, Pos, true, false, Layer, Number);
+		if(Mappart != -1)
+			new CGun(&GameServer()->m_World, Pos, true, false, Mappart, Layer, Number);
 	}
 	else if (Index == ENTITY_PLASMA)
 	{
-		new CGun(&GameServer()->m_World, Pos, true, true, Layer, Number);
+		if(Mappart != -1)
+			new CGun(&GameServer()->m_World, Pos, true, true, Mappart, Layer, Number);
 	}
 	else if (Index == ENTITY_PLASMAU)
 	{
-		new CGun(&GameServer()->m_World, Pos, false, false, Layer, Number);
+		if(Mappart != -1)
+			new CGun(&GameServer()->m_World, Pos, false, false, Mappart, Layer, Number);
 	}
 
 	if (Type != -1)
 	{
-		//CPickup *pPickup = new CPickup(&GameServer()->m_World, Type, SubType);
-		CPickup *pPickup = new CPickup(&GameServer()->m_World, Type, SubType, Layer, Number);
-		pPickup->m_Pos = Pos;
+		if(Mappart != -1)
+		{
+			//CPickup *pPickup = new CPickup(&GameServer()->m_World, Type, SubType);
+			CPickup *pPickup = new CPickup(&GameServer()->m_World, Type, Mappart, SubType, Layer, Number);
+			pPickup->m_Pos = Pos;
 		return true;
+		}
 	}
 
 	return false;

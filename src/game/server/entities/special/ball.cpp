@@ -7,8 +7,8 @@
 #include <game/server/teams.h>
 #include "ball.h"
 
-CBall::CBall(CGameWorld *pGameWorld, vec2 Pos, int Owner)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
+CBall::CBall(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Mappart)
+: CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER, Mappart)
 {
 	m_Owner = Owner;
 	m_Pos = Pos;

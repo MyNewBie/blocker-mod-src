@@ -4,7 +4,7 @@
 class CLovely : public CEntity
 {
 public:
-	CLovely(CGameWorld *pGameWorld, vec2 Pos, int Owner);
+	CLovely(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Mappart);
 
 	virtual void Reset();
 	virtual void Tick();

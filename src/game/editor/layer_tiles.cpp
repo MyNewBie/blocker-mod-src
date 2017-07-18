@@ -36,6 +36,7 @@ CLayerTiles::CLayerTiles(int w, int h)
 	m_Front = 0;
 	m_Switch = 0;
 	m_Tune = 0;
+	m_Mapparts = 0;
 
 	m_pTiles = new CTile[m_Width*m_Height];
 	mem_zero(m_pTiles, m_Width*m_Height*sizeof(CTile));
@@ -307,6 +308,21 @@ int CLayerTiles::BrushGrab(CLayerGroup *pBrush, CUIRect Rect)
 				pGrabbed->m_pTiles[y*pGrabbed->m_Width+x] = GetTile(r.x+x, r.y+y);
 		str_copy(pGrabbed->m_aFileName, m_pEditor->m_aFileName, sizeof(pGrabbed->m_aFileName));
 	}
+	else if(m_pEditor->GetSelectedLayer(0) == m_pEditor->m_Map.m_pMappartsLayer)
+	{
+		CLayerMapparts *pGrabbed = new CLayerMapparts(r.w, r.h);
+		pGrabbed->m_pEditor = m_pEditor;
+		pGrabbed->m_TexID = m_TexID;
+		pGrabbed->m_Image = m_Image;
+		pGrabbed->m_Game = m_Game;
+		pBrush->AddLayer(pGrabbed);
+
+		// copy the tiles
+		for(int y = 0; y < r.h; y++)
+			for(int x = 0; x < r.w; x++)
+				pGrabbed->m_pTiles[y*pGrabbed->m_Width+x] = GetTile(r.x+x, r.y+y);
+		str_copy(pGrabbed->m_aFileName, m_pEditor->m_aFileName, sizeof(pGrabbed->m_aFileName));
+	}
 	else
 	{
 		CLayerTiles *pGrabbed = new CLayerTiles(r.w, r.h);
@@ -322,6 +338,7 @@ int CLayerTiles::BrushGrab(CLayerGroup *pBrush, CUIRect Rect)
 				pGrabbed->m_pTiles[y*pGrabbed->m_Width+x] = GetTile(r.x+x, r.y+y);
 		str_copy(pGrabbed->m_aFileName, m_pEditor->m_aFileName, sizeof(pGrabbed->m_aFileName));
 	}
+
 
 	return 1;
 }
@@ -480,6 +497,9 @@ void CLayerTiles::Resize(int NewW, int NewH)
 	// resize tune layer if available
 	if(m_Game && m_pEditor->m_Map.m_pTuneLayer && (m_pEditor->m_Map.m_pTuneLayer->m_Width != NewW || m_pEditor->m_Map.m_pTuneLayer->m_Height != NewH))
 			m_pEditor->m_Map.m_pTuneLayer->Resize(NewW, NewH);
+
+	if(m_Game && m_pEditor->m_Map.m_pMappartsLayer && (m_pEditor->m_Map.m_pMappartsLayer->m_Width != NewW || m_pEditor->m_Map.m_pMappartsLayer->m_Height != NewH))
+		m_pEditor->m_Map.m_pMappartsLayer->Resize(NewW, NewH);
 }
 
 void CLayerTiles::Shift(int Direction)
@@ -587,7 +607,7 @@ int CLayerTiles::RenderProperties(CUIRect *pToolBox)
 			}
 		}
 	}
-	else if(m_pEditor->m_Map.m_pGameLayer == this || m_pEditor->m_Map.m_pTeleLayer == this || m_pEditor->m_Map.m_pSpeedupLayer == this || m_pEditor->m_Map.m_pFrontLayer == this || m_pEditor->m_Map.m_pSwitchLayer == this || m_pEditor->m_Map.m_pTuneLayer == this)
+	else if(m_pEditor->m_Map.m_pGameLayer == this || m_pEditor->m_Map.m_pTeleLayer == this || m_pEditor->m_Map.m_pSpeedupLayer == this || m_pEditor->m_Map.m_pFrontLayer == this || m_pEditor->m_Map.m_pSwitchLayer == this || m_pEditor->m_Map.m_pTuneLayer == this || m_pEditor->m_Map.m_pMappartsLayer == this)
 		InGameGroup = false;
 
 	if(InGameGroup)
@@ -690,7 +710,7 @@ int CLayerTiles::RenderProperties(CUIRect *pToolBox)
 		{0},
 	};
 
-	if(m_pEditor->m_Map.m_pGameLayer == this || m_pEditor->m_Map.m_pTeleLayer == this || m_pEditor->m_Map.m_pSpeedupLayer == this || m_pEditor->m_Map.m_pFrontLayer == this || m_pEditor->m_Map.m_pSwitchLayer == this || m_pEditor->m_Map.m_pTuneLayer == this) // remove the image and color properties if this is the game/tele/speedup/front/switch layer
+	if(m_pEditor->m_Map.m_pGameLayer == this || m_pEditor->m_Map.m_pTeleLayer == this || m_pEditor->m_Map.m_pSpeedupLayer == this || m_pEditor->m_Map.m_pFrontLayer == this || m_pEditor->m_Map.m_pSwitchLayer == this || m_pEditor->m_Map.m_pTuneLayer == this || m_pEditor->m_Map.m_pMappartsLayer == this) // remove the image and color properties if this is the game/tele/speedup/front/switch layer
 	{
 		aProps[4].m_pName = 0;
 		aProps[5].m_pName = 0;
@@ -1823,4 +1843,18 @@ void CLayerTune::FillSelection(bool Empty, CLayer *pBrush, CUIRect Rect)
 				}
 			}
 		}
+}
+
+CLayerMapparts::CLayerMapparts(int w, int h)
+: CLayerTiles(w, h)
+{
+	//m_Type = LAYERTYPE_FRONT;
+	str_copy(m_aName, "Mapparts", sizeof(m_aName));
+	m_Mapparts = 1;
+}
+
+void CLayerMapparts::SetTile(int x, int y, CTile tile)
+{
+	if(m_pEditor->m_AllowPlaceUnusedTiles || IsValidMappartsTile(tile.m_Index))
+		m_pTiles[y*m_Width+x] = tile;
 }

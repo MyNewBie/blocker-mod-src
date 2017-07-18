@@ -298,7 +298,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         SendChatTarget(ClientID, pPlayer->m_IsBallSpawned ? "Ball spawned" : "Ball removed");
                     
         if (pPlayer->m_IsBallSpawned && pChar)
-            pPlayer->m_pBall = new CBall(&m_World, pChar->m_Pos, ClientID);
+            pPlayer->m_pBall = new CBall(&m_World, pChar->m_Pos, ClientID, pChar->GetMappart());
         else if (!pPlayer->m_IsBallSpawned && pChar)
             pPlayer->m_pBall->Reset();
     }   
@@ -364,7 +364,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         SendChatTarget(ClientID, pPlayer->m_EpicCircle ? "Circle activated" : "Circle deactivated"); 
 
         if(pPlayer->m_EpicCircle && pChar)
-            pPlayer->m_pEpicCircle = new CEpicCircle(&m_World, pChar->m_Pos, ClientID);
+            pPlayer->m_pEpicCircle = new CEpicCircle(&m_World, pChar->m_Pos, ClientID, Server()->GetClientMappart(ClientID));
         else if (!pPlayer->m_EpicCircle && pChar)
             pPlayer->m_pEpicCircle->Reset();
     }
@@ -396,11 +396,11 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
 
         if(pPlayer->m_Invisible)
         {
-            CreatePlayerSpawn(pChar->m_Pos, pChar->Teams()->TeamMask(pChar->Team(), -1, ClientID));
+            CreatePlayerSpawn(pChar->m_Pos, pChar->GetMappart(), pChar->Teams()->TeamMask(pChar->Team(), -1, ClientID));
         }
         else
         {
-            CreateDeath(pChar->m_Pos, ClientID, pChar->Teams()->TeamMask(pChar->Team(), -1, ClientID));
+            CreateDeath(pChar->m_Pos, ClientID, pChar->GetMappart(), pChar->Teams()->TeamMask(pChar->Team(), -1, ClientID));
         }
 
         pPlayer->m_Invisible ^= true;

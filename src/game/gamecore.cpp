@@ -69,6 +69,7 @@ void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore
 	m_Collision = true;
 	m_JumpedTotal = 0;
 	m_Jumps = 2;
+	m_Mappart = MAPPART_LOBBY;
 }
 
 void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore* pTeams, std::map<int, std::vector<vec2> > *pTeleOuts)
@@ -83,6 +84,7 @@ void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore
 	m_Collision = true;
 	m_JumpedTotal = 0;
 	m_Jumps = 2;
+	m_Mappart = MAPPART_LOBBY;
 }
 
 void CCharacterCore::Reset()
@@ -303,7 +305,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 			for (int i = 0; i < MAX_CLIENTS; i++)
 			{
 				CCharacterCore *pCharCore = m_pWorld->m_apCharacters[i];
-				if (!pCharCore || pCharCore == this || !m_pTeams->CanCollide(i, m_Id) || pCharCore->m_PassiveMode)
+				if (!pCharCore || pCharCore == this || !m_pTeams->CanCollide(i, m_Id) || pCharCore->m_PassiveMode || m_Mappart != pCharCore->m_Mappart)
 					continue;
 
 				vec2 ClosestPoint = closest_point_on_line(m_HookPos, NewPos, pCharCore->m_Pos);
@@ -441,7 +443,7 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 		for (int i = 0; i < MAX_CLIENTS; i++)
 		{
 			CCharacterCore *pCharCore = m_pWorld->m_apCharacters[i];
-			if (!pCharCore)
+			if (!pCharCore || m_Mappart != pCharCore->m_Mappart)
 				continue;
 
 			//player *p = (player*)ent;
@@ -450,26 +452,31 @@ void CCharacterCore::Tick(bool UseInput, bool IsClient)
 			if (pCharCore == this || (m_Id != -1 && !m_pTeams->CanCollide(m_Id, i)))
 				continue; // make sure that we don't nudge our self
 
-						  // handle player <-> player collision
-			float Distance = distance(m_Pos, pCharCore->m_Pos);
-			vec2 Dir = normalize(m_Pos - pCharCore->m_Pos);
-			if (pCharCore->m_Collision && this->m_Collision && m_pWorld->m_Tuning[g_Config.m_ClDummy].m_PlayerCollision && Distance < PhysSize*1.25f && Distance > 0.0f)
+			if(abs(m_Pos.x - pCharCore->m_Pos.x) < PhysSize*1.25f && abs(m_Pos.y - pCharCore->m_Pos.y) < PhysSize*1.25f)
 			{
-				float a = (PhysSize*1.45f - Distance);
-				float Velocity = 0.5f;
+						  // handle player <-> player collision
+				float Distance = distance(m_Pos, pCharCore->m_Pos);
+				vec2 Dir = normalize(m_Pos - pCharCore->m_Pos);
+				if (pCharCore->m_Collision && this->m_Collision && m_pWorld->m_Tuning[g_Config.m_ClDummy].m_PlayerCollision && Distance < PhysSize*1.25f && Distance > 0.0f)
+				{
+					float a = (PhysSize*1.45f - Distance);
+					float Velocity = 0.5f;
 
-				// make sure that we don't add excess force by checking the
-				// direction against the current velocity. if not zero.
-				if (length(m_Vel) > 0.0001)
-					Velocity = 1 - (dot(normalize(m_Vel), Dir) + 1) / 2;
+					// make sure that we don't add excess force by checking the
+					// direction against the current velocity. if not zero.
+					if (length(m_Vel) > 0.0001)
+						Velocity = 1 - (dot(normalize(m_Vel), Dir) + 1) / 2;
 
-				m_Vel += Dir*a*(Velocity*0.75f);
-				m_Vel *= 0.85f;
+					m_Vel += Dir*a*(Velocity*0.75f);
+					m_Vel *= 0.85f;
+				}
 			}
 
 			// handle hook influence
 			if (m_Hook && m_HookedPlayer == i && m_pWorld->m_Tuning[g_Config.m_ClDummy].m_PlayerHooking)
 			{
+				float Distance = distance(m_Pos, pCharCore->m_Pos);
+				vec2 Dir = normalize(m_Pos - pCharCore->m_Pos);
 				if (Distance > PhysSize*1.50f) // TODO: fix tweakable variable
 				{
 					float Accel = m_pWorld->m_Tuning[g_Config.m_ClDummy].m_HookDragAccel * (Distance / m_pWorld->m_Tuning[g_Config.m_ClDummy].m_HookLength);
@@ -647,42 +654,46 @@ void CCharacterCore::Move()
 
 	m_Vel.x = m_Vel.x*(1.0f / RampValue);
 
-	if (m_pWorld && m_pWorld->m_Tuning[g_Config.m_ClDummy].m_PlayerCollision && this->m_Collision)
-	{
-		// check player collision
-		float Distance = distance(m_Pos, NewPos);
-		int End = Distance + 1;
-		vec2 LastPos = m_Pos;
-		for (int i = 0; i < End; i++)
-		{
-			float a = i / Distance;
-			vec2 Pos = mix(m_Pos, NewPos, a);
-			for (int p = 0; p < MAX_CLIENTS; p++)
-			{
-				CCharacterCore *pCharCore = m_pWorld->m_apCharacters[p];
-				if (!pCharCore || pCharCore == this || !pCharCore->m_Collision || (m_Id != -1 && !m_pTeams->CanCollide(m_Id, p)))
-					continue;
-				float D = distance(Pos, pCharCore->m_Pos);
-				if (D < 28.0f && D > 0.0f)
-				{
-					if (a > 0.0f)
-						m_Pos = LastPos;
-					else if (distance(NewPos, pCharCore->m_Pos) > D)
-						m_Pos = NewPos;
-					return;
-				}
-				else if (D <= 0.001f && D >= -0.001f)
-				{
-					if (a > 0.0f)
-						m_Pos = LastPos;
-					else if (distance(NewPos, pCharCore->m_Pos) > D)
-						m_Pos = NewPos;
-					return;
-				}
-			}
-			LastPos = Pos;
-		}
-	}
+	//if (m_pWorld && m_pWorld->m_Tuning[g_Config.m_ClDummy].m_PlayerCollision && this->m_Collision)
+	//{
+	//	// check player collision
+	//	float Distance = distance(m_Pos, NewPos);
+	//	int End = Distance + 1;
+	//	vec2 LastPos = m_Pos;
+	//	for (int i = 0; i < End; i++)
+	//	{
+	//		float a = i / Distance;
+	//		vec2 Pos = mix(m_Pos, NewPos, a);
+	//		for (int p = 0; p < MAX_CLIENTS; p++)
+	//		{
+	//			CCharacterCore *pCharCore = m_pWorld->m_apCharacters[p];
+	//			if (!pCharCore || pCharCore == this || !pCharCore->m_Collision || (m_Id != -1 && !m_pTeams->CanCollide(m_Id, p)))
+	//				continue;
+
+	//			if(abs(Pos.x - pCharCore->m_Pos.x) > 28.0f || abs(Pos.y - pCharCore->m_Pos.y) > 28.0f)
+	//				continue;
+
+	//			float D = distance(Pos, pCharCore->m_Pos);
+	//			if (D < 28.0f && D > 0.0f)
+	//			{
+	//				if (a > 0.0f)
+	//					m_Pos = LastPos;
+	//				else if (distance(NewPos, pCharCore->m_Pos) > D)
+	//					m_Pos = NewPos;
+	//				return;
+	//			}
+	//			else if (D <= 0.001f && D >= -0.001f)
+	//			{
+	//				if (a > 0.0f)
+	//					m_Pos = LastPos;
+	//				else if (distance(NewPos, pCharCore->m_Pos) > D)
+	//					m_Pos = NewPos;
+	//				return;
+	//			}
+	//		}
+	//		LastPos = Pos;
+	//	}
+	//}
 
 	m_Pos = NewPos;
 }

@@ -28,6 +28,7 @@ CCollision::CCollision()
 	m_pDoor = 0;
 	m_pSwitchers = 0;
 	m_pTune = 0;
+	m_pMapparts = 0;
 }
 
 void CCollision::Init(class CLayers *pLayers)
@@ -81,6 +82,13 @@ void CCollision::Init(class CLayers *pLayers)
 		unsigned int Size = m_pLayers->Map()->GetUncompressedDataSize(m_pLayers->FrontLayer()->m_Front);
 		if (Size >= m_Width*m_Height*sizeof(CTile))
 			m_pFront = static_cast<CTile *>(m_pLayers->Map()->GetData(m_pLayers->FrontLayer()->m_Front));
+	}
+
+	if (m_pLayers->MappartsLayer())
+	{
+		unsigned int Size = m_pLayers->Map()->GetUncompressedDataSize(m_pLayers->MappartsLayer()->m_Mapparts);
+		if (Size >= m_Width*m_Height*sizeof(CTile))
+			m_pMapparts = static_cast<CTile *>(m_pLayers->Map()->GetData(m_pLayers->MappartsLayer()->m_Mapparts));
 	}
 
 	for (int i = 0; i < m_Width*m_Height; i++)
@@ -863,6 +871,21 @@ int CCollision::GetMapIndex(vec2 Pos)
 		return Index;
 	else
 		return -1;
+}
+
+int CCollision::GetMappartsIndex(vec2 Pos)
+{
+	int Nx = clamp((int)Pos.x / 32, 0, m_Width - 1);
+	int Ny = clamp((int)Pos.y / 32, 0, m_Height - 1);
+	int Index = Ny*m_Width + Nx;
+
+	if(m_pMapparts == NULL)
+		return TILE_MAPPARTS_LOBBY;
+
+	if (IsValidMappartsTile(m_pMapparts[Index].m_Index))
+		return m_pMapparts[Index].m_Index;
+	else
+		return TILE_MAPPARTS_AIR;
 }
 
 std::list<int> CCollision::GetMapIndices(vec2 PrevPos, vec2 Pos, unsigned MaxIndices)

@@ -7,8 +7,8 @@
 #include <game/server/teams.h>
 #include "rocket.h"
 
-CRocket::CRocket(CGameWorld *pGameWorld, int Owner, vec2 Dir, vec2 Pos)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
+CRocket::CRocket(CGameWorld *pGameWorld, int Owner, vec2 Dir, vec2 Pos, int Mappart)
+: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE, Mappart)
 {
 	m_Direction = Dir;
 	m_LifeSpan = 10 * Server()->TickSpeed();
@@ -42,7 +42,7 @@ void CRocket::Tick()
 	
 	float Radius = 1000.0f;
 	m_Pos += m_Direction * 15; /* Rocket Speed */
-	int Num = GameServer()->m_World.FindEntities(m_Pos, Radius, (CEntity**)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+	int Num = GameServer()->m_World.FindEntities(m_Pos, Radius, (CEntity**)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER, GetMappart());
 
 	for (int i = 0; i < Num; i++)
 	{
@@ -82,10 +82,10 @@ void CRocket::Tick()
 
 	if(Collide || m_LifeSpan < 0 || GameLayerClipped(m_Pos))
 	{
-		GameServer()->CreateSound(m_Pos, SOUND_GRENADE_EXPLODE, (m_Owner != -1)? TeamMask : -1LL);
+		GameServer()->CreateSound(m_Pos, SOUND_GRENADE_EXPLODE, GetMappart(), (m_Owner != -1)? TeamMask : -1LL);
 		Reset();
 		return;
 	}
 
-	GameServer()->CreateExplosion(m_Pos, m_Owner, -1, true, (!pOwnerChar ? -1 : pOwnerChar->Team()), (m_Owner != -1)? TeamMask : -1LL);
+	GameServer()->CreateExplosion(m_Pos, m_Owner, -1, true, (!pOwnerChar ? -1 : pOwnerChar->Team()), GetMappart(), (m_Owner != -1)? TeamMask : -1LL);
 }

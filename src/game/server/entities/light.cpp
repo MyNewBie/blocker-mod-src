@@ -6,9 +6,9 @@
 #include "light.h"
 #include <game/mapitems.h>
 
-CLight::CLight(CGameWorld *pGameWorld, vec2 Pos, float Rotation, int Length,
+CLight::CLight(CGameWorld *pGameWorld, vec2 Pos, float Rotation, int Length, int Mappart, 
 		int Layer, int Number) :
-		CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
+		CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER, Mappart)
 {
 	m_Layer = Layer;
 	m_Number = Number;

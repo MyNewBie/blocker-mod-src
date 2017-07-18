@@ -31,7 +31,7 @@ void CRegister::RegisterNewState(int State)
 	m_RegisterStateStart = time_get();
 }
 
-void CRegister::RegisterSendFwcheckresponse(NETADDR *pAddr)
+void CRegister::RegisterSendFwcheckresponse(NETADDR *pAddr, int Socket)
 {
 	CNetChunk Packet;
 	Packet.m_ClientID = -1;
@@ -39,10 +39,10 @@ void CRegister::RegisterSendFwcheckresponse(NETADDR *pAddr)
 	Packet.m_Flags = NETSENDFLAG_CONNLESS;
 	Packet.m_DataSize = sizeof(SERVERBROWSE_FWRESPONSE);
 	Packet.m_pData = SERVERBROWSE_FWRESPONSE;
-	m_pNetServer->Send(&Packet);
+	m_pNetServer->Send(&Packet, Socket);
 }
 
-void CRegister::RegisterSendHeartbeat(NETADDR Addr)
+void CRegister::RegisterSendHeartbeat(NETADDR Addr, int Socket)
 {
 	static unsigned char aData[sizeof(SERVERBROWSE_HEARTBEAT) + 2];
 	unsigned short Port = g_Config.m_SvPort;
@@ -61,10 +61,10 @@ void CRegister::RegisterSendHeartbeat(NETADDR Addr)
 		Port = g_Config.m_SvExternalPort;
 	aData[sizeof(SERVERBROWSE_HEARTBEAT)] = Port >> 8;
 	aData[sizeof(SERVERBROWSE_HEARTBEAT)+1] = Port&0xff;
-	m_pNetServer->Send(&Packet);
+	m_pNetServer->Send(&Packet, Socket);
 }
 
-void CRegister::RegisterSendCountRequest(NETADDR Addr)
+void CRegister::RegisterSendCountRequest(NETADDR Addr, int Socket)
 {
 	CNetChunk Packet;
 	Packet.m_ClientID = -1;
@@ -72,7 +72,7 @@ void CRegister::RegisterSendCountRequest(NETADDR Addr)
 	Packet.m_Flags = NETSENDFLAG_CONNLESS;
 	Packet.m_DataSize = sizeof(SERVERBROWSE_GETCOUNT);
 	Packet.m_pData = SERVERBROWSE_GETCOUNT;
-	m_pNetServer->Send(&Packet);
+	m_pNetServer->Send(&Packet, Socket);
 }
 
 void CRegister::RegisterGotCount(CNetChunk *pChunk)
@@ -156,7 +156,8 @@ void CRegister::RegisterUpdate(int Nettype)
 				if(m_aMasterserverInfo[i].m_LastSend+Freq < Now)
 				{
 					m_aMasterserverInfo[i].m_LastSend = Now;
-					RegisterSendCountRequest(m_aMasterserverInfo[i].m_Addr);
+					for (int j = 0; j < NUM_MAPPARTS; j++)
+						RegisterSendCountRequest(m_aMasterserverInfo[i].m_Addr, j);
 				}
 			}
 		}
@@ -199,7 +200,8 @@ void CRegister::RegisterUpdate(int Nettype)
 		if(Now > m_aMasterserverInfo[m_RegisterRegisteredServer].m_LastSend+Freq*15)
 		{
 			m_aMasterserverInfo[m_RegisterRegisteredServer].m_LastSend = Now;
-			RegisterSendHeartbeat(m_aMasterserverInfo[m_RegisterRegisteredServer].m_Addr);
+			for(int i = 0; i < NUM_MAPPARTS; i++)
+				RegisterSendHeartbeat(m_aMasterserverInfo[m_RegisterRegisteredServer].m_Addr, i);
 		}
 
 		if(Now > m_RegisterStateStart+Freq*60)
@@ -235,7 +237,7 @@ void CRegister::RegisterUpdate(int Nettype)
 	}
 }
 
-int CRegister::RegisterProcessPacket(CNetChunk *pPacket)
+int CRegister::RegisterProcessPacket(CNetChunk *pPacket, int Socket)
 {
 	// check for masterserver address
 	bool Valid = false;
@@ -257,7 +259,7 @@ int CRegister::RegisterProcessPacket(CNetChunk *pPacket)
 	if(pPacket->m_DataSize == sizeof(SERVERBROWSE_FWCHECK) &&
 		mem_comp(pPacket->m_pData, SERVERBROWSE_FWCHECK, sizeof(SERVERBROWSE_FWCHECK)) == 0)
 	{
-		RegisterSendFwcheckresponse(&pPacket->m_Address);
+		RegisterSendFwcheckresponse(&pPacket->m_Address, Socket);
 		return 1;
 	}
 	else if(pPacket->m_DataSize == sizeof(SERVERBROWSE_FWOK) &&

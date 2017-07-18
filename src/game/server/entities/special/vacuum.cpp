@@ -8,8 +8,8 @@
 #include <engine/shared/config.h>
 #include "vacuum.h"
 
-CVacuum::CVacuum(CGameWorld *pGameWorld, vec2 Pos, int Owner)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE) // TODO: I don't believe this is desired to be CGameWorld::ENTTYPE_PROJECTILE? (passing 'NULL' made it be that)
+CVacuum::CVacuum(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Mappart)
+: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE, Mappart) // TODO: I don't believe this is desired to be CGameWorld::ENTTYPE_PROJECTILE? (passing 'NULL' made it be that)
 {
 	m_Pos = Pos;
 	m_Owner = Owner;
@@ -32,7 +32,7 @@ void CVacuum::Gravity()
 		return;
 	
 	float Radius = 1000.0f;
-	int Num = GameServer()->m_World.FindEntities(m_Pos, Radius, (CEntity**)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+	int Num = GameServer()->m_World.FindEntities(m_Pos, Radius, (CEntity**)apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER, GetMappart());
 
 	for (int i = 0; i < Num; i++)
 	{
@@ -89,7 +89,7 @@ void CVacuum::CreateDeath()
 	
 	if(m_Delay > 5)
 	{
-		GameServer()->CreateDeath(m_Pos, m_Owner, pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner));
+		GameServer()->CreateDeath(m_Pos, m_Owner, GetMappart(), pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner));
 		m_Delay = 1;
 	}
 }

@@ -7,6 +7,32 @@
 #include <game/generated/protocol.h>
 #include <engine/shared/protocol.h>
 
+/*
+Mapparts
+Marked in map by the tune layer
+Make sure Spawn-Tiles are marked
+*/
+enum
+{
+	MAPPART_LOBBY=0,
+	MAPPART_CHILL,
+	MAPPART_ROYAL,
+	MAPPART_PEPE,
+	MAPPART_STARBLOCK,
+	MAPPART_BAAM,
+	MAPPART_TOUCHUP,
+	MAPPART_V3,
+	MAPPART_V2,
+	MAPPART_V5,
+	NUM_MAPPARTS,
+};
+
+static const char * s_MappartNames[NUM_MAPPARTS] = { "Lobby", "Chill", "Royal", "Pepe", "Starblock",
+	"Baam", "TouchUp", "V3", "V2", "V5" };
+
+static const char * s_MappartMapNames[NUM_MAPPARTS] = { "BlockWorld", "Chill", "blmapV3ROYAL", "blmapPepe", "Starblock",
+"blmapBaam", "blmapTouchUp", "blmapV3", "blmapV2", "blmapV5" };
+
 class IServer : public IInterface
 {
 	MACRO_INTERFACE("server", 0)
@@ -81,7 +107,13 @@ public:
 		{
 			str_format(msgbuf, sizeof(msgbuf), "%s: %s", ClientName(pMsg->m_ClientID), pMsg->m_pMessage);
 			pMsg->m_pMessage = msgbuf;
-			pMsg->m_ClientID = VANILLA_MAX_CLIENTS - 1;
+			CClientInfo info;
+			GetClientInfo(ClientID, &info);
+			if (info.m_ClientVersion >= VERSION_DDNET_OLD)
+				pMsg->m_ClientID = DDNET_MAX_CLIENTS - 1;
+			else
+				pMsg->m_ClientID = VANILLA_MAX_CLIENTS - 1;
+			
 		}
 		return SendPackMsgOne(pMsg, Flags, ClientID);
 	}
@@ -104,13 +136,15 @@ public:
 
 	bool Translate(int& target, int client)
 	{
+		int Range = VANILLA_MAX_CLIENTS;
+
 		CClientInfo info;
 		GetClientInfo(client, &info);
 		if (info.m_ClientVersion >= VERSION_DDNET_OLD)
-			return true;
-		int* map = GetIdMap(client);
+			Range = DDNET_MAX_CLIENTS;
+		const int* map = GetIdMap(client);
 		bool found = false;
-		for (int i = 0; i < VANILLA_MAX_CLIENTS; i++)
+		for (int i = 0; i < Range; i++)
 		{
 			if (target == map[i])
 			{
@@ -126,9 +160,9 @@ public:
 	{
 		CClientInfo info;
 		GetClientInfo(client, &info);
-		if (info.m_ClientVersion >= VERSION_DDNET_OLD)
-			return true;
-		int* map = GetIdMap(client);
+		//if (info.m_ClientVersion >= VERSION_DDNET_OLD)
+			//return true;
+		const int* map = GetIdMap(client);
 		if (map[target] == -1)
 			return false;
 		target = map[target];
@@ -172,9 +206,14 @@ public:
 
 	virtual void GetClientAddr(int ClientID, NETADDR *pAddr) = 0;
 
-	virtual int* GetIdMap(int ClientID) = 0;
+	virtual const int* GetIdMap() = 0;
+	virtual const int* GetIdMap(int ClientID) = 0;
+	virtual void WriteIdMap(void *pData) = 0;
 
 	virtual bool DnsblWhite(int ClientID) = 0;
+
+	virtual int GetClientMappart(int ClientID) const = 0;
+	virtual void SetClientMappart(int ClientID, int Mappart) = 0;
 };
 
 class IGameServer : public IInterface

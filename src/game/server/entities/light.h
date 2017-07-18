@@ -24,8 +24,8 @@ public:
 	int m_Speed;
 	int m_Length;
 
-	CLight(CGameWorld *pGameWorld, vec2 Pos, float Rotation, int Length,
-			int Layer = 0, int Number = 0);
+	CLight(CGameWorld *pGameWorld, vec2 Pos, float Rotation, int Length, int Mappart,
+			int Layer, int Number);
 
 	virtual void Reset();
 	virtual void Tick();

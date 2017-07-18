@@ -138,7 +138,7 @@ public:
 	void AbortVoteKickOnDisconnect(int ClientID);
 	void OnDetect(int ClientID);
 
-	int CreateLolText(CEntity *pParent, bool Follow, vec2 Pos, vec2 Vel, int Lifespan, const char *pText, int size = 14);
+	int CreateLolText(CEntity *pParent, bool Follow, vec2 Pos, vec2 Vel, int Lifespan, const char *pText, int Mappart, int size = 14);
 	void DestroyLolText(int TextID);
 
 	int m_VoteCreator;
@@ -167,12 +167,12 @@ public:
 	CVoteOptionServer *m_pVoteOptionLast;
 
 	// helper functions
-	void CreateDamageInd(vec2 Pos, float AngleMod, int Amount, int64_t Mask=-1);
-	void CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int ActivatedTeam, int64_t Mask);
-	void CreateHammerHit(vec2 Pos, int64_t Mask=-1);
-	void CreatePlayerSpawn(vec2 Pos, int64_t Mask=-1);
-	void CreateDeath(vec2 Pos, int Who, int64_t Mask=-1);
-	void CreateSound(vec2 Pos, int Sound, int64_t Mask=-1);
+	void CreateDamageInd(vec2 Pos, float AngleMod, int Amount, int Mappart, int64_t Mask);
+	void CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int ActivatedTeam, int Mappart, int64_t Mask);
+	void CreateHammerHit(vec2 Pos, int Mappart, int64_t Mask);
+	void CreatePlayerSpawn(vec2 Pos, int Mappart, int64_t Mask);
+	void CreateDeath(vec2 Pos, int Who, int Mappart, int64_t Mask);
+	void CreateSound(vec2 Pos, int Sound, int Mappart, int64_t Mask);
 	void CreateSoundGlobal(int Sound, int Target=-1);
 	void CreateLoveEvent(vec2 Pos, int Owner);
 	void ChatCommands(const char* pMsg, int ClientID);

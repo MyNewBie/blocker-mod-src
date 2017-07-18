@@ -38,7 +38,11 @@ private:
 	class CGameContext *m_pGameServer;
 	class IServer *m_pServer;
 
-	void UpdatePlayerMaps();
+	static void UpdatePlayerMaps(void *pData);
+	static void UpdatePlayerMapsThread(void *pData);
+	
+	void InitThreadData();
+	void UpdateThreadData();
 
 public:
 	class CGameContext *GameServer() { return m_pGameServer; }
@@ -52,6 +56,8 @@ public:
 	~CGameWorld();
 
 	void SetGameServer(CGameContext *pGameServer);
+
+	int TranslateMappartTiles(int Index);
 
 	CEntity *FindFirst(int Type);
 
@@ -70,7 +76,7 @@ public:
 		Returns:
 			Number of entities found and added to the ents array.
 	*/
-	int FindEntities(vec2 Pos, float Radius, CEntity **ppEnts, int Max, int Type);
+	int FindEntities(vec2 Pos, float Radius, CEntity **ppEnts, int Max, int Type, int Mappart);
 
 	/*
 		Function: InterserctCharacters
@@ -87,7 +93,7 @@ public:
 			Returns a pointer to the closest hit or NULL of there is no intersection.
 	*/
 	//class CCharacter *IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, class CEntity *pNotThis = 0);
-	class CCharacter *IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, class CCharacter *pNotThis = 0, int CollideWith = -1, class CCharacter *pThisOnly = 0);
+	class CCharacter *IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, int Mappart, class CCharacter *pNotThis = 0, int CollideWith = -1, class CCharacter *pThisOnly = 0);
 	/*
 		Function: closest_CCharacter
 			Finds the closest CCharacter to a specific point.
@@ -100,7 +106,7 @@ public:
 		Returns:
 			Returns a pointer to the closest CCharacter or NULL if no CCharacter is close enough.
 	*/
-	class CCharacter *ClosestCharacter(vec2 Pos, float Radius, CEntity *ppNotThis);
+	class CCharacter *ClosestCharacter(vec2 Pos, float Radius, CEntity *ppNotThis, int Mappart);
 
 	/*
 		Function: insert_entity
