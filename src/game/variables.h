@@ -106,7 +106,7 @@ MACRO_CONFIG_STR(UiDemoSelected, ui_demo_selected, 256, "", CFGFLAG_CLIENT | CFG
 MACRO_CONFIG_INT(GfxNoclip, gfx_noclip, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Disable clipping")
 
 // limitations
-MACRO_CONFIG_INT(SvDeathNoteCoolDown, sv_deathnote_cooldown, 180, 180, 1800, CFGFLAG_SERVER, "time in seconds the player must wait before using the deathnote cmd again")
+MACRO_CONFIG_INT(SvDeathNoteCoolDown, sv_deathnote_cooldown, 60, 1, 1800, CFGFLAG_SERVER, "time in seconds the player must wait before using the deathnote cmd again")
 
 // blocking
 MACRO_CONFIG_INT(SvBlockTime, sv_block_time, 3, 3, 10, CFGFLAG_SERVER, "time freezed for a player to be marked blocked")
