@@ -91,7 +91,7 @@ void CBotProtections::HAInspectInput(CNetObj_PlayerInput *pInput)
 	if(pChr == NULL || pChr->IsAlive() == false)
 		return;
 
-	m_HAHookingTee = false; //not Conspicuous yet
+	m_HAHookingTee = -1; //not Conspicuous yet
 	m_HAFinishedAnalyse = false; // need to analys this hook
 
 	vec2 MousePos = pChr->m_Pos + vec2(pInput->m_TargetX, pInput->m_TargetY);
