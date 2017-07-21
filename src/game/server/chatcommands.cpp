@@ -414,7 +414,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
             pChar->HandleCollision(true);
         }
     }
-    else if(str_comp(pMsg + 1, "showwhispers") == 0 && IsAdmin)
+    else if(str_comp(pMsg + 1, "showwhispers") == 0 && (IsAdmin || IsMod))
     {
         if (!pChar || !pChar->IsAlive())
             return;
