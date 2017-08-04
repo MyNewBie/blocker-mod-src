@@ -73,7 +73,7 @@ void CGameContext::GivePagesUpdate(bool Failed, void *pResultData, void *pData)
 	char Info[100];
 	pGameServer->m_apPlayers[id]->m_QuestData.m_Pages += Amount;
 
-	CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(pPlayer->m_pAccount);
+	CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(pGameServer->m_apPlayers[id]->m_pAccount);
 	if (pAccDb)
 		pAccDb->ApplyUpdatedData();
 
@@ -475,7 +475,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
 		if (!m_apPlayers[id]->GetCharacter())
 			return;
 
-		CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(pPlayer->m_pAccount);
+		CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(m_apPlayers[id]->m_pAccount);
 
 		CGivePagesUpdateData *pResultData = new CGivePagesUpdateData;
 		pResultData->m_pGameServer = this;
