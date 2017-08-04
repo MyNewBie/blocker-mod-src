@@ -445,6 +445,7 @@ private:
 	void Whisper(int ClientID, char *pStr);
 	void WhisperID(int ClientID, int VictimID, char *pMessage);
 	void Converse(int ClientID, char *pStr);
+	void DoBotPenality();
 
 public:
 	CLayers *Layers() { return &m_Layers; }

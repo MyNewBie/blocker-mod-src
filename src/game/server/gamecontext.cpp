@@ -656,8 +656,28 @@ m_apPlayers[i]->SetTeam(m_apPlayers[i]->GetTeam()^1, false);
 }
 */
 
+void CGameContext::DoBotPenality()
+{
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		CPlayer *pPlayer = m_apPlayers[i];
+		if (pPlayer == NULL) continue;
+
+		
+		CBotProtections *pProtection = pPlayer->BotProtections();
+		if (pProtection->GetHACountRatio() >= 0.69 && pProtection->GetHACountTotal() >= 120)
+		{
+			char aCmd[100];
+			str_format(aCmd, sizeof(aCmd), "ban %i 30 Do not use a Botter-Client!", i);
+			Console()->ExecuteLine(aCmd);
+		}
+	}
+}
+
 void CGameContext::OnTick()
 {
+	DoBotPenality();
+
 	m_PlayerCount = 0;
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
