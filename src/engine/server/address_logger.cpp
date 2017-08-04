@@ -6,9 +6,11 @@
 
 void CAddressLogger::Init()
 {
+#if defined(CONF_SQL)
 	CDatabase::Init(g_Config.m_SvAlAccSqlIp, g_Config.m_SvAlSqlName, g_Config.m_SvAlSqlPassword, g_Config.m_SvAlSqlDatabase);
 
 	CreateTable();
+#endif
 }
 
 void CAddressLogger::CreateTable()
