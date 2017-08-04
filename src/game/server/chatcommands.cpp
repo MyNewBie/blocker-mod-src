@@ -18,12 +18,22 @@ struct CDeathnoteUpdateData
 	int m_id;
 };
 
+struct CGivePagesUpdateData
+{
+	CGameContext *m_pGameServer;
+	CPlayer *m_pPlayer;
+	int m_id;
+	int m_Amount;
+	char m_aReason[256];
+};
+
 void CGameContext::DeathnoteUpdate(bool Failed, void *pResultData, void *pData)
 {
-	CDeathnoteUpdateData *pUpdateData = (CDeathnoteUpdateData *) pData;
+	CGivePagesUpdateData *pUpdateData = (CGivePagesUpdateData *) pData;
 	CGameContext *pGameServer = pUpdateData->m_pGameServer;
 	CPlayer *pPlayer = pUpdateData->m_pPlayer;
 	int id = pUpdateData->m_id;
+	int Amout = pUpdateData->m_Amount;
 	int ClientID = pPlayer->GetCID();
 
 	if (pPlayer->m_QuestData.m_Pages > 0)
@@ -49,6 +59,31 @@ void CGameContext::DeathnoteUpdate(bool Failed, void *pResultData, void *pData)
         else
             pGameServer->SendChatTarget(ClientID, "You don't have any pages, complete your quests to get some pages.");
     }
+}
+
+void CGameContext::GivePagesUpdate(bool Failed, void *pResultData, void *pData)
+{
+	CGivePagesUpdateData *pUpdateData = (CGivePagesUpdateData *)pData;
+	CGameContext *pGameServer = pUpdateData->m_pGameServer;
+	CPlayer *pPlayer = pUpdateData->m_pPlayer;
+	int id = pUpdateData->m_id;
+	int Amount = pUpdateData->m_Amount;
+	int ClientID = pPlayer->GetCID();
+
+	char LogMsg[230];
+	char Info[100];
+	pGameServer->m_apPlayers[id]->m_QuestData.m_Pages += Amount;
+
+	CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(pPlayer->m_pAccount);
+	if (pAccDb)
+		pAccDb->ApplyUpdatedData();
+
+	str_format(LogMsg, sizeof(LogMsg), "%s gave %d pages to %s", pGameServer->Server()->ClientName(ClientID), Amount, pGameServer->Server()->ClientName(id));
+	str_format(Info, 100, "You have received %d pages from %s", Amount, pGameServer->Server()->ClientName(ClientID));
+
+	pGameServer->SendChatTarget(id, Info);
+	pGameServer->SendChatTarget(ClientID, LogMsg);
+	log_file(LogMsg, "AdminPagesLogs.log", g_Config.m_SvSecurityPath);
 }
 
 void CGameContext::ChatCommands(const char *pMsg, int ClientID)
@@ -437,48 +472,25 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         char aReason[32];
         str_copy(aId, pMsg + 10, 32);
         str_copy(aAmount, pMsg + 12, 32);
-        str_copy(aReason, pMsg + 14, 32);
         int id = str_toint(aId);
 
         if (!m_apPlayers[id]->GetCharacter())
             return;
 
-        char LogMsg[230];
-        char Info[100];
-        m_apPlayers[id]->m_QuestData.m_Pages += str_toint(aAmount);
+		CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(pPlayer->m_pAccount);
 
-        str_format(LogMsg, sizeof(LogMsg), "%s gave %d pages to %s - Reason: \"%s\"", Server()->ClientName(ClientID), str_toint(aAmount), Server()->ClientName(id), aReason);
-        str_format(Info, 100, "You have received %d pages from %s", str_toint(aAmount), Server()->ClientName(ClientID));
+		CGivePagesUpdateData *pResultData = new CGivePagesUpdateData;
+		pResultData->m_pGameServer = this;
+		pResultData->m_pPlayer = pPlayer;
+		pResultData->m_id = id;
+		pResultData->m_Amount = str_toint(aAmount);
+
+		if (pAccDb != NULL)
+			pAccDb->ReloadUpdatedData(GivePagesUpdate, pResultData);
+		else
+			GivePagesUpdate(false, NULL, pResultData);
+
         
-        SendChatTarget(id, Info);
-        log_file(LogMsg, "AdminPagesLogs.log", g_Config.m_SvSecurityPath);
-    }
-    else if (str_comp_nocase_num(pMsg + 1, "vip ", 4) == 0 && IsAuthed)
-    {
-        char aId[32];
-        char aReason[32];
-        str_copy(aId, pMsg + 5, 32);
-        str_copy(aReason, pMsg + 7, 32);
-        int id = str_toint(aId);
-
-        if (!m_apPlayers[id]->GetCharacter())
-            return;
-
-        char LogMsg[230];
-        m_apPlayers[id]->m_AccData.m_Vip ^= 1;
-
-        if (m_apPlayers[id]->m_AccData.m_Vip)
-        {
-            SendChatTarget(id, "You are now vip!");
-            str_format(LogMsg, sizeof(LogMsg), "%s gave vip to %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
-        }
-        else
-        {
-            SendChatTarget(id, "You are no longer vip!");
-            str_format(LogMsg, sizeof(LogMsg), "%s removed vip from %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
-        }
-
-        log_file(LogMsg, "AdminVipLogs.log", g_Config.m_SvSecurityPath);
     }
     else if (str_comp_nocase_num(pMsg + 1, "Givetempassive ", 15) == 0 && IsAuthed)
     {

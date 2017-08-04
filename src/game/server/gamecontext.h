@@ -178,6 +178,7 @@ public:
 	void ChatCommands(const char* pMsg, int ClientID);
 
 	static void DeathnoteUpdate(bool Failed, void *pResultData, void *pData);
+	static void GivePagesUpdate(bool Failed, void *pResultData, void *pData);
 	void ConsoleCmds(const char* pMsg, int ClientID);
 
 
