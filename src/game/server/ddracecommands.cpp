@@ -406,18 +406,17 @@ void CGameContext::ConVip(IConsole::IResult *pResult, void *pUserData)
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	int VipID = pResult->GetVictim();
 
-	CCharacter* pChr = pSelf->GetPlayerChar(VipID);
 	CPlayer *pPlayer = pSelf->m_apPlayers[VipID];
 
 	char aBuf[64];
 	if (pPlayer)
 	{
-		if (pChr->GetPlayer()->m_AccData.m_UserID)
+		if (pPlayer->m_AccData.m_UserID)
 		{
 			pPlayer->m_AccData.m_Vip ^= 1;
 			pPlayer->m_pAccount->Apply();
 
-			if (pChr->GetPlayer()->m_AccData.m_Vip)
+			if (pPlayer->m_AccData.m_Vip)
 				str_format(aBuf, sizeof aBuf, "'%s' is Vip now.", pSelf->Server()->ClientName(VipID));
 			else
 				str_format(aBuf, sizeof aBuf, "'%s' is no longer Vip.", pSelf->Server()->ClientName(VipID));
