@@ -161,7 +161,6 @@ public:
 	virtual bool DemoRecorder_IsRecording() = 0;
 
 	virtual void FixAccounts() = 0;
-	virtual void RunFifoCmd(const char* Command) = 0;
 
 	// DDRace
 

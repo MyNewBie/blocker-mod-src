@@ -255,9 +255,6 @@ public:
 	// fixing accounts after crash
 	void FixAccounts();
 
-	// fifo print
-	void RunFifoCmd(const char* Command);
-
 	virtual int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID);
 	int SendMsgEx(CMsgPacker *pMsg, int Flags, int ClientID, bool System);
 

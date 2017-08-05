@@ -3649,7 +3649,6 @@ void CGameContext::ProcessClientBan(int ClientID)
 
 	char aCurrentClientVersion[64];
 	str_format(aCurrentClientVersion, sizeof(aCurrentClientVersion), "%d", m_apPlayers[ClientID]->m_ClientVersion);
-	dbg_msg("test", "%d", m_apPlayers[ClientID]->m_ClientVersion);
 
 	std::ifstream Banlist(aBanlistPath);
 		while (Banlist >> aClientID)

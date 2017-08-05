@@ -325,7 +325,6 @@ private:
 	static void ConFreeze(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnFreeze(IConsole::IResult *pResult, void *pUserData);
 	static void ConFixAccounts(IConsole::IResult *pResult, void *pUserData);
-	static void ConFifoCommand(IConsole::IResult *pResult, void *pUserData);
 	static void ConSendSound(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConNinja(IConsole::IResult *pResult, void *pUserData);
@@ -418,6 +417,8 @@ private:
 	static void ConList(IConsole::IResult *pResult, void *pUserData);
 	static void ConFreezeHammer(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnFreezeHammer(IConsole::IResult *pResult, void *pUserData);
+
+	static void ConPublicExecCommand(IConsole::IResult *pResult, void *pUserData);
 
 	enum
 	{

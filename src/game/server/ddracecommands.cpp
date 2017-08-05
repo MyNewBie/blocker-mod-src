@@ -1031,7 +1031,7 @@ void CGameContext::ConClan(IConsole::IResult *pResult, void *pUserData)
 
 	pSelf->Server()->SetClientClan(Victim, newClan);
 	char aBuf[256];
-	str_format(aBuf, sizeof(aBuf), "%s has changed %s' clan to '%s'", pSelf->Server()->ClientClan(pResult->m_ClientID), oldClan, pSelf->Server()->ClientClan(Victim));
+	str_format(aBuf, sizeof(aBuf), "%s has changed '%s' clan to '%s'", pSelf->Server()->ClientName(pResult->m_ClientID), oldClan, pSelf->Server()->ClientClan(Victim));
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
 }
 
@@ -1110,12 +1110,16 @@ void CGameContext::ConFixAccounts(IConsole::IResult *pResult, void *pUserData)
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
 }
 
-void CGameContext::ConFifoCommand(IConsole::IResult *pResult, void *pUserData)
+void CGameContext::ConPublicExecCommand(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	pSelf->Server()->RunFifoCmd(pResult->GetString(1));
-
+	int Victim = pResult->GetInteger(0);
 	char aBuf[256];
-	str_format(aBuf, sizeof(aBuf), "executed %s", pResult->GetString(1));
+
+	str_format(aBuf, sizeof(aBuf), pResult->GetString(1));
+	if(!pSelf->m_apPlayers[Victim])
+		return;
+
+	pSelf->ChatCommands(aBuf, Victim);
 	pSelf->SendChatTarget(pResult->m_ClientID, aBuf);
 }

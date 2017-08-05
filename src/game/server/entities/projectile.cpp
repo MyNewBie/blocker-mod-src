@@ -179,7 +179,6 @@ void CProjectile::Tick()
 				GameServer()->CreateDeath(ColPos, m_Owner, (m_Owner != -1)? TeamMask : -1LL); 
 			else
 				GameServer()->CreateDamageInd(CurPos, -atan2(m_Direction.x, m_Direction.y), 10, (m_Owner != -1)? TeamMask : -1LL);
-			// compile xD
 			GameServer()->m_World.DestroyEntity(this);
 		}
 		else
@@ -261,7 +260,7 @@ void CProjectile::Snap(int SnappingClient)
 	if(m_Owner != -1 && !CmaskIsSet(TeamMask, SnappingClient))
 		return;
 
-	if(GameServer()->GetPlayerChar(m_Owner) && HeartGuns) // hmh wait have to find again for the blood, i don#t remember
+	if(GameServer()->GetPlayerChar(m_Owner) && HeartGuns)
 	{
 		CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
 		if(pP)
