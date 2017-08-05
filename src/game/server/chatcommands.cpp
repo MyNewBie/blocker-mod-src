@@ -472,7 +472,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
 		str_copy(aAmount, pMsg + 12, 32);
 		int id = str_toint(aId);
 
-		if (!m_apPlayers[id]->GetCharacter())
+		if (!m_apPlayers[id]->GetCharacter() || m_apPlayers[id]->m_AccData.m_UserID == 0)
 			return;
 
 		CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(m_apPlayers[id]->m_pAccount);
@@ -488,25 +488,25 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
 		else
 			GivePagesUpdate(false, NULL, pResultData);
     }
-	else if (str_comp_nocase_num(pMsg + 1, "setlvl ", 8) == 0 && IsAuthed)
+	else if (str_comp_nocase_num(pMsg + 1, "setlvl ", 7) == 0 && IsAuthed)
 	{
 		char LogMsg[230];
 		char Info[100];
 
 		char aId[32];
 		char aLevel[32];
-		str_copy(aId, pMsg + 9, 32);
-		str_copy(aLevel, pMsg + 11, 32);
+		str_copy(aId, pMsg + 8, 32);
+		str_copy(aLevel, pMsg + 10, 32);
 		int id = str_toint(aId);
 		int Level = str_toint(aLevel);
 
-		if (!m_apPlayers[id]->GetCharacter())
+		if (!m_apPlayers[id]->GetCharacter() || m_apPlayers[id]->m_AccData.m_UserID == 0)
 			return;
 
 		m_apPlayers[id]->m_Level.m_Level = Level;
 		m_apPlayers[id]->m_pAccount->Apply();
 
-		str_format(LogMsg, sizeof(LogMsg), "%s set level to %d pages to %s", Server()->ClientName(ClientID), Level, Server()->ClientName(id));
+		str_format(LogMsg, sizeof(LogMsg), "%s set level to %d to %s", Server()->ClientName(ClientID), Level, Server()->ClientName(id));
 		str_format(Info, 100, "Your level has been set to %d from %s", Level, Server()->ClientName(ClientID));
 
 		SendChatTarget(id, Info);
@@ -521,7 +521,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         str_copy(aReason, pMsg + 7, 32);
         int id = str_toint(aId);
 
-        if (!m_apPlayers[id]->GetCharacter())
+        if (!m_apPlayers[id]->GetCharacter() || m_apPlayers[id]->m_AccData.m_UserID == 0)
             return;
 
         char LogMsg[230];
