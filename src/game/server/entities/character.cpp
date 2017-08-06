@@ -445,7 +445,7 @@ void CCharacter::FireWeapon()
 
 	vec2 ProjStartPos = m_Pos + Direction*m_ProximityRadius*0.75f;
 
-	if(m_Pullhammer) 
+	if(m_Pullhammer && m_Core.m_ActiveWeapon == WEAPON_HAMMER) 
 	{ 
 		return; 
 	}
