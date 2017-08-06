@@ -175,7 +175,7 @@ void CProjectile::Tick()
 		}
 		else if (m_Weapon == WEAPON_GUN)
 		{
-			if(GameServer()->m_apPlayers[m_Owner]->m_HeartGuns)
+			if(GameServer()->m_apPlayers[m_Owner] && GameServer()->m_apPlayers[m_Owner]->m_HeartGuns)
 				GameServer()->CreateDeath(ColPos, m_Owner, (m_Owner != -1)? TeamMask : -1LL); 
 			else
 				GameServer()->CreateDamageInd(CurPos, -atan2(m_Direction.x, m_Direction.y), 10, (m_Owner != -1)? TeamMask : -1LL);

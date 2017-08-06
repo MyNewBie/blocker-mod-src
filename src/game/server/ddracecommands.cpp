@@ -135,13 +135,13 @@ void CGameContext::ConEndless(IConsole::IResult *pResult, void *pUserData) // gi
 		return;
 	int Victim = pResult->GetVictim();
 
-	if (pSelf->m_apPlayers[Victim])
-	{
-		pSelf->m_apPlayers[Victim]->GetCharacter()->m_EndlessHook ^= 1;
-		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_EndlessHook ? "%s gave you endless!" : "%s removed your endless!", pSelf->Server()->ClientName(pResult->m_ClientID));
-		pSelf->SendChatTarget(Victim, aBuf);
-	}
+	if (!pSelf->GetPlayerChar(Victim))
+		return;
+	
+	pSelf->GetPlayerChar(Victim)->m_EndlessHook ^= 1;
+	char aBuf[512];
+	str_format(aBuf, sizeof(aBuf), pSelf->GetPlayerChar(Victim)->m_EndlessHook ? "%s gave you endless!" : "%s removed your endless!", pSelf->Server()->ClientName(pResult->m_ClientID));
+	pSelf->SendChatTarget(Victim, aBuf);
 }
 
 void CGameContext::ConPullhammer(IConsole::IResult *pResult, void *pUserData) // give or remove pullhammer
@@ -206,13 +206,13 @@ void CGameContext::ConXXL(IConsole::IResult *pResult, void *pUserData) // give o
 		return;
 	int Victim = pResult->GetVictim();
 
-	if (pSelf->m_apPlayers[Victim])
-	{
-		pSelf->m_apPlayers[Victim]->GetCharacter()->m_XXL ^= 1;
-		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_XXL ? "%s gave you xxl!" : "%s removed your xxl!", pSelf->Server()->ClientName(pResult->m_ClientID));
-		pSelf->SendChatTarget(Victim, aBuf);
-	}
+	if (!pSelf->GetPlayerChar(Victim))
+		return;
+
+	pSelf->GetPlayerChar(Victim)->m_XXL ^= 1;
+	char aBuf[512];
+	str_format(aBuf, sizeof(aBuf), pSelf->GetPlayerChar(Victim)->m_XXL ? "%s gave you xxl!" : "%s removed your xxl!", pSelf->Server()->ClientName(pResult->m_ClientID));
+	pSelf->SendChatTarget(Victim, aBuf);
 }
 
 void CGameContext::ConBloody(IConsole::IResult *pResult, void *pUserData) // give or remove bloody
@@ -222,13 +222,14 @@ void CGameContext::ConBloody(IConsole::IResult *pResult, void *pUserData) // giv
 		return;
 	int Victim = pResult->GetVictim();
 
-	if (pSelf->m_apPlayers[Victim])
-	{
-		pSelf->m_apPlayers[Victim]->GetCharacter()->m_Bloody ^= 1;
-		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Bloody ? "%s gave you bloody!" : "%s removed your bloody!", pSelf->Server()->ClientName(pResult->m_ClientID));
-		pSelf->SendChatTarget(Victim, aBuf);
-	}
+	if (!pSelf->GetPlayerChar(Victim))
+		return;
+
+	pSelf->GetPlayerChar(Victim)->m_Bloody ^= 1;
+	
+	char aBuf[512];
+	str_format(aBuf, sizeof(aBuf), pSelf->GetPlayerChar(Victim)->m_Bloody ? "%s gave you bloody!" : "%s removed your bloody!", pSelf->Server()->ClientName(pResult->m_ClientID));
+	pSelf->SendChatTarget(Victim, aBuf);
 }
 
 void CGameContext::ConSteamy(IConsole::IResult *pResult, void *pUserData) // give or remove steamy
@@ -238,13 +239,14 @@ void CGameContext::ConSteamy(IConsole::IResult *pResult, void *pUserData) // giv
 		return;
 	int Victim = pResult->GetVictim();
 
-	if (pSelf->m_apPlayers[Victim])
-	{
-		pSelf->m_apPlayers[Victim]->GetCharacter()->m_Steamy ^= 1;
-		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), pSelf->m_apPlayers[Victim]->GetCharacter()->m_Steamy ? "%s gave you steamy!" : "%s removed your steamy!", pSelf->Server()->ClientName(pResult->m_ClientID));
-		pSelf->SendChatTarget(Victim, aBuf);
-	}
+	if (!pSelf->GetPlayerChar(Victim))
+		return;
+
+	pSelf->GetPlayerChar(Victim)->m_Steamy ^= 1;
+	
+	char aBuf[512];
+	str_format(aBuf, sizeof(aBuf), pSelf->GetPlayerChar(Victim)->m_Steamy ? "%s gave you steamy!" : "%s removed your steamy!", pSelf->Server()->ClientName(pResult->m_ClientID));
+	pSelf->SendChatTarget(Victim, aBuf);
 }
 
 void CGameContext::ConRainbow(IConsole::IResult *pResult, void *pUserData) // give or remove Rainbow
