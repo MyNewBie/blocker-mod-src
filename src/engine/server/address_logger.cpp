@@ -24,7 +24,7 @@ void CAddressLogger::CreateTable()
 	str_format(aBuf, sizeof(aBuf), "CREATE DATABASE IF NOT EXISTS %s", g_Config.m_SvAlSqlDatabase);
 	CreateNewQuery(aBuf, NULL, NULL, false);
 
-	CreateNewQuery("CREATE TABLE IF NOT EXISTS addresses (name VARCHAR(32) BINARY NOT NULL, address VARCHAR(64) BINARY NOT NULL, date DATE NOT NULL, PRIMARY KEY (name, address)) CHARACTER SET utf8 ;", NULL, NULL, false);
+	CreateNewQuery("CREATE TABLE IF NOT EXISTS addresses (name VARCHAR(32) BINARY NOT NULL, address VARCHAR(64) BINARY NOT NULL, date DATETIME NOT NULL, PRIMARY KEY (name, address)) CHARACTER SET utf8 ;", NULL, NULL, false);
 #endif
 }
 
