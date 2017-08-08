@@ -70,18 +70,19 @@ CONSOLE_COMMAND("showall", "?i['0'|'1']", CFGFLAG_CHAT, ConShowAll, this, "Wheth
 
 CONSOLE_COMMAND("list", "?s[filter]", CFGFLAG_CHAT, ConList, this, "List connected players with optional case-insensitive substring matching filter")
 
-CONSOLE_COMMAND("mute", "", CFGFLAG_SERVER, ConMute, this, "");
-CONSOLE_COMMAND("muteid", "v[id] i[seconds]", CFGFLAG_SERVER, ConMuteID, this, "");
-CONSOLE_COMMAND("silent_muteid", "v[id] i[seconds]", CFGFLAG_SERVER, ConSilentMuteID, this, "");
-CONSOLE_COMMAND("muteip", "s[ip] i[seconds]", CFGFLAG_SERVER, ConMuteIP, this, "");
-CONSOLE_COMMAND("unmute", "v[id]", CFGFLAG_SERVER, ConUnmute, this, "");
-CONSOLE_COMMAND("mutes", "", CFGFLAG_SERVER, ConMutes, this, "");
+CONSOLE_COMMAND("mute", "", CFGFLAG_SERVER, ConMute, this, "")
+CONSOLE_COMMAND("muteid", "v[id] i[seconds]", CFGFLAG_SERVER, ConMuteID, this, "")
+CONSOLE_COMMAND("silent_muteid", "v[id] i[seconds]", CFGFLAG_SERVER, ConSilentMuteID, this, "")
+CONSOLE_COMMAND("muteip", "s[ip] i[seconds]", CFGFLAG_SERVER, ConMuteIP, this, "")
+CONSOLE_COMMAND("unmute", "v[id]", CFGFLAG_SERVER, ConUnmute, this, "")
+CONSOLE_COMMAND("mutes", "", CFGFLAG_SERVER, ConMutes, this, "")
 
 CONSOLE_COMMAND("freezehammer", "v[id]", CFGFLAG_SERVER, ConFreezeHammer, this, "Gives a player Freeze Hammer")
 CONSOLE_COMMAND("unfreezehammer", "v[id]", CFGFLAG_SERVER, ConUnFreezeHammer, this, "Removes Freeze Hammer from a player")
 
-CONSOLE_COMMAND("fixaccounts", "", CFGFLAG_SERVER, ConFixAccounts, this, "allow players to login back.");
-CONSOLE_COMMAND("exec_command_by", "ir", CFGFLAG_SERVER, ConPublicExecCommand, this, "run a chat command from every player (public!, they can see it)");
+CONSOLE_COMMAND("fixaccounts", "", CFGFLAG_SERVER, ConFixAccounts, this, "allow players to login back.")
+CONSOLE_COMMAND("exec_command_by", "ir", CFGFLAG_SERVER, ConPublicExecCommand, this, "run a chat command from every player (public!, they can see it)")
+
 #undef CONSOLE_COMMAND
 
 #endif
