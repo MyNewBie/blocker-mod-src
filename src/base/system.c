@@ -2645,6 +2645,13 @@ int secure_rand()
 	return (int)(i%RAND_MAX);
 }
 
+int create_http_socket()
+{
+	unsigned long mode = 1;
+	int sock = socket(AF_INET, SOCK_STREAM, 0);
+	return sock;
+}
+
 #if defined(__cplusplus)
 }
 #endif
