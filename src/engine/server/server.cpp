@@ -1992,11 +1992,11 @@ void CServer::ConStatusVpn(IConsole::IResult *pResult, void *pUser)
 			if (pThis->m_aClients[i].m_State == CClient::STATE_INGAME)
 			{
 				const char *pAuthStr = pThis->IsAdmin(i) ? "[Admin]" : pThis->IsMod(i) ? "[Mod]" : pThis->IsAuthed(i) ? "[Helper]" : "";
-				str_format(aBuf, sizeof(aBuf), "[%02i] %s:   addr= %s,   VPN-State=%s", i, pThis->ClientName(i), aAddrStr, pThis->m_VpnDetector.GetVpnState(i));
+				str_format(aBuf, sizeof(aBuf), "[%02i] %s:   addr= %s,   VPN-State=%s", i, pThis->ClientName(i), aAddrStr, pThis->m_VpnDetector.VpnState(i));
 			}
 			else
 			{
-				str_format(aBuf, sizeof(aBuf), "[%02i] addr= %s, VPN-State=%s, connecting...", i, aAddrStr, pThis->m_VpnDetector.GetVpnState(i));
+				str_format(aBuf, sizeof(aBuf), "[%02i] addr= %s, VPN-State=%s, connecting...", i, aAddrStr, pThis->m_VpnDetector.VpnState(i));
 			}
 
 			pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "status", aBuf);
