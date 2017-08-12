@@ -10,6 +10,7 @@
 #define XKEY "MzExOk5xeE9mdmVvZzEwNGRJVnNZdW01d0dla2ZSMW5Ec2xR"
 
 static NETSOCKET invalid_socket = { NETTYPE_INVALID, -1, -1 };
+static const char *s_aVpnStateNames[CVpnDetector::NUM_STATES] = { "Unknown", "Residential", "Warning", "Bad", "Error" };
 
 struct CThreadFeed
 {
@@ -215,4 +216,9 @@ void CVpnDetector::Init(CServer *pServer, VpnDetectorResult *pResultFunc)
 {
 	m_pServer = pServer;
 	m_pResultFunction = pResultFunc;
+}
+
+const char *CVpnDetector::GetVpnState(int ClientID)
+{
+	return s_aVpnStateNames[m_DetectState[ClientID]];
 }

@@ -1965,6 +1965,33 @@ void CServer::ConStatus(IConsole::IResult *pResult, void *pUser)
 	}
 }
 
+void CServer::ConStatusVpn(IConsole::IResult *pResult, void *pUser)
+{
+	char aBuf[1024];
+	char aAddrStr[NETADDR_MAXSTRSIZE];
+	CServer* pThis = static_cast<CServer *>(pUser);
+
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (pThis->m_aClients[i].m_State != CClient::STATE_EMPTY)
+		{
+			net_addr_str(pThis->m_NetServer.ClientAddr(i), aAddrStr, sizeof(aAddrStr), false);
+
+			if (pThis->m_aClients[i].m_State == CClient::STATE_INGAME)
+			{
+				const char *pAuthStr = pThis->IsAdmin(i) ? "[Admin]" : pThis->IsMod(i) ? "[Mod]" : pThis->IsAuthed(i) ? "[Helper]" : "";
+				str_format(aBuf, sizeof(aBuf), "[%02i] %s:   addr= %s,   VPN-State=%s", i, pThis->ClientName(i), aAddrStr, pThis->m_VpnDetector.GetVpnState(i));
+			}
+			else
+			{
+				str_format(aBuf, sizeof(aBuf), "[%02i] addr= %s, VPN-State=%s, connecting...", i, aAddrStr, pThis->m_VpnDetector.GetVpnState(i));
+			}
+
+			pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "status", aBuf);
+		}
+	}
+}
+
 void CServer::ConDnsblStatus(IConsole::IResult *pResult, void *pUser)
 {
 	// dump blacklisted clients
@@ -2313,6 +2340,7 @@ void CServer::RegisterCommands()
 	// register console commands
 	Console()->Register("kick", "i[id] ?r[reason]", CFGFLAG_SERVER, ConKick, this, "Kick player with specified id for any reason");
 	Console()->Register("status", "", CFGFLAG_SERVER, ConStatus, this, "List players");
+	Console()->Register("status_vpn", "", CFGFLAG_SERVER, ConStatusVpn, this, "List players with vpn state");
 	Console()->Register("shutdown", "", CFGFLAG_SERVER, ConShutdown, this, "Shut down");
 	Console()->Register("logout", "", CFGFLAG_SERVER, ConLogout, this, "Logout of rcon");
 

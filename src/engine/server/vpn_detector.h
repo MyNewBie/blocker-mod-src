@@ -11,11 +11,12 @@ class CVpnDetector
 public:
 	enum
 	{
-		STATE_UNKOWN=0,
+		STATE_UNKOWN = 0,
 		STATE_RESIDENTIAL,
 		STATE_WARNING,
 		STATE_BAD,
 		STATE_ERROR,
+		NUM_STATES,
 	};
 
 	struct CVpnRequest
@@ -47,6 +48,8 @@ public:
 
 	void Tick();
 	void Init(CServer *pServer, VpnDetectorResult *pResultFunc);
+
+	const char *GetVpnState(int ClientID);
 
 	CServer *Server() const { return m_pServer; }
 };
