@@ -824,6 +824,13 @@ int CServer::NewClientNoAuthCallback(int ClientID, bool Reset, void *pUser)
 	return 0;
 }
 
+void CServer::VpnDetectorCallback(int ClientID, int State, char *pCountry, void *pServerData)
+{
+	CServer *pThis = (CServer *)pServerData;
+	if (State == CVpnDetector::STATE_BAD)
+		pThis->Kick(ClientID, "VPN/Proxy/Tor detected");
+}
+
 int CServer::NewClientCallback(int ClientID, void *pUser)
 {
 	CServer *pThis = (CServer *)pUser;
@@ -1700,10 +1707,14 @@ int CServer::Run()
 			Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "server", aBuf);
 		}
 
+		m_VpnDetector.Init(this, VpnDetectorCallback);
+
 		while (m_RunServer)
 		{
 			if (NonActive)
 				PumpNetwork();
+
+			m_VpnDetector.Tick();
 
 			set_new_tick();
 

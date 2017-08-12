@@ -25,6 +25,7 @@
 #endif
 
 #include "address_logger.h"
+#include "vpn_detector.h"
 
 class CSnapIDPool
 {
@@ -185,6 +186,7 @@ public:
 #endif
 	CServerBan m_ServerBan;
 	CAddressLogger m_AddressLogger;
+	CVpnDetector m_VpnDetector;
 
 	IEngineMap *m_pMap;
 
@@ -259,6 +261,8 @@ public:
 	int SendMsgEx(CMsgPacker *pMsg, int Flags, int ClientID, bool System);
 
 	void DoSnapshot();
+
+	static void VpnDetectorCallback(int ClientID, int State, char *pCountry, void *pServerData);
 
 	static int NewClientCallback(int ClientID, void *pUser);
 	static int NewClientNoAuthCallback(int ClientID, bool Reset, void *pUser);

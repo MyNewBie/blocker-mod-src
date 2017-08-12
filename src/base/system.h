@@ -1448,6 +1448,8 @@ void secure_random_fill(void *bytes, unsigned length);
 */
 int secure_rand();
 
+int create_http_socket();
+
 #ifdef __cplusplus
 }
 #endif
