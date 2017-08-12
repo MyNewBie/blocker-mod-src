@@ -829,16 +829,19 @@ void CServer::HandleVpnDetector()
 	m_VpnDetector.Tick();
 
 	//look for results
-	for (int i = 0; i < MAX_CLIENTS; i++)
+	if (g_Config.m_SvVpnDetectorBan == 1)
 	{
-		if (ClientIngame(i) == false)
-			continue;
-
-		if (m_VpnDetector.GetVpnState(i) == CVpnDetector::STATE_BAD)
+		for (int i = 0; i < MAX_CLIENTS; i++)
 		{
-			NETADDR Addr = *m_NetServer.ClientAddr(i);
-			Kick(i, "");
-			m_NetServer.NetBan()->BanAddr(&Addr, 60, "VPN/Proxy/Tor detected");
+			if (m_aClients[i].m_State == CClient::STATE_EMPTY)
+				continue;
+
+			if (m_VpnDetector.GetVpnState(i) == CVpnDetector::STATE_BAD)
+			{
+				NETADDR Addr = *m_NetServer.ClientAddr(i);
+				Kick(i, g_Config.m_SvVpnDetectorBanmsg);
+				m_NetServer.NetBan()->BanAddr(&Addr, 60, g_Config.m_SvVpnDetectorBanmsg);
+			}
 		}
 	}
 }

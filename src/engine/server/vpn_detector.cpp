@@ -4,6 +4,7 @@
 #include <base/system.h>
 #include <engine/server/server.h>
 #include <engine/shared/protocol.h>
+#include <engine/shared/config.h>
 
 #include "vpn_detector.h"
 
@@ -139,6 +140,10 @@ void CVpnDetector::WorkStack()
 void CVpnDetector::UpdateList()
 {
 	static bool s_Online[MAX_CLIENTS] = { };
+
+	if (g_Config.m_SvVpnDetectorActive == 0)
+		return;
+
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (Server()->ClientIngame(i) == false)
@@ -180,7 +185,7 @@ void CVpnDetector::NewClient(int ClientID, char *pAddress)
 	pRequest->m_ClientID = ClientID;
 	str_copy(pRequest->m_aAddress, pAddress, sizeof(pRequest->m_aAddress));
 	pRequest->m_ResultState = STATE_UNKOWN;
-	mem_zero(pRequest->m_aResultCountry, sizeof(pRequest->m_aResultCountry));
+	//mem_zero(pRequest->m_aResultCountry, sizeof(pRequest->m_aResultCountry));
 	pRequest->m_TimeLimitExceeded = false;
 	pRequest->m_RemoveTime = Server()->Tick() + Server()->TickSpeed() * 5.0f;
 

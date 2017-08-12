@@ -23,7 +23,7 @@ public:
 		char m_aAddress[256];// class write
 		int64 m_RemoveTime;// class write
 		int m_ResultState;//thread write
-		char m_aResultCountry[256];//thread write
+		//char m_aResultCountry[256];//thread write
 		bool m_TimeLimitExceeded;//both write
 	};
 

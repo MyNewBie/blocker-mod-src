@@ -998,6 +998,10 @@ void CPlayer::QuestSetNextPart()
 	{
 		GameServer()->SendChatTarget(OwnID, "Congratulations, you received +1 Pages for completing the quest!");
 		m_QuestData.m_Pages++;
+		CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(m_pAccount);
+		if (pAccDb)
+			pAccDb->ApplyUpdatedData();
+
 		QuestReset();
 
 		KillCharacter(); // Looks professional with a death at completion :)
