@@ -7,7 +7,7 @@
 //////////////////////////////////////////////////
 // Entity
 //////////////////////////////////////////////////
-CEntity::CEntity(CGameWorld *pGameWorld, int ObjType, int Mappart)
+CEntity::CEntity(CGameWorld *pGameWorld, int ObjType)
 {
 	m_pGameWorld = pGameWorld;
 
@@ -20,8 +20,6 @@ CEntity::CEntity(CGameWorld *pGameWorld, int ObjType, int Mappart)
 
 	m_pPrevTypeEntity = 0;
 	m_pNextTypeEntity = 0;
-
-	m_Mappart = Mappart;
 }
 
 CEntity::~CEntity()
@@ -40,17 +38,14 @@ int CEntity::NetworkClipped(int SnappingClient, vec2 CheckPos)
 	if (SnappingClient == -1)
 		return 0;
 
-	if(m_Mappart != Server()->GetClientMappart(SnappingClient))
-		return 1;
-
 	float dx = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.x - CheckPos.x;
 	float dy = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.y - CheckPos.y;
 
 	if (absolute(dx) > 1000.0f || absolute(dy) > 800.0f)
 		return 1;
 
-	//if (distance(GameServer()->m_apPlayers[SnappingClient]->m_ViewPos, CheckPos) > 4000.0f)//wont ever happen 1280 = sqrt(1000^2 + 800^2)
-		//return 1;
+	if (distance(GameServer()->m_apPlayers[SnappingClient]->m_ViewPos, CheckPos) > 4000.0f)
+		return 1;
 	return 0;
 }
 

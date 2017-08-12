@@ -21,11 +21,10 @@ CProjectile::CProjectile
 		float Force,
 		int SoundImpact,
 		int Weapon,
-		int Mappart,
 		int Layer,
 		int Number
 	)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE, Mappart)
+: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
 {
 	m_Type = Type;
 	m_Pos = Pos;
@@ -121,7 +120,7 @@ void CProjectile::Tick()
 	if(m_Owner >= 0)
 		pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 
-	CCharacter *pTargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, ColPos, m_Freeze ? 1.0f : 6.0f, ColPos, GetMappart(), pOwnerChar, m_Owner);
+	CCharacter *pTargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, ColPos, m_Freeze ? 1.0f : 6.0f, ColPos, pOwnerChar, m_Owner);
 
 	if(m_LifeSpan > -1)
 		m_LifeSpan--;
@@ -154,9 +153,9 @@ void CProjectile::Tick()
 		if(m_Explosive/*??*/ && (!pTargetChr || (pTargetChr && (!m_Freeze || (m_Weapon == WEAPON_SHOTGUN && Collide)))))
 		{
 			GameServer()->CreateExplosion(ColPos, m_Owner, m_Weapon, m_Owner == -1, (!pTargetChr ? -1 : pTargetChr->Team()),
-			GetMappart(), (m_Owner != -1)? TeamMask : -1LL);
+			(m_Owner != -1)? TeamMask : -1LL);
 			GameServer()->CreateSound(ColPos, m_SoundImpact,
-			GetMappart(), (m_Owner != -1)? TeamMask : -1LL);
+			(m_Owner != -1)? TeamMask : -1LL);
 		}
 		else if(pTargetChr && m_Freeze && ((m_Layer == LAYER_SWITCH && GameServer()->Collision()->m_pSwitchers[m_Number].m_Status[pTargetChr->Team()]) || m_Layer != LAYER_SWITCH))
 			pTargetChr->Freeze();
@@ -176,11 +175,10 @@ void CProjectile::Tick()
 		}
 		else if (m_Weapon == WEAPON_GUN)
 		{
-			if(GameServer()->m_apPlayers[m_Owner]->m_HeartGuns)
-				GameServer()->CreateDeath(ColPos, m_Owner, GetMappart(), (m_Owner != -1)? TeamMask : -1LL); 
+			if(GameServer()->m_apPlayers[m_Owner] && GameServer()->m_apPlayers[m_Owner]->m_HeartGuns)
+				GameServer()->CreateDeath(ColPos, m_Owner, (m_Owner != -1)? TeamMask : -1LL); 
 			else
-				GameServer()->CreateDamageInd(CurPos, -atan2(m_Direction.x, m_Direction.y), 10, GetMappart(), (m_Owner != -1)? TeamMask : -1LL);
-			// compile xD
+				GameServer()->CreateDamageInd(CurPos, -atan2(m_Direction.x, m_Direction.y), 10, (m_Owner != -1)? TeamMask : -1LL);
 			GameServer()->m_World.DestroyEntity(this);
 		}
 		else
@@ -201,9 +199,9 @@ void CProjectile::Tick()
 			}
 
 			GameServer()->CreateExplosion(ColPos, m_Owner, m_Weapon, m_Owner == -1, (!pOwnerChar ? -1 : pOwnerChar->Team()),
-			GetMappart(), (m_Owner != -1)? TeamMask : -1LL);
+			(m_Owner != -1)? TeamMask : -1LL);
 			GameServer()->CreateSound(ColPos, m_SoundImpact,
-			GetMappart(), (m_Owner != -1)? TeamMask : -1LL);
+			(m_Owner != -1)? TeamMask : -1LL);
 		}
 		GameServer()->m_World.DestroyEntity(this);
 	}
@@ -262,7 +260,7 @@ void CProjectile::Snap(int SnappingClient)
 	if(m_Owner != -1 && !CmaskIsSet(TeamMask, SnappingClient))
 		return;
 
-	if(GameServer()->GetPlayerChar(m_Owner) && HeartGuns) // hmh wait have to find again for the blood, i don#t remember
+	if(GameServer()->GetPlayerChar(m_Owner) && HeartGuns)
 	{
 		CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
 		if(pP)

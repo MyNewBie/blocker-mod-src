@@ -51,7 +51,7 @@ public:
 	//character's size
 	static const int ms_PhysSize = 28;
 
-	CCharacter(CGameWorld *pWorld, int Mappart);
+	CCharacter(CGameWorld *pWorld);
 
 	virtual void Reset();
 	virtual void Destroy();
@@ -192,7 +192,6 @@ private:
 
 
 	void HandleTiles(int Index);
-	void HandleMappartTiles();
 	float m_Time;
 	int m_LastBroadcast;
 	void DDRaceInit();

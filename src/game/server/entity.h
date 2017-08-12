@@ -61,24 +61,19 @@ class CEntity
 		friend class CGameWorld;	// entity list handling
 	CEntity *m_pPrevTypeEntity;
 	CEntity *m_pNextTypeEntity;
-	int m_Mappart;
 
 protected:
 	class CGameWorld *m_pGameWorld;
 	bool m_MarkedForDestroy;
 	int m_ID;
 	int m_ObjType;
-
-	void SetMappart(int Mappart) { m_Mappart = Mappart; }
-
 public:
-	CEntity(CGameWorld *pGameWorld, int Objtype, int Mappart);
+	CEntity(CGameWorld *pGameWorld, int Objtype);
 	virtual ~CEntity();
 
 	class CGameWorld *GameWorld() { return m_pGameWorld; }
 	class CGameContext *GameServer() { return GameWorld()->GameServer(); }
 	class IServer *Server() { return GameWorld()->Server(); }
-	int GetMappart() const { return m_Mappart; }
 
 
 	CEntity *TypeNext() { return m_pNextTypeEntity; }

@@ -48,7 +48,6 @@ int CEditor::ms_TeleTexture;
 int CEditor::ms_SpeedupTexture;
 int CEditor::ms_SwitchTexture;
 int CEditor::ms_TuneTexture;
-int CEditor::ms_MappartsTexture;
 
 vec3 CEditor::ms_PickerColor;
 int CEditor::ms_SVPicker;
@@ -153,7 +152,7 @@ void CLayerGroup::Render()
 	{
 		if(m_lLayers[i]->m_Visible && m_lLayers[i] != m_pMap->m_pGameLayer
 		&& m_lLayers[i] != m_pMap->m_pFrontLayer && m_lLayers[i] != m_pMap->m_pTeleLayer
-		&& m_lLayers[i] != m_pMap->m_pSpeedupLayer && m_lLayers[i] != m_pMap->m_pSwitchLayer && m_lLayers[i] != m_pMap->m_pTuneLayer && m_lLayers[i] != m_pMap->m_pMappartsLayer)
+		&& m_lLayers[i] != m_pMap->m_pSpeedupLayer && m_lLayers[i] != m_pMap->m_pSwitchLayer && m_lLayers[i] != m_pMap->m_pTuneLayer)
 		{
 			if(m_pMap->m_pEditor->m_ShowDetail || !(m_lLayers[i]->m_Flags&LAYERFLAG_DETAIL))
 				m_lLayers[i]->Render();
@@ -1158,7 +1157,7 @@ void CEditor::DoToolbar(CUIRect ToolBar)
 		CLayerTiles *pT = (CLayerTiles *)GetSelectedLayerType(0, LAYERTYPE_TILES);
 
 		// no border for tele layer, speedup, front and switch
-		if(pT && (pT->m_Tele || pT->m_Speedup || pT->m_Switch || pT->m_Front || pT->m_Tune || pT->m_Mapparts))
+		if(pT && (pT->m_Tele || pT->m_Speedup || pT->m_Switch || pT->m_Front || pT->m_Tune))
 			pT = 0;
 
 		if(DoButton_Editor(&s_BorderBut, "Border", pT?0:-1, &Button, 0, "Adds border tiles"))
@@ -2110,8 +2109,7 @@ void CEditor::DoMapEditor(CUIRect View, CUIRect ToolBar)
 					m_Map.m_lGroups[g] == (CLayerGroup *)m_Map.m_pTeleLayer ||
 					m_Map.m_lGroups[g] == (CLayerGroup *)m_Map.m_pSpeedupLayer ||
 					m_Map.m_lGroups[g] == (CLayerGroup *)m_Map.m_pSwitchLayer ||
-					m_Map.m_lGroups[g] == (CLayerGroup *)m_Map.m_pTuneLayer ||
-					m_Map.m_lGroups[g] == (CLayerGroup *)m_Map.m_pMappartsLayer
+					m_Map.m_lGroups[g] == (CLayerGroup *)m_Map.m_pTuneLayer
 					)
 				continue;
 			if(m_Map.m_lGroups[g]->m_Visible)
@@ -2134,8 +2132,7 @@ void CEditor::DoMapEditor(CUIRect View, CUIRect ToolBar)
 								m_Map.m_pGameGroup->m_lLayers[i] == m_Map.m_pTeleLayer ||
 								m_Map.m_pGameGroup->m_lLayers[i] == m_Map.m_pSpeedupLayer ||
 								m_Map.m_pGameGroup->m_lLayers[i] == m_Map.m_pSwitchLayer ||
-								m_Map.m_pGameGroup->m_lLayers[i] == m_Map.m_pTuneLayer  ||
-								m_Map.m_pGameGroup->m_lLayers[i] == m_Map.m_pMappartsLayer
+								m_Map.m_pGameGroup->m_lLayers[i] == m_Map.m_pTuneLayer
 								)
 								)
 					m_Map.m_pGameGroup->m_lLayers[i]->Render();
@@ -3036,8 +3033,7 @@ void CEditor::RenderLayers(CUIRect ToolBox, CUIRect ToolBar, CUIRect View)
 					m_Map.m_lGroups[g]->m_lLayers[i] == m_Map.m_pSwitchLayer ||
 					m_Map.m_lGroups[g]->m_lLayers[i] == m_Map.m_pTuneLayer ||
 					m_Map.m_lGroups[g]->m_lLayers[i] == m_Map.m_pSpeedupLayer ||
-					m_Map.m_lGroups[g]->m_lLayers[i] == m_Map.m_pTeleLayer ||
-					m_Map.m_pGameGroup->m_lLayers[i] == m_Map.m_pMappartsLayer)
+					m_Map.m_lGroups[g]->m_lLayers[i] == m_Map.m_pTeleLayer)
 				{
 					Checked += 6;
 				}
@@ -5458,7 +5454,6 @@ void CEditorMap::Clean()
 	m_pFrontLayer = 0x0;
 	m_pSwitchLayer = 0x0;
 	m_pTuneLayer = 0x0;
-	m_pMappartsLayer = 0x0;
 }
 
 void CEditorMap::CreateDefault(int EntitiesTexture)
@@ -5494,7 +5489,6 @@ void CEditorMap::CreateDefault(int EntitiesTexture)
 	m_pSpeedupLayer = 0x0;
 	m_pSwitchLayer = 0x0;
 	m_pTuneLayer = 0x0;
-	m_pMappartsLayer = 0x0;
 }
 
 void CEditor::Init()
@@ -5521,7 +5515,6 @@ void CEditor::Init()
 	ms_SpeedupTexture = Graphics()->LoadTexture("editor/speedup.png", IStorage::TYPE_ALL, CImageInfo::FORMAT_AUTO, 0);
 	ms_SwitchTexture = Graphics()->LoadTexture("editor/switch.png", IStorage::TYPE_ALL, CImageInfo::FORMAT_AUTO, 0);
 	ms_TuneTexture = Graphics()->LoadTexture("editor/tune.png", IStorage::TYPE_ALL, CImageInfo::FORMAT_AUTO, 0);
-	ms_MappartsTexture = Graphics()->LoadTexture("editor/mapparts.png", IStorage::TYPE_ALL, CImageInfo::FORMAT_AUTO, 0);
 
 	m_TilesetPicker.m_pEditor = this;
 	m_TilesetPicker.MakePalette();
@@ -5741,11 +5734,4 @@ void CEditorMap::MakeTuneLayer(CLayer *pLayer)
 	m_pTuneLayer = (CLayerTune *)pLayer;
 	m_pTuneLayer->m_pEditor = m_pEditor;
 	m_pTuneLayer->m_TexID = m_pEditor->ms_TuneTexture;
-}
-
-void CEditorMap::MakeMappartsLayer(CLayer *pLayer)
-{
-	m_pMappartsLayer = (CLayerMapparts *)pLayer;
-	m_pMappartsLayer->m_pEditor = m_pEditor;
-	m_pMappartsLayer->m_TexID = m_pEditor->ms_MappartsTexture;
 }

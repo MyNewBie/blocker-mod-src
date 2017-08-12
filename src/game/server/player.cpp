@@ -91,12 +91,12 @@ void CPlayer::Reset()
 	if (m_AccData.m_UserID)
 		m_pAccount->Apply();
 
-	/*const int* idMap = Server()->GetIdMap(m_ClientID);
+	int* idMap = Server()->GetIdMap(m_ClientID);
 	for (int i = 1; i < VANILLA_MAX_CLIENTS; i++)
 	{
 		idMap[i] = -1;
 	}
-	idMap[0] = m_ClientID;*/
+	idMap[0] = m_ClientID;
 
 	// DDRace
 
@@ -431,10 +431,10 @@ void CPlayer::FakeSnap()
 	// This is problematic when it's sent before we know whether it's a non-64-player-client
 	// Then we can't spectate players at the start
 
-	int FakeID = VANILLA_MAX_CLIENTS - 1;
-
 	if (m_ClientVersion >= VERSION_DDNET_OLD)
-		FakeID = DDNET_MAX_CLIENTS - 1;
+		return;
+
+	int FakeID = VANILLA_MAX_CLIENTS - 1;
 
 	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, FakeID, sizeof(CNetObj_ClientInfo)));
 
@@ -456,7 +456,7 @@ void CPlayer::FakeSnap()
 	pPlayerInfo->m_Local = 1;
 	pPlayerInfo->m_ClientID = FakeID;
 	pPlayerInfo->m_Score = -9999;
-	pPlayerInfo->m_Team = -2;//TEAM_SPECTATORS;
+	pPlayerInfo->m_Team = TEAM_SPECTATORS;
 
 	CNetObj_SpectatorInfo *pSpectatorInfo = static_cast<CNetObj_SpectatorInfo *>(Server()->SnapNewItem(NETOBJTYPE_SPECTATORINFO, FakeID, sizeof(CNetObj_SpectatorInfo)));
 	if (!pSpectatorInfo)
@@ -603,7 +603,7 @@ void CPlayer::Respawn(bool WeakHook)
 CCharacter* CPlayer::ForceSpawn(vec2 Pos)
 {
 	m_Spawning = false;
-	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World, Server()->GetClientMappart(m_ClientID));
+	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World);
 	m_pCharacter->Spawn(this, Pos);
 	m_Team = 0;
 	return m_pCharacter;
@@ -659,20 +659,20 @@ void CPlayer::TryRespawn()
 
 	if (m_InLMB == LMB_PARTICIPATE)	//LMB=1 means registered
 		Team += 2;
-	if (!GameServer()->m_pController->CanSpawn(Server()->GetClientMappart(m_ClientID), Team, &SpawnPos))	//we cant spawn being in LMB!
+	if (!GameServer()->m_pController->CanSpawn(Team, &SpawnPos))	//we cant spawn being in LMB!
 		return;
 
 	CGameControllerDDRace* Controller = (CGameControllerDDRace*)GameServer()->m_pController;
 
 	m_WeakHookSpawn = false;
 	m_Spawning = false;
-	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World, Server()->GetClientMappart(m_ClientID));
+	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World);
 
 	if (!m_InLMB && (m_SavedStats.m_SavedSpawn.x || m_SavedStats.m_SavedSpawn.y))
 		SpawnPos = m_SavedStats.m_SavedSpawn;
 
 	m_pCharacter->Spawn(this, SpawnPos);
-	GameServer()->CreatePlayerSpawn(SpawnPos, Server()->GetClientMappart(m_ClientID), m_pCharacter->Teams()->TeamMask(m_pCharacter->Team(), -1, m_ClientID));
+	GameServer()->CreatePlayerSpawn(SpawnPos, m_pCharacter->Teams()->TeamMask(m_pCharacter->Team(), -1, m_ClientID));
 
 	if(!m_InLMB)
 		LMBRestore();
@@ -792,8 +792,8 @@ void CPlayer::ProcessPause()
 				str_format(aBuf, sizeof(aBuf), (m_Paused == PAUSED_PAUSED) ? "'%s' paused" : "'%s' was force-paused for %ds", Server()->ClientName(m_ClientID), m_ForcePauseTime / Server()->TickSpeed());
 				GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 			}
-			GameServer()->CreateDeath(m_pCharacter->m_Pos, m_ClientID, Server()->GetClientMappart(m_ClientID), m_pCharacter->Teams()->TeamMask(m_pCharacter->Team(), -1, m_ClientID));
-			GameServer()->CreateSound(m_pCharacter->m_Pos, SOUND_PLAYER_DIE, Server()->GetClientMappart(m_ClientID), m_pCharacter->Teams()->TeamMask(m_pCharacter->Team(), -1, m_ClientID));
+			GameServer()->CreateDeath(m_pCharacter->m_Pos, m_ClientID, m_pCharacter->Teams()->TeamMask(m_pCharacter->Team(), -1, m_ClientID));
+			GameServer()->CreateSound(m_pCharacter->m_Pos, SOUND_PLAYER_DIE, m_pCharacter->Teams()->TeamMask(m_pCharacter->Team(), -1, m_ClientID));
 			m_NextPauseTick = Server()->Tick() + g_Config.m_SvPauseFrequency * Server()->TickSpeed();
 		}
 	}
@@ -807,7 +807,7 @@ void CPlayer::ProcessPause()
 				str_format(aBuf, sizeof(aBuf), "'%s' resumed", Server()->ClientName(m_ClientID));
 				GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 			}
-			GameServer()->CreatePlayerSpawn(m_pCharacter->m_Pos, Server()->GetClientMappart(m_ClientID), m_pCharacter->Teams()->TeamMask(m_pCharacter->Team(), -1, m_ClientID));
+			GameServer()->CreatePlayerSpawn(m_pCharacter->m_Pos, m_pCharacter->Teams()->TeamMask(m_pCharacter->Team(), -1, m_ClientID));
 			m_NextPauseTick = Server()->Tick() + g_Config.m_SvPauseFrequency * Server()->TickSpeed();
 		}
 	}
@@ -1092,13 +1092,13 @@ void CPlayer::LMBRestore()
 	if (m_SavedStats.m_SavedBall)
 	{
 		m_IsBallSpawned = true;
-		new CBall(&GameServer()->m_World, GetCharacter()->m_Pos, GetCID(), GetCharacter()->GetMappart());
+		new CBall(&GameServer()->m_World, GetCharacter()->m_Pos, GetCID());
 	}
 		
 	if (m_SavedStats.m_SavedEpicCircle)
 	{
 		m_EpicCircle = true;
-		new CEpicCircle(&GameServer()->m_World, GetCharacter()->m_Pos, GetCID(), GetCharacter()->GetMappart());
+		new CEpicCircle(&GameServer()->m_World, GetCharacter()->m_Pos, GetCID());
 	}
 
 	if(m_SavedStats.m_SavedHammerHit)

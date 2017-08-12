@@ -9,8 +9,8 @@
 #include "dragger.h"
 
 CDragger::CDragger(CGameWorld *pGameWorld, vec2 Pos, float Strength, bool NW,
-		int CatchedTeam, int Mappart, int Layer, int Number) :
-		CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER, Mappart)
+		int CatchedTeam, int Layer, int Number) :
+		CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Layer = Layer;
 	m_Number = Number;
@@ -39,7 +39,7 @@ void CDragger::Move()
 	CCharacter *TempEnts[MAX_CLIENTS];
 
 	int Num = GameServer()->m_World.FindEntities(m_Pos, g_Config.m_SvDraggerRange,
-			(CEntity**) m_SoloEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER, GetMappart());
+			(CEntity**) m_SoloEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 	mem_copy(TempEnts, m_SoloEnts, sizeof(TempEnts));
 
 	int Id = -1;
@@ -387,14 +387,14 @@ void CDragger::Snap(int SnappingClient)
 	}
 }
 
-CDraggerTeam::CDraggerTeam(CGameWorld *pGameWorld, vec2 Pos, float Strength, int Mappart,
+CDraggerTeam::CDraggerTeam(CGameWorld *pGameWorld, vec2 Pos, float Strength,
 		bool NW, int Layer, int Number)
 {
-	/*for (int i = 0; i < MAX_CLIENTS; ++i)
+	for (int i = 0; i < MAX_CLIENTS; ++i)
 	{
-		m_Draggers[i] = new CDragger(pGameWorld, Pos, Strength, NW, i, Mappart, Layer,
+		m_Draggers[i] = new CDragger(pGameWorld, Pos, Strength, NW, i, Layer,
 				Number);
-	}*/
+	}
 }
 
 //CDraggerTeam::~CDraggerTeam() {

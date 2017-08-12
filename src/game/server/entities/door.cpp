@@ -7,8 +7,8 @@
 #include "door.h"
 
 CDoor::CDoor(CGameWorld *pGameWorld, vec2 Pos, float Rotation, int Length,
-		int Number, int Mappart) :
-		CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER, Mappart)
+		int Number) :
+		CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Number = Number;
 	m_Pos = Pos;

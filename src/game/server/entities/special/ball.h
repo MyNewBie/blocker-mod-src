@@ -4,7 +4,7 @@
 class CBall : public CEntity
 {
 public:
-	CBall(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Mappart);
+	CBall(CGameWorld *pGameWorld, vec2 Pos, int Owner);
 	
 
 	virtual void Reset();

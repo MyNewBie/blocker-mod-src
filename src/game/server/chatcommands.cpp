@@ -29,11 +29,10 @@ struct CGivePagesUpdateData
 
 void CGameContext::DeathnoteUpdate(bool Failed, void *pResultData, void *pData)
 {
-	CGivePagesUpdateData *pUpdateData = (CGivePagesUpdateData *) pData;
+	CDeathnoteUpdateData *pUpdateData = (CDeathnoteUpdateData *) pData;
 	CGameContext *pGameServer = pUpdateData->m_pGameServer;
 	CPlayer *pPlayer = pUpdateData->m_pPlayer;
 	int id = pUpdateData->m_id;
-	int Amout = pUpdateData->m_Amount;
 	int ClientID = pPlayer->GetCID();
 
 	if (pPlayer->m_QuestData.m_Pages > 0)
@@ -74,7 +73,7 @@ void CGameContext::GivePagesUpdate(bool Failed, void *pResultData, void *pData)
 	char Info[100];
 	pGameServer->m_apPlayers[id]->m_QuestData.m_Pages += Amount;
 
-	CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(pPlayer->m_pAccount);
+	CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(pGameServer->m_apPlayers[id]->m_pAccount);
 	if (pAccDb)
 		pAccDb->ApplyUpdatedData();
 
@@ -333,7 +332,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         SendChatTarget(ClientID, pPlayer->m_IsBallSpawned ? "Ball spawned" : "Ball removed");
                     
         if (pPlayer->m_IsBallSpawned && pChar)
-            pPlayer->m_pBall = new CBall(&m_World, pChar->m_Pos, ClientID, pChar->GetMappart());
+            pPlayer->m_pBall = new CBall(&m_World, pChar->m_Pos, ClientID);
         else if (!pPlayer->m_IsBallSpawned && pChar)
             pPlayer->m_pBall->Reset();
     }   
@@ -399,7 +398,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         SendChatTarget(ClientID, pPlayer->m_EpicCircle ? "Circle activated" : "Circle deactivated"); 
 
         if(pPlayer->m_EpicCircle && pChar)
-            pPlayer->m_pEpicCircle = new CEpicCircle(&m_World, pChar->m_Pos, ClientID, Server()->GetClientMappart(ClientID));
+            pPlayer->m_pEpicCircle = new CEpicCircle(&m_World, pChar->m_Pos, ClientID);
         else if (!pPlayer->m_EpicCircle && pChar)
             pPlayer->m_pEpicCircle->Reset();
     }
@@ -431,11 +430,11 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
 
         if(pPlayer->m_Invisible)
         {
-            CreatePlayerSpawn(pChar->m_Pos, pChar->GetMappart(), pChar->Teams()->TeamMask(pChar->Team(), -1, ClientID));
+            CreatePlayerSpawn(pChar->m_Pos, pChar->Teams()->TeamMask(pChar->Team(), -1, ClientID));
         }
         else
         {
-            CreateDeath(pChar->m_Pos, ClientID, pChar->GetMappart(), pChar->Teams()->TeamMask(pChar->Team(), -1, ClientID));
+            CreateDeath(pChar->m_Pos, ClientID, pChar->Teams()->TeamMask(pChar->Team(), -1, ClientID));
         }
 
         pPlayer->m_Invisible ^= true;
@@ -449,7 +448,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
             pChar->HandleCollision(true);
         }
     }
-    else if(str_comp(pMsg + 1, "showwhispers") == 0 && IsAdmin)
+    else if(str_comp(pMsg + 1, "showwhispers") == 0 && (IsAdmin || IsMod))
     {
         if (!pChar || !pChar->IsAlive())
             return;
@@ -467,17 +466,16 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
     }
     else if (str_comp_nocase_num(pMsg + 1, "givepage ", 9) == 0 && IsAuthed)
     {
-        char aId[32];
-        char aAmount[32];
-        char aReason[32];
-        str_copy(aId, pMsg + 10, 32);
-        str_copy(aAmount, pMsg + 12, 32);
-        int id = str_toint(aId);
+		char aId[32];
+		char aAmount[32];
+		str_copy(aId, pMsg + 10, 32);
+		str_copy(aAmount, pMsg + 12, 32);
+		int id = str_toint(aId);
 
-        if (!m_apPlayers[id]->GetCharacter())
-            return;
+		if (!m_apPlayers[id]->GetCharacter() || m_apPlayers[id]->m_AccData.m_UserID == 0)
+			return;
 
-		CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(pPlayer->m_pAccount);
+		CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(m_apPlayers[id]->m_pAccount);
 
 		CGivePagesUpdateData *pResultData = new CGivePagesUpdateData;
 		pResultData->m_pGameServer = this;
@@ -489,8 +487,58 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
 			pAccDb->ReloadUpdatedData(GivePagesUpdate, pResultData);
 		else
 			GivePagesUpdate(false, NULL, pResultData);
+    }
+	else if (str_comp_nocase_num(pMsg + 1, "setlvl ", 7) == 0 && IsAuthed)
+	{
+		char LogMsg[230];
+		char Info[100];
 
-        
+		char aId[32];
+		char aLevel[32];
+		str_copy(aId, pMsg + 8, 32);
+		str_copy(aLevel, pMsg + 10, 32);
+		int id = str_toint(aId);
+		int Level = str_toint(aLevel);
+
+		if (!m_apPlayers[id]->GetCharacter() || m_apPlayers[id]->m_AccData.m_UserID == 0)
+			return;
+
+		m_apPlayers[id]->m_Level.m_Level = Level;
+		m_apPlayers[id]->m_pAccount->Apply();
+
+		str_format(LogMsg, sizeof(LogMsg), "%s set level to %d to %s", Server()->ClientName(ClientID), Level, Server()->ClientName(id));
+		str_format(Info, 100, "Your level has been set to %d from %s", Level, Server()->ClientName(ClientID));
+
+		SendChatTarget(id, Info);
+		SendChatTarget(ClientID, LogMsg);
+		log_file(LogMsg, "AdminPagesLogs.log", g_Config.m_SvSecurityPath);
+	}
+    else if (str_comp_nocase_num(pMsg + 1, "vip ", 4) == 0 && IsAuthed)
+    {
+        char aId[32];
+        char aReason[32];
+        str_copy(aId, pMsg + 5, 32);
+        str_copy(aReason, pMsg + 7, 32);
+        int id = str_toint(aId);
+
+        if (!m_apPlayers[id]->GetCharacter() || m_apPlayers[id]->m_AccData.m_UserID == 0)
+            return;
+
+        char LogMsg[230];
+        m_apPlayers[id]->m_AccData.m_Vip ^= 1;
+
+        if (m_apPlayers[id]->m_AccData.m_Vip)
+        {
+            SendChatTarget(id, "You are now vip!");
+            str_format(LogMsg, sizeof(LogMsg), "%s gave vip to %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
+        }
+        else
+        {
+            SendChatTarget(id, "You are no longer vip!");
+            str_format(LogMsg, sizeof(LogMsg), "%s removed vip from %s - Reason: \"%s\"", Server()->ClientName(ClientID), Server()->ClientName(id), aReason);
+        }
+
+        log_file(LogMsg, "AdminVipLogs.log", g_Config.m_SvSecurityPath);
     }
     else if (str_comp_nocase_num(pMsg + 1, "Givetempassive ", 15) == 0 && IsAuthed)
     {

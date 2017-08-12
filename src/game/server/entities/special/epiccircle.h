@@ -9,7 +9,7 @@ class CEpicCircle : public CEntity
 	};
 
 public:
-	CEpicCircle(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Mappart);
+	CEpicCircle(CGameWorld *pGameWorld, vec2 Pos, int Owner);
 
 	virtual void Reset();
 	virtual void Tick();

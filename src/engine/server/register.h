@@ -38,16 +38,16 @@ class CRegister
 	int m_RegisterRegisteredServer;
 
 	void RegisterNewState(int State);
-	void RegisterSendFwcheckresponse(NETADDR *pAddr, int Socket);
-	void RegisterSendHeartbeat(NETADDR Addr, int Socket);
-	void RegisterSendCountRequest(NETADDR Addr, int Socket);
+	void RegisterSendFwcheckresponse(NETADDR *pAddr);
+	void RegisterSendHeartbeat(NETADDR Addr);
+	void RegisterSendCountRequest(NETADDR Addr);
 	void RegisterGotCount(struct CNetChunk *pChunk);
 
 public:
 	CRegister();
 	void Init(class CNetServer *pNetServer, class IEngineMasterServer *pMasterServer, class IConsole *pConsole);
 	void RegisterUpdate(int Nettype);
-	int RegisterProcessPacket(struct CNetChunk *pPacket, int Socket);
+	int RegisterProcessPacket(struct CNetChunk *pPacket);
 };
 
 #endif

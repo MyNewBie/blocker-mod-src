@@ -174,8 +174,6 @@ void mem_zero(void *block, unsigned size);
 */
 int mem_comp(const void *a, const void *b, int size);
 
-void mem_set(void *dest, int val, unsigned size);
-
 /*
 	Function: mem_check
 		Validates the heap

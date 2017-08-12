@@ -193,7 +193,6 @@ public:
 	vec2 m_Vel;
 	bool m_Hook;
 	bool m_Collision;
-	int m_Mappart;
 
 	vec2 m_HookPos;
 	vec2 m_HookDir;

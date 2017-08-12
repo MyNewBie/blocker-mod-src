@@ -4,6 +4,8 @@
 
 #include <game/server/entity.h>
 
+class CGun;
+
 class CPlasma: public CEntity
 {
 	vec2 m_Core;
@@ -19,7 +21,7 @@ class CPlasma: public CEntity
 public:
 
 	CPlasma(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, bool Freeze,
-			bool Explosive, int ResponsibleTeam, int Mappart);
+			bool Explosive, int ResponsibleTeam);
 
 	virtual void Reset();
 	virtual void Tick();

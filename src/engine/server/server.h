@@ -158,7 +158,6 @@ public:
 		int m_AuthTries;
 		int m_AccID;
 		int m_NextMapChunk;
-		int m_Mappart;
 
 		const IConsole::CCommandInfo *m_pRconCmdToSend;
 
@@ -174,7 +173,7 @@ public:
 	};
 
 	CClient m_aClients[MAX_CLIENTS];
-	int m_IdMap[MAX_CLIENTS * DDNET_MAX_CLIENTS];
+	int IdMap[MAX_CLIENTS * VANILLA_MAX_CLIENTS];
 
 	CSnapshotDelta m_SnapshotDelta;
 	CSnapshotBuilder m_SnapshotBuilder;
@@ -256,9 +255,6 @@ public:
 	// fixing accounts after crash
 	void FixAccounts();
 
-	// fifo print
-	void RunFifoCmd(const char* Command);
-
 	virtual int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID);
 	int SendMsgEx(CMsgPacker *pMsg, int Flags, int ClientID, bool System);
 
@@ -280,10 +276,10 @@ public:
 	void SendRconCmdRem(const IConsole::CCommandInfo *pCommandInfo, int ClientID);
 	void UpdateClientRconCommands();
 
-	void ProcessClientPacket(CNetChunk *pPacket, int Socket);
+	void ProcessClientPacket(CNetChunk *pPacket);
 
-	void SendServerInfoConnless(const NETADDR *pAddr, int Token, bool Extended, int Socket);
-	void SendServerInfo(const NETADDR *pAddr, int Token, int Socket, bool Extended = false, int Offset = 0, bool Short = false);
+	void SendServerInfoConnless(const NETADDR *pAddr, int Token, bool Extended);
+	void SendServerInfo(const NETADDR *pAddr, int Token, bool Extended = false, int Offset = 0, bool Short = false);
 	void UpdateServerInfo();
 
 	void PumpNetwork();
@@ -347,9 +343,7 @@ public:
 
 	void SetRconLevel(int ClientID, int Level);
 
-	virtual const int* GetIdMap() { return m_IdMap; }
-	virtual const int* GetIdMap(int ClientID);
-	virtual void WriteIdMap(void *pData);
+	virtual int* GetIdMap(int ClientID);
 
 	void InitDnsbl(int ClientID);
 	bool DnsblWhite(int ClientID)
@@ -357,9 +351,6 @@ public:
 		return m_aClients[ClientID].m_DnsblState == CClient::DNSBL_STATE_NONE ||
 			m_aClients[ClientID].m_DnsblState == CClient::DNSBL_STATE_WHITELISTED;
 	}
-
-	virtual int GetClientMappart(int ClientID) const { return m_aClients[ClientID].m_Mappart; }
-	virtual void SetClientMappart(int ClientID, int Mappart) { m_aClients[ClientID].m_Mappart = Mappart; }
 };
 
 #endif

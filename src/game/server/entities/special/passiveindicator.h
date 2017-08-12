@@ -4,7 +4,7 @@
 class CPassiveIndicator : public CEntity
 {
 public:
-	CPassiveIndicator(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Mappart);
+	CPassiveIndicator(CGameWorld *pGameWorld, vec2 Pos, int Owner);
 
 	virtual void Reset();
 	virtual void Tick();

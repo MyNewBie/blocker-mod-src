@@ -11,8 +11,8 @@
 //////////////////////////////////////////////////
 // CGun
 //////////////////////////////////////////////////
-CGun::CGun(CGameWorld *pGameWorld, vec2 Pos, bool Freeze, bool Explosive, int Mappart, int Layer, int Number)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER, Mappart)
+CGun::CGun(CGameWorld *pGameWorld, vec2 Pos, bool Freeze, bool Explosive, int Layer, int Number)
+: CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Layer = Layer;
 	m_Number = Number;
@@ -38,7 +38,7 @@ void CGun::Fire()
 	}
 
 	int Num = -1;
-	Num =  GameServer()->m_World.FindEntities(m_Pos, g_Config.m_SvPlasmaRange, (CEntity**)Ents, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER, GetMappart());
+	Num =  GameServer()->m_World.FindEntities(m_Pos, g_Config.m_SvPlasmaRange, (CEntity**)Ents, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 
 	for (int i = 0; i < Num; i++)
 	{
@@ -64,7 +64,7 @@ void CGun::Fire()
 		if(IdInTeam[i] != -1)
 		{
 			CCharacter *Target = Ents[IdInTeam[i]];
-			new CPlasma(&GameServer()->m_World, m_Pos, normalize(Target->m_Pos - m_Pos), m_Freeze, m_Explosive, i, GetMappart());
+			new CPlasma(&GameServer()->m_World, m_Pos, normalize(Target->m_Pos - m_Pos), m_Freeze, m_Explosive, i);
 			m_LastFire = Server()->Tick();
 		}
 	}
@@ -78,7 +78,7 @@ void CGun::Fire()
 				int res = GameServer()->Collision()->IntersectLine(m_Pos, Target->m_Pos,0,0);
 				if (!res)
 				{
-					new CPlasma(&GameServer()->m_World, m_Pos, normalize(Target->m_Pos - m_Pos), m_Freeze, m_Explosive, Target->Team(), GetMappart());
+					new CPlasma(&GameServer()->m_World, m_Pos, normalize(Target->m_Pos - m_Pos), m_Freeze, m_Explosive, Target->Team());
 					m_LastFire = Server()->Tick();
 				}
 			}

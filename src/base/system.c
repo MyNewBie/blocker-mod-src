@@ -719,10 +719,10 @@ void set_new_tick()
 int64 time_get()
 {
 	static int64 last = 0;
-	/*if(new_tick == 0)
+	if(new_tick == 0)
 		return last;
 	if(new_tick != -1)
-		new_tick = 0;*/
+		new_tick = 0;
 
 #if defined(CONF_PLATFORM_MACOSX)
 	static int got_timebase = 0;
@@ -2221,11 +2221,6 @@ void str_timestamp(char *buffer, int buffer_size)
 int mem_comp(const void *a, const void *b, int size)
 {
 	return memcmp(a,b,size);
-}
-
-void mem_set(void *dest, int val, unsigned size)
-{
-	memset(dest, val, size);
 }
 
 const MEMSTATS *mem_stats()

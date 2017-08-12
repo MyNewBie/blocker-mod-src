@@ -7,8 +7,8 @@
 #include <game/server/teams.h>
 #include "epiccircle.h"
 
-CEpicCircle::CEpicCircle(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Mappart)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE, Mappart)
+CEpicCircle::CEpicCircle(CGameWorld *pGameWorld, vec2 Pos, int Owner)
+: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
 {
 	m_Owner = Owner;
 	m_Pos = Pos;

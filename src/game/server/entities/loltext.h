@@ -13,7 +13,7 @@ class CLolPlasma : public CEntity
 {
 public:
 	//position relative to pParent->m_Pos. if pParent is NULL, Pos is absolute. lifespan in ticks
-	CLolPlasma(CGameWorld *pGameWorld, CEntity *pParent, vec2 Pos, vec2 Vel, int Lifespan, int ltid, int plid, int Mappart);
+	CLolPlasma(CGameWorld *pGameWorld, CEntity *pParent, vec2 Pos, vec2 Vel, int Lifespan, int ltid, int plid);
 
 	virtual void Reset();
 	virtual void Tick();
@@ -40,7 +40,7 @@ private:
 	static bool HasRepr(char c);
 public:
 	static vec2 TextSize(const char *pText, int size = 14);
-	static int Create(CGameWorld *pGameWorld, CEntity *pParent, vec2 Pos, vec2 Vel, int Lifespan, const char *pText, bool Center, bool Follow, int Mappart, int size = 14);
+	static int Create(CGameWorld *pGameWorld, CEntity *pParent, vec2 Pos, vec2 Vel, int Lifespan, const char *pText, bool Center, bool Follow, int size = 14);
 	static void Destroy(CGameWorld *pGameWorld, int TextID);
 	static void PlasmaGone(int TextID, int plid);
 	static void Dump(); //debugging

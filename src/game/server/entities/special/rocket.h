@@ -7,7 +7,7 @@
 class CRocket : public CEntity
 {
 public:
-	CRocket(CGameWorld *pGameWorld, int Owner, vec2 Dir, vec2 Pos, int Mappart);
+	CRocket(CGameWorld *pGameWorld, int Owner, vec2 Dir, vec2 Pos);
 
 	virtual void Reset();
 	virtual void Tick();

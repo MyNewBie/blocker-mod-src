@@ -95,7 +95,7 @@ void CBotProtections::HAInspectInput(CNetObj_PlayerInput *pInput)
 	m_HAFinishedAnalyse = false; // need to analys this hook
 
 	vec2 MousePos = pChr->m_Pos + vec2(pInput->m_TargetX, pInput->m_TargetY);
-	CCharacter *pHookingTee = GameServer()->m_World.ClosestCharacter(MousePos, 30.0f, pChr, pChr->GetMappart());
+	CCharacter *pHookingTee = GameServer()->m_World.ClosestCharacter(MousePos, 30.0f, pChr);
 	if(pHookingTee == NULL || pHookingTee->IsAlive() == false)
 		return;
 

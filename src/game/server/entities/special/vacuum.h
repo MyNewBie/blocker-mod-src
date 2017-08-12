@@ -8,7 +8,7 @@
 class CVacuum : public CEntity
 {
 public:
-	CVacuum(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Mappart);
+	CVacuum(CGameWorld *pGameWorld, vec2 Pos, int Owner);
 
 	virtual void Reset();
 	virtual void Gravity();

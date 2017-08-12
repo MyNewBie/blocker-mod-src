@@ -86,8 +86,6 @@ public:
 	int GetSwitchNumber(int Index);
 	int GetSwitchDelay(int Index);
 
-	int GetMappartsIndex(vec2 Pos);
-
 	int IsSolid(int x, int y);
 	bool IsThrough(int x, int y, int xoff, int yoff, vec2 pos0, vec2 pos1);
 	bool IsHookBlocker(int x, int y, vec2 pos0, vec2 pos1);
@@ -106,7 +104,6 @@ public:
 	class CSwitchTile *SwitchLayer() { return m_pSwitch; }
 	class CTuneTile *TuneLayer() { return m_pTune; }
 	class CLayers *Layers() { return m_pLayers; }
-
 	int m_NumSwitchers;
 
 private:
@@ -117,7 +114,6 @@ private:
 	class CSwitchTile *m_pSwitch;
 	class CTuneTile *m_pTune;
 	class CDoorTile *m_pDoor;
-	class CTile *m_pMapparts;
 	struct SSwitchers
 	{
 		bool m_Status[MAX_CLIENTS];

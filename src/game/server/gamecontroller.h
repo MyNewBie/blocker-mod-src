@@ -4,7 +4,6 @@
 #define GAME_SERVER_GAMECONTROLLER_H
 
 #include <base/vmath.h>
-#include <engine/server.h>
 
 class CDoor;
 #ifdef _MSC_VER
@@ -27,10 +26,8 @@ class IGameController
 {
 	friend class CSaveTeam; // need acces to GameServer() and Server()
 
-	vec2 m_aaSpawnPoints[NUM_MAPPARTS][128];
-	int m_aNumSpawnPoints[NUM_MAPPARTS];
-	/*vec2 m_aaSpawnPointsLmb[NUM_MAPPARTS][128];
-	int m_aNumSpawnPointsLmb[NUM_MAPPARTS];*/
+	vec2 m_aaSpawnPoints[3][128];
+	int m_aNumSpawnPoints[3];
 
 	class CGameContext *m_pGameServer;
 	class IServer *m_pServer;
@@ -55,7 +52,7 @@ protected:
 	};
 
 	float EvaluateSpawnPos(CSpawnEval *pEval, vec2 Pos);
-	void EvaluateSpawnType(CSpawnEval *pEval, int Mappart);
+	void EvaluateSpawnType(CSpawnEval *pEval, int Type);
 	bool EvaluateSpawn(class CPlayer *pP, vec2 *pPos);
 
 	//void CycleMap();
@@ -148,7 +145,7 @@ public:
 	//virtual void OnPlayerInfoChange(class CPlayer *pP);
 
 	//
-	virtual bool CanSpawn(int Mappart, int Team, vec2 *pPos);
+	virtual bool CanSpawn(int Team, vec2 *pPos);
 
 	/*
 

@@ -464,13 +464,11 @@ public:
 	class CLayerFront *m_pFrontLayer;
 	class CLayerSwitch *m_pSwitchLayer;
 	class CLayerTune *m_pTuneLayer;
-	class CLayerMapparts *m_pMappartsLayer;
 	void MakeTeleLayer(CLayer *pLayer);
 	void MakeSpeedupLayer(CLayer *pLayer);
 	void MakeFrontLayer(CLayer *pLayer);
 	void MakeSwitchLayer(CLayer *pLayer);
 	void MakeTuneLayer(CLayer *pLayer);
-	void MakeMappartsLayer(CLayer *pLayer);
 };
 
 
@@ -559,7 +557,6 @@ public:
 	int m_Front;
 	int m_Switch;
 	int m_Tune;
-	int m_Mapparts;
 	char m_aFileName[512];
 };
 
@@ -1030,7 +1027,6 @@ public:
 	static int ms_SpeedupTexture;
 	static int ms_SwitchTexture;
 	static int ms_TuneTexture;
-	static int ms_MappartsTexture;
 	static int PopupTele(CEditor *pEditor, CUIRect View);
 	static int PopupSpeedup(CEditor *pEditor, CUIRect View);
 	static int PopupSwitch(CEditor *pEditor, CUIRect View);
@@ -1158,12 +1154,5 @@ public:
 	array<CSoundSource> m_lSources;
 };
 
-class CLayerMapparts : public CLayerTiles
-{
-public:
-	CLayerMapparts(int w, int h);
-
-	virtual void SetTile(int x, int y, CTile tile);
-};
 
 #endif
