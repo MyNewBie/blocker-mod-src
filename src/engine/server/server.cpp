@@ -829,6 +829,8 @@ void CServer::VpnDetectorCallback(int ClientID, int State, char *pCountry, void 
 	CServer *pThis = (CServer *)pServerData;
 	if (State == CVpnDetector::STATE_BAD)
 		pThis->Kick(ClientID, "VPN/Proxy/Tor detected");
+
+	dbg_msg("VPN-Detector", "Result for %i=%i", ClientID, State);
 }
 
 int CServer::NewClientCallback(int ClientID, void *pUser)
