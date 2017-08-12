@@ -70,8 +70,6 @@ void CVpnDetector::VpnCheckThread(void *pData)
 	char AddressBuf[256];
 	char aBuf[1024];
 
-	dbg_msg(0, "address %s", pRequest->m_aAddress);
-
 	str_format(AddressBuf, sizeof(AddressBuf), "/ip/%s", pRequest->m_aAddress);
 	if (HttpRequest("GET", "v2.api.iphub.info", AddressBuf, XKEY, aBuf, sizeof(aBuf)) == false)
 		return;
@@ -177,6 +175,8 @@ void CVpnDetector::ResetState(int ClientID)
 		delete pRequest;
 		i--;
 	}
+
+	m_DetectState[ClientID] = STATE_UNKOWN;
 }
 
 void CVpnDetector::NewClient(int ClientID, char *pAddress)
