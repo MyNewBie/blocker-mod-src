@@ -839,7 +839,7 @@ void CServer::HandleVpnDetector()
 			if (m_VpnDetector.GetVpnState(i) == CVpnDetector::STATE_BAD)
 			{
 				NETADDR Addr = *m_NetServer.ClientAddr(i);
-				Kick(i, g_Config.m_SvVpnDetectorBanmsg);
+				Kick(i, "");
 				m_NetServer.NetBan()->BanAddr(&Addr, 60, g_Config.m_SvVpnDetectorBanmsg);
 			}
 		}
