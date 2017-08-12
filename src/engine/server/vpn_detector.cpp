@@ -99,7 +99,6 @@ CVpnDetector::CVpnDetector()
 {
 	mem_zero(&m_DetectState, sizeof(m_DetectState));
 	m_pServer = 0x0;
-	m_pResultFunction = 0x0;
 }
 
 void CVpnDetector::WorkStack()
@@ -126,8 +125,6 @@ void CVpnDetector::WorkStack()
 		if (pRequest->m_ResultState != STATE_UNKOWN)
 		{
 			m_DetectState[pRequest->m_ClientID] = pRequest->m_ResultState;
-			if (m_pResultFunction != 0x0)
-				m_pResultFunction(pRequest->m_ClientID, pRequest->m_ResultState, pRequest->m_aResultCountry, Server());
 			Done = true;
 		}
 
@@ -212,13 +209,12 @@ void CVpnDetector::Tick()
 	UpdateList();
 }
 
-void CVpnDetector::Init(CServer *pServer, VpnDetectorResult *pResultFunc)
+void CVpnDetector::Init(CServer *pServer)
 {
 	m_pServer = pServer;
-	m_pResultFunction = pResultFunc;
 }
 
-const char *CVpnDetector::GetVpnState(int ClientID)
+const char *CVpnDetector::VpnState(int ClientID)
 {
 	return s_aVpnStateNames[m_DetectState[ClientID]];
 }

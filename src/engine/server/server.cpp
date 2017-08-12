@@ -824,16 +824,23 @@ int CServer::NewClientNoAuthCallback(int ClientID, bool Reset, void *pUser)
 	return 0;
 }
 
-void CServer::VpnDetectorCallback(int ClientID, int State, char *pCountry, void *pServerData)
+void CServer::HandleVpnDetector()
 {
-	CServer *pThis = (CServer *)pServerData;
-	if (State == CVpnDetector::STATE_BAD)
-	{
-		pThis->m_NetServer.NetBan()->BanAddr(pThis->m_NetServer.ClientAddr(ClientID), 60 , "VPN/Proxy/Tor detected");
-		//pThis->Kick(ClientID, "VPN/Proxy/Tor detected");
-	}
+	m_VpnDetector.Tick();
 
-	dbg_msg("VPN-Detector", "Result for %i=%i", ClientID, State	);
+	//look for results
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (ClientIngame(i) == false)
+			continue;
+
+		if (m_VpnDetector.GetVpnState(i) == CVpnDetector::STATE_BAD)
+		{
+			NETADDR Addr = *m_NetServer.ClientAddr(i);
+			Kick(i, "");
+			m_NetServer.NetBan()->BanAddr(&Addr, 60, "VPN/Proxy/Tor detected");
+		}
+	}
 }
 
 int CServer::NewClientCallback(int ClientID, void *pUser)
@@ -1712,14 +1719,14 @@ int CServer::Run()
 			Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "server", aBuf);
 		}
 
-		m_VpnDetector.Init(this, VpnDetectorCallback);
+		m_VpnDetector.Init(this);
 
 		while (m_RunServer)
 		{
 			if (NonActive)
 				PumpNetwork();
 
-			m_VpnDetector.Tick();
+			HandleVpnDetector();
 
 			set_new_tick();
 

@@ -2,8 +2,6 @@
 
 #include <base/tl/array.h>
 
-typedef void(VpnDetectorResult)(int ClientID, int State, char *pCountry, void *pServerData);
-
 class CServer;
 
 class CVpnDetector
@@ -31,7 +29,6 @@ public:
 
 private:
 	CServer *m_pServer;
-	VpnDetectorResult *m_pResultFunction;
 	int m_DetectState[MAX_CLIENTS];
 	array<CVpnRequest *> m_lRequestList;
 
@@ -47,9 +44,11 @@ public:
 	CVpnDetector();
 
 	void Tick();
-	void Init(CServer *pServer, VpnDetectorResult *pResultFunc);
+	void Init(CServer *pServer);
 
-	const char *GetVpnState(int ClientID);
+	const char *VpnState(int ClientID);
+
+	int GetVpnState(int ClientID) const { return m_DetectState[ClientID]; }
 
 	CServer *Server() const { return m_pServer; }
 };

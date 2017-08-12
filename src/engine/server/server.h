@@ -262,7 +262,7 @@ public:
 
 	void DoSnapshot();
 
-	static void VpnDetectorCallback(int ClientID, int State, char *pCountry, void *pServerData);
+	void HandleVpnDetector();
 
 	static int NewClientCallback(int ClientID, void *pUser);
 	static int NewClientNoAuthCallback(int ClientID, bool Reset, void *pUser);
