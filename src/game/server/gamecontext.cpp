@@ -703,7 +703,7 @@ void CGameContext::HandleFlagHunt()
 	{
 		SendChat(-1, m_FlagHuntCarrier, "A Flag-Hunt began. Find and touch the Flag");
 		s_StartFlagHunt = false;
-		m_FlagHuntOvertime = Server()->Tick() + Server()->TickSpeed() * 60.0f;
+		m_FlagHuntOvertime = Server()->Tick() + Server()->TickSpeed() * 60.0f * 3.0f;
 		m_FlagHuntWarmuptime = 0;
 		SendBroadcast("", m_FlagHuntCarrier);
 		return;
