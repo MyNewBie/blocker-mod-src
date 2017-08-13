@@ -349,7 +349,9 @@ void CPlayer::Snap(int SnappingClient)
 	if (!pClientInfo)
 		return;
 
-	if (g_Config.m_SvAnonymousBlock || m_InLMB == LMB_PARTICIPATE)
+	bool Anonymus = (g_Config.m_SvAnonymousBlock || m_InLMB == LMB_PARTICIPATE) && Server()->IsAdmin(SnappingClient) == false;
+
+	if (Anonymus)
 	{
 		StrToInts(&pClientInfo->m_Name0, 4, " ");
 		StrToInts(&pClientInfo->m_Clan0, 3, " ");
@@ -371,7 +373,7 @@ void CPlayer::Snap(int SnappingClient)
 	}
 	else
 	{
-		if (g_Config.m_SvAnonymousBlock || m_InLMB == LMB_PARTICIPATE)
+		if (Anonymus)
 		{
 			if (Server()->Tick() >= m_LastTriggerTick + Server()->TickSpeed() * 2) {
 				m_LastTriggerTick = Server()->Tick();
@@ -401,6 +403,8 @@ void CPlayer::Snap(int SnappingClient)
 	pPlayerInfo->m_ClientID = id;
 	pPlayerInfo->m_Score = abs(m_Score) * -1;
 	pPlayerInfo->m_Team = (m_ClientVersion < VERSION_DDNET_OLD || m_Paused != PAUSED_SPEC || m_ClientID != SnappingClient) && m_Paused < PAUSED_PAUSED ? m_Team : TEAM_SPECTATORS;
+	if (Anonymus)
+		pPlayerInfo->m_Team = 1;
 
 	if (m_ClientID == SnappingClient && (m_Paused != PAUSED_SPEC || m_ClientVersion >= VERSION_DDNET_OLD))
 		pPlayerInfo->m_Local = 1;
