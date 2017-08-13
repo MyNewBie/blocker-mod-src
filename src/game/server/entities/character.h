@@ -104,6 +104,8 @@ public:
 	void HandleSolo(bool Set);
 	void HandlePullHammer();
 
+	void HandleFlaghunt();
+
 	int NeededFaketuning() { return m_NeededFaketuning; }
 	bool IsAlive() const { return m_Alive; }
 	bool IsPaused() const { return m_Paused; }

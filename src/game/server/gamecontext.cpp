@@ -674,9 +674,88 @@ void CGameContext::DoBotPenality()
 	}
 }
 
+void CGameContext::HandleFlagHunt()
+{
+	if (m_FlagHuntCarrier == -1)
+		return;
+
+	CCharacter *pChrFlag = GetPlayerChar(m_FlagHuntCarrier);
+	if (pChrFlag == 0x0 || pChrFlag->IsAlive() == false)
+	{
+		SendChat(-1, CHAT_ALL, "Flag-Hunt over. Nobody won!");
+		m_FlagHuntCarrier = -1;
+		return;
+	}
+
+	static bool s_StartFlagHunt = false;
+	if (FlagHuntWarmup())
+	{
+		char aBuf[64];
+		float Time = (m_FlagHuntWarmuptime - Server()->Tick()) / (float)Server()->TickSpeed();
+		str_format(aBuf, sizeof(aBuf), "Flag-Hunt warmup: %.1f", Time);
+		SendBroadcast(aBuf, m_FlagHuntCarrier);
+		s_StartFlagHunt = true;
+		
+		return;
+	}
+
+	if (s_StartFlagHunt == true)
+	{
+		SendChat(-1, m_FlagHuntCarrier, "A Flag-Hunt began. Find and touch the Flag");
+		s_StartFlagHunt = false;
+		m_FlagHuntOvertime = Server()->Tick() + Server()->TickSpeed() * 60.0f;
+		m_FlagHuntWarmuptime = 0;
+		SendBroadcast("", m_FlagHuntCarrier);
+		return;
+	}
+
+	if (m_FlagHuntOvertime < Server()->Tick())
+	{
+		SendChat(-1, CHAT_ALL, "Flag-Hunt over. Nobody won!");
+		m_FlagHuntCarrier = -1;
+		pChrFlag->Die(pChrFlag->GetPlayer()->GetCID(), WEAPON_WORLD);
+		return;
+	}
+
+	CCharacter *pChrWinner = m_World.ClosestCharacter(pChrFlag->m_Pos, 28.0f, pChrFlag);
+	if (pChrWinner == 0x0)
+		return;
+
+	CPlayer *pPlayerWinner = pChrWinner->GetPlayer();
+
+	if (pPlayerWinner->m_AccData.m_UserID)
+	{
+		SendChatTarget(pPlayerWinner->GetCID(), "+2 pages!");
+		SendChatTarget(pPlayerWinner->GetCID(), "(+3) WeaponKits (use /weapons)!");
+		SendChatTarget(pPlayerWinner->GetCID(), "Temoporary access to passivemode for 2Hours! (Anti WB)");
+
+		pPlayerWinner->m_QuestData.m_Pages += 2;
+		pPlayerWinner->m_AccData.m_Weaponkits += 3;
+		pPlayerWinner->Temporary.m_PassiveMode = true;
+		pPlayerWinner->Temporary.m_PassiveModeTime = Server()->Tick();
+		pPlayerWinner->Temporary.m_PassiveTimeLength = 10800;
+
+		CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(pPlayerWinner->m_pAccount);
+		if (pAccDb)
+			pAccDb->ApplyUpdatedData();
+	}
+	else
+	{
+		SendChatTarget(pPlayerWinner->GetCID(), "You currently are not logged in into an account. Create one or log in to receive a reward next time.");
+	}
+
+	char aBuf[64];
+	str_format(aBuf, sizeof(aBuf), "Flag-Hunt over: ''%s' won!", Server()->ClientName(pPlayerWinner->GetCID()));
+	SendBroadcast(aBuf, -1);
+	m_FlagHuntCarrier = -1;
+
+	pChrFlag->Die(pChrFlag->GetPlayer()->GetCID(), WEAPON_WORLD);
+}
+
 void CGameContext::OnTick()
 {
 	DoBotPenality();
+	HandleFlagHunt();
 
 	m_PlayerCount = 0;
 	for (int i = 0; i < MAX_CLIENTS; i++)
@@ -2574,6 +2653,32 @@ void CGameContext::ConOpenKOH(IConsole::IResult *pResult, void *pUserData)
 		pSelf->m_KOH[i].m_NumContestants = 0;
 }
 
+void CGameContext::ConStartFlagHunt(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int ClientID = pResult->GetInteger(0);
+	
+
+	if (ClientID >= 0 && ClientID < MAX_CLIENTS && pSelf->Server()->ClientIngame(ClientID))
+	{
+		if (pSelf->m_FlagHuntCarrier != -1)
+		{
+			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "Flag-Hunt", "Flag-Hunt already running. Write \"start_flaghunt -1\" to abort");
+			return;
+		}
+
+		pSelf->m_FlagHuntWarmuptime = pSelf->Server()->Tick() + pSelf->Server()->TickSpeed() * 30.0f;
+		pSelf->m_FlagHuntOvertime = 0;
+		pSelf->m_FlagHuntCarrier = ClientID;
+		pSelf->SendChat(-1, ClientID, "A Flag-Hunt began. You are the Flag. Run away from the players and let nobody touch you! You have endless double jumps and your hook is a jetpack as a flag");
+	}
+	else if(pSelf->m_FlagHuntCarrier != -1)
+	{
+		pSelf->SendChat(-1, CHAT_ALL, "Flag-Hunt over. Nobody won!");
+		pSelf->m_FlagHuntCarrier = -1;
+	}
+}
+
 void CGameContext::ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
 {
 	pfnCallback(pResult, pCallbackUserData);
@@ -2629,6 +2734,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("countdown", "iir", CFGFLAG_SERVER, ConCountdown, this, "Starts a countdown for a server restart");
 	Console()->Register("open_lmb", "", CFGFLAG_SERVER, ConOpenLMB, this, "Opens registration for LMB");
 	Console()->Register("open_koh", "", CFGFLAG_SERVER, ConOpenKOH, this, "Opens KOH");
+	Console()->Register("start_flaghunt", "i[id]", CFGFLAG_SERVER, ConStartFlagHunt, this, "Starts the flag hunt event");
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 
 #define CONSOLE_COMMAND(name, params, flags, callback, userdata, help) m_pConsole->Register(name, params, flags, callback, userdata, help);
@@ -2647,6 +2753,8 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	mem_zero(&aBanAddr, sizeof(aBanAddr));
 
 	DeleteTempfile();
+
+	m_FlagHuntCarrier = -1;
 
 	//init account database
 #if defined(CONF_SQL)
