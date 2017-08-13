@@ -176,7 +176,7 @@ void CAccountDatabase::LoginResult(bool Failed, void *pResultData, void *pData)
 	else
 	{
 		dbg_msg("account", "No Result pointer");
-		pGameServer->SendChatTarget(ClientID, "Internal Server Error. Please contact an admin.");
+		pGameServer->SendChatTarget(ClientID, "Internal Server Error. Please contact an admin. (0)");
 	}
 }
 
@@ -259,7 +259,7 @@ void CAccountDatabase::RegisterResult(bool Failed, void *pResultData, void *pDat
 	else
 	{
 		dbg_msg("account", "No Result pointer");
-		pGameServer->SendChatTarget(ClientID, "Internal Server Error. Please contact an admin.");
+		pGameServer->SendChatTarget(ClientID, "Internal Server Error. Please contact an admin. (1)");
 	}
 }
 
@@ -294,7 +294,7 @@ void CAccountDatabase::ExistsResultRegister(bool Failed, void *pResultData, void
 	else
 	{
 		dbg_msg("account", "No Result pointer");
-		pGameServer->SendChatTarget(ClientID, "Internal Server Error. Please contact an admin.");
+		pGameServer->SendChatTarget(ClientID, "Internal Server Error. Please contact an admin. (2)");
 	}
 }
 
@@ -439,7 +439,7 @@ void CAccountDatabase::ReloadDataResult(bool Failed, void *pResultData, void *pD
 		if(pResults->isLast() == true)
 		{
 			dbg_msg("account", "Name not found for reloading");
-			pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Internal Server Error. Please contact an admin.");
+			pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Internal Server Error. Please contact an admin. (3)");
 			return;
 		}
 
@@ -461,7 +461,7 @@ void CAccountDatabase::ReloadDataResult(bool Failed, void *pResultData, void *pD
 	else
 	{
 		dbg_msg("account", "No Result pointer");
-		pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Internal Server Error. Please contact an admin.");
+		pAccount->GameServer()->SendChatTarget(pAccount->m_pPlayer->GetCID(), "Internal Server Error. Please contact an admin. (4)");
 	}
 }
 
