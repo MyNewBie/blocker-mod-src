@@ -861,6 +861,7 @@ void CCharacter::HandleFlaghunt()
 		if (pChr->Core()->m_HookedPlayer == m_pPlayer->GetCID() && pChr->Core()->m_HookState == HOOK_GRABBED)
 		{
 			pChr->Core()->m_HookState = HOOK_RETRACTED;
+			pChr->Core()->m_HookedPlayer = -1;
 		}
 	}
 }
@@ -1232,7 +1233,7 @@ void CCharacter::Snap(int SnappingClient)
 			pGameDataObj->m_FlagCarrierRed = m_pPlayer->GetCID();
 		}
 
-		if (GameServer()->FlagHuntWarmup() == false || SnappingClient != m_pPlayer->GetCID())
+		if (GameServer()->FlagHuntWarmup() == false || SnappingClient == m_pPlayer->GetCID())
 		{
 			static const int Team = 0;
 			CNetObj_Flag *pFlag = (CNetObj_Flag *)Server()->SnapNewItem(NETOBJTYPE_FLAG, Team, sizeof(CNetObj_Flag));
