@@ -100,6 +100,7 @@ class CGameContext : public IGameServer
 	static void ConOpenLMB(IConsole::IResult *pResult, void *pUserData);
 	static void ConOpenKOH(IConsole::IResult *pResult, void *pUserData);
 	static void ConRegisterLMB(IConsole::IResult *pResult, void *pUserData);
+	static void ConStartFlagHunt(IConsole::IResult *pResult, void *pUserData);
 	static void ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
 	CGameContext(int Resetting);
@@ -152,6 +153,14 @@ public:
 	int m_VoteEnforce;
 	char m_ZoneEnterMsg[NUM_TUNINGZONES][256]; // 0 is used for switching from or to area without tunings
 	char m_ZoneLeaveMsg[NUM_TUNINGZONES][256];
+
+	//flaghunt
+	int m_FlagHuntCarrier;
+	int64 m_FlagHuntWarmuptime;
+	int64 m_FlagHuntOvertime;
+
+	void HandleFlagHunt();
+	bool FlagHuntWarmup() { return m_FlagHuntWarmuptime > Server()->Tick(); };
 
 	char m_aDeleteTempfile[128];
 	void DeleteTempfile();

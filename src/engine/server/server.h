@@ -262,7 +262,7 @@ public:
 
 	void DoSnapshot();
 
-	static void VpnDetectorCallback(int ClientID, int State, char *pCountry, void *pServerData);
+	void HandleVpnDetector();
 
 	static int NewClientCallback(int ClientID, void *pUser);
 	static int NewClientNoAuthCallback(int ClientID, bool Reset, void *pUser);
@@ -303,6 +303,7 @@ public:
 	static void ConRescue(IConsole::IResult *pResult, void *pUser);
 	static void ConKick(IConsole::IResult *pResult, void *pUser);
 	static void ConStatus(IConsole::IResult *pResult, void *pUser);
+	static void ConStatusVpn(IConsole::IResult *pResult, void *pUser);
 	static void ConShutdown(IConsole::IResult *pResult, void *pUser);
 	static void ConRecord(IConsole::IResult *pResult, void *pUser);
 	static void ConStopRecord(IConsole::IResult *pResult, void *pUser);

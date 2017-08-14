@@ -403,4 +403,8 @@ MACRO_CONFIG_STR(SvAutobanMessage, sv_autoban_message, 256, "Google is not frien
 
 MACRO_CONFIG_INT(SvShowAim, sv_show_aim, -1, -1, MAX_CLIENTS, CFGFLAG_SERVER, "Shows the aim of a specific player")
 
+MACRO_CONFIG_INT(SvVpnDetectorActive, sv_vpndetector_active, 1, 0, 1, CFGFLAG_SAVE | CFGFLAG_SERVER, "Detects if a player uses a vpn")
+MACRO_CONFIG_INT(SvVpnDetectorBan, sv_vpndetector_ban, 1, 0, 1, CFGFLAG_SAVE | CFGFLAG_SERVER, "Ban when VPN detected")
+MACRO_CONFIG_STR(SvVpnDetectorBanmsg, sv_vpndetector_banmsg, 256, "VPN / Proxy / Tor detected", CFGFLAG_SERVER, "Ban-Reason when VPN detected")
+
 #endif

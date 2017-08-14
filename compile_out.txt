@@ -1,0 +1,114 @@
+[ 1/53] #1 c++ src/engine/shared/config.cpp
+[ 2/53] #2 c++ src/engine/shared/console.cpp
+[ 3/53] #3 c++ src/engine/shared/demo.cpp
+[ 4/53] #4 c++ src/engine/shared/network_server.cpp
+[ 5/53] #5 c++ src/engine/shared/serverbrowser.cpp
+[ 6/53] #6 c++ src/engine/shared/websockets.cpp
+[ 7/53] #7 c++ src/engine/server/server.cpp
+[ 8/53] #8 c++ src/engine/server/sql_server.cpp
+[ 9/53] #3 c++ src/game/collision.cpp
+[10/53] #6 c++ src/game/gamecore.cpp
+[11/53] #4 c++ src/game/layers.cpp
+[12/53] #5 c++ src/game/mapitems.cpp
+[13/53] #5 c++ src/game/teamscore.cpp
+[14/53] #4 c++ src/game/generated/nethash.cpp
+[15/53] #5 c++ src/game/generated/protocol.cpp
+[16/53] #4 c++ src/game/server/accounting/account.cpp
+[17/53] #5 c++ src/game/server/accounting/account_database.cpp
+[18/53] #1 c++ src/game/server/accounting/account_file.cpp
+[19/53] #3 c++ src/game/server/botprotections.cpp
+[20/53] #4 c++ src/game/server/chatcommands.cpp
+[21/53] #5 c++ src/game/server/ddracechat.cpp
+[22/53] #1 c++ src/game/server/ddracecommands.cpp
+[23/53] #3 c++ src/game/server/entities/character.cpp
+[24/53] #2 c++ src/game/server/entities/door.cpp
+[25/53] #7 c++ src/game/server/entities/dragger.cpp
+[26/53] #2 c++ src/game/server/entities/flag.cpp
+[27/53] #2 c++ src/game/server/entities/gun.cpp
+[28/53] #7 c++ src/game/server/entities/laser.cpp
+[29/53] #2 c++ src/game/server/entities/light.cpp
+src/game/server/entities/laser.cpp(168) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+bam: 'objs/game/server/entities/laser_sql.obj' error 2
+[30/53] #7 c++ src/game/server/entities/loltext.cpp
+src/game/server/entities/character.cpp(155) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(241) : error C2660: 'CGameContext::CreateDamageInd': Funktion akzeptiert keine 4 Argumente
+src/game/server/entities/character.cpp(307) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(441) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(459) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(479) : error C2660: 'CGameContext::CreateHammerHit': Funktion akzeptiert keine 2 Argumente
+src/game/server/entities/character.cpp(481) : error C2660: 'CGameContext::CreateHammerHit': Funktion akzeptiert keine 2 Argumente
+src/game/server/entities/character.cpp(543) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(545) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(667) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(679) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(691) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(768) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(864) : error C2660: 'CGameContext::CreateDeath': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(945) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(947) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(948) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(949) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(1049) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(1060) : error C2660: 'CGameContext::CreateDeath': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/character.cpp(1236) : error C2660: 'CGameContext::CreatePlayerSpawn': Funktion akzeptiert keine 2 Argumente
+src/game/server/entities/character.cpp(2409) : error C2660: 'CGameContext::CreateDamageInd': Funktion akzeptiert keine 4 Argumente
+src/game/server/entities/character.cpp(3075) : error C2660: 'CGameContext::CreateDamageInd': Funktion akzeptiert keine 4 Argumente
+bam: 'objs/game/server/entities/character_sql.obj' error 2
+[31/53] #3 c++ src/game/server/entities/pickup.cpp
+[32/53] #2 c++ src/game/server/entities/plasma.cpp
+[33/53] #5 c++ src/game/server/entities/projectile.cpp
+[34/53] #8 c++ src/game/server/entities/special/ball.cpp
+[35/53] #6 c++ src/game/server/entities/special/epiccircle.cpp
+[36/53] #7 c++ src/game/server/entities/special/koh.cpp
+[37/53] #7 c++ src/game/server/entities/special/lovely.cpp
+src/game/server/entities/pickup.cpp(62) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/pickup.cpp(85) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/pickup.cpp(100) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/pickup.cpp(102) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/pickup.cpp(104) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+bam: 'objs/game/server/entities/pickup_sql.obj' error 2
+[38/53] #3 c++ src/game/server/entities/special/passiveindicator.cpp
+src/game/server/entities/projectile.cpp(180) : error C2660: 'CGameContext::CreateDeath': Funktion akzeptiert keine 3 Argumente
+src/game/server/entities/projectile.cpp(182) : error C2660: 'CGameContext::CreateDamageInd': Funktion akzeptiert keine 4 Argumente
+bam: 'objs/game/server/entities/projectile_sql.obj' error 2
+[39/53] #5 c++ src/game/server/entities/special/rocket.cpp
+[40/53] #6 c++ src/game/server/entities/special/vacuum.cpp
+[41/53] #2 c++ src/game/server/entity.cpp
+[42/53] #8 c++ src/game/server/eventhandler.cpp
+[43/53] #7 c++ src/game/server/gamecontext.cpp
+src/game/server/entities/special/rocket.cpp(85) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+bam: 'objs/game/server/entities/special/rocket_sql.obj' error 2
+[44/53] #5 c++ src/game/server/gamecontroller.cpp
+src/game/server/ddracecommands.cpp(384) : error C2660: 'CGameContext::CreatePlayerSpawn': Funktion akzeptiert keine 2 Argumente
+src/game/server/ddracecommands.cpp(386) : error C2660: 'CGameContext::CreateDeath': Funktion akzeptiert keine 3 Argumente
+src/game/server/ddracecommands.cpp(737) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+bam: 'objs/game/server/ddracecommands_sql.obj' error 2
+[45/53] #1 c++ src/game/server/gamemodes/DDRace.cpp
+[46/53] #2 c++ src/game/server/gameworld.cpp
+src/game/server/entities/special/passiveindicator.cpp(36) : error C2660: 'CGameContext::CreateDeath': Funktion akzeptiert keine 3 Argumente
+bam: 'objs/game/server/entities/special/passiveindicator_sql.obj' error 2
+[47/53] #3 c++ src/game/server/lmb.cpp
+src/game/server/entities/special/vacuum.cpp(92) : error C2660: 'CGameContext::CreateDeath': Funktion akzeptiert keine 3 Argumente
+bam: 'objs/game/server/entities/special/vacuum_sql.obj' error 2
+[48/53] #8 c++ src/game/server/player.cpp
+[49/53] #6 c++ src/game/server/save.cpp
+src/game/server/chatcommands.cpp(399) : error C2660: 'CGameContext::CreatePlayerSpawn': Funktion akzeptiert keine 2 Argumente
+src/game/server/chatcommands.cpp(403) : error C2660: 'CGameContext::CreateDeath': Funktion akzeptiert keine 3 Argumente
+bam: 'objs/game/server/chatcommands_sql.obj' error 2
+[50/53] #4 c++ src/game/server/score/file_score.cpp
+[51/53] #5 c++ src/game/server/score/sql_score.cpp
+[52/53] #3 c++ src/game/server/teams.cpp
+src/game/server/player.cpp(606) : warning C4291: 'void *CCharacter::operator new(size_t,int)': Kein zugeh”riger delete-Operator gefunden; Speicher wird nicht freigegeben, wenn die Initialisierung eine Ausnahme ausl”st
+        c:\users\paddel\desktop\sourcen\blocker-mod\src\game\server\entities/character.h(38): Siehe Deklaration von 'CCharacter::operator new'
+src/game/server/player.cpp(669) : warning C4291: 'void *CCharacter::operator new(size_t,int)': Kein zugeh”riger delete-Operator gefunden; Speicher wird nicht freigegeben, wenn die Initialisierung eine Ausnahme ausl”st
+        c:\users\paddel\desktop\sourcen\blocker-mod\src\game\server\entities/character.h(38): Siehe Deklaration von 'CCharacter::operator new'
+src/game/server/player.cpp(675) : error C2660: 'CGameContext::CreatePlayerSpawn': Funktion akzeptiert keine 2 Argumente
+src/game/server/player.cpp(795) : error C2660: 'CGameContext::CreateDeath': Funktion akzeptiert keine 3 Argumente
+src/game/server/player.cpp(796) : error C2660: 'CGameContext::CreateSound': Funktion akzeptiert keine 3 Argumente
+src/game/server/player.cpp(810) : error C2660: 'CGameContext::CreatePlayerSpawn': Funktion akzeptiert keine 2 Argumente
+bam: 'objs/game/server/player_sql.obj' error 2
+src/game/server/gamecontext.cpp(1146) : warning C4291: 'void *CPlayer::operator new(size_t,int)': Kein zugeh”riger delete-Operator gefunden; Speicher wird nicht freigegeben, wenn die Initialisierung eine Ausnahme ausl”st
+        c:\users\paddel\desktop\sourcen\blocker-mod\src\game\server\player.h(20): Siehe Deklaration von 'CPlayer::operator new'
+src/game/server/gamecontext.cpp(1150) : warning C4291: 'void *CPlayer::operator new(size_t,int)': Kein zugeh”riger delete-Operator gefunden; Speicher wird nicht freigegeben, wenn die Initialisierung eine Ausnahme ausl”st
+        c:\users\paddel\desktop\sourcen\blocker-mod\src\game\server\player.h(20): Siehe Deklaration von 'CPlayer::operator new'
+bam: error: a build step failed

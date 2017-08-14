@@ -824,11 +824,26 @@ int CServer::NewClientNoAuthCallback(int ClientID, bool Reset, void *pUser)
 	return 0;
 }
 
-void CServer::VpnDetectorCallback(int ClientID, int State, char *pCountry, void *pServerData)
+void CServer::HandleVpnDetector()
 {
-	CServer *pThis = (CServer *)pServerData;
-	if (State == CVpnDetector::STATE_BAD)
-		pThis->Kick(ClientID, "VPN/Proxy/Tor detected");
+	m_VpnDetector.Tick();
+
+	//look for results
+	if (g_Config.m_SvVpnDetectorBan == 1)
+	{
+		for (int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if (m_aClients[i].m_State == CClient::STATE_EMPTY)
+				continue;
+
+			if (m_VpnDetector.GetVpnState(i) == CVpnDetector::STATE_BAD)
+			{
+				NETADDR Addr = *m_NetServer.ClientAddr(i);
+				Kick(i, "");
+				m_NetServer.NetBan()->BanAddr(&Addr, 60, g_Config.m_SvVpnDetectorBanmsg);
+			}
+		}
+	}
 }
 
 int CServer::NewClientCallback(int ClientID, void *pUser)
@@ -1707,14 +1722,14 @@ int CServer::Run()
 			Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "server", aBuf);
 		}
 
-		m_VpnDetector.Init(this, VpnDetectorCallback);
+		m_VpnDetector.Init(this);
 
 		while (m_RunServer)
 		{
 			if (NonActive)
 				PumpNetwork();
 
-			m_VpnDetector.Tick();
+			HandleVpnDetector();
 
 			set_new_tick();
 
@@ -1960,6 +1975,33 @@ void CServer::ConStatus(IConsole::IResult *pResult, void *pUser)
 			{
 				str_format(aBuf, sizeof(aBuf), "[%02i] addr= %s, connecting...", i, aAddrStr);
 			}
+			pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "status", aBuf);
+		}
+	}
+}
+
+void CServer::ConStatusVpn(IConsole::IResult *pResult, void *pUser)
+{
+	char aBuf[1024];
+	char aAddrStr[NETADDR_MAXSTRSIZE];
+	CServer* pThis = static_cast<CServer *>(pUser);
+
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (pThis->m_aClients[i].m_State != CClient::STATE_EMPTY)
+		{
+			net_addr_str(pThis->m_NetServer.ClientAddr(i), aAddrStr, sizeof(aAddrStr), false);
+
+			if (pThis->m_aClients[i].m_State == CClient::STATE_INGAME)
+			{
+				const char *pAuthStr = pThis->IsAdmin(i) ? "[Admin]" : pThis->IsMod(i) ? "[Mod]" : pThis->IsAuthed(i) ? "[Helper]" : "";
+				str_format(aBuf, sizeof(aBuf), "[%02i] %s:   addr= %s,   VPN-State=%s", i, pThis->ClientName(i), aAddrStr, pThis->m_VpnDetector.VpnState(i));
+			}
+			else
+			{
+				str_format(aBuf, sizeof(aBuf), "[%02i] addr= %s, VPN-State=%s, connecting...", i, aAddrStr, pThis->m_VpnDetector.VpnState(i));
+			}
+
 			pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "status", aBuf);
 		}
 	}
@@ -2313,6 +2355,7 @@ void CServer::RegisterCommands()
 	// register console commands
 	Console()->Register("kick", "i[id] ?r[reason]", CFGFLAG_SERVER, ConKick, this, "Kick player with specified id for any reason");
 	Console()->Register("status", "", CFGFLAG_SERVER, ConStatus, this, "List players");
+	Console()->Register("status_vpn", "", CFGFLAG_SERVER, ConStatusVpn, this, "List players with vpn state");
 	Console()->Register("shutdown", "", CFGFLAG_SERVER, ConShutdown, this, "Shut down");
 	Console()->Register("logout", "", CFGFLAG_SERVER, ConLogout, this, "Logout of rcon");
 

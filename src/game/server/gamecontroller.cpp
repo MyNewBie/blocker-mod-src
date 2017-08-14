@@ -781,6 +781,30 @@ void IGameController::Snap(int SnappingClient)
 			pGameInfoObj->m_RoundStartTick = (pChr->m_DDRaceState == DDRACE_STARTED) ? pChr->m_StartTime : m_RoundStartTick;
 		}
 	}
+
+	/*CNetObj_GameData *pGameDataObj = (CNetObj_GameData *)Server()->SnapNewItem(NETOBJTYPE_GAMEDATA, 0, sizeof(CNetObj_GameData));
+	if (!pGameDataObj)
+		return;
+
+	pGameDataObj->m_TeamscoreRed = 0;
+	pGameDataObj->m_TeamscoreBlue = 0;
+	pGameDataObj->m_FlagCarrierBlue = 0;
+	pGameDataObj->m_FlagCarrierRed = 0;
+
+	for (int i = 0; i < 2; i++)
+	{
+		if (Server()->Tick() % Server()->TickSpeed() == i)
+			continue;
+
+		int Team = i;
+		CNetObj_Flag *pFlag = (CNetObj_Flag *)Server()->SnapNewItem(NETOBJTYPE_FLAG, Team, sizeof(CNetObj_Flag));
+		if (!pFlag)
+			return;
+
+		pFlag->m_X = 0;
+		pFlag->m_Y = 0;
+		pFlag->m_Team = Team;
+	}*/
 }
 
 int IGameController::GetAutoTeam(int NotThisID)

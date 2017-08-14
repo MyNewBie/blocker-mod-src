@@ -4,12 +4,14 @@
 #include <base/system.h>
 #include <engine/server/server.h>
 #include <engine/shared/protocol.h>
+#include <engine/shared/config.h>
 
 #include "vpn_detector.h"
 
 #define XKEY "MzExOk5xeE9mdmVvZzEwNGRJVnNZdW01d0dla2ZSMW5Ec2xR"
 
 static NETSOCKET invalid_socket = { NETTYPE_INVALID, -1, -1 };
+static const char *s_aVpnStateNames[CVpnDetector::NUM_STATES] = { "Unknown", "Residential", "Warning", "Bad", "Error" };
 
 struct CThreadFeed
 {
@@ -68,8 +70,6 @@ void CVpnDetector::VpnCheckThread(void *pData)
 	char AddressBuf[256];
 	char aBuf[1024];
 
-	dbg_msg(0, "address %s", pRequest->m_aAddress);
-
 	str_format(AddressBuf, sizeof(AddressBuf), "/ip/%s", pRequest->m_aAddress);
 	if (HttpRequest("GET", "v2.api.iphub.info", AddressBuf, XKEY, aBuf, sizeof(aBuf)) == false)
 		return;
@@ -98,7 +98,6 @@ CVpnDetector::CVpnDetector()
 {
 	mem_zero(&m_DetectState, sizeof(m_DetectState));
 	m_pServer = 0x0;
-	m_pResultFunction = 0x0;
 }
 
 void CVpnDetector::WorkStack()
@@ -125,8 +124,6 @@ void CVpnDetector::WorkStack()
 		if (pRequest->m_ResultState != STATE_UNKOWN)
 		{
 			m_DetectState[pRequest->m_ClientID] = pRequest->m_ResultState;
-			if (m_pResultFunction != 0x0)
-				m_pResultFunction(pRequest->m_ClientID, pRequest->m_ResultState, pRequest->m_aResultCountry, Server());
 			Done = true;
 		}
 
@@ -141,6 +138,10 @@ void CVpnDetector::WorkStack()
 void CVpnDetector::UpdateList()
 {
 	static bool s_Online[MAX_CLIENTS] = { };
+
+	if (g_Config.m_SvVpnDetectorActive == 0)
+		return;
+
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (Server()->ClientIngame(i) == false)
@@ -174,6 +175,8 @@ void CVpnDetector::ResetState(int ClientID)
 		delete pRequest;
 		i--;
 	}
+
+	m_DetectState[ClientID] = STATE_UNKOWN;
 }
 
 void CVpnDetector::NewClient(int ClientID, char *pAddress)
@@ -182,7 +185,7 @@ void CVpnDetector::NewClient(int ClientID, char *pAddress)
 	pRequest->m_ClientID = ClientID;
 	str_copy(pRequest->m_aAddress, pAddress, sizeof(pRequest->m_aAddress));
 	pRequest->m_ResultState = STATE_UNKOWN;
-	mem_zero(pRequest->m_aResultCountry, sizeof(pRequest->m_aResultCountry));
+	//mem_zero(pRequest->m_aResultCountry, sizeof(pRequest->m_aResultCountry));
 	pRequest->m_TimeLimitExceeded = false;
 	pRequest->m_RemoveTime = Server()->Tick() + Server()->TickSpeed() * 5.0f;
 
@@ -211,8 +214,12 @@ void CVpnDetector::Tick()
 	UpdateList();
 }
 
-void CVpnDetector::Init(CServer *pServer, VpnDetectorResult *pResultFunc)
+void CVpnDetector::Init(CServer *pServer)
 {
 	m_pServer = pServer;
-	m_pResultFunction = pResultFunc;
+}
+
+const char *CVpnDetector::VpnState(int ClientID)
+{
+	return s_aVpnStateNames[m_DetectState[ClientID]];
 }

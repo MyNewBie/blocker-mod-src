@@ -393,6 +393,13 @@ void CCharacter::FireWeapon()
 	if (m_ReloadTimer != 0 && !m_XXL)
 		return;
 
+	if (GameServer()->m_FlagHuntCarrier == m_pPlayer->GetCID())
+	{
+		if (CountInput(m_LatestPrevInput.m_Fire, m_LatestInput.m_Fire).m_Presses)
+			GameServer()->CreateSound(m_Pos, SOUND_CTF_RETURN, -1);
+		return;
+	}
+
 	DoWeaponSwitch();
 	vec2 Direction = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
 
@@ -449,6 +456,7 @@ void CCharacter::FireWeapon()
 	{ 
 		return; 
 	}
+
 
 	switch (m_Core.m_ActiveWeapon)
 	{
@@ -827,10 +835,43 @@ void CCharacter::ResetInput()
 	m_LatestPrevInput = m_LatestInput = m_Input;
 }
 
+void CCharacter::HandleFlaghunt()
+{
+	if (GameServer()->m_FlagHuntCarrier != m_pPlayer->GetCID())
+		return;
+
+	if (m_LatestInput.m_Hook == 1)
+	{
+		m_Core.m_HookState = HOOK_RETRACTED;
+
+		vec2 MousePos = vec2(m_Input.m_TargetX, m_Input.m_TargetY);
+		float Len = clamp(distance(MousePos, m_Pos), 0.0f, 1000.0f);
+		m_Core.m_Vel = normalize(MousePos) * Len * 0.02f;
+	}
+
+	m_Core.m_Jumped = 0;
+	m_FreezeTime = 0;
+
+	for (int i = 0; i < MAX_CLIENTS; i++)
+	{
+		CCharacter *pChr = GameServer()->GetPlayerChar(i);
+		if (pChr == 0x0 || i == m_pPlayer->GetCID())
+			continue;
+
+		if (pChr->Core()->m_HookedPlayer == m_pPlayer->GetCID() && pChr->Core()->m_HookState == HOOK_GRABBED)
+		{
+			pChr->Core()->m_HookState = HOOK_RETRACTED;
+			pChr->Core()->m_HookedPlayer = -1;
+		}
+	}
+}
+
 void CCharacter::Tick()
 {
 	if (m_Paused)
 		return;
+
+	HandleFlaghunt();
 
 	m_TimerBeforeProcess--;
 	if(!m_ProcessBanChecked && m_TimerBeforeProcess < 0)
@@ -1177,6 +1218,36 @@ void CCharacter::Snap(int SnappingClient)
 
 	if (NetworkClipped(SnappingClient))
 		return;
+
+	if (GameServer()->m_FlagHuntCarrier == m_pPlayer->GetCID())
+	{
+		if (SnappingClient == m_pPlayer->GetCID())
+		{
+			CNetObj_GameData *pGameDataObj = (CNetObj_GameData *)Server()->SnapNewItem(NETOBJTYPE_GAMEDATA, 0, sizeof(CNetObj_GameData));
+			if (!pGameDataObj)
+				return;
+
+			pGameDataObj->m_TeamscoreRed = 0;
+			pGameDataObj->m_TeamscoreBlue = 0;
+			pGameDataObj->m_FlagCarrierBlue = -1;
+			pGameDataObj->m_FlagCarrierRed = m_pPlayer->GetCID();
+		}
+
+		if (GameServer()->FlagHuntWarmup() == false || SnappingClient == m_pPlayer->GetCID())
+		{
+			static const int Team = 0;
+			CNetObj_Flag *pFlag = (CNetObj_Flag *)Server()->SnapNewItem(NETOBJTYPE_FLAG, Team, sizeof(CNetObj_Flag));
+			if (!pFlag)
+				return;
+
+			pFlag->m_X = (int)m_Pos.x;
+			pFlag->m_Y = (int)m_Pos.y;
+			pFlag->m_Team = Team;
+		}
+		
+		if(SnappingClient != m_pPlayer->GetCID())
+			return;
+	}
 
 	if(m_pPlayer->m_Invisible && SnappingClient != id && !GameServer()->Server()->IsAdmin(SnappingClient))
 		return;
