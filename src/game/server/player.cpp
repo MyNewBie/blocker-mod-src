@@ -1063,6 +1063,7 @@ void CPlayer::SaveStats()
 	m_SavedStats.m_SavedHammerHit = GetCharacter()->m_Hit;
 	m_SavedStats.m_SavedHook = !GetCharacter()->Core()->m_Hook;
 	m_SavedStats.m_SavedSolo = GetCharacter()->Teams()->m_Core.GetSolo(GetCID());
+	m_SavedStats.m_DefEmote = m_DefEmote;
 
 	if (GetCharacter()->m_DDRaceState == DDRACE_STARTED)
 		m_SavedStats.m_SavedStartTick = GetCharacter()->m_StartTime;
@@ -1117,6 +1118,8 @@ void CPlayer::LMBRestore()
 
 	if(m_SavedStats.m_SavedSolo)
 		GetCharacter()->HandleSolo(true);
+
+	m_DefEmote = m_SavedStats.m_DefEmote;
 
 	if (m_SavedStats.m_SavedStartTick)
 	{

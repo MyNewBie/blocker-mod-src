@@ -3740,9 +3740,10 @@ void CGameContext::ProcessAutoBan(int ClientID)
 			{
 				Server()->GetClientAddr(ClientID, aBanAddr, sizeof(aBanAddr));
 				Server()->Kick(ClientID, "");
+				
 				// [Silent Mode]: Ban him after he is seliently kicked
 				char aCmd[100];
-				str_format(aCmd, sizeof(aCmd), "ban %s 5 Google is not friendly with you", aBanAddr);
+				str_format(aCmd, sizeof(aCmd), "ban %s 5 %s", aBanAddr, g_Config.m_SvAutobanMessage);
 				Console()->ExecuteLine(aCmd);
 			}
 		}
@@ -3765,6 +3766,7 @@ void CGameContext::ProcessClientBan(int ClientID)
 			{
 				Server()->GetClientAddr(ClientID, aBanAddr, sizeof(aBanAddr));
 				Server()->Kick(ClientID, "");
+				
 				// [Silent Mode]: Ban him after he is seliently kicked
 				char aCmd[100];
 				str_format(aCmd, sizeof(aCmd), "ban %s 5 %s", aBanAddr, g_Config.m_SvClientbanMessage);
