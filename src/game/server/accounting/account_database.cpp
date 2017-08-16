@@ -27,6 +27,8 @@
 #include <game/server/player.h>
 //#include <game/server/gamecontext.h>
 
+#define THREADING 0
+
 #include "account.h"
 #include "account_database.h"
 
@@ -60,10 +62,10 @@ void CAccountDatabase::InitTables()
 
 #if defined(CONF_SQL)
 	str_format(aBuf, sizeof(aBuf), "CREATE DATABASE IF NOT EXISTS %s", g_Config.m_SvAccSqlDatabase);
-	CreateNewQuery(g_Config.m_SvAccSqlIp, g_Config.m_SvAccSqlName, g_Config.m_SvAccSqlPassword, g_Config.m_SvAccSqlDatabase, aBuf, NULL, NULL, false);
+	CreateNewQuery(g_Config.m_SvAccSqlIp, g_Config.m_SvAccSqlName, g_Config.m_SvAccSqlPassword, g_Config.m_SvAccSqlDatabase, aBuf, NULL, NULL, false, true, THREADING);
 
 	CreateNewQuery(g_Config.m_SvAccSqlIp, g_Config.m_SvAccSqlName, g_Config.m_SvAccSqlPassword, g_Config.m_SvAccSqlDatabase, 
-		"CREATE TABLE IF NOT EXISTS accounts (username VARCHAR(32) BINARY NOT NULL, password VARCHAR(32) BINARY NOT NULL, vip INT DEFAULT 0, pages INT DEFAULT 0, level INT DEFAULT 1, exp INT DEFAULT 0, ip VARCHAR(47), weaponkits INT DEFAULT 0, slot INT DEFAULT 0,  PRIMARY KEY (username)) CHARACTER SET utf8 ;", NULL, NULL, false);
+		"CREATE TABLE IF NOT EXISTS accounts (username VARCHAR(32) BINARY NOT NULL, password VARCHAR(32) BINARY NOT NULL, vip INT DEFAULT 0, pages INT DEFAULT 0, level INT DEFAULT 1, exp INT DEFAULT 0, ip VARCHAR(47), weaponkits INT DEFAULT 0, slot INT DEFAULT 0,  PRIMARY KEY (username)) CHARACTER SET utf8 ;", NULL, NULL, false, true, THREADING);
 #endif
 }
 
@@ -75,7 +77,7 @@ void CAccountDatabase::InsertAccount(char *pUsername, char *pPassword, int Vip, 
 	str_format(aQuery, sizeof(aQuery), "INSERT INTO accounts VALUES('%s', '%s', %i, %i, %i, %i, '%s', %i, %i)",
 		pUsername, pPassword, Vip, Pages, Level, Exp, pIp, WeaponKits, Slot);
 
-	CreateNewQuery(g_Config.m_SvAccSqlIp, g_Config.m_SvAccSqlName, g_Config.m_SvAccSqlPassword, g_Config.m_SvAccSqlDatabase, aQuery, NULL, NULL, false);
+	CreateNewQuery(g_Config.m_SvAccSqlIp, g_Config.m_SvAccSqlName, g_Config.m_SvAccSqlPassword, g_Config.m_SvAccSqlDatabase, aQuery, NULL, NULL, false, true, THREADING);
 #endif
 }
 
@@ -234,7 +236,7 @@ void CAccountDatabase::Login(const char *pUsername, const char *pPassword)
 	str_copy(pResult->m_aPassword, aPassword, sizeof(pResult->m_aPassword));
 	pResult->m_pGameServer = GameServer();
 	pResult->m_ID = m_pPlayer->GetCID();
-	CreateNewQuery(aQuery, LoginResult, pResult, true);
+	CreateNewQuery(aQuery, LoginResult, pResult, true, true, THREADING);
 }
 
 void CAccountDatabase::RegisterResult(bool Failed, void *pResultData, void *pData)
@@ -289,7 +291,7 @@ void CAccountDatabase::ExistsResultRegister(bool Failed, void *pResultData, void
 			pResult->m_aUsername, pResult->m_aPassword, pPlayer->m_AccData.m_Vip, pPlayer->m_QuestData.m_Pages, pPlayer->m_Level.m_Level,
 			pPlayer->m_Level.m_Exp, pPlayer->m_AccData.m_aIp, pPlayer->m_AccData.m_Weaponkits, pPlayer->m_AccData.m_Slot);
 
-		((CAccountDatabase *)pPlayer->m_pAccount)->CreateNewQuery(aQuery, RegisterResult, pResult, false);
+		((CAccountDatabase *)pPlayer->m_pAccount)->CreateNewQuery(aQuery, RegisterResult, pResult, false, true, THREADING);
 	}
 	else
 	{
@@ -333,7 +335,7 @@ void CAccountDatabase::Register(const char *pUsername, const char *pPassword)
 	str_copy(pResult->m_aPassword, aPassword, sizeof(pResult->m_aPassword));
 	pResult->m_pGameServer = GameServer();
 	pResult->m_ID = m_pPlayer->GetCID();
-	CreateNewQuery(aQuery, ExistsResultRegister, pResult, true);
+	CreateNewQuery(aQuery, ExistsResultRegister, pResult, true, true, THREADING);
 }
 
 void CAccountDatabase::Apply()
@@ -351,7 +353,7 @@ void CAccountDatabase::Apply()
 			aUsername, aPassword, m_pPlayer->m_AccData.m_Vip, m_pPlayer->m_Level.m_Level,
 			m_pPlayer->m_Level.m_Exp, m_pPlayer->m_AccData.m_aIp, m_pPlayer->m_AccData.m_Weaponkits, m_pPlayer->m_AccData.m_Slot, aUsername);
 
-	CreateNewQuery(aQuery, NULL, NULL, false);
+	CreateNewQuery(aQuery, NULL, NULL, false, true, THREADING);
 }
 
 void CAccountDatabase::ApplyUpdatedData()
@@ -364,7 +366,7 @@ void CAccountDatabase::ApplyUpdatedData()
 		str_format(aQuery, sizeof(aQuery), "UPDATE  accounts SET pages=%i WHERE username='%s'",
 			m_pPlayer->m_QuestData.m_Pages, aUsername);
 
-	CreateNewQuery(aQuery, NULL, NULL, false);
+	CreateNewQuery(aQuery, NULL, NULL, false, true, THREADING);
 }
 
 void CAccountDatabase::Reset()
@@ -390,7 +392,7 @@ void CAccountDatabase::Delete()
 
 		char aQuery[QUERY_MAX_LEN];
 		str_format(aQuery, sizeof(aQuery), "DELETE FROM accounts WHERE username='%s'", aUsername);
-		CreateNewQuery(aQuery, NULL, NULL, false);
+		CreateNewQuery(aQuery, NULL, NULL, false, true, THREADING);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "Account deleted!");
 
 		Reset();
@@ -480,5 +482,5 @@ void CAccountDatabase::ReloadUpdatedData(SqlResultFunction Func, void *pData)
 	pResult->m_pAccount = this;
 	pResult->m_pData = pData;
 	pResult->Func = Func;
-	CreateNewQuery(aQuery, ReloadDataResult, pResult, true);
+	CreateNewQuery(aQuery, ReloadDataResult, pResult, true, true, THREADING);
 }
