@@ -27,7 +27,7 @@
 #include <game/server/player.h>
 //#include <game/server/gamecontext.h>
 
-#define THREADING 0
+#define THREADING 1
 
 #include "account.h"
 #include "account_database.h"

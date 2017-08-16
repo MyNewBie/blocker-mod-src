@@ -4,7 +4,7 @@
 
 #include "address_logger.h"
 
-#define THREADING 0
+#define THREADING 1
 
 void CAddressLogger::Init()
 {
