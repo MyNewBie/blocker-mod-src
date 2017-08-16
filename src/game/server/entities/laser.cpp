@@ -70,7 +70,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 			Temp.y = 0;
 		if(!pHit->m_PassiveMode)
 		pHit->Core()->m_Vel = Temp;
-		if (pOwnerChar->GetPlayer()->m_QuestData.QuestActive() &&
+		if (pOwnerChar->GetPlayer() && pOwnerChar->GetPlayer()->m_QuestData.QuestActive() &&
 				pOwnerChar->GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART_SHOTGUN && pHit->GetPlayer()->GetCID() == pOwnerChar->GetPlayer()->m_QuestData.m_VictimID)
 		{
 			pOwnerChar->GetPlayer()->QuestSetNextPart();
@@ -78,7 +78,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	}
 	else if (m_Type == WEAPON_RIFLE)
 	{
-		if (pOwnerChar->GetPlayer()->m_QuestData.QuestActive() &&
+		if (pOwnerChar->GetPlayer() && pOwnerChar->GetPlayer()->m_QuestData.QuestActive() &&
 				pOwnerChar->GetPlayer()->m_QuestData.m_QuestPart == CPlayer::QUEST_PART_LASER && pHit->GetPlayer()->GetCID() == pOwnerChar->GetPlayer()->m_QuestData.m_VictimID)
 		{
 			pOwnerChar->GetPlayer()->QuestSetNextPart();
