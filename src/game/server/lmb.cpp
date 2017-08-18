@@ -277,4 +277,5 @@ void CLMB::Reset(int ClientID)
 	pPlayer->m_Rainbowepiletic = false;
 	pPlayer->m_EpicCircle = false;
 	pPlayer->m_RainbowHook = false;
+	pPlayer->m_DefEmote = EMOTE_NORMAL;
 }

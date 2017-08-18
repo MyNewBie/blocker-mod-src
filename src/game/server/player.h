@@ -191,6 +191,8 @@ public:
 		bool m_SavedHook;
 		bool m_SavedSolo;
 
+		int m_DefEmote;
+
 		void Reset()
 		{
 			m_SavedSpawn = vec2(0, 0);
@@ -212,6 +214,8 @@ public:
 			m_SavedHammerHit = false;
 			m_SavedHook = false;
 			m_SavedSolo = false;
+
+			m_DefEmote = EMOTE_NORMAL;
 		}
 	} m_SavedStats;
 
