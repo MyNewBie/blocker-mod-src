@@ -296,6 +296,8 @@ public:
 	bool m_RainbowHook;
 	bool m_Invisible;
 	bool m_Stars;
+	bool m_HookJetpack;
+	bool m_LightSaber;
 	//Mute
 	bool m_SilentMuted;
 	bool m_ShowWhispers;

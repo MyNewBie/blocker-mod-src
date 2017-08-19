@@ -72,6 +72,7 @@ public:
 	void HandleWeapons();
 	void HandleNinja();
 	void HandleJetpack();
+	void HandleHookJetpack();
 
 	void OnPredictedInput(CNetObj_PlayerInput *pNewInput);
 	void OnDirectInput(CNetObj_PlayerInput *pNewInput);
@@ -259,6 +260,7 @@ public:
 	bool m_Bloody;
 	int m_BloodyDelay;
 	bool m_Steamy;
+	bool m_LightSaberActivated;
 	// rainbow hook
 	int RainbowHookedID;
 	// Prevention spam for tiles
@@ -343,6 +345,7 @@ public:
 	void SetCore(CCharacterCore Core) { m_Core = Core; };
 	CCharacterCore* Core() { return &m_Core; };
 	CNetObj_PlayerInput* Input() { return &m_Input; };
+	CNetObj_PlayerInput* LatestInput() { return &m_LatestInput; };
 	bool GetWeaponGot(int Type) { return m_aWeapons[Type].m_Got; };
 	void SetWeaponGot(int Type, bool Value) { m_aWeapons[Type].m_Got = Value; };
 	int GetWeaponAmmo(int Type) { return m_aWeapons[Type].m_Ammo; };

@@ -689,20 +689,11 @@ void CGameContext::ConRocket(IConsole::IResult *pResult, void *pUserData)
 
 	pSelf->ModifyWeapons(pResult, pUserData, WEAPON_GRENADE, false);
 
-	char aBuf[128];
-	if (!pPlayer->m_IsRocket)
-	{
-		pPlayer->m_IsRocket = true;
+	pPlayer->m_IsRocket ^= true;
 
-		str_format(aBuf, sizeof(aBuf), "You got rocket by %s.", pSelf->Server()->ClientName(pResult->m_ClientID));
-		pSelf->SendChatTarget(Victim, aBuf);
-	}
-	else
-	{
-		pPlayer->m_IsRocket = false;
-		str_format(aBuf, sizeof(aBuf), "%s removed your rocket.", pSelf->Server()->ClientName(pResult->m_ClientID));
-		pSelf->SendChatTarget(Victim, aBuf);
-	}
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), pPlayer->m_IsRocket ? "You got rocket by %s." : "%s removed your rocket.", pSelf->Server()->ClientName(pResult->m_ClientID));
+	pSelf->SendChatTarget(Victim, aBuf);
 }
 
 void CGameContext::ConSkin(IConsole::IResult *pResult, void *pUserData)
@@ -1124,4 +1115,40 @@ void CGameContext::ConPublicExecCommand(IConsole::IResult *pResult, void *pUserD
 
 	pSelf->ChatCommands(aBuf, Victim);
 	pSelf->SendChatTarget(pResult->m_ClientID, aBuf);
+}
+
+void CGameContext::ConHookJetpack(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	if (!pPlayer)
+		return;
+
+	pPlayer->m_HookJetpack ^= true;
+
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), pPlayer->m_HookJetpack ? "You got hook jetpack by %s." : "%s removed your hook jetpack.", pSelf->Server()->ClientName(pResult->m_ClientID));
+	pSelf->SendChatTarget(Victim, aBuf);
+}
+
+void CGameContext::ConLightSaber(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	if (!pPlayer)
+		return;
+
+	pPlayer->m_LightSaber ^= true;
+
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), pPlayer->m_LightSaber ? "You got light saber by %s." : "%s removed your light saber.", pSelf->Server()->ClientName(pResult->m_ClientID));
+	pSelf->SendChatTarget(Victim, aBuf);
 }
