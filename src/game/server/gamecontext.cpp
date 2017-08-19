@@ -584,8 +584,6 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 	{
 		if (m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetCharacter())
 		{
-			int HookState = m_apPlayers[ClientID]->GetCharacter()->GetCore().m_HookState;
-			CCharacter * pChr = m_apPlayers[ClientID]->GetCharacter();
 			CPlayer *p = m_apPlayers[ClientID];
 			bool DrunkHead = false, DrunkHead2 = false;
 
@@ -2286,7 +2284,6 @@ int CGameContext::UploadFileCallback(const char *name, int is_dir, int dir_type,
 
 void CGameContext::ConAccountUploadFile(IConsole::IResult *pResult, void *pUserData)
 {
-	CGameContext *pSelf = (CGameContext *)pUserData;
 	char aDir[512];
 
 	fs_storage_path("teeworlds/Accounts", aDir, sizeof(aDir));
