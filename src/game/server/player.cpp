@@ -50,6 +50,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	FeatureCapture(Rainbow) = false;
 	FeatureCapture(Blackhole) = false;
 	FeatureCapture(ShowWhispers) = false;
+	FeatureCapture(HookJetpack) = false;
+	FeatureCapture(LightSaber) = false;
 
 	Reset();
 }

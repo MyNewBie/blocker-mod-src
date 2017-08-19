@@ -22,6 +22,8 @@
 #include <game/server/score.h>
 #include "light.h"
 
+#include "special/lightsaber.h"
+
 #include <string.h>
 #include <fstream>
 #include <engine/config.h> 
@@ -89,6 +91,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_LovelyLifeSpan = Server()->TickSpeed(); // hearty
 	m_BloodyDelay = 1;
 	RainbowHookedID = -1;
+	m_LightSaberActivated = false;
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision(), &((CGameControllerDDRace*)GameServer()->m_pController)->m_Teams.m_Core, &((CGameControllerDDRace*)GameServer()->m_pController)->m_TeleOuts);
@@ -682,7 +685,17 @@ void CCharacter::FireWeapon()
 		else
 			LaserReach = GameServer()->TuningList()[m_TuneZone].m_LaserReach;
 
-		new CLaser(GameWorld(), m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_RIFLE);
+		if(m_pPlayer->m_LightSaber)
+		{
+			if(!m_LightSaberActivated)
+				new CLightSaber(GameWorld(), m_pPlayer->GetCID());
+			m_LightSaberActivated ^= true;
+		}
+		else
+		{
+			new CLaser(GameWorld(), m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_RIFLE);
+		}
+
 		GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 	} break;
 
@@ -840,14 +853,7 @@ void CCharacter::HandleFlaghunt()
 	if (GameServer()->m_FlagHuntCarrier != m_pPlayer->GetCID())
 		return;
 
-	if (m_LatestInput.m_Hook == 1)
-	{
-		m_Core.m_HookState = HOOK_RETRACTED;
-
-		vec2 MousePos = vec2(m_Input.m_TargetX, m_Input.m_TargetY);
-		float Len = clamp(distance(MousePos, m_Pos), 0.0f, 1000.0f);
-		m_Core.m_Vel = normalize(MousePos) * Len * 0.02f;
-	}
+	HandleHookJetpack();
 
 	m_Core.m_Jumped = 0;
 	m_FreezeTime = 0;
@@ -893,6 +899,8 @@ void CCharacter::Tick()
 	m_BloodyDelay++;
 	HandleLovely();
 	HandlePullHammer();
+	if(m_pPlayer->m_HookJetpack)
+		HandleHookJetpack();
 
 	if(m_pPlayer->m_Invisible)
 	{
@@ -1987,7 +1995,8 @@ void CCharacter::HandleTiles(int Index)
 	}
 
 	// Vip
-	if ((m_TileIndex == TILE_VIP || m_TileFIndex == TILE_VIP) && !m_pPlayer->m_AccData.m_Vip)
+	if ((m_TileIndex == TILE_VIP || m_TileFIndex == TILE_VIP) && 
+		(!m_pPlayer->m_AccData.m_Vip && !Server()->IsAdmin(m_pPlayer->GetCID())))
 	{
 		Die(m_pPlayer->GetCID(), WEAPON_WORLD);
 		GameServer()->SendChatTarget(m_pPlayer->GetCID(), "You are not a vip!");
@@ -3263,5 +3272,17 @@ void CCharacter::HandlePullHammer()
 		}
 		else
 	    	m_PullingID = -1;
+	}
+}
+
+void CCharacter::HandleHookJetpack()
+{
+	if (m_LatestInput.m_Hook == 1)
+	{
+		m_Core.m_HookState = HOOK_RETRACTED;
+
+		vec2 MousePos = vec2(m_Input.m_TargetX, m_Input.m_TargetY);
+		float Len = clamp(distance(MousePos, m_Pos), 0.0f, 1000.0f);
+		m_Core.m_Vel = normalize(MousePos) * Len * 0.02f;
 	}
 }

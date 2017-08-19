@@ -113,6 +113,7 @@ MACRO_CONFIG_INT(SvBlockTime, sv_block_time, 3, 3, 10, CFGFLAG_SERVER, "time fre
 MACRO_CONFIG_INT(SvQuestCount, sv_player_quest_count, 8, 3, 64, CFGFLAG_SERVER, "amount of playrs needed to begin quests")
 MACRO_CONFIG_INT(SvLvlCount, sv_player_lvlsystem_count, 8, 2, 64, CFGFLAG_SERVER, "amount of players needed for the lvl system to enable")
 MACRO_CONFIG_INT(SvAntiFarmDuration, sv_antifarm_block_dur, 15, 5, 500, CFGFLAG_SERVER, "how long a player has to been living in seconds to get blocked for points")
+MACRO_CONFIG_INT(SvSaberKill, sv_saber_kill, 0, 0, 1, CFGFLAG_SERVER, "enable to kill with saber")
 
 // account
 MACRO_CONFIG_INT(SvAccountSlots, sv_account_slots, 3, 1, 64, CFGFLAG_SERVER, "How many players can be conected to the same account between other servers")
