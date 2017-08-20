@@ -1948,24 +1948,8 @@ void CCharacter::HandleTiles(int Index)
 	// passive
 	if (g_Config.m_SvWbProt != 0)
 	{
-		if (g_Config.m_SvWbProt == 1)
-		{
-			if ((m_TileIndex == TILE_PASSIVE_IN || m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
-			{
-				GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode enabled!");
-				m_ThreeSecondRule = false;
-				m_PassiveMode = true;
-				new CPassiveIndicator(&GameServer()->m_World, m_Pos, m_pPlayer->GetCID());
-			}
-			else if ((m_TileIndex == TILE_PASSIVE_OUT || m_TileFIndex == TILE_PASSIVE_OUT) && m_PassiveMode && !m_TilePauser)
-			{
-				m_LastPassiveOut = Server()->Tick();
-				m_ThreeSecondRule = true;
-				GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode disabling in three seconds!");
-				m_TilePauser = true;
-			}
-		}
-		else if (g_Config.m_SvWbProt == 2 && (m_pPlayer->m_AccData.m_Vip || m_pPlayer->Temporary.m_PassiveMode))
+		if (g_Config.m_SvWbProt == 1 || (g_Config.m_SvWbProt == 2 && 
+		   ((m_pPlayer->m_AccData.m_Vip && m_pPlayer->m_Passive) || m_pPlayer->Temporary.m_PassiveMode)))
 		{
 			if ((m_TileIndex == TILE_PASSIVE_IN || m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
 			{

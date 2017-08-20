@@ -52,6 +52,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	FeatureCapture(ShowWhispers) = false;
 	FeatureCapture(HookJetpack) = false;
 	FeatureCapture(LightSaber) = false;
+	FeatureCapture(WasInLMB) = false;
+	FeatureCapture(Passive) = false;
 
 	Reset();
 }
@@ -680,7 +682,7 @@ void CPlayer::TryRespawn()
 	m_pCharacter->Spawn(this, SpawnPos);
 	GameServer()->CreatePlayerSpawn(SpawnPos, m_pCharacter->Teams()->TeamMask(m_pCharacter->Team(), -1, m_ClientID));
 
-	if(!m_InLMB)
+	if(!m_InLMB && m_WasInLMB)
 		LMBRestore();
 
 	if (g_Config.m_SvTeam == 3)
@@ -1130,4 +1132,5 @@ void CPlayer::LMBRestore()
 	}
 
 	m_SavedStats.Reset();
+	m_WasInLMB = false;
 }

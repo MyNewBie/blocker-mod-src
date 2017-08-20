@@ -106,7 +106,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         pPlayer->m_pAccount->Login(Username, Password);
         return;
     }
-    else if (!str_comp(pMsg + 1, "logout"))
+    else if (!str_comp_nocase(pMsg + 1, "logout"))
     {
         if (!pPlayer->m_AccData.m_UserID)
         {
@@ -308,7 +308,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
     {
         SendChatTarget(ClientID, "===== VIP FEATURES =====");
         SendChatTarget(ClientID, "- VIP-Room (epic circle, rainbow, endless, weapons, bloody)");
-        SendChatTarget(ClientID, "- PassiveMode (Anti-wayblock)");
+        SendChatTarget(ClientID, "- PassiveMode (Anti-wayblock) by using /passive");
         SendChatTarget(ClientID, "- Able to use /weapons at any time (Non-Active-Tournaments)");
         SendChatTarget(ClientID, "- Able to use /rainbow (Epiletic)");
         SendChatTarget(ClientID, "- Able to use /circle");
@@ -326,7 +326,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         pPlayer->m_Lovely ^= true;
         SendChatTarget(ClientID, pPlayer->m_Lovely ? "Lovely activated" : "Lovely deactivated");
     }
-    else if (str_comp(pMsg + 1, "ball") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
+    else if (str_comp_nocase(pMsg + 1, "ball") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
     {
         pPlayer->m_IsBallSpawned ^= true;
         SendChatTarget(ClientID, pPlayer->m_IsBallSpawned ? "Ball spawned" : "Ball removed");
@@ -336,13 +336,17 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         else if (!pPlayer->m_IsBallSpawned && pChar)
             pPlayer->m_pBall->Reset();
     }   
-    else if (str_comp(pMsg + 1, "heartguns") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin)) 
+    else if (str_comp_nocase(pMsg + 1, "heartguns") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin)) 
     {   
-        // i use sublime text me xd
         pPlayer->m_HeartGuns ^= true;
         SendChatTarget(ClientID, pPlayer->m_HeartGuns ? "Heart guns activated" : "Heart guns deactivated");
+    }
+    else if (str_comp_nocase(pMsg + 1, "passive") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin)) 
+    {   
+        pPlayer->m_Passive ^= true;
+        SendChatTarget(ClientID, pPlayer->m_Passive ? "Passive mode activated" : "Passive mode deactivated");
     }   
-    else if (str_comp(pMsg + 1, "weapons") == 0 && (pPlayer->m_AccData.m_Vip || (pPlayer->m_AccData.m_UserID && pPlayer->m_AccData.m_Weaponkits > 0) || IsAdmin))
+    else if (str_comp_nocase(pMsg + 1, "weapons") == 0 && (pPlayer->m_AccData.m_Vip || (pPlayer->m_AccData.m_UserID && pPlayer->m_AccData.m_Weaponkits > 0) || IsAdmin))
     {
         if (!pChar || !pChar->IsAlive())
             return; // Tested and found a crashbug -- heres the fix 
@@ -385,14 +389,14 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         str_format(aBuf, sizeof(aBuf), "[ClientID] [%s]: %d", Server()->ClientName(id), m_apPlayers[id]->m_ClientVersion);
         SendChatTarget(ClientID, aBuf);
     }           
-    else if (str_comp(pMsg + 1, "rainbow") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
+    else if (str_comp_nocase(pMsg + 1, "rainbow") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
     {
         if (!pChar || !pChar->IsAlive())
             return;
         pPlayer->m_Rainbowepiletic ^= 1;
         SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Rainbow activated" : "Rainbow deactivated");
     }
-    else if (str_comp(pMsg + 1, "circle") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
+    else if (str_comp_nocase(pMsg + 1, "circle") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
     {
         pPlayer->m_EpicCircle ^= 1;
         SendChatTarget(ClientID, pPlayer->m_EpicCircle ? "Circle activated" : "Circle deactivated"); 
@@ -402,7 +406,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         else if (!pPlayer->m_EpicCircle && pChar)
             pPlayer->m_pEpicCircle->Reset();
     }
-    else if (str_comp(pMsg + 1, "rainbowhook") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
+    else if (str_comp_nocase(pMsg + 1, "rainbowhook") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
     {
         if (!pChar || !pChar->IsAlive())
             return;
@@ -415,7 +419,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
             pChar->HandleRainbowHook(true);
         }
     }
-    else if (str_comp(pMsg + 1, "tele") == 0 && IsAdmin)
+    else if (str_comp_nocase(pMsg + 1, "tele") == 0 && IsAdmin)
     {
         if (!pChar || !pChar->IsAlive())
             return;
@@ -423,7 +427,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         pChar->Core()->m_Pos = pChar->MousePos();
         pPlayer->m_LastChat = 0;
     }
-    else if(str_comp(pMsg + 1, "invisible") == 0 && IsAdmin)
+    else if(str_comp_nocase(pMsg + 1, "invisible") == 0 && IsAdmin)
     {
         if (!pChar || !pChar->IsAlive())
             return;
@@ -448,7 +452,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
             pChar->HandleCollision(true);
         }
     }
-    else if(str_comp(pMsg + 1, "showwhispers") == 0 && (IsAdmin || IsMod))
+    else if(str_comp_nocase(pMsg + 1, "showwhispers") == 0 && (IsAdmin || IsMod))
     {
         if (!pChar || !pChar->IsAlive())
             return;
@@ -456,7 +460,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         pPlayer->m_ShowWhispers ^= true;
         SendChatTarget(ClientID, pPlayer->m_ShowWhispers ? "You can see whispers" : "You can't see whispers");
     }
-    else if(str_comp(pMsg + 1, "stars") == 0 && IsAuthed)
+    else if(str_comp_nocase(pMsg + 1, "stars") == 0 && IsAuthed)
     {
         if (!pChar || !pChar->IsAlive())
             return;
@@ -802,7 +806,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         str_format(aBuf, sizeof(aBuf), "Successfully %s %s drunk", m_apPlayers[id]->m_Drunk ? "made" : "unmade", Server()->ClientName(id));
         SendChatTarget(ClientID, aBuf);
     }
-    else if (str_comp(pMsg + 1, "fixaccounts") == 0 && IsMod)
+    else if (str_comp_nocase(pMsg + 1, "fixaccounts") == 0 && IsMod)
     {
         Server()->FixAccounts();
         SendChatTarget(ClientID, "Accounts fixed!");
@@ -815,7 +819,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         pPlayer->m_Bots.m_SmartHammer ^= true;
         SendChatTarget(ClientID, pPlayer->m_Bots.m_SmartHammer ? "Smarthammer enabled" : "Smarthammer disabled");
     }
-    else if (str_comp(pMsg + 1, "admincmd") == 0 && IsAdmin)
+    else if (str_comp_nocase(pMsg + 1, "admincmd") == 0 && IsAdmin)
     {
         SendChatTarget(ClientID, "======= Admin <3 =======");
         SendChatTarget(ClientID, "- Givepage (id, amount, reason)");
@@ -827,7 +831,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         SendChatTarget(ClientID, "- Troll (name)");
         SendChatTarget(ClientID, "====== /admincmd 2 =====");
     }
-    else if (str_comp(pMsg + 1, "admincmd 2") == 0 && IsAdmin)
+    else if (str_comp_nocase(pMsg + 1, "admincmd 2") == 0 && IsAdmin)
     {
         SendChatTarget(ClientID, "======= Admin <3 =======");
         SendChatTarget(ClientID, "- Autoban (name)");
