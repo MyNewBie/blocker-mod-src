@@ -732,9 +732,6 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
     }
     else if (str_comp_nocase_num(pMsg + 1, "troll ", 6) == 0 && IsAuthed)
     {
-        if (!pChar || !pChar->IsAlive())
-            return;
-
         char aName[256];
         str_copy(aName, pMsg + 7, sizeof(aName));
         int id = ConvertNameToID(aName);
@@ -752,9 +749,6 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
     }
     else if (str_comp_nocase_num(pMsg + 1, "makedrunk ", 10) == 0 && IsAuthed)
     {
-        if (!pChar || !pChar->IsAlive())
-            return;
-
         char aName[256];
         str_copy(aName, pMsg + 11, sizeof(aName));
         int id = ConvertNameToID(aName);
@@ -776,9 +770,25 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         Server()->FixAccounts();
         SendChatTarget(ClientID, "Accounts fixed!");
     }
+    else if (str_comp_nocase_num(pMsg + 1, "getid ", 6) == 0 && IsAuthed)
+    {
+        char aName[256];
+        str_copy(aName, pMsg + 7, sizeof(aName));
+        int id = ConvertNameToID(aName);
+
+        if (id < 0)
+        {
+            SendChatTarget(ClientID, "Invalid name!");
+            return;
+        }
+
+        char aMsg[256];
+        str_format(aMsg, sizeof(aMsg), "[getid] %s: %d", aName, id);
+        SendChatTarget(ClientID, aMsg);
+    }
     else if (str_comp_nocase_num(pMsg + 1, "smarthammer", 11) == 0 && IsAuthed)
     {
-        if (!pChar || !pChar->IsAlive())
+        if (!pPlayer)
             return;
 
         pPlayer->m_Bots.m_SmartHammer ^= true;
@@ -794,6 +804,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         SendChatTarget(ClientID, "- ToggleColl");
         SendChatTarget(ClientID, "- Makedrunk (name)");
         SendChatTarget(ClientID, "- Troll (name)");
+        SendChatTarget(ClientID, "- Getid");
         SendChatTarget(ClientID, "====== /admincmd 2 =====");
     }
     else if (str_comp_nocase(pMsg + 1, "admincmd 2") == 0 && IsAdmin)
