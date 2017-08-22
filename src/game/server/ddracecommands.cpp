@@ -462,15 +462,14 @@ void CGameContext::ConNinja(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConSuper(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	if (!CheckClientID(pResult->m_ClientID))
-		return;
-	CCharacter* pChr = pSelf->GetPlayerChar(pResult->m_ClientID);
+	
+	CCharacter* pChr = pSelf->GetPlayerChar(pResult->GetVictim());
 	if (pChr && !pChr->m_Super)
 	{
 		pChr->m_Super = true;
 		pChr->UnFreeze();
 		pChr->m_TeamBeforeSuper = pChr->Team();
-		pChr->Teams()->SetCharacterTeam(pResult->m_ClientID, TEAM_SUPER);
+		pChr->Teams()->SetCharacterTeam(pResult->GetVictim(), TEAM_SUPER);
 		pChr->m_DDRaceState = DDRACE_CHEAT;
 	}
 }
@@ -478,13 +477,12 @@ void CGameContext::ConSuper(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConUnSuper(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	if (!CheckClientID(pResult->m_ClientID))
-		return;
-	CCharacter* pChr = pSelf->GetPlayerChar(pResult->m_ClientID);
+	
+	CCharacter* pChr = pSelf->GetPlayerChar(pResult->GetVictim());
 	if (pChr && pChr->m_Super)
 	{
 		pChr->m_Super = false;
-		pChr->Teams()->SetForceCharacterTeam(pResult->m_ClientID,
+		pChr->Teams()->SetForceCharacterTeam(pResult->GetVictim(),
 			pChr->m_TeamBeforeSuper);
 	}
 }
@@ -589,7 +587,7 @@ void CGameContext::ModifyWeapons(IConsole::IResult *pResult, void *pUserData,
 	int Weapon, bool Remove)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	CCharacter* pChr = GetPlayerChar(pResult->m_ClientID);
+	CCharacter* pChr = GetPlayerChar(pResult->GetVictim());
 	if (!pChr)
 		return;
 
