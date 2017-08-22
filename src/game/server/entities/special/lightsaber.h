@@ -24,7 +24,6 @@ public:
 
 private:
 	int m_Owner;
-	int m_ID;
 
 	int m_iLifespan;
 
@@ -32,7 +31,7 @@ private:
 	vec2 m_OwnerPos;
 	vec2 m_Dir;
 
-	int SABRE_LEN;
+	int m_saberLenght;
 };
 
 #endif

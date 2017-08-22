@@ -3708,7 +3708,7 @@ int CGameContext::ConvertNameToID(char *aName)
 	int id = -1;
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (!GetPlayerChar(i))
+		if (!m_apPlayers[i])
 			continue;
 		if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
 			continue;
