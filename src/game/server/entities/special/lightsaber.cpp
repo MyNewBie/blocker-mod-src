@@ -83,7 +83,7 @@ void CLightSaber::Tick()
 	if(m_saberLenght < g_Config.m_ClSaberLenght && pOwnerChar->m_LightSaberActivated)
 		m_saberLenght += 15;
 
-	else if(m_saberLenght < g_Config.m_ClSaberLenght && pOwnerChar->m_LightSaberActivated)
+	else if(m_saberLenght > g_Config.m_ClSaberLenght && pOwnerChar->m_LightSaberActivated)
 		m_saberLenght -= 15;
 }
 

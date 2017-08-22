@@ -716,7 +716,7 @@ void CGameContext::HandleFlagHunt()
 	}
 
 	CCharacter *pChrWinner = m_World.ClosestCharacter(pChrFlag->m_Pos, 28.0f, pChrFlag);
-	if (pChrWinner == 0x0)
+	if (pChrWinner == 0x0 || pChrWinner->Team() != pChrFlag->Team())
 		return;
 
 	CPlayer *pPlayerWinner = pChrWinner->GetPlayer();

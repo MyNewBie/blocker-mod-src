@@ -554,7 +554,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
     else if (str_comp_nocase_num(pMsg + 1, "getTOcode ", 10) == 0 && IsAuthed)
     {
         char Name[256];
-        str_copy(Name, pMsg + 7, 256);
+        str_copy(Name, pMsg + 11, 256);
         int id = ConvertNameToID(Name);
 
         if (id < 0)
