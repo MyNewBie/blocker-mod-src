@@ -174,6 +174,7 @@ void CLMB::TeleportParticipants()
 				Reset(m_Participants[i]);
 				m_pGameServer->m_apPlayers[m_Participants[i]]->KillCharacter();
 				m_pGameServer->m_apPlayers[m_Participants[i]]->m_InLMB = LMB_PARTICIPATE;
+				m_pGameServer->m_apPlayers[m_Participants[i]]->m_WasInLMB = true;
 			}
 			else
 			{

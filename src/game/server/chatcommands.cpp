@@ -106,7 +106,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         pPlayer->m_pAccount->Login(Username, Password);
         return;
     }
-    else if (!str_comp(pMsg + 1, "logout"))
+    else if (!str_comp_nocase(pMsg + 1, "logout"))
     {
         if (!pPlayer->m_AccData.m_UserID)
         {
@@ -205,20 +205,10 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
 
 		char aName[256];
         str_copy(aName, pMsg + 11, sizeof(aName));
-        int id = -1;
-        for (int i = 0; i < MAX_CLIENTS; i++)
-        {
-            if (!GetPlayerChar(i))
-                continue;
-            if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
-                continue;
-            if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
-            {
-                id = i;
-                break;
-            }
-        }
-        if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
+        
+        int id = ConvertNameToID(aName);
+
+        if (id < 0 || !GetPlayerChar(id) || !GetPlayerChar(id)->IsAlive()) // Prevent crashbug (fix)
             return;
 
 		CAccountDatabase *pAccDb = dynamic_cast<CAccountDatabase *>(pPlayer->m_pAccount);
@@ -236,19 +226,21 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
     }
     else if (str_comp_nocase_num(pMsg + 1, "Deathnoteinfo", 13) == 0)
     {
-        if (!pChar || !pChar->IsAlive())
+        if (!m_apPlayers[ClientID]) // again character check useless, you can even check it by simply put player check
             return;
+
         SendChatTarget(ClientID, "You have received a Deathnote, but in order to kill players you must gather pages.");
         SendChatTarget(ClientID, "With a Deathnote you can write /deathnote Playername (Ex: /deathnote namelesstee) to kill any specific player!");
         SendChatTarget(ClientID, "You can type /pages to check your current amount of pages.");
         SendChatTarget(ClientID, "To obtain pages you must complete quests type /beginquest to start the quest. - Good luck!");
-        SendChatTarget(ClientID, "For further information please go watch the anime - DeathNote :)");   //dat note doe
+        SendChatTarget(ClientID, "For further information please go watch the anime - DeathNote :)");
     }
     // PAGES CHECK
     else if (str_comp_nocase_num(pMsg + 1, "pages", 5) == 0)
     {
-        if (!pChar || !pChar->IsAlive())
+        if (!m_apPlayers[ClientID])
             return;
+
         if (!pPlayer->m_DeathNote)
         {
             SendChatTarget(ClientID, "0 pages, You dont even have a Deathnote!");
@@ -308,7 +300,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
     {
         SendChatTarget(ClientID, "===== VIP FEATURES =====");
         SendChatTarget(ClientID, "- VIP-Room (epic circle, rainbow, endless, weapons, bloody)");
-        SendChatTarget(ClientID, "- PassiveMode (Anti-wayblock)");
+        SendChatTarget(ClientID, "- PassiveMode (Anti-wayblock) by using /passive");
         SendChatTarget(ClientID, "- Able to use /weapons at any time (Non-Active-Tournaments)");
         SendChatTarget(ClientID, "- Able to use /rainbow (Epiletic)");
         SendChatTarget(ClientID, "- Able to use /circle");
@@ -326,7 +318,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         pPlayer->m_Lovely ^= true;
         SendChatTarget(ClientID, pPlayer->m_Lovely ? "Lovely activated" : "Lovely deactivated");
     }
-    else if (str_comp(pMsg + 1, "ball") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
+    else if (str_comp_nocase(pMsg + 1, "ball") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
     {
         pPlayer->m_IsBallSpawned ^= true;
         SendChatTarget(ClientID, pPlayer->m_IsBallSpawned ? "Ball spawned" : "Ball removed");
@@ -336,13 +328,17 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         else if (!pPlayer->m_IsBallSpawned && pChar)
             pPlayer->m_pBall->Reset();
     }   
-    else if (str_comp(pMsg + 1, "heartguns") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin)) 
+    else if (str_comp_nocase(pMsg + 1, "heartguns") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin)) 
     {   
-        // i use sublime text me xd
         pPlayer->m_HeartGuns ^= true;
         SendChatTarget(ClientID, pPlayer->m_HeartGuns ? "Heart guns activated" : "Heart guns deactivated");
+    }
+    else if (str_comp_nocase(pMsg + 1, "passive") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin)) 
+    {   
+        pPlayer->m_Passive ^= true;
+        SendChatTarget(ClientID, pPlayer->m_Passive ? "Passive mode activated" : "Passive mode deactivated");
     }   
-    else if (str_comp(pMsg + 1, "weapons") == 0 && (pPlayer->m_AccData.m_Vip || (pPlayer->m_AccData.m_UserID && pPlayer->m_AccData.m_Weaponkits > 0) || IsAdmin))
+    else if (str_comp_nocase(pMsg + 1, "weapons") == 0 && (pPlayer->m_AccData.m_Vip || (pPlayer->m_AccData.m_UserID && pPlayer->m_AccData.m_Weaponkits > 0) || IsAdmin))
     {
         if (!pChar || !pChar->IsAlive())
             return; // Tested and found a crashbug -- heres the fix 
@@ -367,32 +363,25 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         char Name[256];
         str_copy(Name, pMsg + 13, 256);
                     
-        int id = -1;
-        for (int i = 0; i < MAX_CLIENTS; i++)
+        int id = ConvertNameToID(Name);
+        if (id < 0)
         {
-            if (!GetPlayerChar(i) || str_comp_nocase(Name, Server()->ClientName(i)) != 0)
-            continue;
-            if (str_comp_nocase(Name, Server()->ClientName(i)) == 0)
-            {
-                id = i;
-                break;
-            }
-        }
-        if (id < 0 || id > MAX_CLIENTS || !m_apPlayers[id])
+            SendChatTarget(ClientID, "Invalid id!");
             return;
-                    
+        }
+
         char aBuf[246];
         str_format(aBuf, sizeof(aBuf), "[ClientID] [%s]: %d", Server()->ClientName(id), m_apPlayers[id]->m_ClientVersion);
         SendChatTarget(ClientID, aBuf);
     }           
-    else if (str_comp(pMsg + 1, "rainbow") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
+    else if (str_comp_nocase(pMsg + 1, "rainbow") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
     {
         if (!pChar || !pChar->IsAlive())
             return;
         pPlayer->m_Rainbowepiletic ^= 1;
         SendChatTarget(ClientID, pPlayer->m_Rainbowepiletic ? "Rainbow activated" : "Rainbow deactivated");
     }
-    else if (str_comp(pMsg + 1, "circle") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
+    else if (str_comp_nocase(pMsg + 1, "circle") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
     {
         pPlayer->m_EpicCircle ^= 1;
         SendChatTarget(ClientID, pPlayer->m_EpicCircle ? "Circle activated" : "Circle deactivated"); 
@@ -402,7 +391,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         else if (!pPlayer->m_EpicCircle && pChar)
             pPlayer->m_pEpicCircle->Reset();
     }
-    else if (str_comp(pMsg + 1, "rainbowhook") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
+    else if (str_comp_nocase(pMsg + 1, "rainbowhook") == 0 && (pPlayer->m_AccData.m_Vip || IsAdmin))
     {
         if (!pChar || !pChar->IsAlive())
             return;
@@ -415,7 +404,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
             pChar->HandleRainbowHook(true);
         }
     }
-    else if (str_comp(pMsg + 1, "tele") == 0 && IsAdmin)
+    else if (str_comp_nocase(pMsg + 1, "tele") == 0 && IsAdmin)
     {
         if (!pChar || !pChar->IsAlive())
             return;
@@ -423,7 +412,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         pChar->Core()->m_Pos = pChar->MousePos();
         pPlayer->m_LastChat = 0;
     }
-    else if(str_comp(pMsg + 1, "invisible") == 0 && IsAdmin)
+    else if(str_comp_nocase(pMsg + 1, "invisible") == 0 && IsAdmin)
     {
         if (!pChar || !pChar->IsAlive())
             return;
@@ -448,7 +437,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
             pChar->HandleCollision(true);
         }
     }
-    else if(str_comp(pMsg + 1, "showwhispers") == 0 && (IsAdmin || IsMod))
+    else if(str_comp_nocase(pMsg + 1, "showwhispers") == 0 && (IsAdmin || IsMod))
     {
         if (!pChar || !pChar->IsAlive())
             return;
@@ -456,7 +445,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         pPlayer->m_ShowWhispers ^= true;
         SendChatTarget(ClientID, pPlayer->m_ShowWhispers ? "You can see whispers" : "You can't see whispers");
     }
-    else if(str_comp(pMsg + 1, "stars") == 0 && IsAuthed)
+    else if(str_comp_nocase(pMsg + 1, "stars") == 0 && IsAuthed)
     {
         if (!pChar || !pChar->IsAlive())
             return;
@@ -565,22 +554,14 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
     else if (str_comp_nocase_num(pMsg + 1, "getTOcode ", 10) == 0 && IsAuthed)
     {
         char Name[256];
-        str_copy(Name, pMsg + 7, 256);
-        int id = -1;
-        for (int i = 0; i < MAX_CLIENTS; i++)
+        str_copy(Name, pMsg + 11, 256);
+        int id = ConvertNameToID(Name);
+
+        if (id < 0)
         {
-            if (!GetPlayerChar(i))
-                continue;
-            if (str_comp_nocase(Name, Server()->ClientName(i)) != 0)
-                continue;
-            if (str_comp_nocase(Name, Server()->ClientName(i)) == 0)
-            {
-                id = i;
-                break;
-            }
-        }
-        if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
+            SendChatTarget(ClientID, "Invalid target, you must specify a name!");
             return;
+        }
 
         char aBuf[246];
         str_format(aBuf, sizeof(aBuf), "[Code] [%s]: %d", Server()->ClientName(id), m_apPlayers[id]->m_TimeoutCode);
@@ -592,18 +573,22 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         str_copy(Name, pMsg + 7, 256);
         int id = ConvertNameToID(Name);
 
-        if (id < 0 || id > 64 || !m_apPlayers[id]) //->should work without character check //->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
+        if (id < 0)
+        {
+            SendChatTarget(ClientID, "Invalid target, you must specify a name!");
             return;
+        }
 
         char aAddrStr[NETADDR_MAXSTRSIZE] = { 0 };
         Server()->GetClientAddr(id, aAddrStr, sizeof(aAddrStr));
+        
         char aBuf[246];
         str_format(aBuf, sizeof(aBuf), "[IP] [%s]: %s", Server()->ClientName(id), aAddrStr);
         SendChatTarget(ClientID, aBuf);
     }
     else if (str_comp_nocase_num(pMsg + 1, "clientban ", 10) == 0 && IsAdmin)
     {
-        if (!pChar || !pChar->IsAlive())
+        if(!pPlayer)
             return;
 
         char aClientID[256];
@@ -636,7 +621,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
             // Now Kick him
             Server()->Kick(i, "");
 
-            str_format(aCmd, sizeof(aCmd), "ban %s 5 ¨%s", aBanAddr, g_Config.m_SvClientbanMessage);
+            str_format(aCmd, sizeof(aCmd), "ban %s 5 %s", aBanAddr, g_Config.m_SvClientbanMessage);
             Console()->ExecuteLine(aCmd);               
         }
     }
@@ -686,7 +671,7 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
 
         if(id == -1)
         {
-            SendChatTarget(ClientID, "Invalid user!");
+            SendChatTarget(ClientID, "Invalid target, you must specify a name!");
             return;
         }
 
@@ -747,26 +732,15 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
     }
     else if (str_comp_nocase_num(pMsg + 1, "troll ", 6) == 0 && IsAuthed)
     {
-        if (!pChar || !pChar->IsAlive())
-            return;
-
         char aName[256];
-        str_copy(aName, pMsg + 7, sizeof(aName)); // forgot to change these -.- Copy&Pasting my own code to much
-        int id = -1;
-        for (int i = 0; i < MAX_CLIENTS; i++)
+        str_copy(aName, pMsg + 7, sizeof(aName));
+        int id = ConvertNameToID(aName);
+
+        if (id < 0)
         {
-            if (!GetPlayerChar(i))
-                continue;
-            if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
-                continue;
-            if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
-            {
-                id = i;
-                break;
-            }
-        }
-        if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
+            SendChatTarget(ClientID, "Invalid id!");
             return;
+        }
 
         char aBuf[128];
         m_apPlayers[id]->m_Troll ^= 1;
@@ -775,26 +749,15 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
     }
     else if (str_comp_nocase_num(pMsg + 1, "makedrunk ", 10) == 0 && IsAuthed)
     {
-        if (!pChar || !pChar->IsAlive())
-            return;
-
         char aName[256];
-        str_copy(aName, pMsg + 11, sizeof(aName)); // forgot to change these -.- Copy&Pasting my own code to much
-        int id = -1;
-        for (int i = 0; i < MAX_CLIENTS; i++)
+        str_copy(aName, pMsg + 11, sizeof(aName));
+        int id = ConvertNameToID(aName);
+
+        if (id < 0)
         {
-            if (!GetPlayerChar(i))
-                continue;
-            if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
-                continue;
-            if (str_comp_nocase(aName, Server()->ClientName(i)) == 0)
-            {
-                id = i;
-                break;
-            }
+            SendChatTarget(ClientID, "Invalid id!");
+            return;
         }
-        if (id < 0 || id > 64 || !m_apPlayers[id]->GetCharacter() || !m_apPlayers[id]->GetCharacter()->IsAlive()) // Prevent crashbug (fix)
-                return;
 
         char aBuf[128];
         m_apPlayers[id]->m_Drunk ^= 1;
@@ -802,20 +765,36 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         str_format(aBuf, sizeof(aBuf), "Successfully %s %s drunk", m_apPlayers[id]->m_Drunk ? "made" : "unmade", Server()->ClientName(id));
         SendChatTarget(ClientID, aBuf);
     }
-    else if (str_comp(pMsg + 1, "fixaccounts") == 0 && IsMod)
+    else if (str_comp_nocase(pMsg + 1, "fixaccounts") == 0 && IsMod)
     {
         Server()->FixAccounts();
         SendChatTarget(ClientID, "Accounts fixed!");
     }
+    else if (str_comp_nocase_num(pMsg + 1, "getid ", 6) == 0 && IsAuthed)
+    {
+        char aName[256];
+        str_copy(aName, pMsg + 7, sizeof(aName));
+        int id = ConvertNameToID(aName);
+
+        if (id < 0)
+        {
+            SendChatTarget(ClientID, "Invalid name!");
+            return;
+        }
+
+        char aMsg[256];
+        str_format(aMsg, sizeof(aMsg), "[getid] %s: %d", aName, id);
+        SendChatTarget(ClientID, aMsg);
+    }
     else if (str_comp_nocase_num(pMsg + 1, "smarthammer", 11) == 0 && IsAuthed)
     {
-        if (!pChar || !pChar->IsAlive())
+        if (!pPlayer)
             return;
 
         pPlayer->m_Bots.m_SmartHammer ^= true;
         SendChatTarget(ClientID, pPlayer->m_Bots.m_SmartHammer ? "Smarthammer enabled" : "Smarthammer disabled");
     }
-    else if (str_comp(pMsg + 1, "admincmd") == 0 && IsAdmin)
+    else if (str_comp_nocase(pMsg + 1, "admincmd") == 0 && IsAdmin)
     {
         SendChatTarget(ClientID, "======= Admin <3 =======");
         SendChatTarget(ClientID, "- Givepage (id, amount, reason)");
@@ -825,9 +804,10 @@ void CGameContext::ChatCommands(const char *pMsg, int ClientID)
         SendChatTarget(ClientID, "- ToggleColl");
         SendChatTarget(ClientID, "- Makedrunk (name)");
         SendChatTarget(ClientID, "- Troll (name)");
+        SendChatTarget(ClientID, "- Getid");
         SendChatTarget(ClientID, "====== /admincmd 2 =====");
     }
-    else if (str_comp(pMsg + 1, "admincmd 2") == 0 && IsAdmin)
+    else if (str_comp_nocase(pMsg + 1, "admincmd 2") == 0 && IsAdmin)
     {
         SendChatTarget(ClientID, "======= Admin <3 =======");
         SendChatTarget(ClientID, "- Autoban (name)");

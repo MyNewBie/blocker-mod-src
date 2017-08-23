@@ -440,12 +440,12 @@ void CGameContext::ConCheckVip(IConsole::IResult *pResult, void *pUserData)
 	int VipID = pResult->GetVictim();
 	char aBuf[200];
 
-	CCharacter* pChr = pSelf->GetPlayerChar(VipID);
-	if (pChr)
+	CPlayer* pPlayer = pSelf->m_apPlayers[VipID];
+	if (pPlayer)
 	{
-		if (!pChr->GetPlayer()->m_AccData.m_UserID)
+		if (!pPlayer->m_AccData.m_UserID)
 			str_format(aBuf, sizeof aBuf, "'%s' is not even logged in.", pSelf->Server()->ClientName(VipID));
-		else if (pChr->GetPlayer()->m_AccData.m_Vip)
+		else if (pPlayer->m_AccData.m_Vip)
 			str_format(aBuf, sizeof aBuf, "'%s' has Vip.", pSelf->Server()->ClientName(VipID));
 		else
 			str_format(aBuf, sizeof aBuf, "'%s' does not have Vip.", pSelf->Server()->ClientName(VipID));
@@ -462,15 +462,14 @@ void CGameContext::ConNinja(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConSuper(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	if (!CheckClientID(pResult->m_ClientID))
-		return;
-	CCharacter* pChr = pSelf->GetPlayerChar(pResult->m_ClientID);
+	
+	CCharacter* pChr = pSelf->GetPlayerChar(pResult->GetVictim());
 	if (pChr && !pChr->m_Super)
 	{
 		pChr->m_Super = true;
 		pChr->UnFreeze();
 		pChr->m_TeamBeforeSuper = pChr->Team();
-		pChr->Teams()->SetCharacterTeam(pResult->m_ClientID, TEAM_SUPER);
+		pChr->Teams()->SetCharacterTeam(pResult->GetVictim(), TEAM_SUPER);
 		pChr->m_DDRaceState = DDRACE_CHEAT;
 	}
 }
@@ -478,13 +477,12 @@ void CGameContext::ConSuper(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConUnSuper(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	if (!CheckClientID(pResult->m_ClientID))
-		return;
-	CCharacter* pChr = pSelf->GetPlayerChar(pResult->m_ClientID);
+	
+	CCharacter* pChr = pSelf->GetPlayerChar(pResult->GetVictim());
 	if (pChr && pChr->m_Super)
 	{
 		pChr->m_Super = false;
-		pChr->Teams()->SetForceCharacterTeam(pResult->m_ClientID,
+		pChr->Teams()->SetForceCharacterTeam(pResult->GetVictim(),
 			pChr->m_TeamBeforeSuper);
 	}
 }
@@ -589,7 +587,7 @@ void CGameContext::ModifyWeapons(IConsole::IResult *pResult, void *pUserData,
 	int Weapon, bool Remove)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	CCharacter* pChr = GetPlayerChar(pResult->m_ClientID);
+	CCharacter* pChr = GetPlayerChar(pResult->GetVictim());
 	if (!pChr)
 		return;
 
@@ -708,12 +706,8 @@ void CGameContext::ConSkin(IConsole::IResult *pResult, void *pUserData)
 	if (!pPlayer)
 		return;
 
-	CCharacter* pChr = pSelf->m_apPlayers[Victim]->GetCharacter();;
-	if (!pChr)
-		return;
-
 	//change skin
-	str_copy(pSelf->m_apPlayers[Victim]->m_TeeInfos.m_SkinName, Skin, sizeof(pSelf->m_apPlayers[Victim]->m_TeeInfos.m_SkinName));
+	str_copy(pPlayer->m_TeeInfos.m_SkinName, Skin, sizeof(pPlayer->m_TeeInfos.m_SkinName));
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "%s's skin changed to %s", pSelf->Server()->ClientName(Victim), Skin);
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
@@ -962,10 +956,6 @@ void CGameContext::ConRename(IConsole::IResult *pResult, void *pUserData)
 	if (!pPlayer)
 		return;
 
-	CCharacter* pChr = pSelf->m_apPlayers[Victim]->GetCharacter();
-	if (!pChr)
-		return;
-
 	//change name
 	char oldName[MAX_NAME_LENGTH];
 	str_copy(oldName, pSelf->Server()->ClientName(Victim), MAX_NAME_LENGTH);
@@ -987,18 +977,14 @@ void CGameContext::ConHL(IConsole::IResult *pResult, void *pUserData)
 	const char *HammerLevel = pResult->GetString(0);
 	int Victim = pResult->GetVictim();
 
-	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
-	if (!pPlayer)
-		return;
-
-	CCharacter* pChr = pSelf->m_apPlayers[Victim]->GetCharacter();
+	CCharacter* pChr = pSelf->GetPlayerChar(Victim);
 	if (!pChr)
 		return;
 
 	// Set hammer level
-	pPlayer->GetCharacter()->m_HammerStrenght = str_toint(HammerLevel);
+	pChr->m_HammerStrenght = str_toint(HammerLevel);
 	char aBuf[246];
-	str_format(aBuf, 246, "%s has set %s hammer level to %d", pSelf->Server()->ClientName(pResult->m_ClientID), pSelf->Server()->ClientName(Victim), pPlayer->GetCharacter()->m_HammerStrenght);
+	str_format(aBuf, 246, "%s has set %s hammer level to %d", pSelf->Server()->ClientName(pResult->m_ClientID), pSelf->Server()->ClientName(Victim), pChr->m_HammerStrenght);
 	pSelf->SendChatTarget(-1, aBuf);
 }
 
@@ -1014,15 +1000,12 @@ void CGameContext::ConClan(IConsole::IResult *pResult, void *pUserData)
 	if (!pPlayer)
 		return;
 
-	CCharacter* pChr = pSelf->m_apPlayers[Victim]->GetCharacter();
-	if (!pChr)
-		return;
-
 	//change name
 	char oldClan[MAX_CLAN_LENGTH];
 	str_copy(oldClan, pSelf->Server()->ClientClan(Victim), MAX_CLAN_LENGTH);
 
 	pSelf->Server()->SetClientClan(Victim, newClan);
+	
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "%s has changed '%s' clan to '%s'", pSelf->Server()->ClientName(pResult->m_ClientID), oldClan, pSelf->Server()->ClientClan(Victim));
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info", aBuf);
@@ -1140,9 +1123,8 @@ void CGameContext::ConLightSaber(IConsole::IResult *pResult, void *pUserData)
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	if (!CheckClientID(pResult->m_ClientID))
 		return;
-	int Victim = pResult->GetVictim();
 
-	CPlayer *pPlayer = pSelf->m_apPlayers[Victim];
+	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->GetVictim()];
 	if (!pPlayer)
 		return;
 
@@ -1150,5 +1132,5 @@ void CGameContext::ConLightSaber(IConsole::IResult *pResult, void *pUserData)
 
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), pPlayer->m_LightSaber ? "You got light saber by %s." : "%s removed your light saber.", pSelf->Server()->ClientName(pResult->m_ClientID));
-	pSelf->SendChatTarget(Victim, aBuf);
+	pSelf->SendChatTarget(pResult->GetVictim(), aBuf);
 }

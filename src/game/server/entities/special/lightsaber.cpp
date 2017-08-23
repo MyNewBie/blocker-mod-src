@@ -14,12 +14,11 @@ CLightSaber::CLightSaber(CGameWorld *pGameWorld, int Owner)
 	m_Owner = Owner;
 	CCharacter* pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 
-	SABRE_LEN = 0;
+	m_saberLenght = 0;
 
 	m_Pos[POS_START] = pOwnerChar->m_Pos + GetDir(GetAngle(m_Dir)) * 20;
 	m_Pos[POS_END] = pOwnerChar->m_Pos + GetDir(GetAngle(m_Dir)) * 20;
 	
-	m_ID = Server()->SnapNewID();
 	GameWorld()->InsertEntity(this);	
 }
 
@@ -29,7 +28,6 @@ void CLightSaber::Reset()
 	if(pOwnerChar)
 		pOwnerChar->m_LightSaberActivated = false;
 	
-	Server()->SnapFreeID(m_ID); // unallocate the m_ID of lights
 	GameServer()->m_World.DestroyEntity(this); // destroy the lights	
 }
 
@@ -66,14 +64,14 @@ void CLightSaber::Tick()
 
 	if(!pOwnerChar->m_LightSaberActivated)
 	{
-		SABRE_LEN-=15;
-		if(SABRE_LEN <=0)
+		m_saberLenght-=15;
+		if(m_saberLenght <= 0)
 			Reset();
 	}
 
 	m_Dir = normalize(vec2(pOwnerChar->LatestInput()->m_TargetX, pOwnerChar->LatestInput()->m_TargetY));
 	m_Pos[POS_END] = pOwnerChar->m_Pos + GetDir(GetAngle(m_Dir)) * 20;
-	m_Pos[POS_START] = m_Pos[POS_END] + GetDir(GetAngle(m_Dir)) * SABRE_LEN;
+	m_Pos[POS_START] = m_Pos[POS_END] + GetDir(GetAngle(m_Dir)) * m_saberLenght;
 	
 	vec2 CollisionPos;
 	if(GameServer()->Collision()->IntersectLine(m_Pos[POS_END], m_Pos[POS_START], &CollisionPos, NULL))
@@ -82,8 +80,11 @@ void CLightSaber::Tick()
 	for(int i = 0; i < MAX_CLIENTS; i++)
 		HitCharacter(i);
 
-	if(SABRE_LEN<185 && pOwnerChar->m_LightSaberActivated)
-		SABRE_LEN+=15;
+	if(m_saberLenght < g_Config.m_ClSaberLenght && pOwnerChar->m_LightSaberActivated)
+		m_saberLenght += 15;
+
+	else if(m_saberLenght > g_Config.m_ClSaberLenght && pOwnerChar->m_LightSaberActivated)
+		m_saberLenght -= 15;
 }
 
 void CLightSaber::Snap(int SnappingClient)

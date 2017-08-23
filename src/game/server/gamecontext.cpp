@@ -584,8 +584,6 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 	{
 		if (m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetCharacter())
 		{
-			int HookState = m_apPlayers[ClientID]->GetCharacter()->GetCore().m_HookState;
-			CCharacter * pChr = m_apPlayers[ClientID]->GetCharacter();
 			CPlayer *p = m_apPlayers[ClientID];
 			bool DrunkHead = false, DrunkHead2 = false;
 
@@ -718,7 +716,7 @@ void CGameContext::HandleFlagHunt()
 	}
 
 	CCharacter *pChrWinner = m_World.ClosestCharacter(pChrFlag->m_Pos, 28.0f, pChrFlag);
-	if (pChrWinner == 0x0)
+	if (pChrWinner == 0x0 || pChrWinner->Team() != pChrFlag->Team())
 		return;
 
 	CPlayer *pPlayerWinner = pChrWinner->GetPlayer();
@@ -2286,7 +2284,6 @@ int CGameContext::UploadFileCallback(const char *name, int is_dir, int dir_type,
 
 void CGameContext::ConAccountUploadFile(IConsole::IResult *pResult, void *pUserData)
 {
-	CGameContext *pSelf = (CGameContext *)pUserData;
 	char aDir[512];
 
 	fs_storage_path("teeworlds/Accounts", aDir, sizeof(aDir));
@@ -3711,7 +3708,7 @@ int CGameContext::ConvertNameToID(char *aName)
 	int id = -1;
 	for (int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (!GetPlayerChar(i))
+		if (!m_apPlayers[i])
 			continue;
 		if (str_comp_nocase(aName, Server()->ClientName(i)) != 0)
 			continue;

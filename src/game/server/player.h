@@ -223,6 +223,7 @@ public:
 	void LMBRestore();
 
 	int m_InLMB;
+	bool m_WasInLMB;
 
 	struct
 	{
@@ -288,6 +289,9 @@ public:
 	bool m_Troll;
 	bool m_WasTrolled;
 	bool m_WasDrunk;
+
+	bool m_Passive;
+
 	//mod
 	bool m_Lovely;
 	bool m_HeartGuns;
