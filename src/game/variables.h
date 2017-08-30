@@ -66,6 +66,8 @@ MACRO_CONFIG_INT(ClDyncamFollowFactor, cl_dyncam_follow_factor, 60, 0, 200, CFGF
 MACRO_CONFIG_INT(EdZoomTarget, ed_zoom_target, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Zoom to the current mouse target")
 MACRO_CONFIG_INT(EdShowkeys, ed_showkeys, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
 
+MACRO_CONFIG_INT(ClBlockExp, cl_block_exp, 3, 1, 100000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
+
 //MACRO_CONFIG_INT(ClFlow, cl_flow, 0, 0, 1, CFGFLAG_CLIENT|CFGFLAG_SAVE, "")
 
 MACRO_CONFIG_INT(ClShowWelcome, cl_show_welcome, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "")
@@ -197,7 +199,9 @@ MACRO_CONFIG_INT(SvLMBSpawnFreezeTime, sv_lmb_spawn_freeze_time, 3, 0, 5, CFGFLA
 MACRO_CONFIG_INT(SvLMBCooldown, sv_lmb_cooldown, 30, 0, 120, CFGFLAG_SERVER, "Minutes that have to pass unless a new round can start.")
 MACRO_CONFIG_INT(SvTrollShake, sv_troll_shake, 1000, 100, 10000, CFGFLAG_SERVER, "Value of troll. Bigger = more shaking.")
 MACRO_CONFIG_INT(ClBloodyDelay, cl_bloody_delay, 4, 1, 20, CFGFLAG_SERVER, "make bloody faster or lower")
+MACRO_CONFIG_INT(ClSteamyDelay, cl_steamy_delay, 4, 1, 20, CFGFLAG_SERVER, "make steamy faster or lower")
 MACRO_CONFIG_INT(ClSaberLenght, cl_saber_lenght, 185, 1, 15000, CFGFLAG_SERVER, "size of the light saber")
+MACRO_CONFIG_INT(ClStarsAcc, cl_stars_acc, 1, 1, 360, CFGFLAG_SERVER, "")
 
 // debug
 #ifdef CONF_DEBUG // this one can crash the server if not used correctly

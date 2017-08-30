@@ -22,6 +22,7 @@
 #include <game/server/score.h>
 #include "light.h"
 
+#include "special/lightninglaser.h"
 #include "special/lightsaber.h"
 
 #include <string.h>
@@ -89,7 +90,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_TimerBeforeProcess = Server()->TickSpeed()+5;
 	
 	m_LovelyLifeSpan = Server()->TickSpeed(); // hearty
-	m_BloodyDelay = 1;
+	m_BloodyDelay = m_SteamyDelay = 1;
 	RainbowHookedID = -1;
 	m_LightSaberActivated = false;
 
@@ -132,6 +133,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 		pPlayer->m_pBall = new CBall(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
 	if (pPlayer->m_EpicCircle)
 		pPlayer->m_pEpicCircle = new CEpicCircle(&GameServer()->m_World, m_Pos, pPlayer->GetCID());
+	if (pPlayer->m_RotatingHearts)
+		pPlayer->m_pRotatingHearts = new CRotatingHearts(&GameServer()->m_World, pPlayer->GetCID());
 
 	m_FreezeTimer = 0;
 
@@ -433,7 +436,7 @@ void CCharacter::FireWeapon()
 		return;
 	}
 
-	if (this && !IsGrounded() && (m_pPlayer->m_KillMe == 3 || m_LastBonus))
+	if (!IsGrounded() && (m_pPlayer->m_KillMe == 3 || m_LastBonus))
 	{
 		m_pPlayer->m_KillMe++;
 	}
@@ -691,6 +694,11 @@ void CCharacter::FireWeapon()
 				new CLightSaber(GameWorld(), m_pPlayer->GetCID());
 			m_LightSaberActivated ^= true;
 		}
+		else if(m_pPlayer->m_LightningLaser)
+		{
+			new CLightningLaser(GameWorld(), m_Pos, Direction, m_pPlayer->GetCID());
+			m_ReloadTimer = Server()->TickSpeed()/7;
+		}
 		else
 		{
 			new CLaser(GameWorld(), m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_RIFLE);
@@ -897,6 +905,7 @@ void CCharacter::Tick()
 	
 	m_LovelyLifeSpan--;
 	m_BloodyDelay++;
+	m_SteamyDelay++;
 	HandleLovely();
 	HandlePullHammer();
 	if(m_pPlayer->m_HookJetpack)
@@ -911,6 +920,12 @@ void CCharacter::Tick()
 	{
 		GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID(), Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 		m_BloodyDelay = 1;
+	}
+
+	if(m_Steamy && m_SteamyDelay > g_Config.m_ClSteamyDelay)
+	{
+		GameServer()->CreatePlayerSpawn(m_Pos, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+		m_SteamyDelay = 1;
 	}
 
 	HandleRainbowHook(false);
@@ -1306,14 +1321,6 @@ void CCharacter::Snap(int SnappingClient)
 		m_EmoteStop = -1;
 	}
 	pCharacter->m_Emote = m_EmoteType;
-
-	if (m_Steamy)
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			GameServer()->CreatePlayerSpawn(m_Pos, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
-		}
-	}
 
 	if (pCharacter->m_HookedPlayer != -1)
 	{
@@ -2750,10 +2757,10 @@ void CCharacter::Rescue()
 
 void CCharacter::HandleThreeSecondRule() // Since passive mode is meant for anti wayblocking only, we will remove passive mode after the unfreeze
 {
-	if (this && IsAlive() && m_LastPassiveOut + 3 * Server()->TickSpeed() > Server()->Tick())
+	if (IsAlive() && m_LastPassiveOut + 3 * Server()->TickSpeed() > Server()->Tick())
 		return;
 
-	if (this && IsAlive() && m_ThreeSecondRule)
+	if (IsAlive() && m_ThreeSecondRule)
 	{
 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode disabled!");
 		m_PassiveMode = false;
@@ -2763,7 +2770,7 @@ void CCharacter::HandleThreeSecondRule() // Since passive mode is meant for anti
 
 void CCharacter::HandlePassiveMode()
 {
-	if (!this || !IsAlive())
+	if (!IsAlive())
 		return;
 
 	// Dealing with Passive mode : Bodyblocking wayblock
@@ -2796,17 +2803,17 @@ void CCharacter::HandlePassiveMode()
 
 void CCharacter::HandleBots()
 {
-	if (this && IsAlive() && GetPlayer()->m_PlayerFlags&PLAYERFLAG_CHATTING) // Until we decide to make more bots ill Clean up and make some vars
+	if (IsAlive() && GetPlayer()->m_PlayerFlags&PLAYERFLAG_CHATTING) // Until we decide to make more bots ill Clean up and make some vars
 	{
 		if (m_pPlayer->m_Bots.m_Active)
 			m_pPlayer->m_Bots.m_Active = false;
 		return;
 	}
 
-	if (this && IsAlive() && !m_pPlayer->m_Bots.m_Active)
+	if (IsAlive() && !m_pPlayer->m_Bots.m_Active)
 		m_pPlayer->m_Bots.m_Active = true;
 
-	if (this && IsAlive() && m_pPlayer->m_Bots.m_SmartHammer && m_Core.m_ActiveWeapon == WEAPON_HAMMER)
+	if (IsAlive() && m_pPlayer->m_Bots.m_SmartHammer && m_Core.m_ActiveWeapon == WEAPON_HAMMER)
 	{
 		CCharacter * pTarget = GameWorld()->ClosestCharacter(m_Pos, 64.f, this);
 		bool isFreeze;
@@ -2832,7 +2839,7 @@ void CCharacter::HandleBots()
 
 void CCharacter::HandleRainbow()
 {
-	if (!this || !IsAlive())
+	if (!IsAlive())
 		return;
 
 	if (m_pPlayer->m_Rainbow)
@@ -2938,12 +2945,13 @@ void CCharacter::HandleLevelSystem()
 	HandleBlocking(false);
 
 	// Handle level update
-	if (this && IsAlive() && m_pPlayer->m_AccData.m_UserID) // is Logged in
+	if (IsAlive() && m_pPlayer->m_AccData.m_UserID) // is Logged in
 	{
 		if (m_pPlayer->m_Level.m_Exp >= (m_pPlayer->m_Level.m_Level * 2))
 		{
+			int savedExp = m_pPlayer->m_Level.m_Exp - m_pPlayer->m_Level.m_Level * 2;
 			m_pPlayer->m_Level.m_Level++;
-			m_pPlayer->m_Level.m_Exp = 0;
+			m_pPlayer->m_Level.m_Exp = 0 + savedExp;
 
 			char aBuf[246];
 			str_format(aBuf, sizeof(aBuf), "[LevelUp+]: You are now level %d!", m_pPlayer->m_Level.m_Level);
@@ -2951,7 +2959,7 @@ void CCharacter::HandleLevelSystem()
 		}
 	}
 
-	if (this && IsAlive() && m_pPlayer->m_AccData.m_UserID)
+	if (IsAlive() && m_pPlayer->m_AccData.m_UserID)
 	{
 		const char *pClan = Server()->ClientClan(GetPlayer()->GetCID());
 		char aLevel[16];
@@ -2964,7 +2972,7 @@ void CCharacter::HandleLevelSystem()
 	}
 
 	// Stop the fakers
-	if (this && IsAlive() && !m_pPlayer->m_AccData.m_UserID)
+	if (IsAlive() && !m_pPlayer->m_AccData.m_UserID)
 	{
 		const char *pClan = Server()->ClientClan(GetPlayer()->GetCID());
 		if (str_find_nocase(pClan, "Lvl") || str_find_nocase(pClan, "Level") || str_find_nocase(pClan, "LvI"))
@@ -2974,7 +2982,7 @@ void CCharacter::HandleLevelSystem()
 
 void CCharacter::HandleBlocking(bool die)
 {
-	if (this && IsAlive())
+	if (IsAlive())
 	{
 		if (m_FreezeTime == 0 && m_LastBlockedTick == -1)
 			m_LastBlockedTick = Server()->Tick();
@@ -2983,7 +2991,7 @@ void CCharacter::HandleBlocking(bool die)
 	if (die)
 	{
 		CCharacter *pECore = GameServer()->GetPlayerChar(m_Core.m_LastHookedBy);
-		if (this && IsAlive() && pECore && pECore->IsAlive() && Team() == 0 && pECore->Team() == 0)
+		if (IsAlive() && pECore && pECore->IsAlive() && Team() == 0 && pECore->Team() == 0)
 		{
 			if (m_pPlayer->m_Afk) // cannot get points of blocking an afk player
 			{
@@ -3001,9 +3009,11 @@ void CCharacter::HandleBlocking(bool die)
 			}
 			if (m_FirstFreezeTick != 0 && Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
 			{
-				GameServer()->CreateLolText(pECore, false, vec2(0, -50), vec2(0, -1), 100, "+3");
+				char aPrintExp[256];
+				str_format(aPrintExp, sizeof(aPrintExp), "+%d", g_Config.m_ClBlockExp * GameServer()->m_EventExp);
+				GameServer()->CreateLolText(pECore, false, vec2(0, -50), vec2(0, -1), 100, aPrintExp);
 				m_LastBlockedTick = -1;
-				pECore->m_pPlayer->m_Level.m_Exp += 3;
+				pECore->m_pPlayer->m_Level.m_Exp += g_Config.m_ClBlockExp * GameServer()->m_EventExp;
 			}
 			else
 			{
@@ -3017,7 +3027,7 @@ void CCharacter::HandleBlocking(bool die)
 	else
 	{
 		CCharacter *pECore = GameServer()->GetPlayerChar(m_Core.m_LastHookedBy);
-		if (this && IsAlive() && pECore && pECore->IsAlive() && Team() == 0 && pECore->Team() == 0)
+		if (IsAlive() && pECore && pECore->IsAlive() && Team() == 0 && pECore->Team() == 0)
 			if (m_FirstFreezeTick != 0)
 			{
 				// Make sure we not being saved, make sure no one is hooking us, to confirm block
@@ -3046,9 +3056,11 @@ void CCharacter::HandleBlocking(bool die)
 							}
 							if (m_LastBlockedTick != -1 && Server()->Tick() > m_LastBlockedTick + Server()->TickSpeed() * g_Config.m_SvAntiFarmDuration)
 							{
-								GameServer()->CreateLolText(pECore, false, vec2(0, -50), vec2(0, -1), 100, "+3");
+								char aBuf[256];
+								str_format(aBuf, sizeof(aBuf), "+%d", g_Config.m_ClBlockExp * GameServer()->m_EventExp);
+								GameServer()->CreateLolText(pECore, false, vec2(0, -50), vec2(0, -1), 100, aBuf);
 								m_LastBlockedTick = -1;
-								pECore->m_pPlayer->m_Level.m_Exp += 3;
+								pECore->m_pPlayer->m_Level.m_Exp += g_Config.m_ClBlockExp * GameServer()->m_EventExp;
 							}
 							else
 							{
@@ -3065,10 +3077,6 @@ void CCharacter::HandleBlocking(bool die)
 
 void CCharacter::Clean()
 {
-	if (!this)
-		return;
-
-
 	if (m_pPlayer->m_Drunk)
 	{
 		GameServer()->SendTuningParams(m_Core.m_Id, 0);
@@ -3117,7 +3125,7 @@ void CCharacter::Clean()
 	if (IsAlive() && (g_Config.m_SvWbProt != 0 || m_pPlayer->m_Authed))
 		HandlePassiveMode();
 	if(IsAlive() && m_pPlayer->m_Stars)
-		GameServer()->CreateDamageInd(m_Pos, Server()->Tick()%180, 1, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID())); 
+		GameServer()->CreateDamageInd(m_Pos, Server()->Tick()*g_Config.m_ClStarsAcc%180, 1, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID())); 
 }
 
 void CCharacter::HandleGameModes()

@@ -297,6 +297,29 @@ void CGameContext::ConLovely(IConsole::IResult *pResult, void *pUserData) // giv
 	}
 }
 
+void CGameContext::ConRotatingHearts(IConsole::IResult *pResult, void *pUserData) // give or remove epic circles
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+	int Victim = pResult->GetVictim();
+
+	CPlayer* pPlayer = pSelf->m_apPlayers[Victim];
+
+	if (pPlayer)
+	{
+		pPlayer->m_RotatingHearts ^= 1;
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), pPlayer->m_RotatingHearts ? "%s gave you epic circles!" : "%s removed your epic circles!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		pSelf->SendChatTarget(Victim, aBuf);
+
+		if(pPlayer->m_RotatingHearts && pSelf->GetPlayerChar(Victim))
+			pPlayer->m_pRotatingHearts = new CRotatingHearts(&pSelf->m_World, Victim);
+		else if (!pPlayer->m_RotatingHearts && pSelf->GetPlayerChar(Victim))
+			pPlayer->m_pRotatingHearts->Reset();
+	}
+}
+
 void CGameContext::ConBall(IConsole::IResult *pResult, void *pUserData) // give or remove Ball
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -1129,8 +1152,43 @@ void CGameContext::ConLightSaber(IConsole::IResult *pResult, void *pUserData)
 		return;
 
 	pPlayer->m_LightSaber ^= true;
+	pPlayer->m_LightningLaser = false;
 
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), pPlayer->m_LightSaber ? "You got light saber by %s." : "%s removed your light saber.", pSelf->Server()->ClientName(pResult->m_ClientID));
 	pSelf->SendChatTarget(pResult->GetVictim(), aBuf);
+}
+
+void CGameContext::ConLightningLaser(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+
+	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->GetVictim()];
+	if (!pPlayer)
+		return;
+
+	pPlayer->m_LightningLaser ^= true;
+	pPlayer->m_LightSaber = false;
+
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), pPlayer->m_LightningLaser ? "You got lightning laser by %s." : "%s removed your lightning laser.", pSelf->Server()->ClientName(pResult->m_ClientID));
+	pSelf->SendChatTarget(pResult->GetVictim(), aBuf);
+}
+
+void CGameContext::ConEventExp(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if (!CheckClientID(pResult->m_ClientID))
+		return;
+
+	pSelf->m_EventExp       = pResult->GetInteger(0);
+	pSelf->m_EventSecs      = pSelf->Server()->TickSpeed() * pResult->GetInteger(1);
+	pSelf->m_Event          = true;
+
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), "An event x%d has started for %d seconds!", pResult->GetInteger(0), pResult->GetInteger(1));
+
+	pSelf->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 }

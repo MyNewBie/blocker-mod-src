@@ -70,6 +70,8 @@ void CGameContext::Construct(int Resetting)
 	FeatureCapture(pVoteOptionLast) = 0;
 	FeatureCapture(NumVoteOptions) = 0;
 	FeatureCapture(LastMapVote) = 0;
+	FeatureCapture(EventExp) = 1;
+	FeatureCapture(Event) = false;
 	//m_LockTeams = 0;
 
 	if (Resetting == NO_RESET)
@@ -798,7 +800,16 @@ void CGameContext::OnTick()
 				SendBroadcast(aBuf, -1);
 			}
 		}
+	}
 
+	if(m_EventSecs > 0)
+		m_EventSecs --;
+
+	if(m_Event && m_EventSecs <= 0)
+	{
+		m_EventExp = 1;
+		m_Event = false;
+		SendChat(-1, CGameContext::CHAT_ALL, "Event is over!");
 	}
 
 	if (m_CountdownInfo.m_Time > 0 && Server()->Tick() - m_CountdownInfo.m_LastAnnounce > 50)

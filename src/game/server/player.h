@@ -10,6 +10,7 @@
 
 #include "game/server/entities/special/ball.h"
 #include "game/server/entities/special/epiccircle.h"
+#include "game/server/entities/special/rotatinghearts.h"
 
 class CAccount;
 class CBotProtections;
@@ -273,6 +274,8 @@ public:
 
 	CEpicCircle *m_pEpicCircle;//TODO: clear memory 
 	bool m_EpicCircle;
+	CRotatingHearts *m_pRotatingHearts;
+	bool m_RotatingHearts;
 	bool m_Rainbowepiletic; // Epiletic rainbow!
 	bool m_Rainbow;
 	bool m_Called;
@@ -302,6 +305,7 @@ public:
 	bool m_Stars;
 	bool m_HookJetpack;
 	bool m_LightSaber;
+	bool m_LightningLaser;
 	//Mute
 	bool m_SilentMuted;
 	bool m_ShowWhispers;

@@ -260,6 +260,7 @@ public:
 	bool m_Bloody;
 	int m_BloodyDelay;
 	bool m_Steamy;
+	int m_SteamyDelay;
 	bool m_LightSaberActivated;
 	// rainbow hook
 	int RainbowHookedID;

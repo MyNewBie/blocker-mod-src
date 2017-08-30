@@ -154,6 +154,10 @@ public:
 	char m_ZoneEnterMsg[NUM_TUNINGZONES][256]; // 0 is used for switching from or to area without tunings
 	char m_ZoneLeaveMsg[NUM_TUNINGZONES][256];
 
+	int m_EventSecs;
+	int m_EventExp;
+	bool m_Event;
+
 	//flaghunt
 	int m_FlagHuntCarrier;
 	int64 m_FlagHuntWarmuptime;
@@ -320,6 +324,7 @@ private:
 	static void ConRainbow(IConsole::IResult *pResult, void *pUserData); // Give or remove rainbow
 	static void ConEpileticRainbow(IConsole::IResult *pResult, void *pUserData); // Give or remove epiletic rainbow
 	static void ConLovely(IConsole::IResult *pResult, void *pUserData); // Give or remove lovely
+	static void ConRotatingHearts(IConsole::IResult *pResult, void *pUserData); // Give or remove rotating hearts
 	static void ConBall(IConsole::IResult *pResult, void *pUserData); // Give or remove ball
 	static void ConHeartGuns(IConsole::IResult *pResult, void *pUserData); // Give or remove heartguns
 	static void ConRainbowHook(IConsole::IResult *pResult, void *pUserData); // Give or remove rainbow hook
@@ -331,6 +336,7 @@ private:
 	static void ConStars(IConsole::IResult *pResult, void *pUserData); // Give or remove stars
 	static void ConHookJetpack(IConsole::IResult *pResult, void *pUserData); // Give or remove hook jetpack
 	static void ConLightSaber(IConsole::IResult *pResult, void *pUserData); // Give or remove light saber
+	static void ConLightningLaser(IConsole::IResult *pResult, void *pUserData); // Give or remove lightning laser
 	static void ConSkin(IConsole::IResult *pResult, void *pUserData);
 	static void ConClan(IConsole::IResult *pResult, void *pUserData);
 	static void ConFreeze(IConsole::IResult *pResult, void *pUserData);
@@ -365,6 +371,7 @@ private:
 	static void ConMove(IConsole::IResult *pResult, void *pUserData);
 	static void ConMoveRaw(IConsole::IResult *pResult, void *pUserData);
 	static void ConLogout(IConsole::IResult *pResult, void *pUserData);
+	static void ConEventExp(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConToTeleporter(IConsole::IResult *pResult, void *pUserData);
 	static void ConToCheckTeleporter(IConsole::IResult *pResult, void *pUserData);
