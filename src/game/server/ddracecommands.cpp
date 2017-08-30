@@ -297,7 +297,7 @@ void CGameContext::ConLovely(IConsole::IResult *pResult, void *pUserData) // giv
 	}
 }
 
-void CGameContext::ConRotatingHearts(IConsole::IResult *pResult, void *pUserData) // give or remove epic circles
+void CGameContext::ConRotatingHearts(IConsole::IResult *pResult, void *pUserData) // give or remove rotating hearts
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	if (!CheckClientID(pResult->m_ClientID))
@@ -310,7 +310,7 @@ void CGameContext::ConRotatingHearts(IConsole::IResult *pResult, void *pUserData
 	{
 		pPlayer->m_RotatingHearts ^= 1;
 		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), pPlayer->m_RotatingHearts ? "%s gave you epic circles!" : "%s removed your epic circles!", pSelf->Server()->ClientName(pResult->m_ClientID));
+		str_format(aBuf, sizeof(aBuf), pPlayer->m_RotatingHearts ? "%s gave you rotating hearts!" : "%s removed your rotating hearts!", pSelf->Server()->ClientName(pResult->m_ClientID));
 		pSelf->SendChatTarget(Victim, aBuf);
 
 		if(pPlayer->m_RotatingHearts && pSelf->GetPlayerChar(Victim))
