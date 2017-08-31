@@ -153,6 +153,7 @@ public:
 	int m_VoteEnforce;
 	char m_ZoneEnterMsg[NUM_TUNINGZONES][256]; // 0 is used for switching from or to area without tunings
 	char m_ZoneLeaveMsg[NUM_TUNINGZONES][256];
+	//std::vector<vec2> m_KOHTileCenters;
 
 	int m_EventSecs;
 	int m_EventExp;

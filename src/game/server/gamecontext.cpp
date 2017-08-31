@@ -2920,7 +2920,8 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 			{
 				CKOH KOH;
 				KOH.m_Center = vec2(x, y);
-				dbg_msg("game layer", "got KOH tile at (%.2f|%.2f)", KOH.m_Center.x, KOH.m_Center.y);
+				//m_KOHTileCenters.push_back(vec2(x,y)); // TODO: KOH REI
+				dbg_msg("game layer", "got KOH tile at (%d|%d)", x, y);
 				m_KOH.push_back(KOH);
 			}
 
