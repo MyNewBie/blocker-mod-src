@@ -160,6 +160,7 @@ public:
 	bool m_Event;
 
 	//flaghunt
+	int m_LastFlagHunt;
 	int m_FlagHuntCarrier;
 	int64 m_FlagHuntWarmuptime;
 	int64 m_FlagHuntOvertime;

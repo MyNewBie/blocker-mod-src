@@ -197,6 +197,7 @@ MACRO_CONFIG_INT(SvLMBMinPlayer, sv_lmb_min_player, 2, 2, 64, CFGFLAG_SERVER, "S
 MACRO_CONFIG_INT(SvLMBMaxPlayer, sv_lmb_max_player, 64, 2, 64, CFGFLAG_SERVER, "Specifies the maximum playercount")
 MACRO_CONFIG_INT(SvLMBSpawnFreezeTime, sv_lmb_spawn_freeze_time, 3, 0, 5, CFGFLAG_SERVER, "Specifies the amount of time a player is frozen at the spawn")
 MACRO_CONFIG_INT(SvLMBCooldown, sv_lmb_cooldown, 30, 0, 120, CFGFLAG_SERVER, "Minutes that have to pass unless a new round can start.")
+MACRO_CONFIG_INT(SvFlagHuntCooldown, sv_flag_hunt_cooldown, 30, 0, 120, CFGFLAG_SERVER, "Minutes that have to pass unless a new round can start.")
 MACRO_CONFIG_INT(SvTrollShake, sv_troll_shake, 1000, 100, 10000, CFGFLAG_SERVER, "Value of troll. Bigger = more shaking.")
 MACRO_CONFIG_INT(ClBloodyDelay, cl_bloody_delay, 4, 1, 20, CFGFLAG_SERVER, "make bloody faster or lower")
 MACRO_CONFIG_INT(ClSteamyDelay, cl_steamy_delay, 4, 1, 20, CFGFLAG_SERVER, "make steamy faster or lower")

@@ -72,6 +72,7 @@ void CGameContext::Construct(int Resetting)
 	FeatureCapture(LastMapVote) = 0;
 	FeatureCapture(EventExp) = 1;
 	FeatureCapture(Event) = false;
+	//FeatureCapture(LastFlagHunt) = 0;
 	//m_LockTeams = 0;
 
 	if (Resetting == NO_RESET)
@@ -308,6 +309,16 @@ void CGameContext::CallVote(int ClientID, const char *pDesc, const char *pCmd, c
 		return;
 	}
 
+	if (str_comp(pCmd, "start_flaghunt -2") == 0 && (m_FlagHuntCarrier != -1 || m_LMB.State() > CLMB::STATE_STANDBY))
+		return;
+
+	if (str_comp(pCmd, "start_flaghunt -2") == 0 && Server()->Tick() < m_LastFlagHunt + 3000 * g_Config.m_SvFlagHuntCooldown)
+	{
+		char aBuf[256];
+		str_format(aBuf, sizeof(aBuf), "Flag-Hunt is on cooldown. Remaining seconds : %ds", (m_LastFlagHunt + 3000 * g_Config.m_SvFlagHuntCooldown - Server()->Tick()) / 50);
+		SendChatTarget(ClientID, aBuf);
+		return;
+	}
 
 	SendChat(-1, CGameContext::CHAT_ALL, pChatmsg);
 	StartVote(pDesc, pCmd, pReason);
@@ -684,6 +695,7 @@ void CGameContext::HandleFlagHunt()
 	{
 		SendChat(-1, CHAT_ALL, "Flag-Hunt over. Nobody won!");
 		m_FlagHuntCarrier = -1;
+		m_LastFlagHunt = Server()->Tick();
 		return;
 	}
 
@@ -713,6 +725,7 @@ void CGameContext::HandleFlagHunt()
 	{
 		SendChat(-1, CHAT_ALL, "Flag-Hunt over. Nobody won!");
 		m_FlagHuntCarrier = -1;
+		m_LastFlagHunt = Server()->Tick();
 		pChrFlag->Die(pChrFlag->GetPlayer()->GetCID(), WEAPON_WORLD);
 		return;
 	}
@@ -748,6 +761,7 @@ void CGameContext::HandleFlagHunt()
 	str_format(aBuf, sizeof(aBuf), "Flag-Hunt over: ''%s' won!", Server()->ClientName(pPlayerWinner->GetCID()));
 	SendBroadcast(aBuf, -1);
 	m_FlagHuntCarrier = -1;
+	m_LastFlagHunt = Server()->Tick();
 
 	pChrFlag->Die(pChrFlag->GetPlayer()->GetCID(), WEAPON_WORLD);
 }
@@ -2666,6 +2680,21 @@ void CGameContext::ConStartFlagHunt(IConsole::IResult *pResult, void *pUserData)
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	int ClientID = pResult->GetInteger(0);
 	
+	if(ClientID == -2)
+	{
+		std::vector<int> SaveClients;
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->GetPlayerChar(i))
+				continue;
+			if(pSelf->GetPlayerChar(i)->Team() != 0)
+				continue;
+
+			SaveClients.push_back(i);
+		}
+
+		ClientID = SaveClients[rand() % SaveClients.size()];
+	}
 
 	if (ClientID >= 0 && ClientID < MAX_CLIENTS && pSelf->Server()->ClientIngame(ClientID))
 	{
