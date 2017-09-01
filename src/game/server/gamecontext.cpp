@@ -72,7 +72,6 @@ void CGameContext::Construct(int Resetting)
 	FeatureCapture(LastMapVote) = 0;
 	FeatureCapture(EventExp) = 1;
 	FeatureCapture(Event) = false;
-	//FeatureCapture(LastFlagHunt) = 0;
 	//m_LockTeams = 0;
 
 	if (Resetting == NO_RESET)
@@ -298,7 +297,7 @@ void CGameContext::CallVote(int ClientID, const char *pDesc, const char *pCmd, c
 	if (!pPlayer)
 		return;
 
-	if (str_comp(pCmd, "open_lmb") == 0 && m_LMB.State() > CLMB::STATE_STANDBY)
+	if (str_comp(pCmd, "open_lmb") == 0 && (m_FlagHuntCarrier != -1 || m_LMB.State() > CLMB::STATE_STANDBY))
 		return;
 
 	if (str_comp(pCmd, "open_lmb") == 0 && Server()->Tick() < m_LMB.m_LastLMB + 3000 * g_Config.m_SvLMBCooldown)
