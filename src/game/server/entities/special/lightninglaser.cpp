@@ -138,7 +138,7 @@ void CLightningLaser::Snap(int SnappingClient)
 
 	float fPercentage = 100.f - (m_iLifespan * 100.f / m_iStartLifespan);
 
-	int iStart = (int)max(ceil(fPercentage * LIGHTNING_COUNT / 100.f), 1.f);
+	int iStart = (int)max((double)ceil(fPercentage * LIGHTNING_COUNT / 100.f), 1.0);
 	CNetObj_Laser *apObjs[LIGHTNING_COUNT];
 
 	for(int i = iStart - 1; i >= 0; i --)
