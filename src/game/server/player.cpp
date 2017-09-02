@@ -54,6 +54,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	FeatureCapture(LightSaber) = false;
 	FeatureCapture(WasInLMB) = false;
 	FeatureCapture(Passive) = false;
+	FeatureCapture(LightningLaser) = false;
+	FeatureCapture(RotatingHearts) = false;
 
 	Reset();
 }
