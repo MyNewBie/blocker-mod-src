@@ -1955,7 +1955,7 @@ void CCharacter::HandleTiles(int Index)
 	// passive
 	if (g_Config.m_SvWbProt != 0)
 	{
-		if (g_Config.m_SvWbProt == 1 || (g_Config.m_SvWbProt == 2 && (m_pPlayer->m_AccData.m_Vip || m_pPlayer->Temporary.m_PassiveMode)))
+		if (g_Config.m_SvWbProt == 1 || (g_Config.m_SvWbProt == 2 && (Server()->IsAdmin(m_pPlayer->GetCID()) || m_pPlayer->m_AccData.m_Vip || m_pPlayer->Temporary.m_PassiveMode)))
 		{
 			if ((m_TileIndex == TILE_PASSIVE_IN || m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
 			{
