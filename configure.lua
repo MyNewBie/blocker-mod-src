@@ -351,6 +351,7 @@ end
 --[[@FUNCTION
 	TODO
 @END]]--
+
 function OptCCompiler(name, default_driver, default_c, default_cxx, desc)
 	local check = function(option, settings)
 		if ScriptArgs[option.name] then

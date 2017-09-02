@@ -19,6 +19,7 @@ CONSOLE_COMMAND("steamy_pl", "v[id]", CFGFLAG_SERVER, ConSteamy, this, "give/rem
 CONSOLE_COMMAND("rainbow_pl", "v[id]", CFGFLAG_SERVER, ConRainbow, this, "give/remove player v rainbow")
 CONSOLE_COMMAND("epiletic_rainbow_pl", "v[id]", CFGFLAG_SERVER, ConEpileticRainbow, this, "give/remove player v epiletic rainbow")
 CONSOLE_COMMAND("lovely_pl", "v[id]", CFGFLAG_SERVER, ConLovely, this, "give/remove player v lovely")
+CONSOLE_COMMAND("rotating_hearts_pl", "v[id]", CFGFLAG_SERVER, ConRotatingHearts, this, "give/remove player v rotating hearts")
 CONSOLE_COMMAND("ball_pl", "v[id]", CFGFLAG_SERVER, ConBall, this, "give/remove player v ball")
 CONSOLE_COMMAND("heartguns_pl", "v[id]", CFGFLAG_SERVER, ConHeartGuns, this, "give/remove player v heartguns")
 CONSOLE_COMMAND("rainbowhook_pl", "v[id]", CFGFLAG_SERVER, ConRainbowHook, this, "give/remove player v rainbow hook")
@@ -37,6 +38,7 @@ CONSOLE_COMMAND("unfreeze", "v", CFGFLAG_SERVER|CMDFLAG_TEST, ConUnFreeze, this,
 CONSOLE_COMMAND("send_sound_pl", "ii", CFGFLAG_SERVER|CMDFLAG_TEST, ConSendSound, this, "send sound i to a player i")
 CONSOLE_COMMAND("hook_jetpack_pl", "v[id]", CFGFLAG_SERVER|CMDFLAG_TEST, ConHookJetpack, this, "give/remove player v hook jetpack")
 CONSOLE_COMMAND("light_saber_pl", "v[id]", CFGFLAG_SERVER|CMDFLAG_TEST, ConLightSaber, this, "give/remove player v light saber")
+CONSOLE_COMMAND("lightning_laser_pl", "v[id]", CFGFLAG_SERVER|CMDFLAG_TEST, ConLightningLaser, this, "give/remove player v lightning laser")
 
 CONSOLE_COMMAND("totele", "i[number]", CFGFLAG_SERVER|CMDFLAG_TEST, ConToTeleporter, this, "Teleports you to teleporter v")
 CONSOLE_COMMAND("totelecp", "i[number]", CFGFLAG_SERVER|CMDFLAG_TEST, ConToCheckTeleporter, this, "Teleports you to checkpoint teleporter v")
@@ -84,6 +86,7 @@ CONSOLE_COMMAND("unfreezehammer", "v[id]", CFGFLAG_SERVER, ConUnFreezeHammer, th
 
 CONSOLE_COMMAND("fixaccounts", "", CFGFLAG_SERVER, ConFixAccounts, this, "allow players to login back.")
 CONSOLE_COMMAND("exec_command_by", "ir", CFGFLAG_SERVER, ConPublicExecCommand, this, "run a chat command from every player (public!, they can see it)")
+CONSOLE_COMMAND("event_exp", "ii", CFGFLAG_SERVER, ConEventExp, this, "start an even Exp")
 
 #undef CONSOLE_COMMAND
 
