@@ -1959,7 +1959,7 @@ void CCharacter::HandleTiles(int Index)
 		{
 			if ((m_TileIndex == TILE_PASSIVE_IN || m_TileFIndex == TILE_PASSIVE_IN) && !m_PassiveMode)
 			{
-				if(m_pPlayer->m_AccData.m_Vip && !m_pPlayer->m_Passive)
+				if(!m_pPlayer->m_Passive)
 					return;
 
 				GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Passive mode enabled!");
